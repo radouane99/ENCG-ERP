@@ -242,6 +242,7 @@ class SmartSchedulingEngine
             'hard_constraints' => $placed['hard_constraints'],
             'input_issues' => array_values(array_unique($inputIssues)),
             'teaching_weeks' => $weeks,
+            'max_daily_hours' => $config['max_daily_hours'] ?? 8,
             'volume_notice' => 'Grille hebdomadaire indicative en créneaux de 2 h. Ajuster les semaines et séances ponctuelles pour respecter les volumes affectés.',
             'total_variables' => $totalRequired,
             'total_placed' => $totalPlaced,

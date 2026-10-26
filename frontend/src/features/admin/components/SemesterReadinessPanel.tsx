@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  BookOpen, Users, AlertCircle, Building2, CheckCircle2,
+  BookOpen, Users, AlertCircle, Building2,
   ChevronDown, ChevronUp, Scale, ArrowRight, Sparkles,
-  Clock, ShieldCheck, AlertTriangle
+  ShieldCheck, AlertTriangle
 } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 

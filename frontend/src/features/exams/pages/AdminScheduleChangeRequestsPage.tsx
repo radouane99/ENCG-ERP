@@ -10,14 +10,19 @@ export default function AdminScheduleChangeRequestsPage() {
   const [requests, setRequests] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedReqModal, setSelectedReqModal] = useState<any>(null)
+  const [reviewNotes, setReviewNotes] = useState<Record<number,string>>({})
+  const [processing, setProcessing] = useState<number | null>(null)
+  const [loadError, setLoadError] = useState(false)
 
   const fetchRequests = async () => {
     try {
       setIsLoading(true)
+      setLoadError(false)
       const data = await examsApi.getScheduleChangeRequests()
       setRequests(data || [])
     } catch (error) {
       console.error('Failed to fetch requests:', error)
+      setLoadError(true)
       setRequests([])
     } finally {
       setIsLoading(false)
@@ -29,14 +34,18 @@ export default function AdminScheduleChangeRequestsPage() {
   }, [])
 
   const handleUpdateStatus = async (id: number, status: 'approved' | 'rejected') => {
+    if (processing !== null) return
+    const row = requests.find(item => item.id === id)
+    if (row?.request_type === 'timetable_change' && (reviewNotes[id] || '').trim().length < 10) { setSelectedReqModal(row); return }
+    setProcessing(id)
     try {
-      const response = await examsApi.updateScheduleChangeStatus(id, status)
-      setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r))
+      const response = await examsApi.updateScheduleChangeStatus(id, status, reviewNotes[id])
+      setRequests(prev => prev.map(r => r.id === id ? { ...r, status, review_note: reviewNotes[id] } : r))
       toast.success(response?.message || (status === 'approved' ? 'Changement d\'emploi du temps approuvé avec succès !' : 'Demande rejetée.'))
       if (selectedReqModal) setSelectedReqModal(null)
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Erreur lors de la mise à jour du statut.")
-    }
+    } finally { setProcessing(null) }
   }
 
   const handleWhatsAppDelegateAlert = (req: any) => {
@@ -221,11 +230,12 @@ export default function AdminScheduleChangeRequestsPage() {
         </div>
 
         {/* Requests List Content (100% Real DB Records) */}
+        {loadError && <p role="alert">Demandes indisponibles. <button onClick={fetchRequests} className="underline">Réessayer</button></p>}
         {isLoading ? (
           <div className="flex justify-center p-16">
             <Loader2 className="w-8 h-8 text-primary animate-spin" />
           </div>
-        ) : filteredRequests.length === 0 ? (
+        ) : loadError ? null : filteredRequests.length === 0 ? (
           <div className="bg-muted/50 dark:bg-slate-800/40 rounded-2xl border border-slate-200/80 dark:border-border p-16 flex flex-col items-center justify-center text-center">
             <div className="w-20 h-20 bg-primary/5 dark:bg-indigo-950/60 rounded-full flex items-center justify-center mb-4">
               <Mailbox className="w-10 h-10 text-primary dark:text-indigo-400" />
@@ -337,11 +347,11 @@ export default function AdminScheduleChangeRequestsPage() {
       {/* Details Modal */}
       {selectedReqModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-xl shadow-sm overflow-hidden">
+          <div role="dialog" aria-modal="true" aria-labelledby="schedule-request-title" className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-xl shadow-sm overflow-hidden">
             <div className="p-6 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200">Détails de la Requête</span>
-                <h2 className="text-lg font-bold">{selectedReqModal.module_name}</h2>
+                <h2 id="schedule-request-title" className="text-lg font-bold">{selectedReqModal.module_name}</h2>
               </div>
               <button 
                 onClick={() => setSelectedReqModal(null)}
@@ -363,7 +373,8 @@ export default function AdminScheduleChangeRequestsPage() {
                 </div>
               </div>
             </div>
-            <div className="p-4 border-t border-border dark:border-border bg-muted/50 dark:bg-card flex justify-between items-center">
+            <div className="p-4 border-t border-border dark:border-border bg-muted/50 dark:bg-card flex flex-col gap-4 items-stretch">
+              {selectedReqModal.request_type === 'timetable_change' && selectedReqModal.status === 'pending' && <label className="block space-y-2 text-sm font-medium">Motif de la décision<textarea aria-label="Motif de la décision" minLength={10} maxLength={2000} value={reviewNotes[selectedReqModal.id] || ''} onChange={event => setReviewNotes(notes => ({ ...notes, [selectedReqModal.id]: event.target.value }))} className="block w-full rounded-xl border border-input bg-card p-3" /><span className="text-xs text-muted-foreground">L’approbation contrôle le créneau et applique le changement seulement s’il reste possible. La durée et la salle sont conservées.</span></label>}
               {selectedReqModal.status === 'pending' ? (
                 <div className="flex items-center gap-2">
                   <button 

@@ -470,6 +470,7 @@ export default function RootRouter() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/admin/document-registry" element={<ProtectedRoute roles={[...ADMIN_ROLES, 'scolarite']}><DocumentRegistryPage /></ProtectedRoute>} />
+          <Route path="/admin/schedule-change-requests" element={<ProtectedRoute roles={[...ADMIN_ROLES, 'scolarite']}><AdminScheduleChangeRequestsPage /></ProtectedRoute>} />
           <Route element={<ProtectedRoute roles={ADMIN_ROLES} />}>
             <Route path="/settings" element={<SettingsPage />} />
           </Route>
@@ -552,7 +553,6 @@ export default function RootRouter() {
             <Route path="/admin/exams/scan" element={<AdminExamScanPage />} />
             <Route path="/admin/convocations/print-professors" element={<AdminPrintProfessorsConvocationPage />} />
             <Route path="/admin/professor-availability" element={<AdminProfessorAvailabilityPage />} />
-            <Route path="/admin/schedule-change-requests" element={<AdminScheduleChangeRequestsPage />} />
             <Route path="/admin/exams/analytics" element={<AdminExamAnalyticsPage />} />
             <Route path="/admin/analytics" element={<AdminAnalyticsDashboard />} />
             <Route path="/admin/guichet" element={<AdminGuichetPage />} />

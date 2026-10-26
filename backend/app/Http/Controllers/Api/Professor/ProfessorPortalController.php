@@ -58,10 +58,7 @@ class ProfessorPortalController extends Controller
                 }
                 $q->orWhere(fn ($p) => $p->where('professor_id', $userId)->where('professor_type', User::class));
             })
-            ->where(function ($q) {
-                $q->where('is_active', true)
-                    ->orWhereHas('version', fn ($v) => $v->where('status', 'PROPOSED'));
-            })
+            ->where('is_active', true)
             ->get()
             ->map(function ($s) {
                 $subGroups = [];

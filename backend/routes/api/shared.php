@@ -62,6 +62,9 @@ Route::match(['get', 'post'], '/blockchain/public-verify', [AdminBlockchainContr
 Route::match(['get', 'post'], '/verify/blockchain', [AdminBlockchainController::class, 'verify']);
 
 Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
+    Route::get('/timetable/change-requests', [\App\Http\Controllers\Api\ScheduleChangeRequestController::class, 'index']);
+    Route::post('/timetable/change-requests', [\App\Http\Controllers\Api\ScheduleChangeRequestController::class, 'storeTimetable']);
+    Route::patch('/timetable/change-requests/{id}/status', [\App\Http\Controllers\Api\ScheduleChangeRequestController::class, 'updateStatus']);
     Route::get('/documents/registry', [\App\Http\Controllers\Api\DocumentRegistryController::class, 'index']);
     Route::get('/documents/registry/{id}/download', [\App\Http\Controllers\Api\DocumentRegistryController::class, 'download']);
     Route::post('/documents/registry/{id}/revoke', [\App\Http\Controllers\Api\DocumentRegistryController::class, 'revoke']);

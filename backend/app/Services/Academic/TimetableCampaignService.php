@@ -283,6 +283,7 @@ class TimetableCampaignService
                         'include_saturday' => $includeSaturday,
                         'strategy' => $result['strategy'] ?? 'MRV-Degree-LCV',
                         'placed' => $result['total_placed'] ?? 0,
+                        'max_daily_hours' => $result['max_daily_hours'] ?? 8,
                     ],
                 ]
             );
@@ -333,7 +334,7 @@ class TimetableCampaignService
         });
     }
 
-    public function publicationIssues(int $versionId, bool $requireConfirmations = true): array
+    public function publicationIssues(int $versionId, bool $requireConfirmations = false): array
     {
         $version = ScheduleVersion::findOrFail($versionId);
         $this->assertVersion($version);
@@ -354,9 +355,6 @@ class TimetableCampaignService
                 ->where(fn ($q) => $q->where('group_id', $row->group_id)->orWhereNull('group_id'))->exists();
             if (! $assigned) {
                 $issues[] = ['message' => 'Une séance ne correspond pas aux affectations officielles des enseignants.'];
-            }
-            if ($requireConfirmations && $row->confirmation_status !== 'confirmed') {
-                $issues[] = ['message' => 'Toutes les séances doivent être confirmées par leurs enseignants avant publication.'];
             }
         }
         foreach ($this->groupIntoBlocks($rows) as $block) {
@@ -404,7 +402,7 @@ class TimetableCampaignService
             $version->update(['status' => 'PROPOSED']);
             Schedule::where('schedule_version_id', $versionId)->update(['confirmation_status' => 'pending', 'confirmed_at' => null]);
 
-            return ['success' => true, 'message' => 'Proposition disponible dans le portail des enseignants pour confirmation.', 'status' => 'PROPOSED'];
+            return ['success' => true, 'message' => 'Planning préparé pour publication administrative. Aucune confirmation enseignant requise.', 'status' => 'PROPOSED'];
         });
     }
 
@@ -416,8 +414,8 @@ class TimetableCampaignService
             if ($version->status === 'PUBLISHED') {
                 return ['success' => true, 'message' => 'Cette version est déjà publiée.'];
             }
-            if ($version->status !== 'PROPOSED') {
-                return ['success' => false, 'message' => 'Proposer le planning aux enseignants avant publication.'];
+            if (! in_array($version->status, ['DRAFT', 'PROPOSED'], true)) {
+                return ['success' => false, 'message' => 'Seul un planning en préparation peut être publié.'];
             }
             $issues = $this->publicationIssues($versionId);
             if ($issues) {

@@ -88,6 +88,7 @@ const navigation: (NavItem | NavGroup)[] = [
       { label: 'Parapheur Électronique', labelAr: 'المحفظة الإلكترونية وأوامر المهمة', href: '/admin/parapheur', icon: Stamp, badge: 'RH', roles: ['super-admin', 'institution-admin', 'director', 'department-head', 'hr-officer'] },
       { label: 'Affectations Pédagogiques', labelAr: 'التوزيع البيداغوجي للمواد', href: '/admin/professor-assignments', icon: Sparkles, roles: ['super-admin', 'institution-admin', 'department-head', 'director'] },
       { label: 'Emplois du Temps & Planification IA', labelAr: 'استعمالات الزمن والتخطيط الذكي', href: '/admin/ai-timetable-scheduler', icon: Calendar, badge: 'IA', roles: ['super-admin', 'institution-admin', 'director', 'department-head', 'filiere-head', 'scolarite'] },
+      { label: 'Demandes de changement EDT', labelAr: 'طلبات تغيير استعمال الزمن', href: '/admin/schedule-change-requests', icon: Calendar, roles: ['super-admin', 'institution-admin', 'director', 'department-head', 'filiere-head', 'scolarite'] },
       { label: 'Disponibilités & Conflits', labelAr: 'أوقات التوفر وطلبات التعديل', href: '/admin/professor-availability', icon: Clock3, roles: ['super-admin', 'institution-admin', 'director', 'hr-officer'] },
       { label: 'Cahiers de Textes', labelAr: 'دفاتر النصوص الجامعية', href: '/admin/textbooks', icon: Book, roles: ['super-admin', 'institution-admin', 'director', 'department-head'] },
     ]

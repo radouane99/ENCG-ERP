@@ -17,6 +17,8 @@ class ScheduleChangeRequest extends Model
         return [
             'old_date' => 'date',
             'proposed_date' => 'date',
+            'timetable_payload' => 'array',
+            'reviewed_at' => 'datetime',
         ];
     }
 
@@ -29,4 +31,6 @@ class ScheduleChangeRequest extends Model
     {
         return $this->belongsTo(Exam::class);
     }
+
+    public function schedule(): BelongsTo { return $this->belongsTo(Schedule::class); }
 }

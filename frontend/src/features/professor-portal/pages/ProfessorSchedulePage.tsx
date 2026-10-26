@@ -15,6 +15,7 @@ RefreshCcw,CalendarDays,Shield,
 Eye
 } from 'lucide-react';
 import { toast } from 'sonner';
+import TimetableChangePanel from '../components/TimetableChangePanel';
 import { QRScannerModal } from '../components/QRScannerModal';
 import { cn } from '@shared/lib/utils';
 import { Link } from 'react-router-dom';
@@ -42,7 +43,6 @@ export default function ProfessorSchedulePage() {
   const [selectedDay, setSelectedDay] = useState<number>(1);
 
   const profFullName = user?.name || 'Enseignant';
-  const [refusalNotes, setRefusalNotes] = useState<Record<number, string>>({});
   const { data: scheduleData, refetch: refetchSchedule, isError: scheduleError } = useQuery({
     queryKey: ['professor-personal-schedule'],
     queryFn: () => api.get('/professor-portal/schedule').then(res => res.data),
@@ -53,7 +53,6 @@ export default function ProfessorSchedulePage() {
     ...item, session_id: item.id, title: item.module_name, location: item.room,
     group: item.group_code, time_formatted: `${item.start_time} - ${item.end_time}`,
   }));
-  const proposals = allSessions.filter((item: any) => item.lifecycle === 'PROPOSED');
   const { data: matrixData, refetch: refetchMatrix, isFetching: isMatrixFetching } = useQuery({
     queryKey: ['official-timetable-matrix-prof', professorId], enabled: !!professorId,
     queryFn: () => api.get(`/timetable/export/professor/${professorId}/matrix`).then(res => res.data.data || res.data),
@@ -64,11 +63,6 @@ export default function ProfessorSchedulePage() {
   });
   const surveillances = Array.isArray(statsData?.surveillances) ? statsData.surveillances : [];
   const profMatrixSections = Array.isArray(matrixData?.sections) ? matrixData.sections : [];
-  const confirmation = useMutation({
-    mutationFn: ({ id, decision }: { id: number; decision: 'confirmed' | 'refused' }) => api.post(`/professor-portal/schedules/${id}/confirm`, { decision, note: refusalNotes[id] || null }),
-    onSuccess: () => { toast.success('Réponse enregistrée.'); refetchSchedule() },
-    onError: (err: any) => toast.error(err.response?.data?.data?.message || err.response?.data?.message || 'Confirmation impossible.'),
-  });
   const startCall = useMutation({
     mutationFn: async (session: any) => {
       const response = await api.post('/professor/attendance/start', { module_id: session.module_id, group_id: session.group_id, session_type: session.session_type, room_name: session.room });
@@ -167,16 +161,7 @@ export default function ProfessorSchedulePage() {
 
       {/* ── Summary Key Indicator Strip ── */}
       {scheduleError && <div role="alert" className="rounded-xl border border-red-200 p-4 text-red-700">Votre emploi du temps est indisponible. <button onClick={() => refetchSchedule()} className="underline">Réessayer</button></div>}
-      {proposals.length > 0 && <section className="rounded-2xl border border-primary/20 bg-card p-5 space-y-3 dark:bg-card dark:border-primary" aria-labelledby="schedule-proposals">
-        <h2 id="schedule-proposals" className="text-lg font-bold">Planning proposé : votre avis est attendu</h2>
-        <p className="text-sm text-muted-foreground">Ces séances restent provisoires jusqu’à leur publication par la scolarité.</p>
-        {proposals.map((session: any) => <div key={session.id} className="rounded-xl border p-3 space-y-2">
-          <p className="font-semibold">{session.module_name} · {session.group_code}</p><p className="text-sm text-muted-foreground">{session.day_name} · {session.time} · {session.room}</p>
-          <p className="text-sm">Réponse : {session.confirmation_status === 'confirmed' ? 'Confirmée' : session.confirmation_status === 'refused' ? 'Indisponibilité signalée' : 'En attente'}</p>
-          <input aria-label={`Motif pour ${session.module_name}`} value={refusalNotes[session.id] || ''} onChange={event => setRefusalNotes(notes => ({ ...notes, [session.id]: event.target.value }))} placeholder="Précision ou motif d’indisponibilité" maxLength={500} className="w-full border p-2 text-sm dark:bg-card rounded-[var(--control-radius)]" />
-          <div className="flex flex-wrap gap-2"><button disabled={confirmation.isPending || session.confirmation_status === 'confirmed'} onClick={() => confirmation.mutate({ id: session.id, decision: 'confirmed' })} className="rounded-lg bg-emerald-700 px-3 py-2 text-sm text-white disabled:opacity-50">Confirmer ce créneau</button><button disabled={confirmation.isPending} onClick={() => confirmation.mutate({ id: session.id, decision: 'refused' })} className="rounded-lg border px-3 py-2 text-sm">Signaler une indisponibilité</button></div>
-        </div>)}
-      </section>}
+      <TimetableChangePanel sessions={activeSessions} />
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-border dark:border-border">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">Enseignant</span>

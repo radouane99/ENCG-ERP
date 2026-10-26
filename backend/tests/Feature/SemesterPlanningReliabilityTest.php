@@ -111,31 +111,97 @@ class SemesterPlanningReliabilityTest extends TestCase
         $this->assertDatabaseCount('schedule_versions', 1);
     }
 
-    public function test_draft_stays_private_until_its_teacher_confirms_and_publication_is_idempotent(): void
+    public function test_administration_publishes_directly_without_teacher_confirmation(): void
     {
-        $c = $this->setupPlanning();
-        $this->assign($c);
-        $service = $c['service'];
-        $id = $c['versionId'];
+        $c = $this->setupPlanning(); $this->assign($c);
+        $id = $c['versionId']; $service = $c['service'];
         $this->assertTrue($service->addSession($id, $c['payload'])['success']);
         $session = Schedule::where('schedule_version_id', $id)->firstOrFail();
-        $this->assertFalse((bool) $session->is_active);
-        $this->assertFalse($service->publish($id)['success']);
-        $this->assertTrue($service->propose($id)['success']);
-        $this->assertFalse($service->publish($id)['success']);
         $c['professor']->user->assignRole(Role::findOrCreate('professor', 'sanctum'));
         Sanctum::actingAs($c['professor']->user);
-        $this->getJson('/api/professor-portal/schedule')->assertOk()->assertJsonPath('professor_id', $c['professor']->id)->assertJsonPath('data.0.lifecycle', 'PROPOSED');
-        $this->postJson('/api/professor-portal/schedules/'.$session->id.'/confirm', ['decision' => 'confirmed'])->assertOk();
+        $this->getJson('/api/professor-portal/schedule')->assertOk()->assertJsonCount(0, 'data');
         Sanctum::actingAs($c['actor']);
-        $this->assertTrue($service->propose($id)['success']);
-        $this->assertSame('confirmed', $session->fresh()->confirmation_status);
-        $this->assertTrue($service->publish($id)['success']);
+        $this->postJson('/api/admin/smart-scheduling/versions/'.$id.'/publish')->assertOk();
         $this->assertTrue((bool) $session->fresh()->is_active);
-        $this->assertFalse($service->board($id)['editable']);
+        $this->assertNotSame('confirmed', $session->fresh()->confirmation_status);
         $this->assertTrue($service->publish($id)['success']);
+        Sanctum::actingAs($c['professor']->user);
+        $this->getJson('/api/professor-portal/schedule')->assertOk()->assertJsonPath('data.0.lifecycle', 'PUBLISHED');
+        Sanctum::actingAs($c['actor']);
+        $this->assertFalse($service->board($id)['editable']);
         $this->expectException(HttpException::class);
         $service->deleteSession($id, [$session->id]);
+    }
+
+    private function publishedChangeFixture(): array
+    {
+        $c = $this->setupPlanning(); $this->assign($c);
+        $c['service']->addSession($c['versionId'], $c['payload']);
+        $this->assertTrue($c['service']->publish($c['versionId'])['success']);
+        $row = Schedule::where('schedule_version_id', $c['versionId'])->firstOrFail();
+        $c['professor']->user->assignRole(Role::findOrCreate('professor', 'sanctum'));
+        Sanctum::actingAs($c['professor']->user);
+        return [$c, $row];
+    }
+
+    public function test_teacher_request_waits_for_review_then_applies_to_shared_groups(): void
+    {
+        [$c, $row] = $this->publishedChangeFixture();
+        $c['group']->update(['capacity' => 15]);
+        $group = $c['group']->replicate(); $group->name = 'Second groupe'; $group->save();
+        $shared = $row->replicate(); $shared->group_id = $group->id; $shared->save();
+        $student = $this->makeTestStudent();
+        \App\Models\StudentRegistration::create(['student_id' => $student->id, 'academic_year_id' => $c['year']->id, 'filiere_id' => $c['filiere']->id, 'group_id' => $c['group']->id, 'semester_number' => 1, 'status' => 'admin_validated', 'registration_type' => 'new_enrollment']);
+        $data = ['schedule_id' => $row->id, 'day_of_week' => 2, 'start_time' => '08:30', 'end_time' => '10:30', 'reason' => 'Déplacement demandé pour une réunion pédagogique.'];
+        $id = $this->postJson('/api/timetable/change-requests', $data)->assertCreated()->json('data.id');
+        $this->assertSame(1, $row->fresh()->day_of_week);
+        $this->postJson('/api/timetable/change-requests', $data)->assertStatus(409);
+        $this->patchJson('/api/timetable/change-requests/'.$id.'/status', ['status' => 'approved', 'review_note' => 'Créneau contrôlé et accepté.'])->assertForbidden();
+        Sanctum::actingAs($c['actor']);
+        $this->patchJson('/api/timetable/change-requests/'.$id.'/status', ['status' => 'approved', 'review_note' => 'Créneau contrôlé et accepté.'])->assertOk();
+        $this->assertSame(2, $row->fresh()->day_of_week);
+        $this->assertSame(2, $shared->fresh()->day_of_week);
+        $this->assertDatabaseHas('schedule_change_requests', ['id' => $id, 'status' => 'approved', 'reviewed_by' => $c['actor']->id]);
+        $this->assertDatabaseHas('activity_log', ['description' => 'published_timetable_change_applied']);
+        $this->assertDatabaseHas('notifications', ['notifiable_id' => $student->user_id]);
+        $this->patchJson('/api/timetable/change-requests/'.$id.'/status', ['status' => 'rejected', 'review_note' => 'Décision modifiée sans réouverture.'])->assertStatus(409);
+    }
+
+    public function test_change_approval_rechecks_conflicts_and_keeps_the_request_pending(): void
+    {
+        [$c, $row] = $this->publishedChangeFixture();
+        $id = $this->postJson('/api/timetable/change-requests', ['schedule_id' => $row->id, 'day_of_week' => 2, 'start_time' => '08:30', 'end_time' => '10:30', 'reason' => 'Réunion pédagogique exceptionnelle.'])->assertCreated()->json('data.id');
+        $blocking = $row->replicate(); $blocking->day_of_week = 2; $blocking->schedule_version_id = null; $blocking->save();
+        Sanctum::actingAs($c['actor']);
+        $this->patchJson('/api/timetable/change-requests/'.$id.'/status', ['status' => 'approved', 'review_note' => 'Vérification administrative du créneau.'])->assertUnprocessable();
+        $this->assertSame(1, $row->fresh()->day_of_week);
+        $this->assertDatabaseHas('schedule_change_requests', ['id' => $id, 'status' => 'pending']);
+        $this->patchJson('/api/timetable/change-requests/'.$id.'/status', ['status' => 'rejected', 'review_note' => 'La salle est déjà occupée.'])->assertOk();
+        $this->assertSame(1, $row->fresh()->day_of_week);
+    }
+
+    public function test_other_teacher_cannot_request_and_stale_requests_are_not_applied(): void
+    {
+        [$c, $row] = $this->publishedChangeFixture();
+        $data = ['schedule_id' => $row->id, 'day_of_week' => 2, 'start_time' => '08:30', 'end_time' => '10:30', 'reason' => 'Réunion pédagogique exceptionnelle.'];
+        $other = $this->makeTestProfessor()->user; $other->assignRole(Role::findOrCreate('professor', 'sanctum'));
+        Sanctum::actingAs($other); $this->postJson('/api/timetable/change-requests', $data)->assertForbidden();
+        Sanctum::actingAs($c['professor']->user); $id = $this->postJson('/api/timetable/change-requests', $data)->assertCreated()->json('data.id');
+        $row->update(['start_time' => '10:45:00', 'end_time' => '12:45:00']);
+        Sanctum::actingAs($c['actor']);
+        $this->patchJson('/api/timetable/change-requests/'.$id.'/status', ['status' => 'approved', 'review_note' => 'Créneau contrôlé par la scolarité.'])->assertStatus(409);
+    }
+
+    public function test_change_approval_rejects_excessive_daily_workload(): void
+    {
+        [$c, $row] = $this->publishedChangeFixture();
+        $id = $this->postJson('/api/timetable/change-requests', ['schedule_id' => $row->id, 'day_of_week' => 2, 'start_time' => '16:45', 'end_time' => '18:45', 'reason' => 'Déplacement proposé pour réunion pédagogique.'])->assertCreated()->json('data.id');
+        foreach ([['08:30','10:30'],['10:30','12:30'],['12:30','14:30'],['14:30','16:30']] as [$start,$end]) {
+            $other = $row->replicate(); $other->schedule_version_id = null; $other->day_of_week = 2; $other->start_time = $start; $other->end_time = $end; $other->save();
+        }
+        Sanctum::actingAs($c['actor']);
+        $this->patchJson('/api/timetable/change-requests/'.$id.'/status', ['status' => 'approved', 'review_note' => 'Vérification de la charge journalière.'])->assertUnprocessable()->assertJsonPath('message', 'Charge quotidienne maximale de l’enseignant dépassée.');
+        $this->assertSame(1, $row->fresh()->day_of_week);
     }
 
     public function test_room_capacity_and_overlapping_teacher_are_checked_on_manual_add(): void

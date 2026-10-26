@@ -222,11 +222,11 @@ export const examsApi = {
 
   // Schedule Change Requests
   getScheduleChangeRequests: async () => {
-    const response = await api.get('/schedule-change-requests');
+    const response = await api.get('/timetable/change-requests');
     return response.data.data;
   },
-  updateScheduleChangeStatus: async (id: number, status: 'approved' | 'rejected') => {
-    const response = await api.patch(`/schedule-change-requests/${id}/status`, { status });
+  updateScheduleChangeStatus: async (id: number, status: 'approved' | 'rejected', review_note?: string) => {
+    const response = await api.patch(`/timetable/change-requests/${id}/status`, { status, review_note });
     return response.data;
   },
   scanVerifyQr: async (qrToken: string) => {

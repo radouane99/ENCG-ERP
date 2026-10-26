@@ -3,8 +3,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   Building2, Check, ChevronRight, Clock, FileText, Filter,
   GripVertical, Leaf, Loader2, Play, RotateCcw, Search,
-  Send, Sliders, Sparkles, Users, Zap, CalendarDays,
-  ArrowRight, Layers, Eye, ShieldCheck, CheckCircle2, AlertCircle, RefreshCw
+  Sliders, Sparkles, Users, Zap, CalendarDays,
 } from 'lucide-react';
 import api from '@/shared/lib/api'
 import { toast } from 'sonner';
@@ -54,7 +53,7 @@ const DEFAULTS = {
 const STATUS_LABEL: Record<string, string> = {
   EMPTY: 'À générer',
   DRAFT: 'Brouillon',
-  PROPOSED: 'Chez les profs',
+  PROPOSED: 'À publier',
   PUBLISHED: 'Publié',
 }
 
@@ -62,7 +61,7 @@ const STEPS = [
   { id: 1, label: 'Campagne', hint: 'Ouvrir le semestre' },
   { id: 2, label: 'Générer', hint: 'Brouillon par filière' },
   { id: 3, label: 'Ajuster', hint: 'IA ou glisser-déposer' },
-  { id: 4, label: 'Profs', hint: 'Ils confirment' },
+  { id: 4, label: 'Contrôler', hint: 'Salles et conflits' },
   { id: 5, label: 'Publier', hint: 'Visible étudiants' },
 ]
 
@@ -146,15 +145,6 @@ export default function AdminTimetableEnginePage() {
       toast.error(err.response?.data?.data?.message || err.response?.data?.message || 'Génération impossible')
     },
     onSettled: () => setBusyFiliereId(null),
-  })
-
-  const proposeMutation = useMutation({
-    mutationFn: (versionId: number) => api.post(`/admin/smart-scheduling/versions/${versionId}/propose`),
-    onSuccess: () => {
-      toast.success('Proposition envoyée aux enseignants.')
-      refetchWorkspace()
-    },
-    onError: (err: any) => toast.error(err.response?.data?.data?.message || err.response?.data?.message || 'Proposition impossible.'),
   })
 
   const publishVersionMutation = useMutation({
@@ -431,7 +421,7 @@ export default function AdminTimetableEnginePage() {
             >
               -
             </button>
-            <span className="w-16 text-center font-mono font-black text-sm text-slate-900 dark:text-white">
+            <span role="status" aria-label="Semaines d’enseignement prévues" className="w-16 text-center font-mono font-black text-sm text-slate-900 dark:text-white">
               {teachingWeeks} sem.
             </span>
             <button
@@ -576,7 +566,7 @@ export default function AdminTimetableEnginePage() {
             { key: 'ALL', label: `Toutes`, count: counts.total, color: 'bg-[#0f2863] text-white border-[#0f2863] shadow-xs', inactive: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200' },
             { key: 'EMPTY', label: 'À générer', count: counts.empty, color: 'bg-slate-700 text-white border-slate-700 shadow-xs', inactive: 'bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100' },
             { key: 'DRAFT', label: 'Brouillon', count: counts.draft, color: 'bg-amber-600 text-white border-amber-600 shadow-xs', inactive: 'bg-amber-50/70 dark:bg-amber-950/30 text-amber-800 dark:text-amber-400 border-amber-200/80 dark:border-amber-800 hover:bg-amber-100' },
-            { key: 'PROPOSED', label: 'Chez les profs', count: counts.proposed, color: 'bg-indigo-600 text-white border-indigo-600 shadow-xs', inactive: 'bg-indigo-50/70 dark:bg-indigo-950/30 text-indigo-800 dark:text-indigo-400 border-indigo-200/80 dark:border-indigo-800 hover:bg-indigo-100' },
+            { key: 'PROPOSED', label: 'À publier', count: counts.proposed, color: 'bg-indigo-600 text-white border-indigo-600 shadow-xs', inactive: 'bg-indigo-50/70 dark:bg-indigo-950/30 text-indigo-800 dark:text-indigo-400 border-indigo-200/80 dark:border-indigo-800 hover:bg-indigo-100' },
             { key: 'PUBLISHED', label: 'Publié', count: counts.published, color: 'bg-emerald-600 text-white border-emerald-600 shadow-xs', inactive: 'bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-400 border-emerald-200/80 dark:border-emerald-800 hover:bg-emerald-100' },
           ].map(({ key, label, count, color, inactive }) => (
             <button
@@ -653,7 +643,7 @@ export default function AdminTimetableEnginePage() {
                     <tr className="bg-gradient-to-r from-slate-100/90 via-slate-50/70 to-slate-100/90 dark:from-slate-800/90 dark:via-slate-900/70 dark:to-slate-800/90 text-slate-700 dark:text-slate-300 uppercase tracking-wider font-extrabold text-[10px] border-b border-slate-200/80 dark:border-slate-700/80">
                       <th className="px-5 py-3.5 text-left">Filière</th>
                       <th className="px-5 py-3.5 text-left">État d'avancement</th>
-                      <th className="px-5 py-3.5 text-left">Confirmations Enseignants</th>
+                      <th className="px-5 py-3.5 text-left">Enseignants et séances</th>
                       <th className="px-5 py-3.5 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -666,10 +656,8 @@ export default function AdminTimetableEnginePage() {
                         : card.filiere_code?.toUpperCase().includes('GRH') ? 'from-amber-500 to-orange-600'
                         : 'from-[#0f2863] to-blue-700'
 
-                      const confirmed = card.confirmations?.confirmed || 0
                       const total = card.confirmations?.total || 0
                       const sessions = card.confirmations?.sessions || 0
-                      const progressPct = total > 0 ? Math.round((confirmed / total) * 100) : 0
 
                       return (
                         <tr key={card.filiere_id} className="group hover:bg-gradient-to-r hover:from-blue-50/40 hover:via-indigo-50/20 hover:to-transparent dark:hover:from-blue-950/20 dark:hover:via-slate-800/40 dark:hover:to-transparent transition-all">
@@ -714,34 +702,8 @@ export default function AdminTimetableEnginePage() {
                             </span>
                           </td>
 
-                          {/* Confirmations Progress */}
-                          <td className="px-5 py-4">
-                            <div className="space-y-1.5 w-40">
-                              <div className="flex items-center justify-between text-[11px]">
-                                <span className="font-mono font-black text-slate-900 dark:text-white">
-                                  {confirmed} <span className="text-slate-400 font-normal">/ {total} profs</span>
-                                </span>
-                                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">
-                                  {sessions} séance{sessions > 1 ? 's' : ''}
-                                </span>
-                              </div>
-                              <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-200/50 dark:border-slate-700/50">
-                                <div
-                                  className={cn(
-                                    "h-full rounded-full transition-all duration-300",
-                                    confirmed === total && total > 0
-                                      ? "bg-emerald-500"
-                                      : confirmed > 0
-                                        ? "bg-gradient-to-r from-blue-500 to-indigo-600"
-                                        : "bg-slate-300 dark:bg-slate-700"
-                                  )}
-                                  style={{ width: `${progressPct}%` }}
-                                />
-                              </div>
-                            </div>
-                          </td>
+                          <td className="px-5 py-4"><p className="text-sm font-semibold">{total} enseignant(s)</p><p className="text-xs text-muted-foreground">{sessions} séance(s) · Publication par la scolarité</p></td>
 
-                          {/* Row Actions */}
                           <td className="px-5 py-4 text-right">
                             <div className="flex flex-wrap items-center justify-end gap-1.5">
                               {(card.status === 'EMPTY' || card.status === 'DRAFT') && (
@@ -757,18 +719,7 @@ export default function AdminTimetableEnginePage() {
                                 </button>
                               )}
 
-                              {card.version_id && card.status === 'DRAFT' && (
-                                <button
-                                  type="button"
-                                  onClick={() => proposeMutation.mutate(card.version_id)}
-                                  className="flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-black bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 transition-all cursor-pointer border border-indigo-200 dark:border-indigo-800 shadow-2xs"
-                                >
-                                  <Send className="w-3 h-3" />
-                                  <span>Aux profs</span>
-                                </button>
-                              )}
-
-                              {card.version_id && card.status === 'PROPOSED' && (
+                              {card.version_id && ['DRAFT', 'PROPOSED'].includes(card.status) && (
                                 confirmPublishId === card.version_id ? (
                                   <span className="inline-flex items-center gap-1">
                                     <button onClick={() => publishVersionMutation.mutate(card.version_id)} className="h-8 px-3 rounded-xl bg-emerald-600 text-white text-xs font-black cursor-pointer shadow-xs">Confirmer</button>
