@@ -102,8 +102,8 @@ class BacParser implements DocumentParserInterface
     private function normalizeText(string $text): string
     {
         $text = preg_replace('/\r\n|\r/', "\n", $text);
-        $text = preg_replace('/[^\x{0600}-\x{06FF}A-Za-z0-9\s\.\,\-\/\(\)\:\n]/u', ' ', $text);
-        $text = preg_replace('/\s+/', ' ', $text);
+        $text = preg_replace('/[^\p{L}\p{M}\p{N}\s\.\,\-\/\(\)\:\n]/u', ' ', $text);
+        $text = preg_replace('/[ \t]+/', ' ', $text);
 
         return trim($text);
     }

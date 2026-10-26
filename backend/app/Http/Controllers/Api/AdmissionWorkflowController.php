@@ -322,6 +322,10 @@ class AdmissionWorkflowController extends Controller
             Application::whereKey($app->id)->lockForUpdate()->firstOrFail();
             $doc = StudentDocument::whereKey($data['document_id'])->where('application_id', $app->id)->where('is_current', true)->whereNull('withdrawn_at')->firstOrFail();
             abort_if($doc->type === 'photo', 422, 'La photo ne nécessite pas d’extraction de champs.');
+            $existing = DB::table('admission_ocr_runs')->where('document_id', $doc->id)->where('mode', $data['mode'])->whereIn('status', ['queued', 'processing'])->first();
+            if ($existing) {
+                return $existing->id;
+            }
             $active = DB::table('admission_ocr_runs')->where('application_id', $app->id)->whereIn('status', ['queued', 'processing'])->count();
             abort_if($active >= 2, 429, 'Deux documents sont déjà en cours de traitement.');
             $id = (string) Str::uuid();

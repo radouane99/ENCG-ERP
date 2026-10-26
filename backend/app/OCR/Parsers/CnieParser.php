@@ -132,10 +132,10 @@ class CnieParser implements DocumentParserInterface
         $text = str_replace(['ﬁ', 'ﬂ', 'œ', 'æ'], ['fi', 'fl', 'oe', 'ae'], $text);
 
         // Nettoyer les caractères inutiles
-        $text = preg_replace('/[^\x{0600}-\x{06FF}A-Za-z0-9\s\.\,\-\/\:\n<]/u', ' ', $text);
+        $text = preg_replace('/[^\p{L}\p{M}\p{N}\s\.\,\-\/\:\n<]/u', ' ', $text);
 
         // Supprimer les espaces multiples
-        $text = preg_replace('/\s+/', ' ', $text);
+        $text = preg_replace('/[ \t]+/', ' ', $text);
 
         return trim($text);
     }

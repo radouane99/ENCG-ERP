@@ -101,23 +101,37 @@ class ManageDossierAction
         $request->merge(['type' => $type]);
         $request->validate(['application_id' => 'required|integer', 'version' => 'required|integer',
             'type' => 'required|in:'.implode(',', AdmissionEntryRules::uploadTypes()),
-            'file' => ['required', 'file', 'max:10240', $type === 'photo' ? 'mimes:jpg,jpeg,png,webp' : 'mimes:pdf,jpg,jpeg,png,webp']]);
+            'file' => ['required', 'file', 'max:10240', $type === 'photo' ? 'mimes:jpg,jpeg,png,webp' : 'mimes:pdf,jpg,jpeg,png,webp'],
+            'file_verso' => ['nullable', 'file', 'max:10240', 'mimes:jpg,jpeg,png,webp']]);
         $file = $request->file('file');
         $mime = $file->getMimeType();
-        if (str_starts_with($mime, 'image/')) {
-            $size = @getimagesize($file->getRealPath());
+        $verso = $request->file('file_verso');
+        if ($verso) {
+            abort_unless($type === 'cnie' && str_starts_with($mime, 'image/'), 422, 'Les deux faces sont réservées aux images CNIE.');
+        }
+        foreach (array_filter([$file, $verso]) as $imageFile) {
+            if (! str_starts_with($imageFile->getMimeType(), 'image/')) {
+                continue;
+            }
+            $size = @getimagesize($imageFile->getRealPath());
             if (! $size || min($size[0], $size[1]) < 200 || max($size[0], $size[1]) > 12000) {
                 throw ValidationException::withMessages(['file' => 'Image illisible ou trop petite. Minimum 200 pixels ; maximum 12000 pixels par côté.']);
             }
         }
-        $hash = hash_file('sha256', $file->getRealPath());
+        $content = $verso ? app(\App\Services\Admissions\CnieDocumentComposer::class)->compose($file, $verso) : file_get_contents($file->getRealPath());
+        abort_if(strlen($content) > 10 * 1024 * 1024, 422, 'Le document CNIE assemblé dépasse 10 Mo.');
+        $hash = $verso ? hash('sha256', hash_file('sha256', $file->getRealPath()).hash_file('sha256', $verso->getRealPath())) : hash('sha256', $content);
+        if ($verso) {
+            $mime = 'application/pdf';
+        }
         $path = null;
         try {
-            return DB::transaction(function () use ($request, $type, $file, $mime, $hash, &$path) {
+            return DB::transaction(function () use ($request, $type, $content, $mime, $hash, &$path) {
                 $app = $this->locked($request);
                 $old = StudentDocument::where('application_id', $app->id)->where('type', $type)->where('is_current', true)->first();
                 abort_if($app->dossier_status === 'needs_correction' && $old?->status === 'verified', 422, 'Cette pièce est déjà validée. Remplacez uniquement les pièces à corriger ou contactez la scolarité.');
                 if ($old && $old->content_hash === $hash) {
+                    app(QueueAutomaticOcrAction::class)->execute($old);
                     return $old;
                 }
                 $version = StudentDocument::where('application_id', $app->id)->where('type', $type)->max('version') + 1;
@@ -125,16 +139,17 @@ class ManageDossierAction
                     'application/pdf' => 'pdf', 'image/png' => 'png', 'image/webp' => 'webp', default => 'jpg'
                 };
                 $path = 'admissions/'.$app->id.'/'.Str::uuid().'.'.$ext;
-                Storage::disk('private')->put($path, file_get_contents($file->getRealPath()));
+                Storage::disk('private')->put($path, $content);
                 if ($old) {
                     $old->update(['is_current' => false]);
                 }
                 $doc = StudentDocument::create(['application_id' => $app->id, 'student_id' => $app->student_id,
                     'cne' => $app->cne, 'type' => $type, 'file_path' => $path, 'storage_disk' => 'private',
-                    'original_filename' => $type.'.'.$ext, 'mime_type' => $mime, 'file_size' => $file->getSize(),
+                    'original_filename' => $type.'.'.$ext, 'mime_type' => $mime, 'file_size' => strlen($content),
                     'version' => $version, 'content_hash' => $hash, 'is_current' => true, 'status' => 'pending', 'uploaded_by' => auth()->id()]);
                 $app->increment('version');
                 $this->event($app, 'document_uploaded', ['document_id' => $doc->id, 'type' => $type, 'version' => $version]);
+                app(QueueAutomaticOcrAction::class)->execute($doc);
 
                 return $doc;
             });
