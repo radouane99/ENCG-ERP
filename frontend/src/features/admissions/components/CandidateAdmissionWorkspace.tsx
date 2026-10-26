@@ -18,7 +18,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import PrepareDocumentImage from './PrepareDocumentImage'
 import { ocrPrefill } from '../model/ocrPrefill'
 import { useAdmissionDossier, errorMessage } from '../api/workflow'
-import { dateText, dayText, profileLabels, documentLabels, documentLabelsAr, documentTypes, statusLabels, statusLabelsAr, workflowBase, type AdmissionDossier, type DocumentType, type OcrRun } from '../model/workflow'
+import { dateText, dayText, profileLabels, documentLabels, documentLabelsAr, documentTypes, statusLabels, statusLabelsAr, workflowBase, type AdmissionDossier, type AdmissionDocument, type DocumentType, type OcrRun } from '../model/workflow'
 
 const inputClass = 'w-full min-h-11 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-900 transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-400'
 const buttonClass = 'min-h-11 rounded-xl bg-gradient-to-r from-blue-700 via-indigo-700 to-indigo-800 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-indigo-500/20 transition-all hover:opacity-95 hover:shadow-lg hover:shadow-indigo-500/30 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer inline-flex items-center justify-center gap-2'

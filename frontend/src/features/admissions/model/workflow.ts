@@ -244,12 +244,14 @@ export interface OcrRun {
   warnings: string[];
 }
 
-export const dateText = (value: string) =>
-  new Date(/^\d{4}-\d\d-\d\d \d/.test(value) ? value.replace(' ', 'T') + 'Z' : value).toLocaleString('fr-MA', {
+export const dateText = (value?: string | null) => {
+  if (!value) return ''
+  return new Date(/^\d{4}-\d\d-\d\d \d/.test(value) ? value.replace(' ', 'T') + 'Z' : value).toLocaleString('fr-MA', {
     timeZone: 'Africa/Casablanca',
     dateStyle: 'medium',
     timeStyle: 'short',
   })
+}
 
 export const dayText = (value: string) =>
   new Date(value.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('fr-MA', {
