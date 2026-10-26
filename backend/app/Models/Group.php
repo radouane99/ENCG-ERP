@@ -61,4 +61,13 @@ class Group extends Model
     {
         return 'uuid';
     }
+
+    public function resolveRouteBinding($value, $field = null)
+    {
+        if (is_numeric($value)) {
+            return $this->where('id', (int) $value)->first();
+        }
+
+        return $this->where($field ?? $this->getRouteKeyName(), $value)->first();
+    }
 }

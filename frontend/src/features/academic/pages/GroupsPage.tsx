@@ -143,15 +143,14 @@ export default function GroupsPage() {
   }
 
   const handleExportEmargementPdf = (g: Group) => {
-    toast.loading(`Génération de la Liste d'Émargement A4 (${g.name})...`);
+    const toastId = toast.loading(`Génération de la Liste d'Émargement A4 (${g.name})...`);
     void openGroupEmargementPdf(g.id)
       .then(() => {
-        toast.dismiss();
-        toast.success(`📜 Liste d'Émargement (${g.name}) générée avec succès !`);
+        toast.success(`📜 Liste d'Émargement (${g.name}) générée avec succès !`, { id: toastId });
       })
-      .catch(() => {
-        toast.dismiss();
-        toast.error(`Impossible de générer la liste d'émargement.`);
+      .catch((err: any) => {
+        const msg = err?.response?.data?.message || `Impossible de générer la liste d'émargement.`;
+        toast.error(msg, { id: toastId });
       });
   }
 

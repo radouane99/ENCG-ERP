@@ -1559,8 +1559,14 @@ class PdfExportController extends Controller
     /**
      * Feuille d'émargement liée à un groupe — aucun PII dans l'URL (id seul).
      */
-    public function exportGroupEmargementPdf(Group $group)
+    public function exportGroupEmargementPdf(mixed $group)
     {
+        if (! ($group instanceof Group)) {
+            $group = is_numeric($group)
+                ? Group::findOrFail((int) $group)
+                : Group::where('uuid', (string) $group)->firstOrFail();
+        }
+
         $group->loadMissing(['filiere', 'students.user']);
 
         return $this->streamEmargementGroupePdf(
