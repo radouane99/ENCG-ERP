@@ -54,7 +54,7 @@ const navigation: (NavItem | NavGroup)[] = [
       { label: 'Nouvelles inscriptions (TAFEM / CNAEM)', labelAr: 'التسجيل الجديد وطافيم', href: '/academic/enrollments', icon: UserPlus, badge: 'Nouveaux', roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
       { label: 'Réinscriptions (Anciens)', labelAr: 'إعادة تسجيل القدامى', href: '/admin/reinscriptions', icon: RefreshCw, badge: '2A-5A', roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
       { label: 'Lauréats & diplomations', labelAr: 'الخريجون والتخرج', href: '/alumni/dashboard', icon: Award, roles: ['super-admin', 'institution-admin', 'director', 'scolarite', 'pedagogy_officer'] },
-      { label: 'Gestion des Filières & LMD', labelAr: 'إدارة المسالك والشعب', href: '/academic/architecture', icon: GraduationCap, badge: 'LMD', roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
+      { label: 'Gestion des Filières & LMD', labelAr: 'إدارة المسالك والشعب', href: '/academic/filieres', icon: GraduationCap, badge: 'LMD', roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
       { label: 'Gestion des Modules & ECM', labelAr: 'إدارة المواد والمقررات', href: '/academic/modules', icon: BookOpen, badge: 'LMD', roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
       { label: 'Cartes Étudiants & Pass', labelAr: 'بطاقات الطلبة الرقمية', href: '/admin/student-cards', icon: IdCard, badge: 'Pass', roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },
       { label: 'Suivi des Absences', labelAr: 'تتبع الغيابات', href: '/admin/absences', icon: UserX, roles: ['super-admin', 'institution-admin', 'director', 'scolarite'] },

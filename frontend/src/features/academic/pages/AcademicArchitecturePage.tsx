@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { Building2,GraduationCap,Users,Sparkles,BookOpen } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import DepartmentList from '../components/DepartmentList'
@@ -7,7 +7,39 @@ import FiliereList from '../components/FiliereList'
 import GroupsPage from './GroupsPage'
 
 export default function AcademicArchitecturePage() {
-  const [activeTab, setActiveTab] = useState<'departments' | 'filieres' | 'groups'>('departments')
+  const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const getInitialTab = (): 'departments' | 'filieres' | 'groups' => {
+    const tabParam = searchParams.get('tab')
+    if (tabParam === 'filieres' || tabParam === 'departments' || tabParam === 'groups') {
+      return tabParam
+    }
+    if (location.pathname.includes('/academic/filieres')) return 'filieres'
+    if (location.pathname.includes('/academic/groups')) return 'groups'
+    if (location.pathname.includes('/academic/departments')) return 'departments'
+    return 'departments'
+  }
+
+  const [activeTab, setActiveTab] = useState<'departments' | 'filieres' | 'groups'>(getInitialTab)
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab')
+    if (tabParam === 'filieres' || tabParam === 'departments' || tabParam === 'groups') {
+      setActiveTab(tabParam)
+    } else if (location.pathname.includes('/academic/filieres')) {
+      setActiveTab('filieres')
+    } else if (location.pathname.includes('/academic/groups')) {
+      setActiveTab('groups')
+    } else if (location.pathname.includes('/academic/departments')) {
+      setActiveTab('departments')
+    }
+  }, [location.pathname, searchParams])
+
+  const handleTabChange = (tab: 'departments' | 'filieres' | 'groups') => {
+    setActiveTab(tab)
+    setSearchParams({ tab })
+  }
 
   return (
     <div className="max-w-[1700px] mx-auto space-y-8 font-sans animate-in fade-in pb-24">
@@ -39,7 +71,7 @@ export default function AcademicArchitecturePage() {
       {/* ── Mode Switcher Tabs ────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 bg-card p-2 rounded-2xl border border-border shadow-sm overflow-x-auto">
         <button
-          onClick={() => setActiveTab('departments')}
+          onClick={() => handleTabChange('departments')}
           className={cn(
             "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'departments'
@@ -52,7 +84,7 @@ export default function AcademicArchitecturePage() {
         </button>
 
         <button
-          onClick={() => setActiveTab('filieres')}
+          onClick={() => handleTabChange('filieres')}
           className={cn(
             "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'filieres'
@@ -65,7 +97,7 @@ export default function AcademicArchitecturePage() {
         </button>
 
         <button
-          onClick={() => setActiveTab('groups')}
+          onClick={() => handleTabChange('groups')}
           className={cn(
             "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'groups'

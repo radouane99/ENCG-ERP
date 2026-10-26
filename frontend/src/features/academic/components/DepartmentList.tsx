@@ -62,13 +62,35 @@ export default function DepartmentList() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [deptRes, profRes] = await Promise.all([
-        api.get('/departments').catch(() => ({ data: { data: [] } })),
-        api.get('/professors').catch(() => ({ data: { data: [] } }))
+      const [deptRes, profRes, userRes] = await Promise.allSettled([
+        api.get('/departments'),
+        api.get('/hr/professors'),
+        api.get('/users')
       ]);
 
-      const rawDepts = deptRes.data.data || [];
-      const rawProfs = profRes.data.data || [];
+      const rawDepts = deptRes.status === 'fulfilled' ? (deptRes.value.data?.data || deptRes.value.data || []) : [];
+      
+      let rawProfs: any[] = [];
+      if (profRes.status === 'fulfilled') {
+        const raw = profRes.value.data?.data || profRes.value.data || [];
+        if (Array.isArray(raw) && raw.length > 0) {
+          rawProfs = raw;
+        }
+      }
+
+      if (rawProfs.length === 0 && userRes.status === 'fulfilled') {
+        const rawUsers = userRes.value.data?.data || userRes.value.data || [];
+        if (Array.isArray(rawUsers)) {
+          rawProfs = rawUsers
+            .filter((u: any) => ['admin', 'professor', 'teacher', 'super-admin', 'director', 'department-head'].includes(u.role))
+            .map((u: any) => ({
+              id: u.id,
+              user: { first_name: u.first_name || u.name, last_name: u.last_name || '' },
+              name: u.name,
+              email: u.email
+            }));
+        }
+      }
 
       // Enrich with real professor names and stats
       const enrichedDepts = rawDepts.map((d: any) => {
