@@ -183,7 +183,10 @@ class SmartSchedulingEngine
         $assignments = ModuleProfessor::where('academic_year_id', $yearId)->whereIn('module_id', $modules->pluck('id'))->whereIn('professor_id', $professors->pluck('id'))->get();
         $weeks = max(1, (int) ($config['teaching_weeks'] ?? 15));
         $variables = [];
+        $headcounts = app(TimetableRoomGuard::class)->groupHeadcounts($groups->pluck('id')->all());
         $inputIssues = [];
+        if ($modules->isEmpty()) { $inputIssues[] = 'Aucun module configuré pour cette filière et cette période.'; }
+        if ($groups->isEmpty()) { $inputIssues[] = 'Aucun groupe configuré pour cette filière et cette période.'; }
         $varIndex = 1;
         foreach ($modules as $mod) {
             foreach ($groups->where('filiere_id', $mod->filiere_id)->where('semester_number', $mod->semester_number) as $group) {
@@ -202,11 +205,11 @@ class SmartSchedulingEngine
                     $blocks = max(1, (int) round($hours / ($weeks * 2)));
                     for ($b = 1; $b <= $blocks; $b++) {
                         $variables[] = ['var_id' => $varIndex++, 'occurrence_index' => $b, 'group_id' => $group->id, 'occupied_group_ids' => [$group->id],
-                            'group_name' => $group->name, 'group_size' => (int) $group->capacity,
+                            'group_name' => $group->name, 'group_size' => $headcounts[$group->id],
                             'module_id' => $mod->id, 'module_name' => $mod->name, 'module_code' => $mod->code,
                             'filiere_code' => $mod->filiere?->code, 'professor_id' => $assignment->professor_id,
                             'session_type' => $type, 'assigned_hours' => $hours,
-                            'required_type' => $type === 'tp' ? 'lab' : ($group->capacity > 50 ? 'amphitheater' : 'classroom')];
+                            'required_type' => app(TimetableRoomGuard::class)->requiredRoomType($mod->name, $type, $headcounts[$group->id])];
                     }
                 }
             }
@@ -226,14 +229,14 @@ class SmartSchedulingEngine
 
         $totalRequired = count($placed['assignments']) + count($placed['unplaced']);
         $totalPlaced = count($scheduledSessions);
-        $satisfactionRate = $totalRequired > 0 ? round(($totalPlaced / $totalRequired) * 100, 1) : 100.0;
+        $satisfactionRate = $totalRequired > 0 ? round(($totalPlaced / $totalRequired) * 100, 1) : 0.0;
 
         $totalSessions = max(1, count($scheduledSessions));
         $clusteredSessions = $scheduledSessions ? collect($scheduledSessions)->where('energy_score', '>=', 90)->count() : 0;
         $energyScore = round(($clusteredSessions / $totalSessions) * 100, 1);
 
         return [
-            'success' => $placed['zero_hard_conflicts'] && $placed['success'],
+            'success' => empty($inputIssues) && $totalRequired > 0 && $placed['zero_hard_conflicts'] && $placed['success'],
             'strategy' => $placed['strategy'],
             'heuristics' => $placed['heuristics'],
             'hard_constraints' => $placed['hard_constraints'],

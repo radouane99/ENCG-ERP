@@ -235,6 +235,7 @@ class TimetableCampaignService
         $existing = ScheduleVersion::where('edt_campaign_id', $campaign->id)->where('filiere_id', $filiereId)->first();
         abort_if($existing && $existing->status !== 'DRAFT', 409, 'Cette version est proposée ou publiée. Sa régénération est interdite.');
         $params['except_schedule_ids'] = $existing ? Schedule::where('schedule_version_id', $existing->id)->pluck('id')->all() : [];
+        $params['except_schedule_ids'] = array_merge($params['except_schedule_ids'], $this->legacyReplacementIds($filiereId, $workspace['academic_year']['id'], $workspace['semester']['number'] % 2));
 
         $result = $this->engine->simulate(array_merge($params, [
             'filiere_id' => $filiereId,
@@ -245,7 +246,7 @@ class TimetableCampaignService
         if (empty($result['scheduled_sessions']) || ! empty($result['input_issues']) || ! empty($result['unplaced_count'])) {
             return [
                 'success' => false,
-                'message' => $result['input_issues'][0] ?? 'Planning incomplet : vérifier les affectations, disponibilités et salles. Aucun brouillon remplacé.',
+                'message' => $result['input_issues'][0] ?? (empty($result['total_variables']) ? 'Aucune séance à générer : configurer les modules, groupes et affectations de cette filière pour la période.' : 'Planning incomplet : '.($result['total_placed'] ?? 0).' / '.($result['total_variables'] ?? 0).' séances placées. Vérifier les disponibilités et salles. Aucun brouillon remplacé.'),
                 'simulation' => $result,
             ];
         }
@@ -337,7 +338,7 @@ class TimetableCampaignService
         $version = ScheduleVersion::findOrFail($versionId);
         $this->assertVersion($version);
         $rows = Schedule::with(['room', 'group', 'module'])->where('schedule_version_id', $versionId)->get();
-        $issues = $this->hardConflictsFromBlocks($this->groupIntoBlocks($rows));
+        $issues = $this->hardConflictsFromBlocks($this->groupIntoBlocks($rows), $this->replacementIdsForVersion($version));
         if ($rows->isEmpty()) {
             $issues[] = ['message' => 'Le planning est vide.'];
         }
@@ -363,6 +364,10 @@ class TimetableCampaignService
             if ((int) $capacity < $this->rooms->groupsHeadcount($block['group_ids'])) {
                 $issues[] = ['message' => 'Une salle ne couvre pas la capacité des groupes regroupés.'];
             }
+            $room = Room::find($block['room_id']);
+            $size = $this->rooms->groupsHeadcount($block['group_ids']);
+            $requirement = ['group_size' => $size, 'required_type' => $this->rooms->requiredRoomType($block['module_name'], $block['session_type'], $size)];
+            if ($room && ! $this->rooms->roomFits($room, $requirement, Room::where('institution_id', $room->institution_id)->get())) { $issues[] = ['message' => 'Type ou capacité de salle incompatible avec la séance : '.$block['module_name']]; }
         }
         $parity = $version->semester()->value('number') % 2;
         $readiness = app(SemesterReadinessService::class)->summarize($this->contextYear(), $parity, $version->filiere_id);
@@ -422,6 +427,9 @@ class TimetableCampaignService
                 ->where('filiere_id', $version->filiere_id)->whereKeyNot($version->id)->where('status', 'PUBLISHED')->pluck('id');
             Schedule::whereIn('schedule_version_id', $previousIds)->update(['is_active' => false]);
             ScheduleVersion::whereIn('id', $previousIds)->update(['status' => 'ARCHIVED']);
+            $legacyIds = $this->replacementIdsForVersion($version);
+            Schedule::whereIn('id', $legacyIds)->update(['is_active' => false]);
+            if ($legacyIds) { activity()->causedBy(auth()->user())->performedOn($version)->withProperties(['schedule_ids' => $legacyIds])->log('legacy_timetable_superseded_on_publication'); }
             $version->update(['status' => 'PUBLISHED']);
             Schedule::where('schedule_version_id', $versionId)->update(['is_active' => true]);
 
@@ -537,10 +545,10 @@ class TimetableCampaignService
             });
         }
 
-        $rows = $query->get();
+        $rows = $query->whereNotIn('id', $this->replacementIdsForVersion($version))->get();
 
         $blocks = $this->groupIntoBlocks($rows);
-        $conflicts = $this->hardConflictsFromBlocks($blocks);
+        $conflicts = $this->hardConflictsFromBlocks($blocks, $this->replacementIdsForVersion($version));
 
         $allFilieres = Filiere::query()->where('institution_id', $this->contextYear()?->institution_id)->orderBy('name')->get(['id', 'name', 'code']);
         $allSemesters = DB::table('semesters')->where('academic_year_id', $this->contextYear()?->id)->orderBy('number')->get(['id', 'name', 'number']);
@@ -636,6 +644,7 @@ class TimetableCampaignService
                 $q->where('schedule_version_id', $vId)
                     ->orWhere('is_active', true);
             })
+            ->whereNotIn('id', $this->replacementIdsForVersion($version))
             ->whereNotIn('id', $moving->pluck('id'))
             ->get();
 
@@ -678,7 +687,7 @@ class TimetableCampaignService
             Professor::where('institution_id', $this->contextYear()->institution_id)->where('is_active', true)->findOrFail($row->professor_id);
         }
 
-        $conflicts = $this->hardConflictsFromBlocks($this->groupIntoBlocks($proposed->concat($moved)));
+        $conflicts = $this->hardConflictsFromBlocks($this->groupIntoBlocks($proposed->concat($moved)), $this->replacementIdsForVersion($version));
         if ($conflicts !== []) {
             return [
                 'success' => false,
@@ -761,7 +770,8 @@ class TimetableCampaignService
 
         $institutionId = $this->contextYear()->institution_id;
         abort_unless((int) $room->institution_id === (int) $institutionId && $this->rooms->roomOperational($room), 422, 'Salle indisponible ou hors établissement.');
-        if ((int) $room->capacity < (int) $groups->sum('capacity')) {
+        $headcount = $this->rooms->groupsHeadcount($groupIds);
+        if (! $this->rooms->roomFits($room, ['group_size' => $headcount, 'required_type' => $this->rooms->requiredRoomType($module->name, $sessionType, $headcount)], Room::where('institution_id', $institutionId)->get())) {
             return ['success' => false, 'message' => 'Capacité de salle insuffisante pour les groupes sélectionnés.'];
         }
         $yearId = $version?->academic_year_id ?? (AcademicYear::where('is_current', true)->value('id') ?? 1);
@@ -770,7 +780,7 @@ class TimetableCampaignService
 
         if ($day >= 1) {
             $grid = new TimetableOccupancyGrid;
-            $this->rooms->seedOccupancy($grid);
+            $this->rooms->seedOccupancy($grid, $this->replacementIdsForVersion($version));
             if ($grid->roomBusy($day, $start, $end, $room->id) || $grid->professorBusy($day, $start, $end, $payload['professor_id']) || $grid->groupsBusy($day, $start, $end, $groupIds)) {
                 return ['success' => false, 'message' => 'Conflit de salle, professeur ou groupe sur ce créneau.'];
             }
@@ -897,10 +907,21 @@ class TimetableCampaignService
      * @param  list<array<string, mixed>>  $blocks
      * @return list<array{message: string}>
      */
-    private function hardConflictsFromBlocks(array $blocks): array
+    private function replacementIdsForVersion(?ScheduleVersion $version): array
+    {
+        return $version ? $this->legacyReplacementIds($version->filiere_id, $version->academic_year_id, $version->semester()->value('number') % 2) : [];
+    }
+
+    private function legacyReplacementIds(int $filiereId, int $yearId, int $parity): array
+    {
+        return Schedule::where('institution_id', $this->contextYear()->institution_id)->where('academic_year_id', $yearId)
+            ->whereNull('schedule_version_id')->where('is_active', true)
+            ->whereHas('module', fn ($q) => $q->where('filiere_id', $filiereId)->whereRaw('MOD(semester_number, 2) = ?', [$parity]))->pluck('id')->all();
+    }
+
+    private function hardConflictsFromBlocks(array $blocks, array $except = []): array
     {
         $grid = new TimetableOccupancyGrid;
-        $except = [];
         foreach ($blocks as $block) {
             foreach ($block['schedule_ids'] ?? [] as $id) {
                 if ((int) $id > 0) {

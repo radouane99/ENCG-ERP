@@ -50,6 +50,67 @@ class SemesterPlanningReliabilityTest extends TestCase
         ModuleProfessor::create(['academic_year_id' => $c['year']->id, 'module_id' => $c['module']->id, 'group_id' => $c['group']->id, 'professor_id' => $c['professor']->id, 'professor_type' => Professor::class, 'assigned_hours' => 30, 'session_type' => 'td']);
     }
 
+    public function test_room_selection_uses_validated_enrolments_and_reserves_computer_rooms(): void
+    {
+        $c = $this->setupPlanning();
+        $student = $this->makeTestStudent();
+        \App\Models\StudentRegistration::create(['student_id' => $student->id, 'academic_year_id' => $c['year']->id, 'filiere_id' => $c['filiere']->id, 'group_id' => $c['group']->id, 'semester_number' => 1, 'status' => 'admin_validated', 'registration_type' => 'new_enrollment']);
+        $guard = app(\App\Services\Academic\TimetableRoomGuard::class);
+        $this->assertSame(1, $guard->groupsHeadcount([$c['group']->id]));
+        $lab = clone $c['room']; $lab->type = 'lab';
+        $rooms = collect([$c['room'], $lab]);
+        $this->assertTrue($guard->roomFits($c['room'], ['group_size' => 24, 'required_type' => 'classroom', 'occupied_group_ids' => [1,2], 'session_type' => 'cm'], $rooms));
+        $this->assertFalse($guard->roomFits($lab, ['group_size' => 24, 'required_type' => 'classroom'], $rooms));
+        $this->assertFalse($guard->roomFits($c['room'], ['group_size' => 24, 'required_type' => 'lab'], $rooms));
+        $this->assertTrue($guard->roomFits($lab, ['group_size' => 24, 'required_type' => 'lab'], $rooms));
+        $this->assertFalse($guard->roomFits($lab, ['group_size' => 41, 'required_type' => 'lab'], $rooms));
+        $this->assertSame('lab', $guard->requiredRoomType('Informatique de gestion', 'td', 24));
+        $this->assertSame('amphitheater', $guard->requiredRoomType('Gestion', 'cm', 90));
+    }
+
+    public function test_replacement_draft_preserves_the_legacy_timetable_until_publication(): void
+    {
+        $c = $this->setupPlanning(); $this->assign($c);
+        $legacy = Schedule::create(['institution_id' => 1, 'academic_year_id' => $c['year']->id, 'semester_id' => $c['semester']->id, 'module_id' => $c['module']->id, 'group_id' => $c['group']->id, 'room_id' => $c['room']->id, 'professor_id' => $c['professor']->id, 'professor_type' => Professor::class, 'day_of_week' => 1, 'start_time' => '08:30:00', 'end_time' => '10:30:00', 'session_type' => 'td', 'is_active' => true]);
+        $this->assertTrue($c['service']->addSession($c['versionId'], $c['payload'])['success']);
+        $this->assertTrue($legacy->fresh()->is_active);
+        $this->assertTrue($c['service']->propose($c['versionId'])['success']);
+        $row = Schedule::where('schedule_version_id', $c['versionId'])->firstOrFail();
+        $c['service']->confirmSession($row->id, $c['professor']->id, 'confirmed');
+        $this->assertTrue($c['service']->publish($c['versionId'])['success']);
+        $this->assertFalse($legacy->fresh()->is_active);
+        $this->assertTrue($row->fresh()->is_active);
+        $this->assertDatabaseHas('activity_log', ['description' => 'legacy_timetable_superseded_on_publication']);
+    }
+
+    public function test_computer_classes_keep_groups_separate_to_fit_the_lab(): void
+    {
+        $c = $this->setupPlanning();
+        $c['room']->update(['type' => 'lab', 'capacity' => 30]);
+        $variables = [];
+        foreach ([1, 2] as $id) {
+            $variables[] = ['var_id' => $id, 'occurrence_index' => 1, 'group_id' => $id, 'occupied_group_ids' => [$id], 'group_name' => 'Test '.$id, 'group_size' => 20, 'module_id' => $c['module']->id, 'module_name' => 'Informatique', 'professor_id' => $c['professor']->id, 'session_type' => 'cm', 'required_type' => 'lab'];
+        }
+        $result = app(\App\Services\Academic\TimetablePerformanceStrategy::class)->place($variables, collect([$c['room']]));
+        $this->assertTrue($result['success']);
+        $this->assertCount(2, $result['assignments']);
+        foreach ($result['assignments'] as $row) { $this->assertCount(1, $row['occupied_group_ids']); $this->assertSame($c['room']->id, $row['room_id']); }
+    }
+
+    public function test_empty_programme_is_not_reported_as_a_successful_timetable(): void
+    {
+        $c = $this->setupPlanning();
+        $empty = $this->makeTestFiliere(['code' => 'EMPTY']);
+        $result = app(SmartSchedulingEngine::class)->simulate(['filiere_id' => $empty->id, 'semester_id' => $c['semester']->id]);
+        $this->assertFalse($result['success']);
+        $this->assertSame(0.0, $result['satisfaction_rate']);
+        $this->assertCount(2, $result['input_issues']);
+        $draft = $c['service']->generateDraft($empty->id);
+        $this->assertFalse($draft['success']);
+        $this->assertStringContainsString('Aucun module', $draft['message']);
+        $this->assertDatabaseCount('schedule_versions', 1);
+    }
+
     public function test_draft_stays_private_until_its_teacher_confirms_and_publication_is_idempotent(): void
     {
         $c = $this->setupPlanning();

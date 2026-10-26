@@ -17,6 +17,10 @@ use Illuminate\Support\Facades\Schema;
  */
 class TimetableRoomGuard
 {
+    public function requiredRoomType(string $moduleName, string $sessionType, int $headcount): string
+    {
+        return $sessionType === 'tp' || str_contains(mb_strtolower($moduleName), 'informatique') ? 'lab' : ($headcount > 50 ? 'amphitheater' : 'classroom');
+    }
     public function isAmphitheater(object $room): bool
     {
         $type = strtolower((string) ($room->type ?? ''));
@@ -74,18 +78,21 @@ class TimetableRoomGuard
         if ($capacity < $headcount) {
             return false;
         }
-        if (($var['required_type'] ?? '') === 'lab' && ! in_array(strtolower((string) ($room->type ?? '')), ['lab', 'laboratory', 'tp'], true)) {
+        if (($var['required_type'] ?? '') === 'lab' && ! in_array(strtolower((string) ($room->type ?? '')), ['lab', 'laboratory', 'tp', 'computer_lab', 'informatique'], true)) {
             return false;
         }
 
-        if ($this->isSharedCours($var) || (string) ($var['required_type'] ?? '') === 'amphitheater') {
+        if ((string) ($var['required_type'] ?? '') === 'amphitheater') {
             return $this->isAmphitheater($room) || $capacity >= max(100, $headcount);
         }
 
+        // Reserve computer laboratories for sessions that actually require computers.
+        if (($var['required_type'] ?? '') !== 'lab' && in_array(strtolower((string) ($room->type ?? '')), ['lab', 'laboratory', 'tp', 'computer_lab', 'informatique'], true)) { return false; }
         $smallEnough = $this->isTeachingRoom($room) && ! $this->isAmphitheater($room);
         $hasSmall = $allRooms->contains(fn ($candidate) => $this->roomOperational($candidate)
             && $this->isTeachingRoom($candidate)
             && ! $this->isAmphitheater($candidate)
+            && ! in_array(strtolower((string) ($candidate->type ?? '')), ['lab', 'laboratory', 'tp', 'computer_lab', 'informatique'], true)
             && (int) ($candidate->capacity ?? 0) >= $headcount);
 
         if ($hasSmall) {
@@ -211,7 +218,17 @@ class TimetableRoomGuard
             return 0;
         }
 
-        return (int) Group::query()->whereIn('id', $groupIds)->sum('capacity') ?: (count($groupIds) * 35);
+        return array_sum($this->groupHeadcounts($groupIds));
+    }
+
+    /** Validated current-year enrolments take precedence over a group's capacity ceiling. */
+    public function groupHeadcounts(array $groupIds): array
+    {
+        $counts = DB::table('student_registrations as r')->join('groups as g', 'g.id', '=', 'r.group_id')
+            ->whereIn('g.id', $groupIds)->whereColumn('r.academic_year_id', 'g.academic_year_id')
+            ->whereIn('r.status', ['academic_validated', 'admin_validated'])
+            ->selectRaw('g.id, count(distinct r.student_id) as total')->groupBy('g.id')->pluck('total', 'id');
+        return Group::whereIn('id', $groupIds)->get()->mapWithKeys(fn ($group) => [$group->id => (int) ($counts[$group->id] ?? ($group->capacity ?: 35))])->all();
     }
 
     /**

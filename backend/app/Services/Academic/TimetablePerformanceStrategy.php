@@ -395,7 +395,7 @@ class TimetablePerformanceStrategy
 
         foreach ($variables as $var) {
             $type = (string) ($var['session_type'] ?? 'cm');
-            if (! self::isCoursMagistral($type)) {
+            if (! self::isCoursMagistral($type) || ($var['required_type'] ?? '') === 'lab') {
                 $standalone[] = $var;
 
                 continue;
@@ -433,6 +433,7 @@ class TimetablePerformanceStrategy
             $merged['occupied_group_ids'] = array_values(array_unique($groupIds));
             $merged['schedule_ids'] = $scheduleIds;
             $merged['group_size'] = $size;
+            $merged['required_type'] = $size > 50 ? 'amphitheater' : 'classroom';
             $merged['group_name'] = implode(' + ', array_filter($names));
             $standalone[] = $merged;
         }
