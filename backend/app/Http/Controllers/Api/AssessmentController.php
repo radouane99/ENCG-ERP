@@ -49,7 +49,21 @@ class AssessmentController extends Controller
 
         $validated = $request->validate([
             'assessments' => 'required|array|min:1',
-            'assessments.*.id' => ['nullable', 'integer', 'distinct', Rule::exists('assessments', 'id')->where('module_id', $module->id)->where('academic_year_id', AcademicContext::yearId())->where('needs_review', false)],
+            'assessments.*.id' => [
+                'nullable',
+                'integer',
+                'distinct',
+                Rule::exists('assessments', 'id')->where(function ($query) use ($module) {
+                    $query->where('module_id', $module->id)
+                        ->where('needs_review', false);
+                    if ($yearId = AcademicContext::yearId()) {
+                        $query->where(function ($q) use ($yearId) {
+                            $q->where('academic_year_id', $yearId)
+                                ->orWhereNull('academic_year_id');
+                        });
+                    }
+                }),
+            ],
             'assessments.*.type' => 'required|string|max:50|distinct:ignore_case',
             'assessments.*.weight' => 'required|numeric|min:0|max:100',
         ]);
