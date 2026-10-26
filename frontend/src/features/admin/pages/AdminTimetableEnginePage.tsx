@@ -1,6 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Building2, Check, ChevronRight, Clock, FileText, Filter, GripVertical, Leaf, Loader2, Play, RotateCcw, Search, Send, Sliders, Sparkles, Users, Zap } from 'lucide-react';
+import {
+  Building2, Check, ChevronRight, Clock, FileText, Filter,
+  GripVertical, Leaf, Loader2, Play, RotateCcw, Search,
+  Send, Sliders, Sparkles, Users, Zap, CalendarDays,
+  ArrowRight, Layers, Eye, ShieldCheck, CheckCircle2, AlertCircle, RefreshCw
+} from 'lucide-react';
 import api from '@/shared/lib/api'
 import { toast } from 'sonner';
 import { cn } from '@/shared/lib/utils';
@@ -382,56 +387,116 @@ export default function AdminTimetableEnginePage() {
       {workspace?.readiness && <SemesterReadinessPanel data={workspace.readiness} />}
       {!!simResult?.input_issues?.length && <div role="alert" className="rounded-xl border border-amber-300 p-4 text-sm text-amber-800 dark:text-amber-300"><p className="font-bold">Données à compléter avant génération</p><ul className="list-disc pl-5">{simResult.input_issues.slice(0, 10).map(issue => <li key={issue}>{issue}</li>)}</ul></div>}
       {!!simResult?.unplaced_count && <p role="status" className="text-sm text-amber-800 dark:text-amber-300">{simResult.unplaced_count} séances non placées : revoir les disponibilités, capacités et plafonds de charge.</p>}
-      <div className="rounded-xl border border-border bg-card p-4 text-sm dark:border-border dark:bg-card">
-        <label htmlFor="teaching-weeks" className="font-semibold">Semaines d’enseignement prévues</label>
-        <input id="teaching-weeks" type="number" min={1} max={30} value={teachingWeeks} onChange={event => setTeachingWeeks(Math.min(30, Math.max(1, Number(event.target.value) || 1)))} className="ml-3 w-20 border p-2 dark:bg-card rounded-[var(--control-radius)]" />
-        <p className="mt-2 text-xs text-muted-foreground">La génération propose une semaine type en créneaux de 2 h. Ajustez les séances ponctuelles pour respecter les volumes affectés.</p>
+      {/* Teaching Weeks Configuration Card */}
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/80 p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0f2863] to-blue-700 text-white shadow-xs shrink-0">
+            <CalendarDays className="h-5 w-5 text-amber-300" />
+          </div>
+          <div>
+            <h3 className="text-sm font-black text-slate-900 dark:text-white">
+              Semaines d'enseignement prévues
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Génération d'une semaine type calibrée en créneaux de 2h pour respecter les volumes affectés.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Preset Buttons */}
+          <div className="hidden sm:flex items-center gap-1.5 mr-2">
+            {[14, 15, 16].map((w) => (
+              <button
+                key={w}
+                type="button"
+                onClick={() => setTeachingWeeks(w)}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer",
+                  teachingWeeks === w
+                    ? "bg-[#0f2863] text-white shadow-xs"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
+                )}
+              >
+                {w} sem. {w === 15 && '(Standard)'}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800">
+            <button
+              type="button"
+              onClick={() => setTeachingWeeks(prev => Math.max(1, prev - 1))}
+              className="h-8 w-8 rounded-lg flex items-center justify-center font-black text-slate-600 hover:bg-white hover:shadow-xs dark:text-slate-300 dark:hover:bg-slate-700 transition cursor-pointer"
+            >
+              -
+            </button>
+            <span className="w-16 text-center font-mono font-black text-sm text-slate-900 dark:text-white">
+              {teachingWeeks} sem.
+            </span>
+            <button
+              type="button"
+              onClick={() => setTeachingWeeks(prev => Math.min(30, prev + 1))}
+              className="h-8 w-8 rounded-lg flex items-center justify-center font-black text-slate-600 hover:bg-white hover:shadow-xs dark:text-slate-300 dark:hover:bg-slate-700 transition cursor-pointer"
+            >
+              +
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* ══════════════════════════════════════════════════════
           PROGRESS STEPPER
       ══════════════════════════════════════════════════════ */}
-      <div className="flex items-start gap-0">
-        {STEPS.map((step, idx) => {
-          const isActive = activeStep === step.id
-          const isDone = activeStep > step.id
-          const StepIcon = STEP_ICONS[idx]
-          return (
-            <React.Fragment key={step.id}>
-              <div className={cn(
-                'flex flex-col items-center flex-1 min-w-0 px-2 py-3 rounded-2xl transition-all',
-                isActive ? "bg-card dark:bg-card border border-primary/20 dark:border-primary shadow-sm" : ''
-              )}>
-                <div className={cn(
-                  "w-8 h-8 rounded-xl flex items-center justify-center mb-2 text-xs font-bold transition-all",
-                  isActive ? 'text-white' : isDone ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-600' : "bg-muted dark:bg-card text-slate-400"
-                )} style={isActive ? { background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' } : {}}>
-                  {isDone ? <Check size={14} /> : <StepIcon size={14} />}
+      <div className="rounded-2xl border border-slate-200/80 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/80 shadow-xs">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+          {STEPS.map((step, idx) => {
+            const isActive = activeStep === step.id
+            const isDone = activeStep > step.id
+            const StepIcon = STEP_ICONS[idx]
+            return (
+              <div
+                key={step.id}
+                className={cn(
+                  'relative flex flex-col items-center px-3 py-3 rounded-xl transition-all',
+                  isActive
+                    ? 'bg-gradient-to-br from-[#0f2863] via-blue-900 to-indigo-900 text-white shadow-lg shadow-blue-950/20 ring-1 ring-white/20'
+                    : isDone
+                      ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40 text-slate-700 dark:text-slate-300'
+                      : 'bg-slate-50/60 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 text-slate-400'
+                )}
+              >
+                <div
+                  className={cn(
+                    'w-8 h-8 rounded-xl flex items-center justify-center mb-1.5 text-xs font-black shadow-xs transition-transform',
+                    isActive
+                      ? 'bg-white/20 text-white backdrop-blur ring-1 ring-white/30 scale-105'
+                      : isDone
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-200 dark:bg-slate-700 text-slate-500'
+                  )}
+                >
+                  {isDone ? <Check size={14} className="stroke-[3]" /> : <StepIcon size={14} />}
                 </div>
-                <p className={cn('text-[9px] font-bold uppercase tracking-widest mb-0.5', isActive ? "text-primary" : isDone ? 'text-emerald-500' : 'text-slate-400')}>
+                <p className={cn('text-[9px] font-black uppercase tracking-widest mb-0.5', isActive ? 'text-amber-300' : isDone ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400')}>
                   Étape {step.id}
                 </p>
-                <p className={cn("text-xs font-bold text-center leading-tight", isActive ? "text-foreground dark:text-foreground" : isDone ? "text-muted-foreground dark:text-muted-foreground" : 'text-slate-400')}>
+                <p className={cn('text-xs font-black text-center leading-tight', isActive ? 'text-white' : 'text-slate-800 dark:text-slate-200')}>
                   {step.label}
                 </p>
-                <p className={cn('text-[10px] text-center mt-0.5 hidden md:block', isActive ? 'text-indigo-400' : 'text-slate-300 dark:text-slate-600')}>
+                <p className={cn('text-[10px] text-center mt-0.5 font-medium hidden md:block', isActive ? 'text-blue-100/80' : 'text-slate-400')}>
                   {step.hint}
                 </p>
               </div>
-              {idx < STEPS.length - 1 && (
-                <div className="flex items-center pt-4 shrink-0">
-                  <div className={cn('w-6 h-0.5 mx-1', isDone ? 'bg-emerald-300' : 'bg-slate-200 dark:bg-slate-700')} />
-                </div>
-              )}
-            </React.Fragment>
-          )
-        })}
+            )
+          })}
+        </div>
       </div>
 
       {/* ══════════════════════════════════════════════════════
           TAB SWITCHER
       ══════════════════════════════════════════════════════ */}
-      <div className="flex gap-1 p-1 rounded-xl bg-muted dark:bg-card border border-border dark:border-border w-full md:w-fit">
+      <div className="flex gap-1.5 p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 w-full md:w-fit shadow-xs">
         {([
           { id: 'filieres' as const, label: 'Filières à traiter', icon: Filter },
           { id: 'official' as const, label: 'Grille officielle', icon: FileText },
@@ -442,13 +507,13 @@ export default function AdminTimetableEnginePage() {
             type="button"
             onClick={() => setWorkMode(tab.id)}
             className={cn(
-              'flex items-center gap-1.5 flex-1 md:flex-none h-9 px-4 rounded-lg text-xs font-bold transition-all cursor-pointer',
+              'flex items-center gap-2 flex-1 md:flex-none h-9 px-4 rounded-xl text-xs font-black transition-all cursor-pointer',
               workMode === tab.id
-                ? "bg-card dark:bg-slate-700 text-primary dark:text-indigo-400 shadow-sm"
-                : "text-muted-foreground hover:text-foreground dark:hover:text-slate-200"
+                ? 'bg-gradient-to-r from-[#0f2863] to-blue-700 text-white shadow-md shadow-blue-950/20'
+                : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'
             )}
           >
-            <tab.icon size={13} />
+            <tab.icon size={14} />
             {tab.label}
           </button>
         ))}
@@ -457,13 +522,21 @@ export default function AdminTimetableEnginePage() {
       {/* ══════════════════════════════════════════════════════
           FILTER BAR
       ══════════════════════════════════════════════════════ */}
-      <section className="rounded-2xl border border-border dark:border-border bg-card dark:bg-card p-5 space-y-4">
+      <section className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-5 space-y-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-bold text-foreground dark:text-foreground flex items-center gap-2">
-            <Filter className="w-4 h-4 text-primary" />
-            Périmètre de travail
-          </h2>
-          <button type="button" onClick={handleResetAll} className="flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground dark:hover:text-slate-200 hover:bg-muted/50 dark:hover:bg-slate-800 transition-all cursor-pointer">
+          <div className="flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary/10 text-primary dark:bg-blue-950 dark:text-blue-300">
+              <Filter className="w-3.5 h-3.5" />
+            </span>
+            <h2 className="text-sm font-black text-slate-900 dark:text-white">
+              Périmètre de travail
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={handleResetAll}
+            className="flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+          >
             <RotateCcw className="w-3.5 h-3.5" /> Tout réinitialiser
           </button>
         </div>
@@ -474,23 +547,23 @@ export default function AdminTimetableEnginePage() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="TC, GFC, MCM…"
-              className={cn(selectClass, "pl-9 rounded-[var(--control-radius)]")}
+              placeholder="Rechercher TC, GFC, MCM…"
+              className={cn(selectClass, "pl-9 rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 font-medium")}
             />
           </div>
-          <select value={selectedFiliere} onChange={(e) => setSelectedFiliere(e.target.value)} className={selectClass}>
+          <select value={selectedFiliere} onChange={(e) => setSelectedFiliere(e.target.value)} className={cn(selectClass, "rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 font-medium")}>
             <option value="">Toutes les filières</option>
             {filieres.map((f: any) => (
               <option key={f.id} value={f.id}>{f.code} — {f.name}</option>
             ))}
           </select>
-          <select value={selectedSemester} onChange={(e) => setSelectedSemester(e.target.value)} className={selectClass}>
+          <select value={selectedSemester} onChange={(e) => setSelectedSemester(e.target.value)} className={cn(selectClass, "rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 font-medium")}>
             <option value="">Tous les semestres</option>
             {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
               <option key={n} value={String(n)}>S{n} · {n % 2 === 1 ? 'Automne' : 'Printemps'}</option>
             ))}
           </select>
-          <select value={String(maxDailyHours)} onChange={(e) => setMaxDailyHours(Number(e.target.value))} className={selectClass}>
+          <select value={String(maxDailyHours)} onChange={(e) => setMaxDailyHours(Number(e.target.value))} className={cn(selectClass, "rounded-xl border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 font-medium")}>
             <option value="6">6 h max / jour</option>
             <option value="8">8 h max / jour</option>
             <option value="10">10 h max / jour</option>
@@ -498,24 +571,27 @@ export default function AdminTimetableEnginePage() {
         </div>
 
         {/* Status pill filters */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
           {[
-            { key: 'ALL', label: `Toutes`, count: counts.total, color: 'bg-slate-800 text-white border-slate-800', inactive: 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700' },
-            { key: 'EMPTY', label: 'À générer', count: counts.empty, color: 'bg-slate-700 text-white border-slate-700', inactive: 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700' },
-            { key: 'DRAFT', label: 'Brouillon', count: counts.draft, color: 'bg-amber-600 text-white border-amber-600', inactive: 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800' },
-            { key: 'PROPOSED', label: 'Chez les profs', count: counts.proposed, color: 'bg-indigo-600 text-white border-indigo-600', inactive: 'bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800' },
-            { key: 'PUBLISHED', label: 'Publié', count: counts.published, color: 'bg-emerald-600 text-white border-emerald-600', inactive: 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' },
+            { key: 'ALL', label: `Toutes`, count: counts.total, color: 'bg-[#0f2863] text-white border-[#0f2863] shadow-xs', inactive: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200' },
+            { key: 'EMPTY', label: 'À générer', count: counts.empty, color: 'bg-slate-700 text-white border-slate-700 shadow-xs', inactive: 'bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100' },
+            { key: 'DRAFT', label: 'Brouillon', count: counts.draft, color: 'bg-amber-600 text-white border-amber-600 shadow-xs', inactive: 'bg-amber-50/70 dark:bg-amber-950/30 text-amber-800 dark:text-amber-400 border-amber-200/80 dark:border-amber-800 hover:bg-amber-100' },
+            { key: 'PROPOSED', label: 'Chez les profs', count: counts.proposed, color: 'bg-indigo-600 text-white border-indigo-600 shadow-xs', inactive: 'bg-indigo-50/70 dark:bg-indigo-950/30 text-indigo-800 dark:text-indigo-400 border-indigo-200/80 dark:border-indigo-800 hover:bg-indigo-100' },
+            { key: 'PUBLISHED', label: 'Publié', count: counts.published, color: 'bg-emerald-600 text-white border-emerald-600 shadow-xs', inactive: 'bg-emerald-50/70 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-400 border-emerald-200/80 dark:border-emerald-800 hover:bg-emerald-100' },
           ].map(({ key, label, count, color, inactive }) => (
             <button
               key={key}
               type="button"
               onClick={() => setStatusFilter(key)}
               className={cn(
-                'h-8 px-3 rounded-full text-xs font-bold border transition-all cursor-pointer',
+                'h-8 px-3.5 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5',
                 statusFilter === key ? color : inactive
               )}
             >
-              {label} <span className="ml-1 opacity-70">({count})</span>
+              <span>{label}</span>
+              <span className={cn("px-1.5 py-0.2 rounded-md text-[10px] font-mono font-black", statusFilter === key ? "bg-white/20 text-white" : "bg-black/5 dark:bg-white/10")}>
+                {count}
+              </span>
             </button>
           ))}
         </div>
@@ -527,151 +603,206 @@ export default function AdminTimetableEnginePage() {
       {workMode === 'filieres' && (
         <section className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">
-              <span className="font-bold text-slate-700 dark:text-foreground">{filteredCards.length}</span> filière{filteredCards.length > 1 ? 's' : ''} · action principale selon l'étape
-            </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#0f2863] text-white text-xs font-black shadow-xs">
+                {filteredCards.length}
+              </span>
+              <p className="text-xs text-slate-600 dark:text-slate-400 font-bold">
+                filière{filteredCards.length > 1 ? 's' : ''} répertoriée{filteredCards.length > 1 ? 's' : ''} · actions contextuelles selon l'état d'avancement
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2.5">
               <button
                 type="button"
                 onClick={() => generateEmpty()}
                 disabled={!workspace?.campaign_open || draftMutation.isPending}
-                className="flex items-center gap-2 h-9 px-4 rounded-xl text-xs font-bold text-white transition-all active:scale-95 disabled:opacity-40 cursor-pointer"
-                style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', boxShadow: '0 3px 12px rgba(79,70,229,0.3)' }}
+                className="flex items-center gap-2 h-9 px-4 rounded-xl text-xs font-black text-white transition-all active:scale-95 disabled:opacity-40 cursor-pointer shadow-md shadow-indigo-950/20"
+                style={{ background: 'linear-gradient(135deg, #0f2863 0%, #4f46e5 100%)' }}
               >
-                {draftMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                Générer les filières vides
+                {draftMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-300" /> : <Sparkles className="w-3.5 h-3.5 text-amber-300" />}
+                <span>Générer les filières vides</span>
               </button>
               <button
                 type="button"
                 onClick={() => simulateMutation.mutate()}
                 disabled={simulateMutation.isPending}
-                className="flex items-center gap-2 h-9 px-4 rounded-xl border border-border dark:border-border bg-card dark:bg-card text-xs font-bold text-slate-700 dark:text-foreground hover:border-primary/20 transition-all cursor-pointer"
+                className="flex items-center gap-2 h-9 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-black text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all cursor-pointer shadow-xs active:scale-98"
               >
-                {simulateMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
-                Tester sans enregistrer
+                {simulateMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />}
+                <span>Tester sans enregistrer</span>
               </button>
             </div>
           </div>
 
           {filteredCards.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 dark:border-border p-12 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-muted dark:bg-card flex items-center justify-center mx-auto mb-3">
-                <Filter className="w-5 h-5 text-slate-400" />
+            <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-12 text-center bg-white dark:bg-slate-900/60">
+              <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3 text-slate-400">
+                <Filter className="w-5 h-5" />
               </div>
-              <p className="text-sm text-muted-foreground dark:text-muted-foreground">Aucune filière pour ce filtre.</p>
-              <button type="button" onClick={handleResetAll} className="mt-2 text-xs font-bold text-primary dark:text-indigo-400 hover:underline cursor-pointer">
-                Tout réinitialiser
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Aucune filière ne correspond à ce filtre.</p>
+              <p className="text-xs text-slate-400 mt-1">Modifiez vos critères de recherche ou réinitialisez le périmètre.</p>
+              <button type="button" onClick={handleResetAll} className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 text-primary text-xs font-bold hover:bg-primary/20 transition cursor-pointer">
+                <RotateCcw className="w-3 h-3" /> Réinitialiser les filtres
               </button>
             </div>
           ) : (
-            <div className="rounded-2xl border border-border dark:border-border bg-card dark:bg-card overflow-hidden">
+            <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/90 shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[760px]">
+                <table className="w-full min-w-[760px] text-xs">
                   <thead>
-                    <tr className="border-b border-border dark:border-border" style={{ background: 'rgba(248,250,252,0.8)' }}>
-                      <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Filière</th>
-                      <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">État</th>
-                      <th className="px-5 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400">Profs (confirmés)</th>
-                      <th className="px-5 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-slate-400">Actions</th>
+                    <tr className="bg-gradient-to-r from-slate-100/90 via-slate-50/70 to-slate-100/90 dark:from-slate-800/90 dark:via-slate-900/70 dark:to-slate-800/90 text-slate-700 dark:text-slate-300 uppercase tracking-wider font-extrabold text-[10px] border-b border-slate-200/80 dark:border-slate-700/80">
+                      <th className="px-5 py-3.5 text-left">Filière</th>
+                      <th className="px-5 py-3.5 text-left">État d'avancement</th>
+                      <th className="px-5 py-3.5 text-left">Confirmations Enseignants</th>
+                      <th className="px-5 py-3.5 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
                     {filteredCards.map((card: any) => {
                       const busy = busyFiliereId === card.filiere_id
-                      const avatarColor = card.filiere_code?.toUpperCase().includes('GFC') ? '#4f46e5'
-                        : card.filiere_code?.toUpperCase().includes('MCM') ? '#9333ea'
-                        : card.filiere_code?.toUpperCase().includes('TC') ? '#059669'
-                        : card.filiere_code?.toUpperCase().includes('GRH') ? '#d97706'
-                        : '#2563eb'
+                      const avatarGradient = card.filiere_code?.toUpperCase().includes('GFC') ? 'from-blue-600 to-indigo-700'
+                        : card.filiere_code?.toUpperCase().includes('MCM') ? 'from-purple-600 to-pink-700'
+                        : card.filiere_code?.toUpperCase().includes('TC') ? 'from-emerald-600 to-teal-700'
+                        : card.filiere_code?.toUpperCase().includes('GRH') ? 'from-amber-500 to-orange-600'
+                        : 'from-[#0f2863] to-blue-700'
+
+                      const confirmed = card.confirmations?.confirmed || 0
+                      const total = card.confirmations?.total || 0
+                      const sessions = card.confirmations?.sessions || 0
+                      const progressPct = total > 0 ? Math.round((confirmed / total) * 100) : 0
+
                       return (
-                        <tr key={card.filiere_id} className="group hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                        <tr key={card.filiere_id} className="group hover:bg-gradient-to-r hover:from-blue-50/40 hover:via-indigo-50/20 hover:to-transparent dark:hover:from-blue-950/20 dark:hover:via-slate-800/40 dark:hover:to-transparent transition-all">
+                          {/* Filière info */}
                           <td className="px-5 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0"
-                                style={{ background: avatarColor }}>
+                            <div className="flex items-center gap-3.5">
+                              <div className={cn(
+                                "w-10 h-10 rounded-2xl flex items-center justify-center text-white text-xs font-black shrink-0 shadow-md ring-2 ring-white/20 transition-transform group-hover:scale-105 bg-gradient-to-br",
+                                avatarGradient
+                              )}>
                                 {(card.filiere_code || '??').substring(0, 2).toUpperCase()}
                               </div>
-                              <div>
-                                <p className="text-sm font-bold text-foreground dark:text-foreground">{card.filiere_code}</p>
-                                <p className="text-[11px] text-slate-400 font-medium">{card.filiere_name}</p>
+                              <div className="min-w-0">
+                                <p className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                  <span>{card.filiere_code}</span>
+                                </p>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate max-w-xs">{card.filiere_name}</p>
                               </div>
                             </div>
                           </td>
+
+                          {/* Status Pill */}
                           <td className="px-5 py-4">
                             <span className={cn(
-                              'inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-full border',
-                              card.status === 'PUBLISHED' ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
-                              : card.status === 'PROPOSED' ? "bg-primary/5 dark:bg-indigo-950/40 text-primary dark:text-indigo-400 border-primary/20 dark:border-primary"
-                              : card.status === 'DRAFT' ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800'
-                              : "bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground border-border dark:border-border"
+                              'inline-flex items-center gap-1.5 text-[11px] font-black px-3 py-1 rounded-full border shadow-2xs',
+                              card.status === 'PUBLISHED'
+                                ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                                : card.status === 'PROPOSED'
+                                  ? 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800'
+                                  : card.status === 'DRAFT'
+                                    ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700'
                             )}>
-                              <span className={cn('w-1.5 h-1.5 rounded-full',
-                                card.status === 'PUBLISHED' ? 'bg-emerald-500'
-                                : card.status === 'PROPOSED' ? "bg-primary"
+                              <span className={cn(
+                                'w-2 h-2 rounded-full',
+                                card.status === 'PUBLISHED' ? 'bg-emerald-500 animate-pulse'
+                                : card.status === 'PROPOSED' ? 'bg-indigo-500'
                                 : card.status === 'DRAFT' ? 'bg-amber-500'
                                 : 'bg-slate-400'
                               )} />
-                              {STATUS_LABEL[card.status] || card.status}
+                              <span>{STATUS_LABEL[card.status] || card.status}</span>
                             </span>
                           </td>
+
+                          {/* Confirmations Progress */}
                           <td className="px-5 py-4">
-                            <p className="text-sm font-bold text-foreground dark:text-foreground">
-                              {card.confirmations?.confirmed || 0}
-                              <span className="font-medium text-slate-400">/{card.confirmations?.total || 0}</span>
-                            </p>
-                            <p className="text-[11px] text-slate-400 font-medium">{card.confirmations?.sessions || 0} séance{(card.confirmations?.sessions || 0) > 1 ? 's' : ''}</p>
+                            <div className="space-y-1.5 w-40">
+                              <div className="flex items-center justify-between text-[11px]">
+                                <span className="font-mono font-black text-slate-900 dark:text-white">
+                                  {confirmed} <span className="text-slate-400 font-normal">/ {total} profs</span>
+                                </span>
+                                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">
+                                  {sessions} séance{sessions > 1 ? 's' : ''}
+                                </span>
+                              </div>
+                              <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-200/50 dark:border-slate-700/50">
+                                <div
+                                  className={cn(
+                                    "h-full rounded-full transition-all duration-300",
+                                    confirmed === total && total > 0
+                                      ? "bg-emerald-500"
+                                      : confirmed > 0
+                                        ? "bg-gradient-to-r from-blue-500 to-indigo-600"
+                                        : "bg-slate-300 dark:bg-slate-700"
+                                  )}
+                                  style={{ width: `${progressPct}%` }}
+                                />
+                              </div>
+                            </div>
                           </td>
-                          <td className="px-5 py-4">
-                            <div className="flex flex-wrap justify-end gap-1.5">
+
+                          {/* Row Actions */}
+                          <td className="px-5 py-4 text-right">
+                            <div className="flex flex-wrap items-center justify-end gap-1.5">
                               {(card.status === 'EMPTY' || card.status === 'DRAFT') && (
                                 <button
+                                  type="button"
                                   onClick={() => draftMutation.mutate(card.filiere_id)}
                                   disabled={!workspace?.campaign_open || busy}
-                                  className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-bold text-white transition-all active:scale-95 disabled:opacity-40 cursor-pointer"
-                                  style={{ background: 'linear-gradient(135deg, #4f46e5, #7c3aed)' }}
+                                  className="flex items-center gap-1.5 h-8 px-3.5 rounded-xl text-xs font-black text-white transition-all active:scale-95 disabled:opacity-40 cursor-pointer shadow-xs hover:scale-102"
+                                  style={{ background: 'linear-gradient(135deg, #0f2863 0%, #4f46e5 100%)' }}
                                 >
-                                  {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                                  {card.status === 'EMPTY' ? 'Générer' : 'Regénérer'}
+                                  {busy ? <Loader2 className="w-3 h-3 animate-spin text-amber-300" /> : <Sparkles className="w-3 h-3 text-amber-300" />}
+                                  <span>{card.status === 'EMPTY' ? 'Générer' : 'Régénérer'}</span>
                                 </button>
                               )}
+
                               {card.version_id && card.status === 'DRAFT' && (
                                 <button
+                                  type="button"
                                   onClick={() => proposeMutation.mutate(card.version_id)}
-                                  className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-bold bg-primary/5 dark:bg-indigo-950/50 text-primary dark:text-indigo-300 hover:bg-primary/10 transition-all cursor-pointer border border-primary/20 dark:border-primary"
+                                  className="flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-black bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 transition-all cursor-pointer border border-indigo-200 dark:border-indigo-800 shadow-2xs"
                                 >
-                                  <Send className="w-3 h-3" /> Aux profs
+                                  <Send className="w-3 h-3" />
+                                  <span>Aux profs</span>
                                 </button>
                               )}
+
                               {card.version_id && card.status === 'PROPOSED' && (
                                 confirmPublishId === card.version_id ? (
                                   <span className="inline-flex items-center gap-1">
-                                    <button onClick={() => publishVersionMutation.mutate(card.version_id)} className="h-8 px-3 rounded-lg bg-emerald-600 text-white text-xs font-bold cursor-pointer">Confirmer</button>
-                                    <button onClick={() => setConfirmPublishId(null)} className="h-8 px-3 rounded-lg text-xs font-bold text-muted-foreground hover:bg-muted cursor-pointer">Non</button>
+                                    <button onClick={() => publishVersionMutation.mutate(card.version_id)} className="h-8 px-3 rounded-xl bg-emerald-600 text-white text-xs font-black cursor-pointer shadow-xs">Confirmer</button>
+                                    <button onClick={() => setConfirmPublishId(null)} className="h-8 px-2.5 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer">Non</button>
                                   </span>
                                 ) : (
                                   <button
+                                    type="button"
                                     onClick={() => setConfirmPublishId(card.version_id)}
-                                    className="flex items-center gap-1.5 h-8 px-3 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 transition-all cursor-pointer"
+                                    className="flex items-center gap-1.5 h-8 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black transition-all cursor-pointer shadow-xs"
                                   >
-                                    <Check className="w-3 h-3" /> Publier
+                                    <Check className="w-3 h-3 stroke-[3]" />
+                                    <span>Publier</span>
                                   </button>
                                 )
                               )}
+
                               <button
                                 type="button"
                                 onClick={() => openManual(card)}
                                 disabled={emptyDraftMutation.isPending || (!card.version_id && !workspace?.campaign_open)}
-                                className="flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border dark:border-border text-xs font-bold text-muted-foreground dark:text-muted-foreground hover:border-slate-300 transition-all disabled:opacity-40 cursor-pointer"
+                                className="flex items-center gap-1.5 h-8 px-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all disabled:opacity-40 cursor-pointer shadow-2xs"
                               >
-                                <GripVertical className="w-3 h-3" />
-                                {card.version_id ? 'Ajuster' : 'Manuel'}
+                                <GripVertical className="w-3 h-3 text-slate-400" />
+                                <span>{card.version_id ? 'Ajuster' : 'Manuel'}</span>
                               </button>
+
                               <button
                                 type="button"
                                 onClick={() => { setSelectedFiliere(String(card.filiere_id)); setWorkMode('official') }}
-                                className="flex items-center gap-1 h-8 px-3 rounded-lg text-xs font-bold text-slate-400 hover:text-primary dark:hover:text-indigo-400 transition-all cursor-pointer"
+                                className="flex items-center gap-1 h-8 px-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-[#0f2863] dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
                               >
-                                Voir <ChevronRight size={12} />
+                                <span>Voir</span>
+                                <ChevronRight size={13} />
                               </button>
                             </div>
                           </td>
