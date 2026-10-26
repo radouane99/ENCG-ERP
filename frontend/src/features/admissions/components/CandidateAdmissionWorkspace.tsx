@@ -87,6 +87,9 @@ export default function CandidateAdmissionWorkspace() {
       const changedDossier = initialId.current !== app.id;
       initialId.current = app.id;
       let initialForm: Record<string, string | number | boolean | null> = {
+        country: 'Maroc',
+        nationality: 'Marocaine',
+        nationality_ar: 'مغربية',
         ...app.profile,
         first_name: app.profile.first_name || app.first_name,
         last_name: app.profile.last_name || app.last_name,

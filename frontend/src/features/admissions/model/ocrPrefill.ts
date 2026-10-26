@@ -1,4 +1,5 @@
 import type { OcrRun } from './workflow'
+import { getRegionForProvince, getProvinceDetails } from './moroccanGeography'
 
 // Only editable documentary fields may enter the form. Official identifiers and
 // administrative decisions are never writable through extracted data.
@@ -27,6 +28,21 @@ export function ocrPrefill(run: OcrRun, current: Record<string, unknown>, replac
     if (!replace && current[target] !== null && current[target] !== undefined && String(current[target]).trim() !== '') continue
     result[target] = field.value
   }
+
+  // Automatic geographic enrichment & normalization if province was extracted
+  if (result.province && typeof result.province === 'string') {
+    const details = getProvinceDetails(result.province)
+    if (details) {
+      result.province = details.name
+      if (!current.region && !result.region) {
+        const reg = getRegionForProvince(details.name)
+        if (reg) result.region = reg
+      }
+      if (!current.delegation && !result.delegation && details.delegation) {
+        result.delegation = details.delegation
+      }
+    }
+  }
+
   return result
 }
-
