@@ -413,7 +413,7 @@ export default function CandidateAdmissionWorkspace() {
                         </h3>
                         {doc && (
                           <span className="text-[11px] text-muted-foreground">
-                            Version {doc.version} · {dateText(doc.updated_at || doc.created_at)}
+                            Version {doc.version}{doc.updated_at || doc.created_at ? ` · ${dateText(doc.updated_at || doc.created_at)}` : (doc.original_filename ? ` · ${doc.original_filename}` : '')}
                           </span>
                         )}
                       </div>

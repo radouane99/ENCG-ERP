@@ -157,6 +157,8 @@ export interface AdmissionDocument {
   status: string;
   signed_url: string;
   original_filename: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface AdmissionDossier {
