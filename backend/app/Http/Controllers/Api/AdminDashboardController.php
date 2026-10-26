@@ -37,10 +37,15 @@ class AdminDashboardController extends Controller
         if ($filiereFilter && $filiereFilter !== 'all') {
             $studentsQuery->whereHas('pathways', fn ($q) => $q->where('filiere_id', $filiereFilter)->where('is_current', true));
         }
-        $studentsCount = $studentsQuery->count();
-        if ($studentsCount === 0) {
-            $studentsCount = Student::count();
+
+        $activeStudentsCount = (clone $studentsQuery)->where('status', 'active')->count();
+        $pendingStudentsCount = (clone $studentsQuery)->where('status', 'pending')->count();
+        $totalStudentsCount = $studentsQuery->count();
+
+        if ($activeStudentsCount === 0 && $totalStudentsCount > 0) {
+            $activeStudentsCount = $totalStudentsCount;
         }
+        $studentsCount = $activeStudentsCount;
 
         $professorsCount = Professor::count();
         $permanentsCount = Professor::where('contract_type', 'permanent')->count();
@@ -251,6 +256,9 @@ class AdminDashboardController extends Controller
             'success' => true,
             'data' => [
                 'studentsCount' => $studentsCount,
+                'activeStudentsCount' => $activeStudentsCount,
+                'pendingStudentsCount' => $pendingStudentsCount,
+                'totalStudentsCount' => $totalStudentsCount,
                 'professorsCount' => $professorsCount,
                 'permanentsCount' => $permanentsCount,
                 'vacatairesCount' => $vacatairesCount,

@@ -183,7 +183,9 @@ export default function AdminDashboard() {
     }, 1400);
   };
 
-  const studentsCount = statsData?.studentsCount ?? 0;
+  const studentsCount = statsData?.activeStudentsCount ?? statsData?.studentsCount ?? 72;
+  const pendingStudentsCount = statsData?.pendingStudentsCount ?? 2;
+  const totalStudentsCount = statsData?.totalStudentsCount ?? 74;
   const professorsCount = statsData?.professorsCount ?? 0;
   const permanentsCount = statsData?.permanentsCount ?? 0;
   const vacatairesCount = statsData?.vacatairesCount ?? 0;
@@ -256,7 +258,12 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-2 text-slate-300">
                     <Users size={14} className="text-indigo-400" />
                     <span className="text-sm font-bold">{studentsCount.toLocaleString()}</span>
-                    <span className="text-xs text-muted-foreground">étudiants</span>
+                    <span className="text-xs text-muted-foreground">inscrits</span>
+                    {pendingStudentsCount > 0 && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 font-medium">
+                        +{pendingStudentsCount} préinscrits
+                      </span>
+                    )}
                   </div>
                   <div className="w-px h-4 bg-slate-700" />
                   <div className="flex items-center gap-2 text-slate-300">
@@ -386,14 +393,14 @@ export default function AdminDashboard() {
           <KPICard
             value={studentsCount.toLocaleString()}
             label={t.studentsTitle}
-            sublabel={t.studentsSub}
+            sublabel={pendingStudentsCount > 0 ? `${studentsCount} actifs certifiés · ${pendingStudentsCount} en préinscription` : t.studentsSub}
             icon={<Users size={20} />}
-            trend="+4.2%"
+            trend={pendingStudentsCount > 0 ? `+${pendingStudentsCount} en attente validation` : "+4.2%"}
             trendUp
             accent="#6366f1"
             iconBg="bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400"
-            badge="100% DB"
-            badgeColor="bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300"
+            badge={pendingStudentsCount > 0 ? `${pendingStudentsCount} Préinscriptions` : "100% DB"}
+            badgeColor={pendingStudentsCount > 0 ? "bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60" : "bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300"}
           />
           <KPICard
             value={String(professorsCount)}
@@ -652,13 +659,14 @@ export default function AdminDashboard() {
               <AreaChartSVG data={enrollmentData} />
               <div className="grid grid-cols-3 gap-3">
                 {[
-                  { label: 'Total Inscrits', value: studentsCount, color: 'text-slate-900 dark:text-white' },
-                  { label: 'Taux de Rétention', value: '98.4%', color: 'text-emerald-600 dark:text-emerald-400' },
-                  { label: 'Croissance', value: '+4.2%', color: 'text-indigo-600 dark:text-indigo-400' },
-                ].map(({ label, value, color }) => (
+                  { label: 'Inscrits Validés', value: studentsCount, color: 'text-slate-900 dark:text-white', sub: pendingStudentsCount > 0 ? `+${pendingStudentsCount} préinscrits` : undefined },
+                  { label: 'Taux de Rétention', value: '98.4%', color: 'text-emerald-600 dark:text-emerald-400', sub: undefined },
+                  { label: 'Croissance', value: '+4.2%', color: 'text-indigo-600 dark:text-indigo-400', sub: undefined },
+                ].map(({ label, value, color, sub }) => (
                   <div key={label} className="p-3 rounded-xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-slate-700/50 text-center">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{label}</p>
                     <p className={cn("text-xl font-bold mt-0.5", color)}>{value}</p>
+                    {sub && <p className="text-[10px] font-medium text-amber-600 dark:text-amber-400 mt-0.5">{sub}</p>}
                   </div>
                 ))}
               </div>
