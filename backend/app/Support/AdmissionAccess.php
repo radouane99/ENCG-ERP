@@ -33,11 +33,14 @@ final class AdmissionAccess
             $q->whereKey($request->input('campaign_id', $request->input('admission_campaign_id')));
         } else {
             $q->whereHas('institution')->where('status', 'open')->orderByDesc('id');
+            if ($open) {
+                $today = now(config('admissions.timezone'))->toDateString();
+                $q->whereDate('open_date', '<=', $today)->whereDate('close_date', '>=', $today);
+            }
         }
         $campaign = $q->firstOrFail();
         if ($open) {
-            $today = now(config('admissions.timezone'))->toDateString();
-            abort_unless($campaign->status === 'open' && $today >= $campaign->open_date->toDateString() && $today <= $campaign->close_date->toDateString(), 422, 'La campagne est fermée.');
+            abort_unless($campaign->registrationState() === 'open', 422, 'La campagne est fermée.');
         }
 
         return $campaign;
@@ -75,8 +78,7 @@ final class AdmissionAccess
     public static function campaignOpen(Application $app): void
     {
         $c = $app->campaign;
-        $today = now(config('admissions.timezone'))->toDateString();
-        abort_unless($c && $c->status === 'open' && $today >= $c->open_date->toDateString() && $today <= $c->close_date->toDateString(), 422, 'La campagne est fermée.');
+        abort_unless($c && $c->registrationState() === 'open', 422, 'La campagne est fermée.');
         self::invitationActive($app);
     }
 

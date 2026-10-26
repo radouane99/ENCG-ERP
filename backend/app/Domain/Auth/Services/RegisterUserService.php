@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Domain\Auth\Services;
 
 use App\Actions\Admission\ManageDossierAction;
-use App\Models\AcademicYear;
 use App\Models\AdmissionCampaign;
 use App\Models\Application;
 use App\Models\Student;
@@ -45,9 +44,10 @@ class RegisterUserService
             }
 
             $institutionId = (int) config('erp.institution_id', 1);
-            $academicYear = AcademicYear::where('institution_id', $institutionId)->where('is_current', true)->first();
+            $today = now(config('admissions.timezone'))->toDateString();
             $campaign = AdmissionCampaign::where('institution_id', $institutionId)
-                ->where('academic_year_id', $academicYear?->id)->where('status', 'open')->latest('id')->first();
+                ->where('status', 'open')->whereDate('open_date', '<=', $today)->whereDate('close_date', '>=', $today)
+                ->when(! empty($data['campaign_id']), fn ($query) => $query->whereKey($data['campaign_id']))->latest('id')->first();
             if (! $campaign) {
                 throw ValidationException::withMessages(['email' => ['Les inscriptions sont actuellement fermées.']]);
             }

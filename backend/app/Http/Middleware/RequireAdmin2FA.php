@@ -8,7 +8,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class RequireAdmin2FA
 {
-    private const ADMIN_ROLES = ['super-admin', 'institution-admin', 'director'];
+    private const ADMIN_ROLES = ['super-admin', 'super_admin', 'institution-admin', 'institution_admin', 'director', 'directeur', 'admin', 'scolarite', 'secretaire_general', 'directeur_adjoint'];
 
     /**
      * Vérifie que l'admin a configuré la 2FA.
@@ -18,8 +18,8 @@ class RequireAdmin2FA
         $user = $request->user();
 
         if ($user?->hasAnyRole(self::ADMIN_ROLES)) {
-            if (! $user->two_factor_confirmed_at && ! $user->two_factor_secret) {
-                if (app()->environment('local', 'testing') || ! config('security.enforce_2fa_strict', false)) {
+            if (! $user->two_factor_enabled || ! $user->two_factor_confirmed_at) {
+                if (! config('security.enforce_2fa_strict', false)) {
                     return $next($request);
                 }
 

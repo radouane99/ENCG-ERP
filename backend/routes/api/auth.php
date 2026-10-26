@@ -19,6 +19,7 @@ Route::post('/contact', [ContactController::class, 'send'])->middleware('throttl
 Route::get('/login', fn () => response()->json(['message' => 'Non authentifié. Veuillez vous connecter.'], 401))->name('login');
 
 Route::prefix('public/admissions')->middleware('throttle:10,1')->group(function () {
+    Route::get('calendar', [AdmissionWorkflowController::class, 'publicCalendar']);
     Route::get('campaigns', [AdmissionWorkflowController::class, 'campaigns']);
     Route::post('admissibility', [AdmissionWorkflowController::class, 'admissibility']);
     Route::post('request-activation', [AdmissionWorkflowController::class, 'requestActivation']);
@@ -105,13 +106,16 @@ Route::prefix('v1/auth')->group(function () {
     Route::post('/google/exchange', [SsoController::class, 'exchange'])->middleware('throttle:30,1');
 
     Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/sessions', [\App\Http\Controllers\Api\Auth\SessionController::class, 'index']);
+        Route::delete('/sessions/others', [\App\Http\Controllers\Api\Auth\SessionController::class, 'others']);
+        Route::delete('/sessions/{id}', [\App\Http\Controllers\Api\Auth\SessionController::class, 'destroy'])->whereNumber('id');
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
-        Route::post('/change-password', [AuthController::class, 'changePassword']);
+        Route::post('/change-password', [AuthController::class, 'changePassword'])->middleware('throttle:login');
         // 2FA management routes
-        Route::post('/two-factor/setup', [AuthController::class, 'setup2FA']);
-        Route::post('/two-factor/confirm', [AuthController::class, 'confirm2FA']);
+        Route::post('/two-factor/setup', [AuthController::class, 'setup2FA'])->middleware('throttle:login');
+        Route::post('/two-factor/confirm', [AuthController::class, 'confirm2FA'])->middleware('throttle:login');
         Route::post('/two-factor/step-up', [AuthController::class, 'stepUpTwoFactor'])->middleware('throttle:login');
-        Route::delete('/two-factor/disable', [AuthController::class, 'disable2FA']);
+        Route::delete('/two-factor/disable', [AuthController::class, 'disable2FA'])->middleware('throttle:login');
     });
 });

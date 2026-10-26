@@ -48,6 +48,7 @@ class UserResource extends JsonResource
             'is_active' => (bool) $this->is_active,
             'must_change_password' => (bool) $this->must_change_password,
             'two_factor_enabled' => (bool) $this->two_factor_enabled,
+            'two_factor_required' => (bool) $this->two_factor_required,
             'locale' => $this->locale ?? 'fr',
             'institution_id' => $this->institution_id,
             'institution_name' => Utf8Text::repair($this->institution?->name),

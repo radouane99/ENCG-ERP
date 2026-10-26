@@ -38,8 +38,12 @@ Sauvegarde préalable `encg_20261026_013328_36f9f061.dump`, 1250948 octets, SHA-
 
 Première suite ciblée : 15 tests, 99 assertions réussis, incluant publication directe, demande sur ses propres cours, refus des doublons et accès tiers, modification de tous les groupes partagés, contrôle des conflits au moment de la décision, rejet et détection des demandes périmées.
 
-Suite ciblée finale : 16 tests, 105 assertions réussis, incluant les notifications aux inscrits et le plafond de charge quotidienne. Suite générale : 186 tests, 731 assertions réussis (`direct-publication-complete-20261026.log`).
+Suite ciblée finale : 18 tests, 113 assertions réussis, incluant les notifications aux inscrits, le plafond de charge quotidienne, le refus de publication/génération aux professeurs sur les deux alias API et l'accès de la scolarité. Après durcissement des droits, suite générale : 186 tests, 731 assertions réussis (`direct-publication-rbac-final-20261026.log`).
 
-Navigation Playwright : huit scénarios distincts réussis après relance ciblée des contrôles d'accessibilité et de soumission. Publication depuis DRAFT sans appel à la proposition, refus serveur conservant le motif, succès administratif confirmé, formulaire enseignant préservé en cas d'erreur puis demande en attente, affichage bureau/mobile et appel de présence conservé. Les réponses API des tests navigateur sont synthétiques ; les tests backend utilisent les vrais contrôleurs/actions sur PostgreSQL isolé.
+Navigation Playwright : dix scénarios distincts réussis après relances ciblées des contrôles d'accessibilité et de soumission. Publication depuis DRAFT sans appel à la proposition, refus serveur conservant le motif, succès administratif confirmé, formulaire enseignant préservé en cas d'erreur puis demande en attente, affichage bureau/mobile, accès scolarité et chef de département et appel de présence conservé. Les réponses API des tests navigateur sont synthétiques ; les tests backend utilisent les vrais contrôleurs/actions sur PostgreSQL isolé.
 
 Contrôle de conservation sur la base du projet : MCM reste DRAFT (version 7, 28 lignes inactives), 1721 notes présentes. Aucun changement réel approuvé pendant cette recette.
+
+Les routes des deux alias du moteur ont été déplacées dans le groupe authentifié commun, avec une autorisation administrative au niveau du contrôleur pour toutes ses méthodes. Les professeurs ne peuvent plus exploiter leur ancien accès au groupe général des routes administratives pour générer, publier ou modifier les plannings. Le rôle scolarité a accès à la gestion et à la boîte des demandes, côté interface et API.
+
+TypeScript, lint sans avertissement et build de production réussis. Les anciens rapports restent des relevés historiques ; le présent document décrit le parcours actuel.

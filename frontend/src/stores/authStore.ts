@@ -18,6 +18,7 @@ export interface User {
   institution_id: number
   institution_name: string
   two_factor_enabled: boolean
+  two_factor_required?: boolean
   locale: 'fr' | 'ar'
   must_change_password?: boolean
   admission_pending?: boolean

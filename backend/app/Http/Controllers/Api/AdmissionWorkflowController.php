@@ -16,6 +16,7 @@ use App\Models\Filiere;
 use App\Models\Institution;
 use App\Models\StudentDocument;
 use App\Models\User;
+use App\Services\Admission\PublicAdmissionCalendar;
 use App\Services\Admissions\AdmissionNotificationService;
 use App\Services\Ocr\AdmissionOcrPolicy;
 use App\Support\AdmissionAccess;
@@ -29,13 +30,19 @@ use Illuminate\Validation\Rules\Password;
 
 class AdmissionWorkflowController extends Controller
 {
+    public function publicCalendar(Request $request)
+    {
+        return response()->json(['data' => app(PublicAdmissionCalendar::class)->read((int) config('erp.institution_id', 1))])->header('Cache-Control', 'no-store, private');
+    }
+
     public function __construct(private ManageDossierAction $action) {}
 
     public function campaigns(Request $request)
     {
         $q = AdmissionCampaign::where('institution_id', AdmissionAccess::institution($request));
         if (! AdmissionAccess::staff($request->user())) {
-            $q->where('status', 'open')->whereDate('open_date', '<=', now())->whereDate('close_date', '>=', now());
+            $today = now(config('admissions.timezone'))->toDateString();
+            $q->where('status', 'open')->whereDate('open_date', '<=', $today)->whereDate('close_date', '>=', $today);
         }
 
         return response()->json(['data' => $q->orderByDesc('id')->get(['id', 'name', 'open_date', 'close_date', 'academic_year_id', 'filiere_id', 'status', 'target_capacity', 'entry_route', 'entry_semester'])]);

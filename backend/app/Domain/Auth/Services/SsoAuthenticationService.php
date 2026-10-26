@@ -7,6 +7,7 @@ namespace App\Domain\Auth\Services;
 use App\Domain\Auth\Dto\OidcIdentity;
 use App\Domain\Auth\Exceptions\SsoAuthenticationException;
 use App\Models\User;
+use App\Services\LoginChallengeService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -51,7 +52,7 @@ class SsoAuthenticationService
             'verifier' => $request['verifier'],
         ], now()->addMinutes(10));
 
-        return redirect()->away($request['url']);
+        return redirect()->away($request['url'])->withCookie(cookie('encg_sso_state', $request['state'], 10, '/', null, parse_url(config('app.url'), PHP_URL_SCHEME) === 'https' || app()->environment('production'), true, false, 'lax'));
     }
 
     public function callback(string $provider, Request $request): RedirectResponse
@@ -62,7 +63,7 @@ class SsoAuthenticationService
             $this->assertKnownProvider($provider);
             $state = (string) $request->query('state', '');
             $code = (string) $request->query('code', '');
-            if ($state === '' || $code === '') {
+            if ($state === '' || $code === '' || ! hash_equals((string) $request->cookie('encg_sso_state', ''), $state)) {
                 throw new SsoAuthenticationException('sso', 'Retour IdP incomplet.');
             }
 
@@ -79,16 +80,10 @@ class SsoAuthenticationService
             );
 
             $user = $this->resolveUser($identity);
-            $user->forceFill([
-                'last_login_at' => now(),
-                'last_login_ip' => $request->ip(),
-            ])->save();
-
             $this->linkIdentity($user, $identity);
 
-            $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
             $exchange = Str::random(64);
-            Cache::put('oauth_exchange_'.$exchange, $token, now()->addMinutes(2));
+            Cache::put('oauth_exchange_'.$exchange, ['user_id' => $user->id, 'stamp' => LoginChallengeService::stamp($user), 'browser_state' => $state], now()->addMinutes(2));
 
             return redirect()->to($frontend.'/auth/callback?code='.$exchange);
         } catch (SsoAuthenticationException $e) {
@@ -98,14 +93,22 @@ class SsoAuthenticationService
         }
     }
 
-    public function exchange(string $code): string
+    public function exchange(string $code, Request $request): User
     {
-        $token = Cache::pull('oauth_exchange_'.$code);
-        if (! is_string($token) || $token === '') {
-            throw new SsoAuthenticationException('sso', 'Code d\'échange invalide ou expiré.');
+        $data = Cache::get('oauth_exchange_'.$code);
+        if (! is_array($data) || ! hash_equals((string) $data['browser_state'], (string) $request->cookie('encg_sso_state', ''))) {
+            throw new SsoAuthenticationException('sso', 'Code d’échange invalide ou expiré.');
         }
 
-        return $token;
+        return Cache::lock('oauth_exchange_lock_'.hash('sha256', $code), 10)->get(function () use ($code) {
+            $data = Cache::pull('oauth_exchange_'.$code);
+            $user = is_array($data) ? User::find($data['user_id']) : null;
+            if (! $user || ! $user->is_active || ! hash_equals($data['stamp'], LoginChallengeService::stamp($user))) {
+                throw new SsoAuthenticationException('sso', 'Session SSO invalide.');
+            }
+
+            return $user;
+        }) ?: throw new SsoAuthenticationException('sso', 'Échange déjà en cours.');
     }
 
     private function resolveUser(OidcIdentity $identity): User
@@ -129,6 +132,10 @@ class SsoAuthenticationService
 
         if (! $user || ! $user->is_active) {
             throw new SsoAuthenticationException('unknown_account', 'Aucun compte ERP pour cette identité.');
+        }
+
+        if ($user->sso_provider && ($user->sso_provider !== $identity->provider || $user->sso_subject !== $identity->subject)) {
+            throw new SsoAuthenticationException('unknown_account', 'Cette identité ne correspond pas au lien SSO enregistré.');
         }
 
         return $user;

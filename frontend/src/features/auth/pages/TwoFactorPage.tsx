@@ -8,6 +8,10 @@ import { toast } from 'sonner'
 export default function TwoFactorPage() {
   const [code, setCode] = useState(['', '', '', '', '', ''])
   const [isLoading, setIsLoading] = useState(false)
+  const [recovery, setRecovery] = useState(false)
+  const [recoveryCode, setRecoveryCode] = useState('')
+  const [error, setError] = useState('')
+  const busy = useRef(false)
   const navigate = useNavigate()
   const location = useLocation()
   const { verifyTwoFactor, requiresTwoFactor } = useAuthStore()
@@ -61,7 +65,9 @@ export default function TwoFactorPage() {
   }
 
   const submitCode = async (fullCode: string) => {
-    if (fullCode.length !== 6) return
+    if (busy.current || (!recovery && fullCode.length !== 6) || (recovery && fullCode.trim().length < 10)) return
+    busy.current = true
+    setError('')
     setIsLoading(true)
     try {
       await verifyTwoFactor(fullCode)
@@ -69,17 +75,18 @@ export default function TwoFactorPage() {
       navigate(admissionReturnPath(location.state))
     } catch (err: any) {
       const msg = err.response?.data?.message || 'Code invalide ou expiré.'
-      toast.error(msg)
+      setError(msg)
       setCode(['', '', '', '', '', ''])
       inputRefs.current[0]?.focus()
     } finally {
+      busy.current = false
       setIsLoading(false)
     }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    submitCode(code.join(''))
+    submitCode(recovery ? recoveryCode.trim() : code.join(''))
   }
 
   return (
@@ -95,7 +102,8 @@ export default function TwoFactorPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6 mt-8">
-        <div className="flex justify-center gap-2">
+        {error && <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">{error}</p>}
+        {recovery ? <label className="block space-y-2 text-sm">Code de récupération<input aria-label="Code de récupération" value={recoveryCode} onChange={event => setRecoveryCode(event.target.value)} autoComplete="one-time-code" maxLength={32} disabled={isLoading} className="block w-full rounded-xl border border-input bg-background p-3" /></label> : <div className="flex justify-center gap-2">
           {code.map((digit, index) => (
             <input
               key={index}
@@ -113,11 +121,11 @@ export default function TwoFactorPage() {
               className="w-12 h-14 text-center text-xl font-bold bg-background border-2 focus:border-primary focus:ring-4 focus:ring-primary/20 outline-none transition-all disabled:opacity-50 rounded-[var(--control-radius)]"
             />
           ))}
-        </div>
+        </div>}
 
         <button
           type="submit"
-          disabled={isLoading || code.join('').length < 6}
+          disabled={isLoading || (recovery ? recoveryCode.trim().length < 10 : code.join('').length < 6)}
           className="w-full bg-primary text-primary-foreground hover:bg-primary/90 h-11 rounded-lg font-medium shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? (
@@ -130,7 +138,7 @@ export default function TwoFactorPage() {
         <div className="text-center space-y-2">
           <p className="text-sm text-muted-foreground flex items-center justify-center gap-1.5">
             <KeyRound className="w-4 h-4" />
-            Vous pouvez aussi utiliser un <strong>code de récupération</strong>.
+            <button type="button" disabled={isLoading} onClick={() => setRecovery(value => !value)} className="underline">{recovery ? 'Utiliser un code d’authentification à 6 chiffres' : 'Utiliser un code de récupération'}</button>
           </p>
           <button
             type="button"

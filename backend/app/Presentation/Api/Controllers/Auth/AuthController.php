@@ -10,16 +10,16 @@ use App\Http\Resources\UserResource;
 use App\Models\Application;
 use App\Models\Student;
 use App\Models\User;
+use App\Services\LoginChallengeService;
 use App\Services\TwoFactorAuthService;
 use App\Support\AuthCookie;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
@@ -35,8 +35,11 @@ class AuthController extends Controller
     {
         $request->validate([
             'email' => 'required|email',
-            'password' => 'required',
+            'password' => 'required|string|max:4096',
+            'remember' => 'sometimes|boolean',
         ]);
+
+        $request->merge(['email' => strtolower(trim($request->email))]);
 
         $user = User::with('roles', 'permissions')->where('email', $request->email)->first();
 
@@ -50,22 +53,8 @@ class AuthController extends Controller
             return response()->json(['message' => 'Votre compte a été désactivé.'], 403);
         }
 
-        $user->update([
-            'last_login_at' => now(),
-            'last_login_ip' => $request->ip(),
-        ]);
-
-        // 2FA pour admins
-        if ($user->two_factor_enabled && $user->hasAnyRole(['super-admin', 'institution-admin', 'director'])) {
-            $challengeToken = Str::uuid()->toString();
-            Cache::put('2fa_challenge_'.$challengeToken, $user->id, now()->addMinutes(10));
-
-            return response()->json([
-                'data' => [
-                    'requires_two_factor' => true,
-                    'two_factor_challenge_token' => $challengeToken,
-                ],
-            ]);
+        if ($user->two_factor_enabled) {
+            return response()->json(['data' => app(LoginChallengeService::class)->create($user, $request->boolean('remember'))])->withCookie(AuthCookie::forget());
         }
 
         $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
@@ -81,27 +70,19 @@ class AuthController extends Controller
     public function verifyTwoFactor(Request $request): JsonResponse
     {
         $request->validate([
-            'challenge_token' => 'required|string',
-            'code' => 'required|string',
+            'challenge_token' => 'required|string|max:128',
+            'code' => 'required|string|max:32',
         ]);
 
-        $userId = Cache::get('2fa_challenge_'.$request->challenge_token);
-        if (! $userId) {
-            return response()->json(['message' => 'Session 2FA expirée ou invalide.'], 401);
-        }
-
-        $user = User::with('roles', 'permissions')->find($userId);
-        if (! $user) {
-            return response()->json(['message' => 'Utilisateur introuvable.'], 404);
-        }
-
-        if (! $this->twoFactorService->verify($user, $request->code)) {
+        $result = app(LoginChallengeService::class)->verify($request->challenge_token, $request->code);
+        if (! $result) {
             return response()->json(['message' => 'Code 2FA invalide ou expiré.'], 422);
         }
-
-        Cache::forget('2fa_challenge_'.$request->challenge_token);
+        $user = $result['user'];
+        $request->merge(['remember' => $result['remember']]);
 
         $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
+        event(new Login('sanctum', $user, false));
 
         return $this->authenticatedResponse($request, $user, $token);
     }
@@ -119,7 +100,10 @@ class AuthController extends Controller
      */
     public function logout(Request $request): JsonResponse
     {
-        $request->user()?->currentAccessToken()->delete();
+        $current = $request->user()?->currentAccessToken();
+        if ($current instanceof PersonalAccessToken) {
+            $current->delete();
+        }
 
         return response()->json(['message' => 'Déconnexion réussie.'])
             ->withCookie(AuthCookie::forget());
@@ -137,6 +121,7 @@ class AuthController extends Controller
             'password' => ['required', 'confirmed', Password::defaults()],
             'cne' => 'required|string|max:255',
             'cin' => 'nullable|string|max:255',
+            'campaign_id' => 'nullable|integer',
         ]);
 
         try {
@@ -157,9 +142,9 @@ class AuthController extends Controller
     public function setup2FA(Request $request): JsonResponse
     {
         $user = $request->user();
-        if (! $user->hasAnyRole(['super-admin', 'institution-admin', 'director'])) {
-            return response()->json(['message' => 'Non autorisé.'], 403);
-        }
+        $request->validate(['password' => 'required|string']);
+        abort_unless(Hash::check($request->password, $user->password), 422, 'Mot de passe incorrect.');
+        abort_if($user->two_factor_enabled, 409, 'Désactivez la 2FA existante avant de la reconfigurer.');
 
         $setupData = $this->twoFactorService->generateSetupData($user);
 
@@ -183,6 +168,8 @@ class AuthController extends Controller
         if (! $confirmed) {
             return response()->json(['message' => 'Code incorrect.'], 422);
         }
+
+        $this->revokeOtherTokens($request);
 
         return response()->json([
             'success' => true,
@@ -220,13 +207,17 @@ class AuthController extends Controller
      */
     public function disable2FA(Request $request): JsonResponse
     {
+        abort_if($request->user()->two_factor_required, 403, 'La 2FA est obligatoire pour ce compte. Contactez l’administration en cas de perte du téléphone.');
         $request->validate(['password' => 'required|string']);
 
         if (! Hash::check($request->password, $request->user()->password)) {
             return response()->json(['message' => 'Mot de passe incorrect.'], 422);
         }
 
+        $request->validate(['code' => 'required|string|max:32']);
+        abort_unless($this->twoFactorService->verify($request->user(), $request->code), 422, 'Code 2FA invalide.');
         $this->twoFactorService->disable($request->user());
+        $this->revokeOtherTokens($request);
 
         return response()->json([
             'success' => true,
@@ -254,7 +245,10 @@ class AuthController extends Controller
             'must_change_password' => false,
         ])->save();
 
-        return response()->json(['message' => 'Mot de passe mis à jour.']);
+        $user->tokens()->delete();
+        $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
+
+        return $this->authenticatedResponse($request, $user, $token, 'Mot de passe mis à jour. Les anciennes sessions ont été fermées.');
     }
 
     /**
@@ -297,6 +291,13 @@ class AuthController extends Controller
         ]);
     }
 
+    private function revokeOtherTokens(Request $request): void
+    {
+        $token = $request->user()->currentAccessToken();
+        $id = $token instanceof PersonalAccessToken ? $token->id : null;
+        $request->user()->tokens()->when($id, fn ($q) => $q->where('id', '!=', $id))->delete();
+    }
+
     private function authenticatedResponse(Request $request, User $user, string $token, ?string $message = null): JsonResponse
     {
         $data = [
@@ -313,7 +314,7 @@ class AuthController extends Controller
             $payload['message'] = $message;
         }
 
-        return AuthCookie::attach(response()->json($payload), $token);
+        return AuthCookie::attach(response()->json($payload), $token, $request->boolean('remember'));
     }
 
     private function buildUserData(User $user): array

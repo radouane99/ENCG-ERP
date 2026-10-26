@@ -38,6 +38,7 @@ class User extends Authenticatable implements HasMedia
         'two_factor_recovery_codes',
         'is_active',
         'must_change_password',
+        'two_factor_required',
         'email_verified_at',
     ];
 
@@ -58,6 +59,7 @@ class User extends Authenticatable implements HasMedia
             'is_active' => 'boolean',
             'last_login_at' => 'datetime',
             'two_factor_enabled' => 'boolean',
+            'two_factor_required' => 'boolean',
             'two_factor_confirmed_at' => 'datetime',
             'must_change_password' => 'boolean',
         ];

@@ -144,6 +144,30 @@ class SemesterPlanningReliabilityTest extends TestCase
         return [$c, $row];
     }
 
+    public function test_professor_cannot_use_either_alias_to_generate_or_publish(): void
+    {
+        $c = $this->setupPlanning(); $this->assign($c);
+        $c['service']->addSession($c['versionId'], $c['payload']);
+        $c['professor']->user->assignRole(Role::findOrCreate('professor', 'sanctum'));
+        Sanctum::actingAs($c['professor']->user);
+        foreach (['/api/smart-scheduling', '/api/admin/smart-scheduling'] as $prefix) {
+            $this->postJson($prefix.'/versions/'.$c['versionId'].'/publish')->assertForbidden();
+            $this->postJson($prefix.'/draft', ['filiere_id' => $c['filiere']->id])->assertForbidden();
+        }
+        $this->assertFalse(Schedule::where('schedule_version_id', $c['versionId'])->first()->is_active);
+    }
+
+    public function test_scolarite_can_publish_and_access_the_change_inbox(): void
+    {
+        $c = $this->setupPlanning(); $this->assign($c);
+        $c['service']->addSession($c['versionId'], $c['payload']);
+        $staff = User::factory()->create(['institution_id' => 1]); $staff->assignRole(Role::findOrCreate('scolarite', 'sanctum'));
+        Sanctum::actingAs($staff);
+        $this->getJson('/api/admin/smart-scheduling/workspace')->assertOk();
+        $this->postJson('/api/admin/smart-scheduling/versions/'.$c['versionId'].'/publish')->assertOk();
+        $this->getJson('/api/timetable/change-requests')->assertOk();
+    }
+
     public function test_teacher_request_waits_for_review_then_applies_to_shared_groups(): void
     {
         [$c, $row] = $this->publishedChangeFixture();

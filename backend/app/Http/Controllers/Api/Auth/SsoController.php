@@ -7,7 +7,9 @@ namespace App\Http\Controllers\Api\Auth;
 use App\Domain\Auth\Exceptions\SsoAuthenticationException;
 use App\Domain\Auth\Services\SsoAuthenticationService;
 use App\Http\Controllers\Controller;
+use App\Services\LoginChallengeService;
 use App\Support\AuthCookie;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -48,10 +50,16 @@ class SsoController extends Controller
         ]);
 
         try {
-            $token = $this->sso->exchange($validated['code']);
+            $user = $this->sso->exchange($validated['code'], $request);
         } catch (SsoAuthenticationException $e) {
             return response()->json(['message' => $e->getMessage()], 422);
         }
+
+        if ($user->two_factor_enabled) {
+            return response()->json(['data' => app(LoginChallengeService::class)->create($user)])->withCookie(AuthCookie::forget());
+        }
+        $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
+        event(new Login('sanctum', $user, false));
 
         return AuthCookie::attach(response()->json([
             'data' => [

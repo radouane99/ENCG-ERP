@@ -382,8 +382,13 @@ class AppServiceProvider extends ServiceProvider
 
         // Rate Limiter pour les authentifications
         RateLimiter::for('login', function (Request $request) {
+            $email = strtolower(trim((string) $request->input('email', '')));
+            $identity = $request->user()
+                ? 'user:'.$request->user()->id
+                : ($email !== '' ? 'email:'.$email : 'challenge:'.hash('sha256', (string) $request->input('challenge_token', '')));
+
             return Limit::perMinute(5)
-                ->by($request->email.'|'.$request->ip())
+                ->by($identity.'|'.$request->ip())
                 ->response(function (Request $request, array $headers) {
                     return response()->json([
                         'message' => 'Trop de tentatives de connexion. Veuillez réessayer plus tard.',

@@ -3,19 +3,17 @@ import { useNavigate,Link } from 'react-router-dom';
 import api from '@shared/lib/api';
 import {
 ShieldCheck,Sparkles,GraduationCap,ArrowRight,LogIn,BrainCircuit,
-Megaphone,UserCheck,Activity,QrCode,Database,BookOpen,Layers,BarChart3,
-Sun,Moon,X,MapPin,Phone,Mail,Send,CheckCircle2,Award
+UserCheck,Activity,QrCode,Database,BookOpen,Layers,BarChart3,
+Sun,Moon,MapPin,Phone,Mail,Send,CheckCircle2,Award
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useAuthStore } from '@stores/authStore';
 import { useTheme } from '@shared/components/layout/useTheme';
-import MvpRoadmapSection from '@features/public/components/MvpRoadmapSection';
 import RoleJourneySection from '@features/public/components/RoleJourneySection';
 import BenefitsSection from '@features/public/components/BenefitsSection';
-import TestimonialsSection from '@features/public/components/TestimonialsSection';
-import ImpactSection from '@features/public/components/ImpactSection';
 import ConversionSection from '@features/public/components/ConversionSection';
 import FaqSection from '@features/public/components/FaqSection';
+import AdmissionCalendarPanel from '../components/AdmissionCalendarPanel';
 import TafemAdmissibilitySection from '@features/public/components/TafemAdmissibilitySection';
 
 const dict = {
@@ -23,13 +21,10 @@ const dict = {
     font: 'font-sans',
     navVision: 'Vision', navEco: 'Écosystème', navAi: 'ENCG AI',
     navDash: 'Tableau de bord', navLogin: 'Connexion',
-    badge1: 'Sécurité Étatique', badge2: '100% Cloud Native',
+    badge1: 'Accès sécurisé', badge2: 'Services numériques',
     heroTitle1: 'Le Management de Demain', heroTitle2: "S'invente Aujourd'hui.",
-    heroDesc: "L'ENCG Fès déploie le premier ERP Universitaire 3.0 au Maroc. Une plateforme unifiée, intelligente et sans friction, propulsée par l'Intelligence Artificielle.",
-    btnExplore: 'Explorer le Portail', btnRegister: "S'inscrire (Candidats)",
-    popupTitle: "Session d'Inscription Ouverte ! 🎉",
-    popupDesc: "Ne manquez pas l'opportunité de rejoindre l'ENCG Fès pour l'année universitaire 2025-2026. La plateforme d'admission est officiellement ouverte.",
-    popupBtn: "S'inscrire maintenant",
+    heroDesc: "Le portail de l’ENCG Fès réunit les admissions, le suivi de scolarité et les services destinés aux étudiants, aux enseignants et à l’administration.",
+    btnExplore: 'Explorer le Portail', btnRegister: 'Calendrier des inscriptions',
     ecoTitle1: 'Un Écosystème,', ecoTitle2: 'Trois Dimensions.',
     ecoDesc: "Une architecture unifiée qui s'adapte contextuellement à votre rôle au sein de l'institution.",
     adminTitle: 'Tour de Contrôle Admin', adminDesc: "Pilotage stratégique en temps réel. Gérez les inscriptions, planifiez les examens et générez les PV de délibération.",
@@ -38,13 +33,13 @@ const dict = {
     profTag1: 'Générateur QCM', profTag2: 'Suivi des Absences',
     studentTitle: 'Portail Étudiant 3.0', studentDesc: "Toute votre scolarité dans votre poche. Des notes certifiées aux documents administratifs.",
     studentTag1: 'Carte Digitale', studentTag2: 'Relevés Instantanés', studentTag3: 'Bourse Projets',
-    aiBadge: 'ENCG LLaMA 3 Core', aiTitle1: "L'Intelligence", aiTitle2: "Artificielle", aiTitle3: "Au Service De L'Humain",
+    aiBadge: 'Assistance IA', aiTitle1: "L'Intelligence", aiTitle2: "Artificielle", aiTitle3: "Au Service De L'Humain",
     aiDesc: "Notre IA intégrée analyse les résultats, répond aux étudiants 24/7 et assiste les professeurs.",
     aiBtn: "Découvrir les cas d'usage",
     aiChatUser: "Ai-je validé mon S1 ? J'ai 9.5 en Comptabilité et 14 en Management.",
-    aiChatBot: "Bonjour ! D'après le règlement de l'ENCG, votre moyenne est de 11.75/20. ✅ Vous validez par compensation !",
+    aiChatBot: "Consultez vos résultats validés dans votre espace étudiant. La décision officielle relève du jury de délibération.",
     contactTitle: 'Entrez en Contact', contactSubtitle: 'Notre équipe est là pour vous',
-    contactDesc: "Une question sur les admissions, la plateforme ou nos formations ? Envoyez-nous un message directement, nous vous répondrons dans les 24h.",
+    contactDesc: "Une question sur les admissions, la plateforme ou nos formations ? Envoyez-nous un message directement, le service concerné prendra connaissance de votre demande.",
     formName: 'Votre nom complet', formEmail: 'Votre email', formSubject: 'Sujet du message', formMsg: 'Votre message...',
     formBtn: 'Envoyer le message', formSuccess: 'Message envoyé avec succès ! Nous vous répondrons très bientôt.',
     footerTagline: "Former les leaders et managers de demain.",
@@ -56,13 +51,10 @@ const dict = {
     font: 'font-sans',
     navVision: 'Vision', navEco: 'Ecosystem', navAi: 'ENCG AI',
     navDash: 'Dashboard', navLogin: 'Login',
-    badge1: 'State Security', badge2: '100% Cloud Native',
+    badge1: 'Secure access', badge2: 'Digital services',
     heroTitle1: 'The Management of Tomorrow', heroTitle2: 'Is Invented Today.',
-    heroDesc: "ENCG Fes deploys the first University ERP 3.0 in Morocco. A unified, smart, and frictionless platform powered by Artificial Intelligence.",
-    btnExplore: 'Explore Portal', btnRegister: 'Register (Candidates)',
-    popupTitle: 'Enrollment Session Open! 🎉',
-    popupDesc: "Don't miss the opportunity to join ENCG Fes for the 2025-2026 academic year. The admission platform is officially open.",
-    popupBtn: 'Register now',
+    heroDesc: "The ENCG Fes portal brings together admissions, academic records and services for students, teachers and administration.",
+    btnExplore: 'Explore Portal', btnRegister: 'Enrollment calendar',
     ecoTitle1: 'One Ecosystem,', ecoTitle2: 'Three Dimensions.',
     ecoDesc: "A unified architecture that contextually adapts to your role within the institution.",
     adminTitle: 'Admin Control Tower', adminDesc: "Real-time strategic management. Manage enrollments, schedule exams, and generate deliberation reports.",
@@ -71,13 +63,13 @@ const dict = {
     profTag1: 'Quiz Generator', profTag2: 'Absence Tracking',
     studentTitle: 'Student Portal 3.0', studentDesc: "Your entire education in your pocket. From certified grades to administrative documents.",
     studentTag1: 'Digital ID', studentTag2: 'Instant Transcripts', studentTag3: 'Project Board',
-    aiBadge: 'ENCG LLaMA 3 Core', aiTitle1: "Artificial", aiTitle2: "Intelligence", aiTitle3: "Serving Humanity",
+    aiBadge: 'Assistance IA', aiTitle1: "Artificial", aiTitle2: "Intelligence", aiTitle3: "Serving Humanity",
     aiDesc: "Our integrated AI analyzes results, answers students 24/7, and assists professors.",
     aiBtn: "Discover use cases",
     aiChatUser: "Did I pass S1? I got 9.5 in Accounting and 14 in Management.",
-    aiChatBot: "Hello! According to ENCG rules, your average is 11.75/20. ✅ You pass by compensation!",
+    aiChatBot: "Check your validated results in the student portal. The official decision belongs to the examination board.",
     contactTitle: 'Get in Touch', contactSubtitle: 'Our team is here for you',
-    contactDesc: "A question about admissions, the platform or our programs? Send us a message directly, we will reply within 24 hours.",
+    contactDesc: "A question about admissions, the platform or our programs? Send us a message directly, the relevant department will review your request.",
     formName: 'Your full name', formEmail: 'Your email', formSubject: 'Message subject', formMsg: 'Your message...',
     formBtn: 'Send message', formSuccess: 'Message sent successfully! We will get back to you very soon.',
     footerTagline: "Training tomorrow's leaders and managers.",
@@ -89,13 +81,10 @@ const dict = {
     font: "font-['Cairo']",
     navVision: 'الرؤية', navEco: 'النظام البيئي', navAi: 'الذكاء الاصطناعي',
     navDash: 'لوحة التحكم', navLogin: 'تسجيل الدخول',
-    badge1: 'أمان حكومي', badge2: 'سحابي 100%',
+    badge1: 'ولوج آمن', badge2: 'خدمات رقمية',
     heroTitle1: 'إدارة الغد', heroTitle2: 'تُبتكر اليوم.',
-    heroDesc: "المدرسة الوطنية للتجارة والتسيير بفاس تطلق أول نظام إدارة جامعي 3.0 في المغرب. منصة موحدة وذكية تعمل بالذكاء الاصطناعي.",
-    btnExplore: 'اكتشف البوابة', btnRegister: 'التسجيل (للمرشحين)',
-    popupTitle: 'فتح دورة التسجيل! 🎉',
-    popupDesc: "لا تفوتوا فرصة الالتحاق بالمدرسة الوطنية للتجارة والتسيير بفاس للسنة الجامعية 2025-2026.",
-    popupBtn: 'سجل الآن',
+    heroDesc: "بوابة المدرسة الوطنية للتجارة والتسيير بفاس تجمع التسجيلات وتتبع المسار الدراسي وخدمات الطلبة والأساتذة والإدارة.",
+    btnExplore: 'اكتشف البوابة', btnRegister: 'رزنامة التسجيل',
     ecoTitle1: 'نظام بيئي واحد،', ecoTitle2: 'ثلاثة أبعاد.',
     ecoDesc: "بنية موحدة تتكيف بشكل سياقي مع دورك داخل المؤسسة.",
     adminTitle: 'برج المراقبة الإداري', adminDesc: "إدارة استراتيجية في الوقت الفعلي. إدارة التسجيلات وجدولة الامتحانات وإنشاء محاضر المداولات.",
@@ -104,13 +93,13 @@ const dict = {
     profTag1: 'منشئ الاختبارات', profTag2: 'تتبع الغياب',
     studentTitle: 'بوابة الطالب 3.0', studentDesc: "مسارك الدراسي بالكامل في جيبك. من النقاط المعتمدة إلى الوثائق الإدارية.",
     studentTag1: 'بطاقة رقمية', studentTag2: 'كشوف فورية', studentTag3: 'بورصة المشاريع',
-    aiBadge: 'نواة ENCG LLaMA 3', aiTitle1: "الذكاء", aiTitle2: "الاصطناعي", aiTitle3: "في خدمة الإنسان",
+    aiBadge: 'المساعدة الذكية', aiTitle1: "الذكاء", aiTitle2: "الاصطناعي", aiTitle3: "في خدمة الإنسان",
     aiDesc: "يقوم الذكاء الاصطناعي المدمج لدينا بتحليل النتائج والإجابة على الطلاب على مدار الساعة.",
     aiBtn: "اكتشف حالات الاستخدام",
     aiChatUser: "هل نجحت في الفصل الأول؟ حصلت على 9.5 في المحاسبة و14 في الإدارة.",
-    aiChatBot: "مرحباً! وفقاً لقوانين المؤسسة، معدلك هو 11.75/20. ✅ لقد نجحت بالمقاصة!",
+    aiChatBot: "يمكنكم الاطلاع على النتائج المصادق عليها في فضاء الطالب. القرار الرسمي من اختصاص لجنة المداولات.",
     contactTitle: 'تواصل معنا', contactSubtitle: 'فريقنا هنا لمساعدتك',
-    contactDesc: "هل لديك سؤال حول القبول أو المنصة أو برامجنا؟ أرسل لنا رسالة مباشرة وسنرد عليك خلال 24 ساعة.",
+    contactDesc: "هل لديك سؤال حول القبول أو المنصة أو برامجنا؟ أرسل لنا رسالة مباشرة وسيطلع القسم المعني على طلبك.",
     formName: 'الاسم الكامل', formEmail: 'بريدك الإلكتروني', formSubject: 'موضوع الرسالة', formMsg: 'رسالتك...',
     formBtn: 'إرسال الرسالة', formSuccess: 'تم إرسال رسالتك بنجاح! سنرد عليك قريباً جداً.',
     footerTagline: "تكوين قادة ومديري الغد.",
@@ -129,7 +118,6 @@ export default function LandingPage() {
 
   const [scrolled, setScrolled] = useState(false);
   const [lang, setLang] = useState<Lang>('fr');
-  const [showPopup, setShowPopup] = useState(false);
   const [formState, setFormState] = useState({ name: '', email: '', subject: '', message: '' });
   const [formSent, setFormSent] = useState(false);
   const [formSending, setFormSending] = useState(false);
@@ -145,8 +133,7 @@ export default function LandingPage() {
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
-    const timer = setTimeout(() => setShowPopup(true), 1800);
-    return () => { window.removeEventListener('scroll', handleScroll); clearTimeout(timer); };
+    return () => { window.removeEventListener('scroll', handleScroll); };
   }, []);
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -189,35 +176,6 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* ── Registration Popup ── */}
-      {showPopup && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-          <div className="bg-white dark:bg-[#0A1220] border border-slate-200 dark:border-white/10 rounded-3xl p-8 max-w-md w-full shadow-2xl relative">
-            <button
-              onClick={() => setShowPopup(false)}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <div className="w-16 h-16 bg-blue-100 dark:bg-[#0f2863]/40 rounded-2xl flex items-center justify-center mb-6">
-              <Megaphone className="w-8 h-8 text-[#0f2863] dark:text-amber-400 animate-bounce" />
-            </div>
-            <div className="inline-flex items-center gap-2 bg-emerald-100 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-full px-3 py-1 text-xs font-bold text-emerald-700 dark:text-emerald-400 mb-4">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Session ouverte
-            </div>
-            <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-3">{t.popupTitle}</h3>
-            <p className="text-slate-600 dark:text-slate-300 mb-8 leading-relaxed">{t.popupDesc}</p>
-            <button
-              onClick={() => { setShowPopup(false); navigate('/inscription'); }}
-              className="w-full bg-gradient-to-r from-[#0f2863] via-[#162e74] to-[#1e3a8a] text-white py-4 rounded-xl font-bold shadow-lg shadow-[#0f2863]/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-2"
-            >
-              {t.popupBtn} <ArrowRight className={cn('w-5 h-5', isRTL && 'rotate-180')} />
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* ── Navigation ── */}
       <nav className={cn('fixed top-0 left-0 right-0 z-50 transition-all duration-500', scrolled ? 'py-3' : 'py-5')}>
         <div className="max-w-7xl mx-auto px-6">
@@ -241,9 +199,9 @@ export default function LandingPage() {
 
             {/* Links */}
             <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-              <a href="#resultats-tafem" className="text-amber-500 font-black flex items-center gap-1 hover:text-amber-600 transition-colors">
+              <a href="#inscriptions" className="text-amber-500 font-black flex items-center gap-1 hover:text-amber-600 transition-colors">
                 <Award className="w-4 h-4 text-amber-500" />
-                <span>{isRTL ? 'نتائج القبول' : 'Résultats TAFEM'}</span>
+                <span>{isRTL ? 'القبول والتسجيل' : lang === 'en' ? 'Admissions' : 'Admissions & calendrier'}</span>
               </a>
               <a href="#vision" className="text-slate-600 dark:text-slate-300 hover:text-[#0f2863] dark:hover:text-white transition-colors">{t.navVision}</a>
               <a href="#ecosystem" className="text-slate-600 dark:text-slate-300 hover:text-[#0f2863] dark:hover:text-white transition-colors">{t.navEco}</a>
@@ -330,7 +288,7 @@ export default function LandingPage() {
                 <ArrowRight className={cn('w-5 h-5 transition-transform', isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1')} />
               </button>
               <button
-                onClick={() => navigate('/inscription')}
+                onClick={() => document.getElementById('inscriptions')?.scrollIntoView({ behavior: 'smooth' })}
                 className="w-full sm:w-auto bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 text-slate-800 dark:text-white px-8 py-4 rounded-2xl font-bold hover:bg-slate-100 dark:hover:bg-white/10 transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
               >
                 <GraduationCap className="w-5 h-5 text-amber-500" />{t.btnRegister}
@@ -346,7 +304,7 @@ export default function LandingPage() {
                 <div className="flex gap-1.5">
                   <div className="w-3 h-3 rounded-full bg-blue-600" /><div className="w-3 h-3 rounded-full bg-amber-400" /><div className="w-3 h-3 rounded-full bg-emerald-500" />
                 </div>
-                <span className="text-xs text-slate-400 font-mono font-bold">ENCG.OS v3.0</span>
+                <span className="text-xs text-slate-400 font-mono font-bold">Aperçu du portail</span>
               </div>
               <div className="space-y-4">
                 {[
@@ -369,7 +327,7 @@ export default function LandingPage() {
             <div className="absolute top-[5%] right-[-5%] bg-white dark:bg-[#0A1220]/90 backdrop-blur-xl border border-amber-400/40 p-4 rounded-2xl shadow-xl transform rotate-12 animate-bounce [animation-duration:4s]">
               <div className="flex items-center gap-3 mb-2">
                 <Sparkles className="w-5 h-5 text-amber-500" />
-                <span className="text-sm font-bold text-slate-900 dark:text-white">IA Active</span>
+                <span className="text-sm font-bold text-slate-900 dark:text-white">Assistance numérique</span>
               </div>
               <div className="h-1.5 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                 <div className="h-full w-3/4 bg-gradient-to-r from-[#0f2863] to-amber-500" />
@@ -378,15 +336,16 @@ export default function LandingPage() {
             <div className="absolute bottom-[5%] left-[-5%] bg-white dark:bg-[#0A1220]/90 backdrop-blur-xl border border-blue-200 dark:border-blue-500/30 p-4 rounded-2xl shadow-xl transform -rotate-12 animate-bounce [animation-duration:5s]">
               <div className="flex items-center gap-3 mb-1">
                 <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                <span className="text-sm font-bold text-slate-900 dark:text-white">Blockchain ✓</span>
+                <span className="text-sm font-bold text-slate-900 dark:text-white">Documents vérifiables</span>
               </div>
-              <p className="text-[10px] text-slate-500">Certificats & Relevés cryptés</p>
+              <p className="text-[10px] text-slate-500">Identifiant numérique et vérification QR</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* ── TAFEM Admissibility & Results Lookup Widget ── */}
+      <AdmissionCalendarPanel lang={lang} />
       <TafemAdmissibilitySection isRtl={isRTL} />
 
       {/* ── Ecosystem / 3 Universes ── */}
@@ -470,10 +429,7 @@ export default function LandingPage() {
       </div>
 
       <BenefitsSection lang={lang} isRTL={isRTL} />
-      <MvpRoadmapSection />
       <RoleJourneySection lang={lang} isRTL={isRTL} />
-      <TestimonialsSection lang={lang} isRTL={isRTL} />
-      <ImpactSection lang={lang} isRTL={isRTL} />
       <ConversionSection lang={lang} isRTL={isRTL} />
       <FaqSection lang={lang} isRTL={isRTL} />
 

@@ -37,14 +37,14 @@ class AuthCookie
         return is_string($decoded) && $decoded !== '' ? $decoded : $value;
     }
 
-    public static function make(string $plainTextToken): Cookie
+    public static function make(string $plainTextToken, bool $remember = false): Cookie
     {
-        $secure = app()->environment('production');
+        $secure = app()->environment('production') || parse_url((string) config('app.url'), PHP_URL_SCHEME) === 'https' || request()->isSecure();
 
         return cookie(
             self::NAME,
             self::encode($plainTextToken),
-            8 * 60,
+            $remember ? 8 * 60 : 0,
             '/',
             env('AUTH_COOKIE_DOMAIN') ?: null,
             $secure,
@@ -56,11 +56,11 @@ class AuthCookie
 
     public static function forget(): Cookie
     {
-        return cookie()->forget(self::NAME);
+        return cookie()->forget(self::NAME, '/', env('AUTH_COOKIE_DOMAIN') ?: null);
     }
 
-    public static function attach(JsonResponse $response, string $plainTextToken): JsonResponse
+    public static function attach(JsonResponse $response, string $plainTextToken, bool $remember = false): JsonResponse
     {
-        return $response->withCookie(self::make($plainTextToken));
+        return $response->withCookie(self::make($plainTextToken, $remember));
     }
 }

@@ -83,7 +83,6 @@ use App\Http\Controllers\Api\RetakeController;
 use App\Http\Controllers\Api\RoomController;
 use App\Http\Controllers\Api\ScheduleChangeRequestController;
 use App\Http\Controllers\Api\ScheduleController;
-use App\Http\Controllers\Api\SmartSchedulingController;
 use App\Http\Controllers\Api\Student\StudentAiController;
 use App\Http\Controllers\Api\Student\StudentMobilityController;
 use App\Http\Controllers\Api\StudentCardController;
@@ -208,43 +207,6 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::get('/admin/parapheur/{id}/preview-pdf', [ParapheurController::class, 'previewPdf']);
 
     // Automated Timetable Engine — CSP Solver & Energy Optimizer
-    Route::prefix('smart-scheduling')->group(function () {
-        Route::post('/simulate', [SmartSchedulingController::class, 'simulate']);
-        Route::post('/generate', [SmartSchedulingController::class, 'generate']);
-        Route::post('/reoptimize', [SmartSchedulingController::class, 'reoptimize']);
-        Route::get('/stats', [SmartSchedulingController::class, 'stats']);
-        Route::post('/suggest-slots', [SmartSchedulingController::class, 'suggestSlots']);
-        Route::get('/workspace', [SmartSchedulingController::class, 'workspace']);
-        Route::post('/campaign/open', [SmartSchedulingController::class, 'openCampaign']);
-        Route::post('/campaign/close', [SmartSchedulingController::class, 'closeCampaign']);
-        Route::post('/draft', [SmartSchedulingController::class, 'generateDraft']);
-        Route::post('/draft/empty', [SmartSchedulingController::class, 'emptyDraft']);
-        Route::get('/versions/{versionId}/board', [SmartSchedulingController::class, 'board']);
-        Route::post('/versions/{versionId}/move', [SmartSchedulingController::class, 'moveBlock']);
-        Route::post('/versions/{versionId}/sessions', [SmartSchedulingController::class, 'addSession']);
-        Route::post('/versions/{versionId}/sessions/delete', [SmartSchedulingController::class, 'deleteBlock']);
-        Route::post('/versions/{versionId}/propose', [SmartSchedulingController::class, 'propose']);
-        Route::post('/versions/{versionId}/publish', [SmartSchedulingController::class, 'publishVersion']);
-    });
-    Route::prefix('admin/smart-scheduling')->group(function () {
-        Route::post('/simulate', [SmartSchedulingController::class, 'simulate']);
-        Route::post('/generate', [SmartSchedulingController::class, 'generate']);
-        Route::post('/reoptimize', [SmartSchedulingController::class, 'reoptimize']);
-        Route::get('/stats', [SmartSchedulingController::class, 'stats']);
-        Route::post('/suggest-slots', [SmartSchedulingController::class, 'suggestSlots']);
-        Route::get('/workspace', [SmartSchedulingController::class, 'workspace']);
-        Route::post('/campaign/open', [SmartSchedulingController::class, 'openCampaign']);
-        Route::post('/campaign/close', [SmartSchedulingController::class, 'closeCampaign']);
-        Route::post('/draft', [SmartSchedulingController::class, 'generateDraft']);
-        Route::post('/draft/empty', [SmartSchedulingController::class, 'emptyDraft']);
-        Route::get('/versions/{versionId}/board', [SmartSchedulingController::class, 'board']);
-        Route::post('/versions/{versionId}/move', [SmartSchedulingController::class, 'moveBlock']);
-        Route::post('/versions/{versionId}/sessions', [SmartSchedulingController::class, 'addSession']);
-        Route::post('/versions/{versionId}/sessions/delete', [SmartSchedulingController::class, 'deleteBlock']);
-        Route::post('/versions/{versionId}/propose', [SmartSchedulingController::class, 'propose']);
-        Route::post('/versions/{versionId}/publish', [SmartSchedulingController::class, 'publishVersion']);
-    });
-
     // AI Predictive Analytics
     Route::get('/predictive-analytics', [AdminPredictiveAnalyticsController::class, 'index']);
     Route::post('/predictive-analytics/refresh', [AdminPredictiveAnalyticsController::class, 'refresh']);
@@ -474,6 +436,8 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     });
 
     Route::apiResource('departments', DepartmentController::class);
+    Route::post('users/{id}/security', [UserController::class, 'security'])->middleware('throttle:login');
+    Route::get('users/{id}/security', [UserController::class, 'securityHistory']);
     Route::apiResource('users', UserController::class);
     Route::post('professor-assignments/auto-distribute', [ProfessorAssignmentController::class, 'autoDistribute']);
     Route::post('professor-assignments/unassign-all', [ProfessorAssignmentController::class, 'unassignAll']);

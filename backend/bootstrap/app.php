@@ -58,6 +58,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->api(prepend: [
+            \App\Http\Middleware\CheckBrowserOrigin::class,
             QueryTokenAuth::class,
             SetLocale::class,
         ]);

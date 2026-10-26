@@ -9,8 +9,15 @@ use App\Services\Academic\TimetableCampaignService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class SmartSchedulingController extends Controller
+class SmartSchedulingController extends Controller implements \Illuminate\Routing\Controllers\HasMiddleware
 {
+    public static function middleware(): array
+    {
+        return [function ($request, $next) {
+            app(\App\Services\Academic\ExamWorkflowGuard::class)->manage($request->user());
+            return $next($request);
+        }];
+    }
     public function __construct(
         private SmartSchedulingEngine $engine,
         private SlotSuggestionService $slotSuggestions,

@@ -28,7 +28,7 @@ const translations = {
         icon: Users,
       },
     ],
-    ctaPrimary: "Commencer l'inscription",
+    ctaPrimary: "Consulter le calendrier",
     ctaSecondary: "Voir le contact",
   },
   en: {
@@ -51,7 +51,7 @@ const translations = {
         icon: Users,
       },
     ],
-    ctaPrimary: 'Start registration',
+    ctaPrimary: 'View enrollment calendar',
     ctaSecondary: 'See contact',
   },
   ar: {
@@ -74,7 +74,7 @@ const translations = {
         icon: Users,
       },
     ],
-    ctaPrimary: 'ابدأ التسجيل',
+    ctaPrimary: 'عرض رزنامة التسجيل',
     ctaSecondary: 'عرض جهة الاتصال',
   },
 };
@@ -98,7 +98,7 @@ export default function ConversionSection({ lang = 'fr', isRTL = false }: Conver
             </p>
             <div className={cn('flex flex-col sm:flex-row gap-4', isRTL ? 'sm:justify-end' : '')}>
               <Link
-                to="/inscription"
+                to="/#inscriptions"
                 className="inline-flex items-center justify-center gap-2 rounded-3xl bg-gradient-to-r from-[#0f2863] via-[#162e74] to-[#1e3a8a] px-8 py-4 text-sm font-bold text-white shadow-2xl shadow-[#0f2863]/30 hover:scale-[1.02] transition-transform border border-blue-400/30"
               >
                 {t.ctaPrimary}

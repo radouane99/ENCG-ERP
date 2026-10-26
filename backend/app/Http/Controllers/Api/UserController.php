@@ -3,15 +3,42 @@
 namespace App\Http\Controllers\Api;
 
 use App\Actions\Auth\ManageUserAccessAction;
+use App\Actions\Auth\SecureUserAccountAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\SecureUserAccountRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
+use App\Services\TwoFactorAuthService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Spatie\Activitylog\Models\Activity;
 
 class UserController extends Controller
 {
     public function __construct(private ManageUserAccessAction $access) {}
+
+    public function securityHistory(Request $request, string $id)
+    {
+        abort_unless($request->user()->can('users.view') || $request->user()->can('users.manage'), 403);
+        $target = $this->resolve($request, $id);
+        $events = Activity::forSubject($target)->where('description', 'account_security_changed')->latest('id')->limit(20)->get();
+
+        return response()->json(['data' => $events->map(fn ($event) => ['id' => $event->id, 'created_at' => $event->created_at, 'actor_id' => $event->causer_id, 'details' => collect($event->properties)->only(['operation', 'reason', 'identity_verified', 'revoked_sessions'])])]);
+    }
+
+    public function security(SecureUserAccountRequest $request, string $id)
+    {
+        $target = $this->resolve($request, $id);
+        $this->access->assertManageable($request->user(), $target);
+        abort_unless(Hash::check($request->password, $request->user()->password), 422, 'Mot de passe actuel incorrect.');
+        if ($request->user()->two_factor_enabled) {
+            abort_unless(app(TwoFactorAuthService::class)->verify($request->user(), (string) $request->code), 422, 'Code 2FA invalide.');
+        }
+        $user = app(SecureUserAccountAction::class)->execute($request->user(), $target, $request->validated());
+
+        return response()->json(['message' => 'Mesure de sécurité appliquée ; sessions fermées.', 'data' => new UserResource($user)]);
+    }
 
     private function resolve(Request $request, string $id): User
     {
@@ -65,6 +92,9 @@ class UserController extends Controller
                 unset($data['password']);
             }
             $user->fill($data)->save();
+            if (isset($data['password']) || isset($data['email'])) {
+                $user->tokens()->delete();
+            }
             activity()->causedBy($request->user())->performedOn($user)->log('user_updated');
         });
 
@@ -77,7 +107,7 @@ class UserController extends Controller
         $user = $this->resolve($request, $id);
         $this->access->assertManageable($request->user(), $user);
         abort_if($user->id === $request->user()->id || $user->hasAnyRole(['super-admin', 'super_admin']), 422, 'Ce compte ne peut pas être supprimé.');
-        $user->update(['is_active' => false]);
+        $user->forceFill(['is_active' => false])->save();
         $user->tokens()->delete();
         activity()->causedBy($request->user())->performedOn($user)->log('user_disabled');
 

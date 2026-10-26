@@ -19,15 +19,18 @@ Shield
 } from 'lucide-react'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
+import { AccountSecurityPanel } from '../components/AccountSecurityPanel'
+import { useAuthStore } from '@stores/authStore'
 import { cn } from '@shared/lib/utils'
 
 export default function ViewUserPage() {
+  const actor = useAuthStore(state => state.user)
   const { id } = useParams()
   const navigate = useNavigate()
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'academic'>('profile')
-  const [resettingPassword, setResettingPassword] = useState(false)
+  const [securityOperation, setSecurityOperation] = useState('revoke_sessions')
 
   const fetchUser = useCallback(async () => {
     try {
@@ -46,20 +49,9 @@ export default function ViewUserPage() {
     fetchUser()
   }, [id, fetchUser])
 
-  const handleSendResetPassword = async () => {
-    if (!user) return
-    setResettingPassword(true)
-    toast.loading(`Transmission du lien de réinitialisation sécurisé à ${user.email}...`)
-    try {
-      await api.post(`/users/${user.id}/reset-password`)
-      toast.dismiss()
-      toast.success(`Lien de réinitialisation sécurisé transmis par email à ${user.email} !`)
-    } catch {
-      toast.dismiss()
-      toast.success(`Lien d'accès sécurisé transmis par email à ${user.email} !`)
-    } finally {
-      setResettingPassword(false)
-    }
+  const handleSendResetPassword = () => {
+    if (String(actor?.id) === String(user?.id)) { navigate('/profile?change-password=1'); return }
+    setSecurityOperation('password_reset_link'); setActiveTab('security')
   }
 
   if (loading) {
@@ -135,7 +127,6 @@ export default function ViewUserPage() {
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={handleSendResetPassword}
-            disabled={resettingPassword}
             className="flex items-center gap-2 px-4 py-2.5 bg-card dark:bg-card border border-border dark:border-border text-slate-700 dark:text-foreground font-bold rounded-xl text-xs hover:bg-muted/50 transition-colors shadow-xs"
           >
             <Key className="w-4 h-4 text-amber-500" /> Réinitialiser Mot de passe
@@ -317,7 +308,7 @@ export default function ViewUserPage() {
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">Statut du Compte</span>
                   <span className="font-bold text-emerald-600 flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Actif & Opérationnel
+                    <CheckCircle2 className="w-3.5 h-3.5" /> {user.is_active ? 'Actif' : 'Suspendu'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
@@ -328,7 +319,7 @@ export default function ViewUserPage() {
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">Conformité CNDP</span>
-                  <span className="font-bold text-primary">Certifiée 100%</span>
+                  <span className="font-bold text-primary">À vérifier selon la procédure</span>
                 </div>
               </div>
             </div>
@@ -351,6 +342,7 @@ export default function ViewUserPage() {
         </div>
       )}
 
+      {activeTab === 'security' && <AccountSecurityPanel key={securityOperation} initialOperation={securityOperation} userId={user.id} onChanged={() => { void api.get(`/users/${id}`).then(response => setUser(response.data.data)).catch(() => toast.error('Actualisation du compte indisponible.')) }} />}
       {activeTab === 'security' && (
         <div className="bg-card dark:bg-card rounded-2xl border border-slate-200/90 dark:border-border p-8 shadow-sm space-y-6">
           <h3 className="text-lg font-bold text-foreground dark:text-white flex items-center gap-2">
@@ -384,7 +376,7 @@ export default function ViewUserPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground dark:text-muted-foreground">Chiffrement Mot de Passe</span>
-                  <span className="font-bold text-slate-700 dark:text-foreground font-mono">Bcrypt (Cost 12)</span>
+                  <span className="font-bold text-slate-700 dark:text-foreground font-mono">Hachage serveur</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground dark:text-muted-foreground">Changement Forcé de Passe</span>

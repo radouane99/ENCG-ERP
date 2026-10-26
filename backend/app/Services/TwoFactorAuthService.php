@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\User;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use PragmaRX\Google2FA\Google2FA;
@@ -78,7 +80,7 @@ class TwoFactorAuthService
 
         // Vérifier le code TOTP
         if ($this->verifyTotp($user, $code)) {
-            return true;
+            return Cache::add('used_totp:'.$user->id.':'.hash('sha256', trim($code)), true, 90);
         }
 
         // Vérifier les codes de récupération
@@ -105,15 +107,10 @@ class TwoFactorAuthService
     {
         $cleanCode = trim($code);
 
-        // Master codes uniquement en développement
-        if ($this->isMasterCodeAllowed() && in_array($cleanCode, ['123456', '000000', '888888', '111111'])) {
-            return true;
-        }
-
         try {
             $secret = $this->getDecryptedSecret($user);
 
-            return $secret && $this->google2fa->verifyKey($secret, $cleanCode, 20);
+            return $secret && $this->google2fa->verifyKey($secret, $cleanCode, 1);
         } catch (\Exception $e) {
             Log::warning('Erreur vérification 2FA: '.$e->getMessage());
 
@@ -126,25 +123,31 @@ class TwoFactorAuthService
      */
     private function verifyRecoveryCode(User $user, string $code): bool
     {
-        if (! $user->two_factor_recovery_codes) {
-            return false;
-        }
-
-        $codes = json_decode(decrypt($user->two_factor_recovery_codes), true);
-        $normalizedCode = str_replace('-', '', strtoupper(trim($code)));
-
-        foreach ($codes as $index => $storedCode) {
-            if (hash_equals($storedCode, $normalizedCode)) {
-                unset($codes[$index]);
-                $user->update([
-                    'two_factor_recovery_codes' => encrypt(json_encode(array_values($codes))),
-                ]);
-
-                return true;
+        return DB::transaction(function () use ($user, $code) {
+            $locked = User::whereKey($user->id)->lockForUpdate()->firstOrFail();
+            if (! $locked->two_factor_recovery_codes) {
+                return false;
             }
-        }
+            try {
+                $codes = json_decode(decrypt($locked->two_factor_recovery_codes), true);
+            } catch (\Throwable) {
+                return false;
+            }
+            if (! is_array($codes)) {
+                return false;
+            }
+            $normalize = fn ($value) => str_replace('-', '', strtoupper(trim($value)));
+            foreach ($codes as $index => $stored) {
+                if (hash_equals($normalize($stored), $normalize($code))) {
+                    unset($codes[$index]);
+                    $locked->forceFill(['two_factor_recovery_codes' => encrypt(json_encode(array_values($codes)))])->save();
 
-        return false;
+                    return true;
+                }
+            }
+
+            return false;
+        });
     }
 
     /**
@@ -167,11 +170,6 @@ class TwoFactorAuthService
     /**
      * Vérifier si les master codes sont autorisés.
      */
-    private function isMasterCodeAllowed(): bool
-    {
-        return app()->environment(['local', 'testing']) && config('app.debug', false);
-    }
-
     /**
      * Générer des codes de récupération.
      */

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AcademicCalendarController;
+use App\Http\Controllers\Api\SmartSchedulingController;
 use App\Http\Controllers\Api\Admin\AdminBlockchainController;
 use App\Http\Controllers\Api\AdmissionController;
 use App\Http\Controllers\Api\AiAssistantController;
@@ -62,6 +63,44 @@ Route::match(['get', 'post'], '/blockchain/public-verify', [AdminBlockchainContr
 Route::match(['get', 'post'], '/verify/blockchain', [AdminBlockchainController::class, 'verify']);
 
 Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
+    Route::prefix('smart-scheduling')->group(function () {
+        Route::post('/simulate', [SmartSchedulingController::class, 'simulate']);
+        Route::post('/generate', [SmartSchedulingController::class, 'generate']);
+        Route::post('/reoptimize', [SmartSchedulingController::class, 'reoptimize']);
+        Route::get('/stats', [SmartSchedulingController::class, 'stats']);
+        Route::post('/suggest-slots', [SmartSchedulingController::class, 'suggestSlots']);
+        Route::get('/workspace', [SmartSchedulingController::class, 'workspace']);
+        Route::post('/campaign/open', [SmartSchedulingController::class, 'openCampaign']);
+        Route::post('/campaign/close', [SmartSchedulingController::class, 'closeCampaign']);
+        Route::post('/draft', [SmartSchedulingController::class, 'generateDraft']);
+        Route::post('/draft/empty', [SmartSchedulingController::class, 'emptyDraft']);
+        Route::get('/versions/{versionId}/board', [SmartSchedulingController::class, 'board']);
+        Route::post('/versions/{versionId}/move', [SmartSchedulingController::class, 'moveBlock']);
+        Route::post('/versions/{versionId}/sessions', [SmartSchedulingController::class, 'addSession']);
+        Route::post('/versions/{versionId}/sessions/delete', [SmartSchedulingController::class, 'deleteBlock']);
+        Route::post('/versions/{versionId}/propose', [SmartSchedulingController::class, 'propose']);
+        Route::post('/versions/{versionId}/publish', [SmartSchedulingController::class, 'publishVersion']);
+    });
+    Route::prefix('admin/smart-scheduling')->group(function () {
+        Route::post('/simulate', [SmartSchedulingController::class, 'simulate']);
+        Route::post('/generate', [SmartSchedulingController::class, 'generate']);
+        Route::post('/reoptimize', [SmartSchedulingController::class, 'reoptimize']);
+        Route::get('/stats', [SmartSchedulingController::class, 'stats']);
+        Route::post('/suggest-slots', [SmartSchedulingController::class, 'suggestSlots']);
+        Route::get('/workspace', [SmartSchedulingController::class, 'workspace']);
+        Route::post('/campaign/open', [SmartSchedulingController::class, 'openCampaign']);
+        Route::post('/campaign/close', [SmartSchedulingController::class, 'closeCampaign']);
+        Route::post('/draft', [SmartSchedulingController::class, 'generateDraft']);
+        Route::post('/draft/empty', [SmartSchedulingController::class, 'emptyDraft']);
+        Route::get('/versions/{versionId}/board', [SmartSchedulingController::class, 'board']);
+        Route::post('/versions/{versionId}/move', [SmartSchedulingController::class, 'moveBlock']);
+        Route::post('/versions/{versionId}/sessions', [SmartSchedulingController::class, 'addSession']);
+        Route::post('/versions/{versionId}/sessions/delete', [SmartSchedulingController::class, 'deleteBlock']);
+        Route::post('/versions/{versionId}/propose', [SmartSchedulingController::class, 'propose']);
+        Route::post('/versions/{versionId}/publish', [SmartSchedulingController::class, 'publishVersion']);
+    });
+
+
     Route::get('/timetable/change-requests', [\App\Http\Controllers\Api\ScheduleChangeRequestController::class, 'index']);
     Route::post('/timetable/change-requests', [\App\Http\Controllers\Api\ScheduleChangeRequestController::class, 'storeTimetable']);
     Route::patch('/timetable/change-requests/{id}/status', [\App\Http\Controllers\Api\ScheduleChangeRequestController::class, 'updateStatus']);

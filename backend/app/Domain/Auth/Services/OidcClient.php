@@ -6,6 +6,9 @@ namespace App\Domain\Auth\Services;
 
 use App\Domain\Auth\Dto\OidcIdentity;
 use App\Domain\Auth\Exceptions\SsoAuthenticationException;
+use Firebase\JWT\JWK;
+use Firebase\JWT\JWT;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
@@ -31,6 +34,7 @@ class OidcClient
                 'authorization_endpoint' => 'https://accounts.google.com/o/oauth2/v2/auth',
                 'token_endpoint' => 'https://oauth2.googleapis.com/token',
                 'userinfo_endpoint' => 'https://openidconnect.googleapis.com/v1/userinfo',
+                'jwks_uri' => 'https://www.googleapis.com/oauth2/v3/certs',
             ],
             'microsoft' => $this->microsoftEndpoints((string) ($config['tenant'] ?? 'organizations')),
             'oidc' => $this->discover((string) ($config['issuer'] ?? '')),
@@ -97,7 +101,31 @@ class OidcClient
 
         $idToken = (string) $response->json('id_token', '');
         $accessToken = (string) $response->json('access_token', '');
-        $claims = $this->decodeJwtPayload($idToken);
+        try {
+            $uri = $ep['jwks_uri'] ?? '';
+            if (parse_url($uri, PHP_URL_SCHEME) !== 'https') {
+                throw new \RuntimeException('JWKS HTTPS requis.');
+            }
+            $key = 'oidc_jwks_'.hash('sha256', $uri);
+            $keys = Cache::remember($key, 300, fn () => Http::acceptJson()->timeout(15)->get($uri)->throw()->json());
+            $claims = (array) JWT::decode($idToken, JWK::parseKeySet($keys, 'RS256'));
+        } catch (\Throwable) {
+            throw new SsoAuthenticationException('sso', 'Signature OIDC invalide.');
+        }
+        $issuer = $ep['issuer'];
+        if (str_contains($issuer, '{tenantid}')) {
+            $tenant = (string) ($claims['tid'] ?? '');
+            if (! preg_match('/^[a-f0-9-]{36}$/i', $tenant)) {
+                throw new SsoAuthenticationException('sso', 'Tenant invalide.');
+            }
+            $issuer = str_replace('{tenantid}', $tenant, $issuer);
+        }
+        if (($claims['iss'] ?? '') !== $issuer || ! isset($claims['aud'], $claims['exp'], $claims['sub'])) {
+            throw new SsoAuthenticationException('sso', 'Claims OIDC incomplets ou émetteur invalide.');
+        }
+        if (($provider === 'google' || array_key_exists('email_verified', $claims)) && ($claims['email_verified'] ?? false) !== true) {
+            throw new SsoAuthenticationException('sso', 'Adresse non vérifiée par le fournisseur.');
+        }
 
         if ($nonce !== '' && ($claims['nonce'] ?? null) !== $nonce) {
             throw new SsoAuthenticationException('sso', 'Nonce OIDC invalide.');
@@ -127,6 +155,9 @@ class OidcClient
 
             if ($userinfo->successful()) {
                 $info = $userinfo->json() ?? [];
+                if (($info['sub'] ?? null) !== $subject) {
+                    throw new SsoAuthenticationException('sso', 'Identités OIDC incohérentes.');
+                }
                 $email = $email !== '' ? $email : $this->claimEmail($info);
                 $subject = $subject !== '' ? $subject : (string) ($info['sub'] ?? '');
                 $name = $name ?? (isset($info['name']) ? (string) $info['name'] : null);
@@ -154,7 +185,7 @@ class OidcClient
         }
 
         $clientId = trim((string) ($config['client_id'] ?? ''));
-        if ($clientId === '') {
+        if ($clientId === '' || empty($config['client_secret']) || empty($config['redirect'])) {
             return false;
         }
 
@@ -185,12 +216,7 @@ class OidcClient
     {
         $tenant = $tenant !== '' ? $tenant : 'organizations';
 
-        return [
-            'issuer' => 'https://login.microsoftonline.com/'.$tenant.'/v2.0',
-            'authorization_endpoint' => 'https://login.microsoftonline.com/'.$tenant.'/oauth2/v2.0/authorize',
-            'token_endpoint' => 'https://login.microsoftonline.com/'.$tenant.'/oauth2/v2.0/token',
-            'userinfo_endpoint' => 'https://graph.microsoft.com/oidc/userinfo',
-        ];
+        return $this->discover('https://login.microsoftonline.com/'.rawurlencode($tenant).'/v2.0');
     }
 
     /**
@@ -199,7 +225,7 @@ class OidcClient
     private function discover(string $issuer): array
     {
         $issuer = rtrim($issuer, '/');
-        if ($issuer === '') {
+        if ($issuer === '' || parse_url($issuer, PHP_URL_SCHEME) !== 'https') {
             throw new SsoAuthenticationException('sso', 'Issuer OIDC manquant.');
         }
 
@@ -218,29 +244,19 @@ class OidcClient
         }
 
         $userinfo = $response->json('userinfo_endpoint');
+        foreach (array_filter([$authorization, $token, $response->json('jwks_uri'), $userinfo], fn ($url) => $url !== null) as $endpoint) {
+            if (! is_string($endpoint) || parse_url($endpoint, PHP_URL_SCHEME) !== 'https') {
+                throw new SsoAuthenticationException('sso', 'Endpoints HTTPS requis.');
+            }
+        }
 
         return [
             'issuer' => (string) $response->json('issuer', $issuer),
             'authorization_endpoint' => $authorization,
             'token_endpoint' => $token,
             'userinfo_endpoint' => is_string($userinfo) && $userinfo !== '' ? $userinfo : null,
+            'jwks_uri' => $response->json('jwks_uri'),
         ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function decodeJwtPayload(string $jwt): array
-    {
-        $parts = explode('.', $jwt);
-        if (count($parts) < 2) {
-            return [];
-        }
-
-        $payload = $this->base64UrlDecode($parts[1]);
-        $decoded = json_decode($payload, true);
-
-        return is_array($decoded) ? $decoded : [];
     }
 
     /**
@@ -261,18 +277,5 @@ class OidcClient
     private function base64Url(string $raw): string
     {
         return rtrim(strtr(base64_encode($raw), '+/', '-_'), '=');
-    }
-
-    private function base64UrlDecode(string $value): string
-    {
-        $padded = strtr($value, '-_', '+/');
-        $remainder = strlen($padded) % 4;
-        if ($remainder > 0) {
-            $padded .= str_repeat('=', 4 - $remainder);
-        }
-
-        $decoded = base64_decode($padded, true);
-
-        return is_string($decoded) ? $decoded : '';
     }
 }

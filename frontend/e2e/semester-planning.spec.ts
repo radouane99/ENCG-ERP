@@ -13,6 +13,15 @@ async function planning(page: Page) {
 }
 test.describe('Préparation du semestre', () => {
   test.skip(!process.env.E2E_ROLE_AUDIT, 'Données synthétiques uniquement')
+  for (const role of ['scolarite', 'department-head']) test(`accès aux demandes pour le rôle ${role}`, async ({ page }) => {
+    await mockApi(page); await seedSession(page, 'admin')
+    await page.route(url => url.pathname.endsWith('/auth/me'), route => route.fulfill(json({ success: true, data: { id: 5, name: 'Agent de test', institution_id: 1, roles: [role], permissions: [], locale: 'fr' } })))
+    await page.route(url => url.pathname === '/api/timetable/change-requests', route => route.fulfill(json({ data: [] })))
+    await page.goto('/admin/schedule-change-requests')
+    await expect(page.getByText('Agent de test', { exact: true }).first()).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Changements Emploi du Temps', exact: true })).toBeVisible()
+    await expect(page).toHaveURL(/\/admin\/schedule-change-requests$/)
+  })
   test('publication directe du brouillon sans étape de confirmation enseignant', async ({ page }) => {
     await planning(page)
     let published = false; let proposals = 0

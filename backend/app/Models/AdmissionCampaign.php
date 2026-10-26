@@ -26,6 +26,22 @@ class AdmissionCampaign extends Model
         ];
     }
 
+    public function registrationState(): string
+    {
+        if ($this->status !== 'open') {
+            return $this->status === 'draft' ? 'draft' : 'closed';
+        }
+        $today = now(config('admissions.timezone', 'Africa/Casablanca'))->toDateString();
+        if (! $this->open_date || ! $this->close_date) {
+            return 'closed';
+        }
+        if ($today < $this->open_date->toDateString()) {
+            return 'upcoming';
+        }
+
+        return $today <= $this->close_date->toDateString() ? 'open' : 'closed';
+    }
+
     public function institution(): BelongsTo
     {
         return $this->belongsTo(Institution::class);

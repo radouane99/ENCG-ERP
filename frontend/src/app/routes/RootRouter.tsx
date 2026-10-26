@@ -212,6 +212,9 @@ function RequireAuth({ children }: { children: ReactNode }) {
   if (user?.must_change_password && location.pathname !== '/profile') {
     return <Navigate to="/profile?change-password=1" replace />
   }
+  if (user?.two_factor_required && !user.two_factor_enabled && location.pathname !== '/profile') {
+    return <Navigate to="/profile?setup-2fa=1" replace />
+  }
   return <>{children}</>
 }
 
@@ -470,7 +473,7 @@ export default function RootRouter() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/admin/document-registry" element={<ProtectedRoute roles={[...ADMIN_ROLES, 'scolarite']}><DocumentRegistryPage /></ProtectedRoute>} />
-          <Route path="/admin/schedule-change-requests" element={<ProtectedRoute roles={[...ADMIN_ROLES, 'scolarite']}><AdminScheduleChangeRequestsPage /></ProtectedRoute>} />
+          <Route path="/admin/schedule-change-requests" element={<ProtectedRoute roles={[...ACADEMIC_ROLES, 'scolarite']}><AdminScheduleChangeRequestsPage /></ProtectedRoute>} />
           <Route element={<ProtectedRoute roles={ADMIN_ROLES} />}>
             <Route path="/settings" element={<SettingsPage />} />
           </Route>

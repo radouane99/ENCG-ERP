@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\AuthCookie;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -11,6 +12,11 @@ class EnsurePasswordChanged
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
+        if ($user && ! $user->is_active) {
+            $user->tokens()->delete();
+
+            return response()->json(['message' => 'Session indisponible. Veuillez vous reconnecter.'], 401)->withCookie(AuthCookie::forget());
+        }
 
         if ($user && ($user->must_change_password ?? false)) {
             $allowed = $request->is(
@@ -24,6 +30,12 @@ class EnsurePasswordChanged
                     'message' => 'Vous devez changer votre mot de passe avant de continuer.',
                     'must_change_password' => true,
                 ], 403);
+            }
+        }
+
+        if ($user && $user->two_factor_required && (! $user->two_factor_enabled || ! $user->two_factor_confirmed_at)) {
+            if (! $request->is('api/v1/auth/me', 'api/v1/auth/logout', 'api/v1/auth/change-password', 'api/v1/auth/two-factor/setup', 'api/v1/auth/two-factor/confirm')) {
+                return response()->json(['message' => 'Configurez la double authentification dans votre profil.', 'requires_2fa_setup' => true], 403);
             }
         }
 

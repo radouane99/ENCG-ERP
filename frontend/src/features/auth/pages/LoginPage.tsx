@@ -74,7 +74,7 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginForm) => {
     try {
-      const result = await login(data.email, data.password)
+      const result = await login(data.email, data.password, data.remember)
       if (result.requiresTwoFactor) {
         navigate('/two-factor', { state: location.state })
       } else {
@@ -107,7 +107,7 @@ export default function LoginPage() {
         </p>
       </div>
 
-      {import.meta.env.DEV && (
+      {import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_LOGIN === 'true' && (
       <div className="p-3 bg-muted/50 dark:bg-muted/30 border border-border/70 rounded-2xl space-y-2">
         <div className="flex items-center justify-between text-[10px] font-bold uppercase text-muted-foreground tracking-wider">
           <span className="flex items-center gap-1"><Sparkles className="w-3 h-3 text-amber-500" /> {isAr ? 'حسابات التجربة السريعة' : 'Comptes Démo Rapides'}</span>

@@ -12,7 +12,7 @@ describe('ConversionSection', () => {
     );
 
     expect(screen.getByText(/Prêt à transformer l'expérience éducative/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Commencer l'inscription/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Consulter le calendrier/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Voir le contact/i })).toBeInTheDocument();
   });
 });

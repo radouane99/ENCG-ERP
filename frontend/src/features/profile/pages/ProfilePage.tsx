@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '@stores/authStore';
 import { useQuery } from '@tanstack/react-query';
-import { Camera, Loader2, ShieldCheck, User, KeyRound, Lock, GraduationCap, Mail, Phone, Copy, Check, CheckCircle2, FileText, Shield, Building2, Info, Eye, EyeOff, Laptop, Smartphone, ShieldAlert, LogOut, Briefcase, CheckCircle, XCircle } from 'lucide-react';
+import { Camera, Loader2, ShieldCheck, User, KeyRound, Lock, GraduationCap, Mail, Phone, Copy, Check, CheckCircle2, FileText, Shield, Building2, Info, Eye, EyeOff, Laptop, ShieldAlert, Briefcase, CheckCircle, XCircle } from 'lucide-react';
 import api from '@shared/lib/api'
 import { cn } from '@shared/lib/utils';
 import { QRCodeSVG } from 'qrcode.react';
 import { toast } from 'sonner';
+import { SessionManager } from '../components/SessionManager';
 import { DsarPanel } from '../components/DsarPanel';
 
 export default function ProfilePage() {
   const { user, updateUser } = useAuthStore();
 
-  const [activeTab, setActiveTab] = useState<'general' | 'security' | '2fa' | 'cndp' | 'sessions'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'security' | '2fa' | 'cndp' | 'sessions'>(user?.must_change_password ? 'security' : user?.two_factor_required && !user.two_factor_enabled ? '2fa' : 'general');
 
   const [isLoading, setIsLoading] = useState(false);
   const [, setSuccessMessage] = useState('');
@@ -43,6 +44,8 @@ const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar_p
 
   // 2FA state
   // 2FA state
+const [securityPassword, setSecurityPassword] = useState('');
+  const [disableCode, setDisableCode] = useState('');
 const [setupData, setSetupData] = useState<any>(null);
   const [totpCode, setTotpCode] = useState('');
   const [isSettingUp2FA, setIsSettingUp2FA] = useState(false);
@@ -196,8 +199,9 @@ const { data: studentDossier } = useQuery({
   const handleSetup2FA = async () => {
     setIsSettingUp2FA(true)
     try {
-      const res = await api.post('/v1/auth/two-factor/setup')
+      const res = await api.post('/v1/auth/two-factor/setup', { password: securityPassword })
       setSetupData(res.data)
+      setSecurityPassword('')
       toast.info('Scannez le QR Code avec votre application d\'authentification (Google Authenticator, Microsoft Authenticator ou Authy).')
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Erreur lors de la configuration 2FA.')
@@ -224,11 +228,10 @@ const { data: studentDossier } = useQuery({
   }
 
   const handleDisable2FA = async () => {
-    const password = prompt('Veuillez entrer votre mot de passe pour désactiver la double authentification :')
-    if (!password) return
-    
+    if (!securityPassword || !disableCode) return
     try {
-      const res = await api.delete('/v1/auth/two-factor/disable', { data: { password } })
+      const res = await api.delete('/v1/auth/two-factor/disable', { data: { password: securityPassword, code: disableCode } })
+      setSecurityPassword(''); setDisableCode('')
       toast.success(res.data.message || 'Double authentification désactivée.')
       const meRes = await api.get('/v1/auth/me')
       updateUser(meRes.data.data)
@@ -967,13 +970,16 @@ const { data: studentDossier } = useQuery({
                 </div>
               </div>
 
-              <div className="pt-2 flex flex-wrap items-center gap-3">
+              <div className="space-y-3">
+                <label className="block text-sm">Mot de passe actuel<input type="password" autoComplete="current-password" value={securityPassword} onChange={e => setSecurityPassword(e.target.value)} className="block w-full max-w-md rounded-xl border border-input bg-background p-3" /></label>
+                <label className="block text-sm">Code 2FA ou de récupération<input value={disableCode} maxLength={32} autoComplete="one-time-code" onChange={e => setDisableCode(e.target.value)} className="block w-full max-w-md rounded-xl border border-input bg-background p-3" /></label>
                 <button
                   type="button"
                   onClick={handleDisable2FA}
+                  disabled={user.two_factor_required}
                   className="px-4 py-2.5 bg-card text-red-600 font-bold rounded-xl text-xs border border-red-200 hover:bg-red-50 transition-colors shadow-xs cursor-pointer"
                 >
-                  Désactiver la Double Authentification
+                  {user.two_factor_required ? '2FA obligatoire pour ce compte' : 'Désactiver la Double Authentification'}
                 </button>
               </div>
             </div>
@@ -988,9 +994,10 @@ const { data: studentDossier } = useQuery({
                     </p>
                   </div>
 
+                  <label className="block text-sm">Confirmez votre mot de passe<input type="password" autoComplete="current-password" value={securityPassword} onChange={e => setSecurityPassword(e.target.value)} className="block w-full max-w-md rounded-xl border border-input bg-background p-3" /></label>
                   <button
                     type="button"
-                    disabled={isSettingUp2FA}
+                    disabled={isSettingUp2FA || !securityPassword}
                     onClick={handleSetup2FA}
                     className="inline-flex items-center gap-2 px-6 py-3 bg-[#002e5b] hover:bg-[#0a356c] text-white text-xs font-bold rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 cursor-pointer"
                   >
@@ -1031,6 +1038,12 @@ const { data: studentDossier } = useQuery({
                     </div>
                   </div>
 
+                  <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                    <h4 className="font-semibold">Codes de récupération à conserver</h4>
+                    <p className="text-sm text-muted-foreground">Chaque code fonctionne une seule fois si vous perdez votre téléphone. Conservez-les en lieu sûr avant de terminer.</p>
+                    <pre className="select-all whitespace-pre-wrap font-mono text-sm">{setupData.recovery_codes?.join('\n')}</pre>
+                    <button type="button" className="text-sm underline" onClick={() => navigator.clipboard.writeText(setupData.recovery_codes.join('\n')).then(() => toast.success('Codes copiés.')).catch(() => toast.error('Copie indisponible. Sélectionnez les codes manuellement.'))}>Copier les codes</button>
+                  </div>
                   <div className="pt-4 border-t border-border">
                     <h4 className="text-sm font-bold text-foreground mb-1">2. Saisissez le code à 6 chiffres</h4>
                     <p className="text-xs text-muted-foreground mb-3">
@@ -1071,90 +1084,7 @@ const { data: studentDossier } = useQuery({
       )}
 
       {/* ── TAB 5: SESSIONS & SÉCURITÉ DU COMPTE ── */}
-      {activeTab === 'sessions' && (
-        <div className="bg-card border border-slate-200/80 rounded-2xl shadow-sm p-6 md:p-10 space-y-6 max-w-4xl animate-in fade-in duration-200">
-          <div className="border-b border-border pb-4">
-            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-              <Laptop className="w-5 h-5 text-[#002e5b]" />
-              Sessions Actives & Sécurité du Compte
-            </h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Consultez les appareils et navigateurs connectés à votre compte ENCG Fès.
-            </p>
-          </div>
-
-          {/* Active Sessions List */}
-          <div className="space-y-4">
-            <div className="p-4 rounded-2xl border border-emerald-200 bg-emerald-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center">
-                  <Laptop className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-foreground">Navigateur Web Actuel (Session Active)</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                      Cet appareil
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Fès, Maroc • IP : 196.200.xxx.xxx • Chiffrement TLS 1.3
-                  </p>
-                </div>
-              </div>
-
-              <span className="text-xs font-bold text-emerald-700 bg-card px-3 py-1.5 rounded-xl border border-emerald-200">
-                En ligne maintenant
-              </span>
-            </div>
-
-            <div className="p-4 rounded-2xl border border-border bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-muted text-muted-foreground flex items-center justify-center">
-                  <Smartphone className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-sm font-bold text-foreground">Application Mobile ENCG / PWA</span>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Dernière synchronisation il y a 2 heures
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => toast.success('Session mobile révoquée.')}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
-              >
-                Déconnecter
-              </button>
-            </div>
-          </div>
-
-          <div className="pt-2">
-            <button
-              type="button"
-              onClick={() => toast.success('Toutes les autres sessions distantes ont été révoquées avec succès.')}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-muted/50 text-xs font-bold transition-colors cursor-pointer"
-            >
-              <LogOut className="w-4 h-4" />
-              Déconnecter toutes les autres sessions
-            </button>
-          </div>
-
-          {/* Regulatory Notice */}
-          <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 leading-relaxed space-y-2">
-            <p className="font-bold flex items-center gap-1.5">
-              <Info className="w-4 h-4 text-amber-600" />
-              Conservation des dossiers d'État (Loi 01-00 & CNDP) :
-            </p>
-            <p>
-              Conformément à la réglementation de l'Enseignement Supérieur au Maroc, 
-              les historiques académiques, procès-verbaux de notes et états de scolarité doivent être impérativement conservés par l'établissement pour la validité légale des diplômes d'État.
-            </p>
-          </div>
-        </div>
-      )}
+      {activeTab === 'sessions' && <SessionManager />}
 
     </div>
   )
