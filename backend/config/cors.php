@@ -1,9 +1,11 @@
 <?php
 
-$allowedOrigins = array_values(array_filter(array_map(
-    static fn (string $origin): string => trim($origin),
-    explode(',', (string) env('CORS_ALLOWED_ORIGINS', env('FRONTEND_URL', 'http://localhost:5173')))
-)));
+$defaultOrigins = 'https://erp.irsale.fr,http://localhost:5173,http://localhost';
+$rawOrigins = env('CORS_ALLOWED_ORIGINS', env('FRONTEND_URL', $defaultOrigins));
+$allowedOrigins = array_values(array_unique(array_filter(array_merge(
+    ['https://erp.irsale.fr'],
+    array_map(static fn (string $origin): string => trim($origin), explode(',', (string) $rawOrigins))
+))));
 
 return [
     'paths' => ['api/*', 'sanctum/csrf-cookie'],
