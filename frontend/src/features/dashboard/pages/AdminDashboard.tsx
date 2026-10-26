@@ -1,4 +1,5 @@
 import { AcademicIntegrityPanel } from '../../admin/components/AcademicIntegrityPanel';
+import OperationalWorkspace from '../components/OperationalWorkspace';
 import React,{ useState } from 'react';
 import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api';
@@ -185,7 +186,6 @@ export default function AdminDashboard() {
 
   const studentsCount = statsData?.activeStudentsCount ?? statsData?.studentsCount ?? 72;
   const pendingStudentsCount = statsData?.pendingStudentsCount ?? 2;
-  const totalStudentsCount = statsData?.totalStudentsCount ?? 74;
   const professorsCount = statsData?.professorsCount ?? 0;
   const permanentsCount = statsData?.permanentsCount ?? 0;
   const vacatairesCount = statsData?.vacatairesCount ?? 0;
@@ -209,7 +209,6 @@ export default function AdminDashboard() {
       isRTL && "font-serif"
     )}>
       <div className="w-full space-y-5">
-        <AcademicIntegrityPanel />
 
         {/* ══════════════════════════════════════════════════════════════
             HERO HEADER — Premium Dark Glassmorphism
@@ -440,6 +439,12 @@ export default function AdminDashboard() {
             badgeColor="bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-300"
           />
         </div>
+
+        {/* ══════════════════════════════════════════════════════════════
+            OPERATIONAL WORKSPACE & ACADEMIC INTEGRITY
+        ══════════════════════════════════════════════════════════════ */}
+        <AcademicIntegrityPanel />
+        <OperationalWorkspace />
 
         {/* ══════════════════════════════════════════════════════════════
             AI COPILOT BANNER — Premium Neural Style
