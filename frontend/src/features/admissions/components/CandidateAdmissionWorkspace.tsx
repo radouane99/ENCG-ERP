@@ -1,3 +1,5 @@
+import CnieUploadFields from './CnieUploadFields'
+import { useAdmissionOcrPolling } from '../hooks/useAdmissionOcrPolling'
 import CandidateProfileFields from './CandidateProfileFields'
 import AdmissionAdministrativeSummary from './AdmissionAdministrativeSummary'
 import candidateArabic from '../model/candidateArabic.json'
@@ -42,7 +44,7 @@ const getDocIcon = (type: string) => {
       return FileText
   }
 }
-const eventLabels: Record<string, string> = { draft_saved: 'Brouillon enregistré', document_uploaded: 'Document ajouté', document_withdrawn: 'Document retiré', submitted: 'Dossier soumis', activated: 'Accès activé', needs_correction: 'Correction demandée', approved: 'Inscription validée', rejected: 'Décision enregistrée', document_reviewed: 'Document examiné', appointment_reserved: 'Rendez-vous réservé', checked_in: 'Entrée enregistrée', ocr_consented: 'Extraction demandée', ministry_imported: 'Liste officielle importée', waiting_invited: 'Invitation depuis la liste d’attente' }
+const eventLabels: Record<string, string> = { draft_saved: 'Brouillon enregistré', document_uploaded: 'Document ajouté', document_withdrawn: 'Document retiré', submitted: 'Dossier soumis', activated: 'Accès activé', needs_correction: 'Correction demandée', approved: 'Inscription validée', rejected: 'Décision enregistrée', document_reviewed: 'Document examiné', appointment_reserved: 'Rendez-vous réservé', checked_in: 'Entrée enregistrée', ocr_queued_automatically: 'Extraction automatique lancée', ocr_consented: 'Extraction demandée', ministry_imported: 'Liste officielle importée', waiting_invited: 'Invitation depuis la liste d’attente' }
 
 export default function CandidateAdmissionWorkspace() {
   const { i18n } = useTranslation()
@@ -57,30 +59,34 @@ export default function CandidateAdmissionWorkspace() {
   const [dirty, setDirty] = useState(false)
   const [busy, setBusy] = useState<string | null>(null)
   const [error, setError] = useState('')
-  const [consent, setConsent] = useState(true)
-  const [mode, setMode] = useState<'local' | 'cloud'>('local')
   const [run, setRun] = useState<OcrRun | null>(null)
   const [prefillNotice, setPrefillNotice] = useState('')
-  const appliedRun = useRef<string | null>(null)
+  const appliedRuns = useRef(new Set<string>())
   const [imagePreparation, setImagePreparation] = useState<{ type: DocumentType; file: File } | null>(null)
   const [slots, setSlots] = useState<{ id: number; starts_at: string; desk: string; capacity: number; reserved: number }[]>([])
   const initialId = useRef<number | null>(null)
   const mounted = useRef(true)
   const campaignId = app?.campaign.id
   useEffect(() => { if (app?.id) void cache.invalidateQueries({ queryKey: ['admission-operations', app.id] }) }, [app?.id, app?.version, cache])
+  useAdmissionOcrPolling(app, run, setRun)
   useEffect(() => {
-    if (!run || !app || !['needs_review', 'succeeded'].includes(run.status) || !['draft', 'needs_correction'].includes(app.dossier_status)) return
-    if (appliedRun.current === run.id || !Object.values(app.documents).some(doc => doc?.id === run.document_id)) return
-    appliedRun.current = run.id
-    void cache.invalidateQueries({ queryKey: ['admission-operations', app.id] })
-    const proposed = ocrPrefill(run, form, false)
-    if (Object.keys(proposed).length) {
-      setForm(previous => ({ ...previous, ...proposed }));
-      setDirty(true);
-      setPrefillNotice(ar ? `تم استخراج ${Object.keys(proposed).length} معلومة بالذكاء الاصطناعي وملؤها في الملف.` : `${Object.keys(proposed).length} champ(s) prérempli(s). Vérifiez les informations proposées.`);
-      toast.success(ar ? `تم استخراج ${Object.keys(proposed).length} معلومة تلقائياً بالذكاء الاصطناعي!` : `${Object.keys(proposed).length} information(s) extraite(s) automatiquement par IA !`);
+    if (!app || !['draft', 'needs_correction'].includes(app.dossier_status)) return
+    const available = new Map((app.ocr_runs ?? []).map(item => [item.id, item]))
+    if (run) available.set(run.id, run)
+    const currentDocuments = new Set(Object.values(app.documents).map(doc => doc?.id))
+    let next = form; let count = 0
+    for (const result of available.values()) {
+      if (!['needs_review', 'succeeded'].includes(result.status) || appliedRuns.current.has(result.id) || !currentDocuments.has(result.document_id)) continue
+      appliedRuns.current.add(result.id)
+      const proposed = ocrPrefill(result, next, false)
+      count += Object.keys(proposed).length
+      next = { ...next, ...proposed }
     }
-  }, [run, app, form, cache, ar])
+    if (count) {
+      setForm(next); setDirty(true)
+      setPrefillNotice(ar ? `تم ملء ${count} خانة تلقائياً. راجع المعلومات المقروءة.` : `${count} champ(s) prérempli(s). Vérifiez les informations proposées.`)
+    }
+  }, [run, app, form, ar])
   useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
   useEffect(() => {
     if (app && (initialId.current !== app.id || !dirty)) {
@@ -88,8 +94,6 @@ export default function CandidateAdmissionWorkspace() {
       initialId.current = app.id;
       let initialForm: Record<string, string | number | boolean | null> = {
         country: 'Maroc',
-        nationality: 'Marocaine',
-        nationality_ar: 'مغربية',
         ...app.profile,
         first_name: app.profile.first_name || app.first_name,
         last_name: app.profile.last_name || app.last_name,
@@ -100,7 +104,7 @@ export default function CandidateAdmissionWorkspace() {
 
       if (app.ocr_runs && app.ocr_runs.length) {
         for (const ocr of [...app.ocr_runs].reverse()) {
-          if (['needs_review', 'succeeded'].includes(ocr.status)) {
+          if (['needs_review', 'succeeded'].includes(ocr.status) && Object.values(app.documents).some(doc => doc?.id === ocr.document_id)) {
             const extracted = ocrPrefill(ocr, initialForm, false);
             initialForm = { ...initialForm, ...extracted };
           }
@@ -122,12 +126,6 @@ export default function CandidateAdmissionWorkspace() {
     api.get(`${workflowBase}/slots`, { params: { campaign_id: campaignId }, signal: controller.signal }).then(r => setSlots(r.data.data)).catch(() => {})
     return () => controller.abort()
   }, [campaignId])
-  useEffect(() => {
-    if (!run || !['queued', 'processing'].includes(run.status)) return
-    const controller = new AbortController()
-    const timer = window.setTimeout(() => api.get<OcrRun>(`${workflowBase}/ocr/${run.id}`, { signal: controller.signal }).then(r => setRun(r.data)).catch(e => { if (!controller.signal.aborted) setError(errorMessage(e)) }), 1800)
-    return () => { clearTimeout(timer); controller.abort() }
-  }, [run])
   const update = useCallback((next: AdmissionDossier) => { cache.setQueryData(['admission-dossier', 'mine'], next) }, [cache])
   const draft = useAdmissionDraftAutosave(app, form, dirty, setDirty, !!busy || !!reviewDossier, update)
   const saveNow = draft.save
@@ -139,21 +137,16 @@ export default function CandidateAdmissionWorkspace() {
     setBusy(label); setError('')
     try { await action() } catch (e) { setError(errorMessage(e)) } finally { if (mounted.current) setBusy(null) }
   }
-  const upload = (type: DocumentType, file?: File) => {
+  const upload = (type: DocumentType, file?: File, verso?: File) => {
     if (!file || !app) return
     void perform(type, async () => {
       if (file.size > 10 * 1024 * 1024) throw new Error('Le fichier dépasse 10 Mo.')
       const data = new FormData()
-      data.append('application_id', String(app.id)); data.append('version', String(app.version)); data.append('type', type); data.append('file', file)
+      data.append('application_id', String(app.id)); data.append('version', String(app.version)); data.append('type', type); data.append('file', file); if (verso) data.append('file_verso', verso)
       const r = await api.post<{ candidate: AdmissionDossier; document: { id: number } }>(`${workflowBase}/documents`, data)
       update(r.data.candidate); toast.success('Document enregistré.')
-      if (type !== 'photo') {
-        try {
-          toast.info(ar ? 'جاري استخراج البيانات بالذكاء الاصطناعي...' : 'Extraction IA des informations en cours...')
-          const extraction = await api.post<OcrRun>(`${workflowBase}/ocr`, { application_id: app.id, document_id: r.data.document.id, mode, consent: true, consent_version: 'admissions-v1' })
-          setRun({ ...extraction.data, document_id: r.data.document.id, fields: extraction.data.fields ?? {}, warnings: extraction.data.warnings ?? [] })
-        } catch (e) { setError(`Le document est enregistré. Extraction : ${errorMessage(e)}`) }
-      }
+      const automatic = r.data.candidate.ocr_runs?.find(item => item.document_id === r.data.document.id)
+      if (automatic) setRun(automatic)
     })
   }
   if (query.isLoading) return <div className="p-10" role="status"><Loader2 className="animate-spin" /> Chargement du dossier…</div>
@@ -342,28 +335,7 @@ export default function CandidateAdmissionWorkspace() {
                   <BrainCircuit className="h-4 w-4" />
                 </div>
                 <div className="flex-1">
-                  <label className="flex cursor-pointer items-start gap-2.5">
-                    <input
-                      type="checkbox"
-                      checked={consent}
-                      onChange={e => setConsent(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 rounded-md border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                    <span className="text-xs font-medium text-slate-700 dark:text-slate-300 leading-snug">
-                      {tr("Préremplir les champs vides automatiquement après chaque dépôt par OCR intelligent.")}
-                    </span>
-                  </label>
-                  <div className="mt-3 flex items-center gap-2 text-xs text-slate-500">
-                    <span className="shrink-0 font-medium">{tr("Mode de traitement")}:</span>
-                    <select
-                      className="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-800 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                      value={mode}
-                      onChange={e => { setMode(e.target.value as 'local' | 'cloud'); setConsent(false) }}
-                    >
-                      <option value="local">{tr("Local · document conservé sur le serveur")}</option>
-                      {app.cloud_available && <option value="cloud">{tr("IA cloud · reconnaissance avancée")}</option>}
-                    </select>
-                  </div>
+                  <p className="text-xs font-medium text-slate-700 dark:text-slate-300 leading-snug">{ar ? 'تبدأ قراءة الوثائق تلقائياً بعد رفعها، وتُملأ الخانات الفارغة. راجع المعلومات قبل إرسال الملف.' : 'Les documents sont lus automatiquement dès leur dépôt. Les champs vides sont préremplis ; vérifiez les informations avant l’envoi.'}</p>
                 </div>
               </div>
             </div>
@@ -443,7 +415,7 @@ export default function CandidateAdmissionWorkspace() {
                         </span>
                       ) : (
                         <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                          {tr("Requis")}
+                          {requiredDocuments.includes(type) ? tr('Requis') : (ar ? 'اختياري' : 'Facultatif')}
                         </span>
                       )}
                     </div>
@@ -461,17 +433,17 @@ export default function CandidateAdmissionWorkspace() {
                         <Eye size={13} />
                         {tr("Voir le document")}
                       </a>
-                      {editable && type !== 'photo' && (
+                      {editable && type !== 'photo' && app.ocr_runs?.some(item => item.document_id === doc.id && item.status === 'failed') && (
                         <button
-                          disabled={!!busy || draft.saving || !consent || ['queued', 'processing'].includes(run?.status ?? '')}
+                          disabled={!!busy || draft.saving || ['queued', 'processing'].includes(run?.status ?? '')}
                           className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-2.5 py-1.5 font-semibold text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/60 transition-colors disabled:opacity-50 cursor-pointer"
                           onClick={() => void perform('ocr', async () => {
-                            const r = await api.post<OcrRun>(`${workflowBase}/ocr`, { application_id: app.id, document_id: doc.id, mode, consent, consent_version: 'admissions-v1' });
+                            const r = await api.post<OcrRun>(`${workflowBase}/ocr`, { application_id: app.id, document_id: doc.id, mode: app.cloud_available ? 'cloud' : 'local', consent: true, consent_version: 'admissions-v1' });
                             setRun({ ...r.data, document_id: doc.id, fields: {}, warnings: [] })
                           })}
                         >
                           <Sparkles size={13} />
-                          {tr("Proposer les champs")}
+                          {ar ? 'إعادة المحاولة' : 'Réessayer l’extraction'}
                         </button>
                       )}
                       {editable && !(app.dossier_status === 'needs_correction' && isVerified) && (
@@ -491,7 +463,8 @@ export default function CandidateAdmissionWorkspace() {
                   )}
 
                   {/* File Upload Trigger */}
-                  {editable && !(app.dossier_status === 'needs_correction' && isVerified) && (
+                  {editable && type === 'cnie' && !(app.dossier_status === 'needs_correction' && isVerified) && <CnieUploadFields disabled={!!busy || draft.saving} ar={ar} onUpload={(front, back) => upload(type, front, back)} />}
+                  {editable && type !== 'cnie' && !(app.dossier_status === 'needs_correction' && isVerified) && (
                     <div className="mt-3">
                       <label className="block text-xs font-medium text-slate-600 dark:text-slate-400">
                         {doc ? tr("Remplacer par une nouvelle version") : tr("Ajouter le document")}
@@ -499,7 +472,7 @@ export default function CandidateAdmissionWorkspace() {
                           aria-label={`${doc ? 'Remplacer' : 'Ajouter'} ${docLabels[type]}`}
                           type="file"
                           accept={type === 'photo' ? 'image/jpeg,image/png,image/webp' : '.pdf,image/jpeg,image/png,image/webp'}
-                          disabled={!!busy || draft.saving || ['queued', 'processing'].includes(run?.status ?? '')}
+                          disabled={!!busy || draft.saving}
                           capture={type === 'photo' ? 'user' : undefined}
                           className="mt-1.5 block w-full text-xs text-slate-500 file:me-3 file:rounded-xl file:border-0 file:bg-slate-100 file:px-3.5 file:py-2 file:text-xs file:font-semibold file:text-slate-700 hover:file:bg-slate-200 dark:file:bg-slate-800 dark:file:text-slate-200 cursor-pointer"
                           onChange={e => {
@@ -611,15 +584,7 @@ export default function CandidateAdmissionWorkspace() {
           <div className="mt-4 flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
             <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
             <span>Traitement en cours. Vous pouvez continuer à saisir les champs.</span>
-            <button
-              className="ms-auto text-xs text-slate-500 underline hover:text-slate-800 cursor-pointer"
-              onClick={() => void perform('cancel', async () => {
-                await api.delete(`${workflowBase}/ocr/${run.id}`, { data: { application_id: app.id } });
-                setRun({ ...run, status: 'cancelled' })
-              })}
-            >
-              {tr("Annuler")}
-            </button>
+
           </div>
         ) : (
           <>

@@ -13,6 +13,7 @@ use App\Models\StudentPathway;
 use App\Models\StudentRegistration;
 use App\Models\User;
 use App\Services\Admissions\AdmissionNotificationService;
+use App\Services\Admissions\CnieDocumentComposer;
 use App\Support\AdmissionAccess;
 use App\Support\AdmissionDeskAccess;
 use Illuminate\Http\Request;
@@ -106,6 +107,9 @@ class ManageDossierAction
         $file = $request->file('file');
         $mime = $file->getMimeType();
         $verso = $request->file('file_verso');
+        if ($type === 'cnie' && str_starts_with($mime, 'image/') && ! $verso) {
+            throw ValidationException::withMessages(['file_verso' => 'Ajoutez le verso de la CNIE ou un PDF contenant les deux faces.']);
+        }
         if ($verso) {
             abort_unless($type === 'cnie' && str_starts_with($mime, 'image/'), 422, 'Les deux faces sont réservées aux images CNIE.');
         }
@@ -118,9 +122,9 @@ class ManageDossierAction
                 throw ValidationException::withMessages(['file' => 'Image illisible ou trop petite. Minimum 200 pixels ; maximum 12000 pixels par côté.']);
             }
         }
-        $content = $verso ? app(\App\Services\Admissions\CnieDocumentComposer::class)->compose($file, $verso) : file_get_contents($file->getRealPath());
+        $content = $verso ? app(CnieDocumentComposer::class)->compose($file, $verso) : file_get_contents($file->getRealPath());
         abort_if(strlen($content) > 10 * 1024 * 1024, 422, 'Le document CNIE assemblé dépasse 10 Mo.');
-        $hash = $verso ? hash('sha256', hash_file('sha256', $file->getRealPath()).hash_file('sha256', $verso->getRealPath())) : hash('sha256', $content);
+        $hash = hash('sha256', $content);
         if ($verso) {
             $mime = 'application/pdf';
         }
@@ -132,6 +136,7 @@ class ManageDossierAction
                 abort_if($app->dossier_status === 'needs_correction' && $old?->status === 'verified', 422, 'Cette pièce est déjà validée. Remplacez uniquement les pièces à corriger ou contactez la scolarité.');
                 if ($old && $old->content_hash === $hash) {
                     app(QueueAutomaticOcrAction::class)->execute($old);
+
                     return $old;
                 }
                 $version = StudentDocument::where('application_id', $app->id)->where('type', $type)->max('version') + 1;

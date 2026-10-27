@@ -49,10 +49,12 @@ return [
         'key' => env('GROQ_API_KEY', ''),
         'api_key' => env('GROQ_API_KEY', ''),
         'model' => env('GROQ_MODEL', 'openai/gpt-oss-120b'),
+        'vision_model' => env('GROQ_VISION_MODEL', 'qwen/qwen3.8-27b'),
     ],
 
     'gemini' => [
         'key' => env('GEMINI_API_KEY', ''),
+        'ocr_model' => env('GEMINI_OCR_MODEL', 'gemini-3.8-flash'),
     ],
 
     'ai' => [

@@ -15,7 +15,8 @@ final class AdmissionOcrPolicy
 
     public static function configured(): bool
     {
-        return (bool) ((config('services.groq.key') ?: config('services.groq.api_key')) && config('services.groq.model'));
+        return (bool) ((config('services.gemini.key') && config('services.gemini.ocr_model'))
+            || ((config('services.groq.key') ?: config('services.groq.api_key')) && (config('services.groq.vision_model') || config('services.groq.model'))));
     }
 
     public static function available(int $institutionId): bool

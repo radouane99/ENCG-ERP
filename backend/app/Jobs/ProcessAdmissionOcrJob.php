@@ -17,7 +17,7 @@ class ProcessAdmissionOcrJob implements ShouldQueue
 
     public int $tries = 2;
 
-    public int $timeout = 50;
+    public int $timeout = 55;
 
     public function backoff(): array
     {

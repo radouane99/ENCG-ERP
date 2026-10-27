@@ -750,12 +750,7 @@ class CnieParser implements DocumentParserInterface
             return false;
         }
 
-        $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
-        if ($day < 1 || $day > $daysInMonth) {
-            return false;
-        }
-
-        return true;
+        return checkdate($month, $day, $year);
     }
 
     /**

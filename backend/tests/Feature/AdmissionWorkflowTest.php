@@ -8,6 +8,7 @@ use App\Models\AdmissionCampaign;
 use App\Models\Application;
 use App\Models\Student;
 use App\Models\StudentDocument;
+use App\Models\StudentRegistration;
 use App\Models\User;
 use App\Services\Ocr\AdmissionOcrService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -31,6 +32,139 @@ class AdmissionWorkflowTest extends TestCase
     use RefreshDatabase;
 
     private const BASE = '/api/admissions/workflow';
+
+    public function test_gemini_reads_uploaded_pdf_directly_and_automatic_queue_uses_cloud_policy(): void
+    {
+        Http::preventStrayRequests();
+        Storage::fake('private');
+        config(['services.gemini.key' => 'synthetic-gemini-key', 'services.gemini.ocr_model' => 'synthetic-gemini']);
+        $a = $this->candidate();
+        $this->login($a);
+        $institution = $a->campaign->institution;
+        $settings = $institution->settings ?? [];
+        $settings['admissions']['ocr_cloud_enabled'] = true;
+        $institution->update(['settings' => $settings]);
+        Http::fake(['generativelanguage.googleapis.com/*' => Http::response(['candidates' => [['content' => ['parts' => [['text' => json_encode([
+            'cin' => 'AB123456', 'address' => '12 RUE SYNTHETIQUE', 'address_ar' => 'عنوان تجريبي',
+            'birth_city' => 'MEKNES', 'birth_city_ar' => 'مكناس', 'status' => 'approved',
+        ])]]]]]])]);
+        $pdf = app('dompdf.wrapper')->loadHTML('<html><body>CNIE SYNTHETIQUE RECTO VERSO CIN AB123456</body></html>')->output();
+        $uploaded = $this->post(self::BASE.'/documents', ['application_id' => $a->id, 'version' => $a->fresh()->version,
+            'type' => 'cnie', 'file' => UploadedFile::fake()->createWithContent('cnie.pdf', $pdf)], ['Accept' => 'application/json'])
+            ->assertOk()->assertJsonPath('candidate.ocr_runs.0.mode', 'cloud');
+        $runId = $uploaded->json('candidate.ocr_runs.0.id');
+        $job = new class($runId) extends ProcessAdmissionOcrJob
+        {
+            public ?\Throwable $failure = null;
+
+            public function failed(?\Throwable $e): void
+            {
+                $this->failure = $e;
+                parent::failed($e);
+            }
+        };
+        $job->handle(app(AdmissionOcrService::class));
+        $this->assertNull($job->failure, $job->failure?->getMessage() ?? '');
+        $result = $this->getJson(self::BASE.'/ocr/'.$runId)->assertOk()->assertJsonPath('fields.address_ar.value', 'عنوان تجريبي')
+            ->assertJsonPath('fields.birth_city.value', 'MEKNES');
+        $this->assertStringContainsString('+gemini:synthetic-gemini', $result->json('engine'));
+        $this->assertArrayNotHasKey('status', $result->json('fields'));
+        Http::assertSent(fn ($request) => $request->hasHeader('x-goog-api-key', 'synthetic-gemini-key')
+            && ! str_contains($request->url(), 'key=')
+            && $request['contents'][0]['parts'][0]['inlineData']['mimeType'] === 'application/pdf'
+            && base64_decode($request['contents'][0]['parts'][0]['inlineData']['data']) === $pdf);
+        Http::assertSentCount(1);
+        $this->assertSame('draft', $a->fresh()->dossier_status);
+    }
+
+    public function test_failed_gemini_falls_back_to_groq_images_without_public_document_url(): void
+    {
+        Http::preventStrayRequests();
+        Storage::fake('private');
+        config(['services.gemini.key' => 'synthetic-gemini-key', 'services.gemini.ocr_model' => 'synthetic-gemini',
+            'services.groq.key' => 'synthetic-groq-key', 'services.groq.vision_model' => 'synthetic-vision']);
+        $a = $this->candidate();
+        $institution = $a->campaign->institution;
+        $settings = $institution->settings ?? [];
+        $settings['admissions']['ocr_cloud_enabled'] = true;
+        $institution->update(['settings' => $settings]);
+        $pdf = app('dompdf.wrapper')->loadHTML('<html><body>CNE N123456789 CIN AB123456 SYNTHETIC TRANSCRIPT</body></html>')->output();
+        Storage::disk('private')->put('vision-test.pdf', $pdf);
+        $doc = StudentDocument::create(['application_id' => $a->id, 'type' => 'releve_notes', 'file_path' => 'vision-test.pdf', 'storage_disk' => 'private', 'mime_type' => 'application/pdf']);
+        Http::fake(['generativelanguage.googleapis.com/*' => Http::response(['error' => 'PRIVATE_PROVIDER_ERROR'], 503),
+            'api.groq.com/*' => Http::response(['choices' => [['message' => ['content' => '{"bac_average":16.5,"bac_type":"Sciences Mathématiques A"}']]]])]);
+        $result = app(AdmissionOcrService::class)->extract($doc, 'cloud');
+        $this->assertSame(16.5, $result['fields']['bac_average']['value']);
+        $this->assertSame('Sciences Mathématiques A', $result['fields']['bac_type']['value']);
+        $this->assertStringContainsString('+groq:synthetic-vision', $result['engine']);
+        $this->assertStringNotContainsString('PRIVATE_PROVIDER_ERROR', json_encode($result));
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'api.groq.com')
+            && $request['model'] === 'synthetic-vision'
+            && str_starts_with($request['messages'][1]['content'][1]['image_url']['url'], 'data:image/jpeg;base64,'));
+        Http::assertSentCount(2);
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Queue::fake([ProcessAdmissionOcrJob::class]);
+        config(['services.gemini.key' => '', 'services.groq.key' => '', 'services.groq.api_key' => '']);
+    }
+
+    public function test_upload_automatically_queues_local_ocr_once_without_student_choice(): void
+    {
+        Http::preventStrayRequests();
+        $a = $this->candidate();
+        $this->login($a);
+        Storage::fake('private');
+        $payload = ['application_id' => $a->id, 'type' => 'bac',
+            'file' => UploadedFile::fake()->createWithContent('bac.pdf', '%PDF-1.4 SYNTHETIC')];
+        $r = $this->post(self::BASE.'/documents', $payload + ['version' => $a->fresh()->version], ['Accept' => 'application/json'])->assertOk()
+            ->assertJsonPath('candidate.ocr_runs.0.status', 'queued')->assertJsonPath('candidate.ocr_runs.0.mode', 'local');
+        $id = $r->json('document.id');
+        $this->post(self::BASE.'/documents', $payload + ['version' => $a->fresh()->version], ['Accept' => 'application/json'])->assertOk();
+        $this->assertSame(1, DB::table('admission_ocr_runs')->where('document_id', $id)->count());
+        Queue::assertPushed(ProcessAdmissionOcrJob::class, 1);
+        Http::assertNothingSent();
+        $this->post(self::BASE.'/documents', ['application_id' => $a->id, 'version' => $a->fresh()->version,
+            'type' => 'photo', 'file' => UploadedFile::fake()->image('photo.jpg', 300, 400)], ['Accept' => 'application/json'])->assertOk();
+        Queue::assertPushed(ProcessAdmissionOcrJob::class, 1);
+    }
+
+    public function test_cnie_two_images_are_saved_as_one_two_page_private_document(): void
+    {
+        $a = $this->candidate();
+        $this->login($a);
+        Storage::fake('private');
+        $r = $this->post(self::BASE.'/documents', ['application_id' => $a->id, 'version' => $a->fresh()->version,
+            'type' => 'cnie', 'file' => UploadedFile::fake()->image('recto.jpg', 900, 600),
+            'file_verso' => UploadedFile::fake()->image('verso.jpg', 900, 600)], ['Accept' => 'application/json'])
+            ->assertOk()->assertJsonPath('document.mime_type', 'application/pdf');
+        $doc = StudentDocument::findOrFail($r->json('document.id'));
+        $pdf = Storage::disk('private')->get($doc->file_path);
+        $this->assertStringStartsWith('%PDF-', $pdf);
+        $this->assertSame(2, preg_match_all('~/Type\s*/Page\b~', $pdf));
+        $this->assertSame(1, DB::table('admission_ocr_runs')->where('document_id', $doc->id)->count());
+        $this->post(self::BASE.'/documents', ['application_id' => $a->id, 'version' => $a->fresh()->version,
+            'type' => 'cnie', 'file' => UploadedFile::fake()->image('recto-seul.jpg', 900, 600)],
+            ['Accept' => 'application/json'])->assertUnprocessable()->assertJsonValidationErrors('file_verso');
+    }
+
+    public function test_automatic_local_ocr_preserves_residence_birthplace_and_bac_details(): void
+    {
+        Http::preventStrayRequests();
+        Storage::fake('private');
+        $a = $this->candidate();
+        $this->login($a);
+        $pdf = app('dompdf.wrapper')->loadHTML('<html><body><p>CIN : AB123456</p><p>Lieu de naissance : MEKNES</p><p>Adresse : 12 RUE SYNTHETIQUE FES</p></body></html>')->output();
+        $response = $this->post(self::BASE.'/documents', ['application_id' => $a->id, 'version' => $a->fresh()->version,
+            'type' => 'cnie', 'file' => UploadedFile::fake()->createWithContent('cnie.pdf', $pdf)], ['Accept' => 'application/json'])->assertOk();
+        $id = $response->json('candidate.ocr_runs.0.id');
+        (new ProcessAdmissionOcrJob($id))->handle(app(AdmissionOcrService::class));
+        $this->getJson(self::BASE.'/ocr/'.$id)->assertOk()->assertJsonPath('fields.birth_city.value', 'MEKNES')
+            ->assertJsonPath('fields.address.value', '12 RUE SYNTHETIQUE FES')->assertJsonPath('fields.cin.conflict', false);
+        Http::assertNothingSent();
+    }
 
     private function campaign(): AdmissionCampaign
     {
@@ -167,12 +301,12 @@ class AdmissionWorkflowTest extends TestCase
         $a->update(['student_id' => $student->id]);
         $campaign = $a->campaign;
         foreach (['initial' => 1, 're_enrollment' => 3] as $type => $semester) {
-            \App\Models\StudentRegistration::create(['student_id' => $student->id,
+            StudentRegistration::create(['student_id' => $student->id,
                 'academic_year_id' => $campaign->academic_year_id, 'filiere_id' => $campaign->filiere_id,
                 'semester_number' => $semester, 'registration_type' => $type, 'status' => 'academic_validated']);
         }
         $other = $this->makeTestStudent(['cne' => 'Z123456789']);
-        \App\Models\StudentRegistration::create(['student_id' => $other->id,
+        StudentRegistration::create(['student_id' => $other->id,
             'academic_year_id' => $campaign->academic_year_id, 'filiere_id' => $campaign->filiere_id,
             'semester_number' => 9, 'registration_type' => 're_enrollment', 'status' => 'academic_validated']);
         $this->login($a);
@@ -404,7 +538,7 @@ class AdmissionWorkflowTest extends TestCase
 
     public function test_cloud_policy_is_admin_controlled_and_mocked_extraction_rejects_invalid_fields(): void
     {
-        config(['services.groq.key' => 'synthetic-test-key', 'services.groq.model' => 'synthetic-model']);
+        config(['services.groq.key' => 'synthetic-test-key', 'services.groq.model' => 'synthetic-model', 'services.groq.vision_model' => 'synthetic-model']);
         $a = $this->candidate();
         $this->staff('scolarite');
         $this->putJson(self::BASE.'/ocr-settings', ['cloud_enabled' => true])->assertForbidden();
@@ -462,7 +596,7 @@ class AdmissionWorkflowTest extends TestCase
         Queue::fake();
         Http::preventStrayRequests();
         Storage::fake('private');
-        config(['services.groq.key' => 'synthetic-test-key', 'services.groq.model' => 'synthetic-model']);
+        config(['services.groq.key' => 'synthetic-test-key', 'services.groq.model' => 'synthetic-model', 'services.groq.vision_model' => 'synthetic-model']);
         $a = $this->candidate();
         $this->login($a);
         $institution = $a->campaign->institution;
@@ -512,7 +646,7 @@ class AdmissionWorkflowTest extends TestCase
     {
         Http::preventStrayRequests();
         Storage::fake('private');
-        config(['services.groq.key' => 'synthetic-test-key', 'services.groq.model' => 'synthetic-model']);
+        config(['services.groq.key' => 'synthetic-test-key', 'services.groq.model' => 'synthetic-model', 'services.groq.vision_model' => 'synthetic-model']);
         $a = $this->candidate();
         $institution = $a->campaign->institution;
         $settings = $institution->settings ?? [];

@@ -15,6 +15,12 @@ class AdmissionConsistencyService
         $runs = DB::table('admission_ocr_runs')->where('application_id', $app->id)->whereIn('document_id', $docs->keys())
             ->whereIn('status', ['needs_review', 'succeeded'])->orderByDesc('created_at')->get()->unique('document_id');
         $map = ['cne' => 'cne', 'cin' => 'cin', 'first_name_fr' => 'first_name', 'last_name_fr' => 'last_name', 'birth_date' => 'birth_date', 'bac_average' => 'bac_average'];
+        foreach (['first_name_ar', 'last_name_ar', 'birth_city', 'birth_city_ar', 'address', 'address_ar',
+            'nationality', 'nationality_ar', 'gender', 'bac_mention', 'bac_year', 'high_school', 'academy',
+            'bac_province', 'bac_regional_average', 'bac_national_average', 'bac_continuous_average'] as $field) {
+            $map[$field] = $field;
+        }
+        $map['bac_type'] = 'bac_series';
         $values = [];
         foreach ($map as $field => $profileKey) {
             $baseline = in_array($field, ['cne', 'cin']) ? $app->{$field} : ($app->profile[$profileKey] ?? (in_array($profileKey, ['first_name', 'last_name']) ? $app->{$profileKey} : null));
@@ -44,7 +50,7 @@ class AdmissionConsistencyService
 
     private function normalize(string $field, mixed $value): string
     {
-        if ($field === 'bac_average') {
+        if (str_ends_with($field, '_average')) {
             return number_format((float) str_replace(',', '.', (string) $value), 2, '.', '');
         }
 

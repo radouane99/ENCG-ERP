@@ -103,7 +103,7 @@ export default function CandidateProfileFields({
 
   const input = (field: Field) => {
     const [key, label, labelAr, type = 'text'] = field
-    const numericYear = type === 'number' && key !== 'bac_average'
+    const numericYear = type === 'number' && !key.endsWith('_average')
     return (
       <label key={key} htmlFor={`admission-${key}`} className="block text-xs font-semibold text-slate-700 dark:text-slate-300">
         <span>
@@ -120,9 +120,9 @@ export default function CandidateProfileFields({
           value={String(values[key] ?? '')}
           aria-invalid={!!errors[key]}
           aria-describedby={errors[key] ? `error-${key}` : undefined}
-          min={key === 'bac_average' ? 0 : numericYear ? 1980 : undefined}
-          max={key === 'bac_average' ? 20 : numericYear ? new Date().getFullYear() + (key === 'bac_year' ? 0 : 1) : undefined}
-          step={key === 'bac_average' ? '0.01' : numericYear ? 1 : undefined}
+          min={key.endsWith('_average') ? 0 : numericYear ? 1980 : undefined}
+          max={key.endsWith('_average') ? 20 : numericYear ? new Date().getFullYear() + (key === 'bac_year' ? 0 : 1) : undefined}
+          step={key.endsWith('_average') ? '0.01' : numericYear ? 1 : undefined}
           maxLength={
             type === 'text'
               ? key.startsWith('address')

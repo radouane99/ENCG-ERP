@@ -117,6 +117,17 @@ class AdmissionOperationsTest extends TestCase
         $this->getJson(self::BASE.'/operations/context?application_id='.$app->id)->assertNotFound();
     }
 
+    public function test_residence_conflicts_are_reported_without_confusing_the_school_province(): void
+    {
+        $app = $this->dossier();
+        $app->update(['profile' => ['address' => 'Adresse déclarée', 'province' => 'MEKNES', 'bac_province' => 'FES']]);
+        $doc = $this->document($app, 'cnie');
+        $this->ocrRun($app, $doc, ['address' => ['value' => 'Adresse imprimée'], 'bac_province' => ['value' => 'FES']]);
+        $alerts = $this->getJson(self::BASE.'/operations/context?application_id='.$app->id)->assertOk()->json('alerts');
+        $this->assertSame(['address'], array_column($alerts, 'field'));
+        $this->assertSame('Adresse déclarée', $app->fresh()->profile['address']);
+    }
+
     public function test_assignment_is_scoped_versioned_and_available_in_personal_queue(): void
     {
         $app = $this->dossier();

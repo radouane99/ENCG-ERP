@@ -22,6 +22,8 @@ export const sections: { id: string; title: string; titleAr: string; fields: Fie
   { id: 'bac', title: 'Baccalauréat et établissement d’origine', titleAr: 'البكالوريا ومؤسسة الدراسة', fields: [
     ['bac_series', 'Série du bac', 'شعبة البكالوريا'], ['bac_mention', 'Mention du bac', 'ميزة البكالوريا'],
     ['bac_average', 'Moyenne du bac /20', 'المعدل العام للبكالوريا', 'number'], ['bac_year', 'Année du bac', 'سنة البكالوريا', 'number'],
+    ['bac_province', 'Province de l’établissement du bac', 'إقليم مؤسسة البكالوريا'],
+    ['bac_regional_average', 'Moyenne régionale /20', 'معدل الامتحان الجهوي', 'number'], ['bac_national_average', 'Moyenne nationale /20', 'معدل الامتحان الوطني', 'number'], ['bac_continuous_average', 'Contrôle continu /20', 'معدل المراقبة المستمرة', 'number'],
     ['high_school', 'Établissement du bac', 'مؤسسة البكالوريا'], ['academy', 'Académie', 'الأكاديمية'],
   ] },
   { id: 'higher', title: 'Historique de l’enseignement supérieur', titleAr: 'مسار التعليم العالي', fields: [

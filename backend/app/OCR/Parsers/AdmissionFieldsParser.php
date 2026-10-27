@@ -12,6 +12,7 @@ final class AdmissionFieldsParser
 
     public function canonicalize(array $fields, string $text, string $type): array
     {
+        $fields = array_filter($fields, fn ($value) => is_scalar($value));
         $aliases = ['birth_city' => ['birth_city_fr', 'birth_place_fr'], 'birth_city_ar' => ['birth_place_ar'],
             'address' => ['address_fr'], 'bac_mention' => ['mention'], 'bac_average' => ['moyenne_bac'],
             'bac_regional_average' => ['note_regional'], 'bac_national_average' => ['note_national'],
@@ -68,6 +69,14 @@ final class AdmissionFieldsParser
         if (isset($fields['bac_year']) && (! preg_match('/^\d{4}$/', (string) $fields['bac_year']) || $fields['bac_year'] < 1980 || $fields['bac_year'] > now()->year)) {
             unset($fields['bac_year']);
         }
+        if (! empty($fields['gender'])) {
+            $fields['gender'] = match (mb_strtolower(trim((string) $fields['gender']))) {
+                'male', 'masculin', 'm', 'ذكر' => 'male',
+                'female', 'féminin', 'feminin', 'f', 'أنثى' => 'female',
+                default => null,
+            };
+        }
+
         return array_intersect_key($fields, array_flip(self::FIELDS));
     }
 }
