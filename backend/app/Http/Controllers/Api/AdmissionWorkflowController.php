@@ -17,6 +17,7 @@ use App\Models\Institution;
 use App\Models\StudentDocument;
 use App\Models\User;
 use App\Services\Admission\PublicAdmissionCalendar;
+use App\Services\Admissions\AdmissionAdministrativeContext;
 use App\Services\Admissions\AdmissionNotificationService;
 use App\Services\Ocr\AdmissionOcrPolicy;
 use App\Support\AdmissionAccess;
@@ -67,7 +68,7 @@ class AdmissionWorkflowController extends Controller
         }
 
         return response()->json(['cloud_enabled' => AdmissionOcrPolicy::enabled($institution->id),
-            'configured' => AdmissionOcrPolicy::configured(), 'can_manage' => $canManage, 'provider' => 'Groq', 'local_available' => true]);
+            'configured' => AdmissionOcrPolicy::configured(), 'can_manage' => $canManage, 'provider' => 'Gemini / Groq Vision', 'local_available' => true]);
     }
 
     public function references(Request $request)
@@ -208,7 +209,7 @@ class AdmissionWorkflowController extends Controller
         return array_merge($app->only(['id', 'reference_number', 'cne', 'cin', 'first_name', 'last_name', 'email', 'phone',
             'dossier_status', 'eligibility', 'version', 'submitted_at', 'approved_at', 'ranking', 'selection_score', 'invitation_expires_at']), [
                 'application_id' => $app->id, 'profile' => $app->profile ?? [], 'documents' => $mapped,
-                'administrative_context' => app(\App\Services\Admissions\AdmissionAdministrativeContext::class)->read($app),
+                'administrative_context' => app(AdmissionAdministrativeContext::class)->read($app),
                 'is_locked' => ! in_array($app->dossier_status, ['draft', 'needs_correction']),
                 'campaign' => $app->campaign->only(['id', 'name', 'open_date', 'close_date', 'entry_route', 'entry_semester']), 'appointment' => $appointment,
                 'required_documents' => AdmissionEntryRules::documents($app->campaign->entry_route),
@@ -234,9 +235,14 @@ class AdmissionWorkflowController extends Controller
 
     public function document(StudentDocument $doc): array
     {
-        $url = URL::temporarySignedRoute('admissions.document', now()->addMinutes(15), ['document' => $doc->id]);
+        $url = URL::temporarySignedRoute('admissions.document', now()->addHours(4), ['document' => $doc->id]);
 
-        return array_merge($doc->only(['id', 'type', 'original_filename', 'mime_type', 'file_size', 'status', 'version']), ['file_path' => $url, 'signed_url' => $url]);
+        return array_merge($doc->only(['id', 'type', 'original_filename', 'mime_type', 'file_size', 'status', 'version']), [
+            'file_path' => $url,
+            'signed_url' => $url,
+            'created_at' => $doc->created_at?->toIso8601String(),
+            'updated_at' => $doc->updated_at?->toIso8601String(),
+        ]);
     }
 
     public function save(SaveDossierRequest $request)
@@ -275,22 +281,42 @@ class AdmissionWorkflowController extends Controller
     {
         $doc = StudentDocument::findOrFail($document);
         abort_if($doc->withdrawn_at && ! AdmissionAccess::staff($request->user()), 404);
-        if (! $request->hasValidSignature()) {
-            abort_unless($request->user(), 403, 'Accès au document refusé.');
+
+        $hasValidSignature = $request->hasValidSignature() || $request->hasValidSignature(false);
+        if (! $hasValidSignature) {
+            // Check alternate scheme in case of SSL termination proxy (http <-> https)
+            $altScheme = $request->isSecure() ? 'http' : 'https';
+            $altUrl = preg_replace('/^https?:/', $altScheme . ':', $request->url());
+            $altRequest = Request::create($altUrl . '?' . (string) $request->server->get('QUERY_STRING'), $request->method(), [], [], [], $request->server->all());
+            if ($altRequest->hasValidSignature()) {
+                $hasValidSignature = true;
+            }
+        }
+
+        if (! $hasValidSignature) {
+            $user = $request->user() ?: auth('sanctum')->user();
+            abort_unless($user, 403, 'Accès au document refusé.');
             if ($doc->application_id) {
                 AdmissionAccess::dossier($request, false, $doc->application_id);
             } else {
                 AdmissionAccess::review($request);
                 abort_unless(AdmissionAccess::institution($request) === (int) config('erp.institution_id', 1), 403);
             }
-            abort_unless($doc->is_current || AdmissionAccess::staff($request->user()), 403);
+            abort_unless($doc->is_current || AdmissionAccess::staff($user), 403);
         } else {
             abort_unless($doc->is_current, 403, 'Version remplacée. Rechargez le dossier.');
         }
         $disk = Storage::disk($doc->storage_disk);
         abort_unless($disk->exists($doc->file_path), 404);
 
-        return response()->file($disk->path($doc->file_path), ['Content-Type' => $doc->mime_type, 'X-Content-Type-Options' => 'nosniff', 'Cache-Control' => 'private, no-store']);
+        $safeFilename = str_replace(['"', "\r", "\n"], '', basename($doc->original_filename ?: 'document.pdf'));
+
+        return response()->file($disk->path($doc->file_path), [
+            'Content-Type' => $doc->mime_type ?: 'application/pdf',
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+            'Content-Disposition' => 'inline; filename="' . $safeFilename . '"',
+        ]);
     }
 
     public function submit(Request $request)

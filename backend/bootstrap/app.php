@@ -42,10 +42,8 @@ return Application::configure(basePath: dirname(__DIR__))
         }
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $trustedProxies = array_filter(array_map('trim', explode(',', (string) env('TRUSTED_PROXIES', ''))));
-        if ($trustedProxies !== []) {
-            $middleware->trustProxies(at: $trustedProxies);
-        }
+        $trustedProxies = array_filter(array_map('trim', explode(',', (string) env('TRUSTED_PROXIES', '*'))));
+        $middleware->trustProxies(at: $trustedProxies ?: '*');
         $middleware->alias([
             'role' => RoleMiddleware::class,
             'require-admin-2fa' => RequireAdmin2FA::class,

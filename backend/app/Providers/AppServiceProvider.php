@@ -140,7 +140,7 @@ class AppServiceProvider extends ServiceProvider
         // 10. Configuration des commandes (si nécessaire)
         $this->bootCommands();
 
-        if ($this->app->environment('production')) {
+        if ($this->app->environment('production') || request()->header('X-Forwarded-Proto') === 'https' || str_starts_with((string) env('FRONTEND_URL', ''), 'https://') || str_starts_with((string) config('app.url'), 'https://')) {
             URL::forceScheme('https');
         }
     }
