@@ -185,8 +185,12 @@ class SmartSchedulingEngine
         $variables = [];
         $headcounts = app(TimetableRoomGuard::class)->groupHeadcounts($groups->pluck('id')->all());
         $inputIssues = [];
-        if ($modules->isEmpty()) { $inputIssues[] = 'Aucun module configuré pour cette filière et cette période.'; }
-        if ($groups->isEmpty()) { $inputIssues[] = 'Aucun groupe configuré pour cette filière et cette période.'; }
+        if ($modules->isEmpty()) {
+            $inputIssues[] = 'Aucun module configuré pour cette filière et cette période.';
+        }
+        if ($groups->isEmpty()) {
+            $inputIssues[] = 'Aucun groupe configuré pour cette filière et cette période.';
+        }
         $varIndex = 1;
         foreach ($modules as $mod) {
             foreach ($groups->where('filiere_id', $mod->filiere_id)->where('semester_number', $mod->semester_number) as $group) {

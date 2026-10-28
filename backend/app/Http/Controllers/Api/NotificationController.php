@@ -48,6 +48,7 @@ class NotificationController extends Controller
             ]);
         } catch (\Throwable $e) {
             report($e);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Notifications temporairement indisponibles. Réessayez.',

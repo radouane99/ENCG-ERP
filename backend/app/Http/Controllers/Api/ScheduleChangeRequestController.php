@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Academic\RequestTimetableChangeAction;
+use App\Actions\Academic\ReviewTimetableChangeAction;
 use App\Http\Controllers\Controller;
 use App\Models\Exam;
 use App\Models\Professor;
@@ -15,15 +17,20 @@ use Illuminate\Support\Facades\DB;
 
 class ScheduleChangeRequestController extends Controller
 {
-    private function isStaff(): bool { return request()->user()->hasAnyRole(['admin','super-admin','super_admin','institution-admin','institution_admin','director','department-head','filiere-head','scolarite']); }
+    private function isStaff(): bool
+    {
+        return request()->user()->hasAnyRole(['admin', 'super-admin', 'super_admin', 'institution-admin', 'institution_admin', 'director', 'department-head', 'filiere-head', 'scolarite']);
+    }
 
     public function storeTimetable(Request $request): JsonResponse
     {
-        abort_unless($request->user()->professor || $request->user()->hasAnyRole(['professor','vacataire']), 403);
+        abort_unless($request->user()->professor || $request->user()->hasAnyRole(['professor', 'vacataire']), 403);
         $data = $request->validate(['schedule_id' => 'required|integer', 'reason' => 'required|string|min:10|max:2000', 'day_of_week' => 'required|integer|min:1|max:5', 'start_time' => 'required|date_format:H:i|after_or_equal:08:30', 'end_time' => 'required|date_format:H:i|before_or_equal:18:45']);
-        $record = app(\App\Actions\Academic\RequestTimetableChangeAction::class)->execute($request->user(), $data);
+        $record = app(RequestTimetableChangeAction::class)->execute($request->user(), $data);
+
         return response()->json(['success' => true, 'message' => 'Demande transmise. Le planning reste inchangé avant décision administrative.', 'data' => $record], 201);
     }
+
     /**
      * Liste des demandes de changement.
      */
@@ -41,9 +48,9 @@ class ScheduleChangeRequestController extends Controller
                     'schedule_id' => $req->schedule_id,
                     'timetable_payload' => $req->timetable_payload,
                     'review_note' => $req->review_note,
-                    'old_date' => $req->request_type === 'timetable_change' ? (['','Lundi','Mardi','Mercredi','Jeudi','Vendredi'][$req->timetable_payload['original']['day_of_week']] ?? '—') : ($req->old_date?->format('d/m/Y') ?? 'N/A'),
+                    'old_date' => $req->request_type === 'timetable_change' ? (['', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'][$req->timetable_payload['original']['day_of_week']] ?? '—') : ($req->old_date?->format('d/m/Y') ?? 'N/A'),
                     'old_start_time' => $req->old_start_time ? substr($req->old_start_time, 0, 5) : 'N/A',
-                    'proposed_date' => $req->request_type === 'timetable_change' ? (['','Lundi','Mardi','Mercredi','Jeudi','Vendredi'][$req->timetable_payload['proposed']['day_of_week']] ?? '—') : $req->proposed_date?->format('d/m/Y'),
+                    'proposed_date' => $req->request_type === 'timetable_change' ? (['', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'][$req->timetable_payload['proposed']['day_of_week']] ?? '—') : $req->proposed_date?->format('d/m/Y'),
                     'proposed_start_time' => $req->proposed_start_time ? substr($req->proposed_start_time, 0, 5) : 'N/A',
                     'reason' => $req->reason,
                     'status' => $req->status,
@@ -79,7 +86,8 @@ class ScheduleChangeRequestController extends Controller
         $change = ScheduleChangeRequest::whereHas('professor', fn ($q) => $q->where('institution_id', $request->user()->institution_id))->findOrFail($id);
         if ($change->request_type === 'timetable_change') {
             $review = $request->validate(['review_note' => 'required|string|min:10|max:2000']);
-            app(\App\Actions\Academic\ReviewTimetableChangeAction::class)->execute($request->user(), $change, $data['status'], $review['review_note']);
+            app(ReviewTimetableChangeAction::class)->execute($request->user(), $change, $data['status'], $review['review_note']);
+
             return response()->json(['success' => true, 'message' => $data['status'] === 'approved' ? 'Changement contrôlé et appliqué au planning.' : 'Demande refusée. Planning conservé.']);
         }
         DB::transaction(function () use ($request, $id, $data) {

@@ -365,7 +365,9 @@ class TimetableCampaignService
             $room = Room::find($block['room_id']);
             $size = $this->rooms->groupsHeadcount($block['group_ids']);
             $requirement = ['group_size' => $size, 'required_type' => $this->rooms->requiredRoomType($block['module_name'], $block['session_type'], $size)];
-            if ($room && ! $this->rooms->roomFits($room, $requirement, Room::where('institution_id', $room->institution_id)->get())) { $issues[] = ['message' => 'Type ou capacité de salle incompatible avec la séance : '.$block['module_name']]; }
+            if ($room && ! $this->rooms->roomFits($room, $requirement, Room::where('institution_id', $room->institution_id)->get())) {
+                $issues[] = ['message' => 'Type ou capacité de salle incompatible avec la séance : '.$block['module_name']];
+            }
         }
         $parity = $version->semester()->value('number') % 2;
         $readiness = app(SemesterReadinessService::class)->summarize($this->contextYear(), $parity, $version->filiere_id);
@@ -427,7 +429,9 @@ class TimetableCampaignService
             ScheduleVersion::whereIn('id', $previousIds)->update(['status' => 'ARCHIVED']);
             $legacyIds = $this->replacementIdsForVersion($version);
             Schedule::whereIn('id', $legacyIds)->update(['is_active' => false]);
-            if ($legacyIds) { activity()->causedBy(auth()->user())->performedOn($version)->withProperties(['schedule_ids' => $legacyIds])->log('legacy_timetable_superseded_on_publication'); }
+            if ($legacyIds) {
+                activity()->causedBy(auth()->user())->performedOn($version)->withProperties(['schedule_ids' => $legacyIds])->log('legacy_timetable_superseded_on_publication');
+            }
             $version->update(['status' => 'PUBLISHED']);
             Schedule::where('schedule_version_id', $versionId)->update(['is_active' => true]);
 

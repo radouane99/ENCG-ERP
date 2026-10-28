@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Admin\PublicPortalController;
 use App\Http\Controllers\Api\AdmissionAppointmentController;
 use App\Http\Controllers\Api\AdmissionDeskController;
 use App\Http\Controllers\Api\AdmissionEnrollmentController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\Api\AdmissionOperationsController;
 use App\Http\Controllers\Api\AdmissionWorkflowController;
 use App\Http\Controllers\Api\AdmissionWorkflowPdfController;
 use App\Http\Controllers\Api\Auth\PasswordResetController;
+use App\Http\Controllers\Api\Auth\SessionController;
 use App\Http\Controllers\Api\Auth\SsoController;
 use App\Http\Controllers\Api\ContactController;
 use App\Presentation\Api\Controllers\Auth\AuthController;
@@ -19,8 +21,8 @@ Route::post('/contact', [ContactController::class, 'send'])->middleware('throttl
 Route::get('/login', fn () => response()->json(['message' => 'Non authentifié. Veuillez vous connecter.'], 401))->name('login');
 
 Route::prefix('public/admissions')->middleware('throttle:10,1')->group(function () {
-    Route::get('portal', [\App\Http\Controllers\Api\Admin\PublicPortalController::class, 'content']);
-    Route::get('announcements/{id}/pdf', [\App\Http\Controllers\Api\Admin\PublicPortalController::class, 'attachment'])->whereUuid('id');
+    Route::get('portal', [PublicPortalController::class, 'content']);
+    Route::get('announcements/{id}/pdf', [PublicPortalController::class, 'attachment'])->whereUuid('id');
     Route::get('calendar', [AdmissionWorkflowController::class, 'publicCalendar']);
     Route::get('campaigns', [AdmissionWorkflowController::class, 'campaigns']);
     Route::post('admissibility', [AdmissionWorkflowController::class, 'admissibility']);
@@ -108,9 +110,9 @@ Route::prefix('v1/auth')->group(function () {
     Route::post('/google/exchange', [SsoController::class, 'exchange'])->middleware('throttle:30,1');
 
     Route::middleware('auth:sanctum')->group(function () {
-        Route::get('/sessions', [\App\Http\Controllers\Api\Auth\SessionController::class, 'index']);
-        Route::delete('/sessions/others', [\App\Http\Controllers\Api\Auth\SessionController::class, 'others']);
-        Route::delete('/sessions/{id}', [\App\Http\Controllers\Api\Auth\SessionController::class, 'destroy'])->whereNumber('id');
+        Route::get('/sessions', [SessionController::class, 'index']);
+        Route::delete('/sessions/others', [SessionController::class, 'others']);
+        Route::delete('/sessions/{id}', [SessionController::class, 'destroy'])->whereNumber('id');
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/change-password', [AuthController::class, 'changePassword'])->middleware('throttle:login');

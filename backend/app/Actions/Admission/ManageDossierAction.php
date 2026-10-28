@@ -145,9 +145,7 @@ class ManageDossierAction
                 };
                 $path = 'admissions/'.$app->id.'/'.Str::uuid().'.'.$ext;
                 Storage::disk('private')->put($path, $content);
-                if ($old) {
-                    $old->update(['is_current' => false]);
-                }
+                StudentDocument::where('application_id', $app->id)->where('type', $type)->where('is_current', true)->update(['is_current' => false]);
                 $doc = StudentDocument::create(['application_id' => $app->id, 'student_id' => $app->student_id,
                     'cne' => $app->cne, 'type' => $type, 'file_path' => $path, 'storage_disk' => 'private',
                     'original_filename' => $type.'.'.$ext, 'mime_type' => $mime, 'file_size' => strlen($content),

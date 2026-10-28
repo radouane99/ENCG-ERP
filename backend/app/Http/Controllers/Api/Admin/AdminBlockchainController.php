@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BlockchainCertificate;
 use App\Models\Filiere;
 use App\Models\Student;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -16,7 +17,8 @@ class AdminBlockchainController extends Controller
     {
         abort_unless($request->user()->hasAnyRole(['admin', 'super-admin', 'super_admin', 'institution-admin', 'institution_admin', 'director', 'scolarite']), 403);
         $cert = BlockchainCertificate::with('student.user')->whereHas('student', fn ($q) => $q->where('institution_id', $request->user()->institution_id))->findOrFail($id);
-        return \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.workflow_record', [
+
+        return Pdf::loadView('pdf.workflow_record', [
             'title' => 'Extrait du registre de traçabilité des diplômes',
             'facts' => [
                 'Titulaire' => $cert->student->user?->name ?: trim($cert->student->first_name.' '.$cert->student->last_name),
@@ -31,6 +33,7 @@ class AdminBlockchainController extends Controller
             'notice' => 'Cet extrait reproduit les informations conservées dans le registre interne. Il ne prouve pas un ancrage sur un réseau externe et ne remplace ni le diplôme ni les signatures et validations administratives requises.',
         ])->download('extrait-registre-diplome-'.$cert->id.'.pdf');
     }
+
     /**
      * Registre des diplômes certifiés sur le ledger Blockchain.
      */

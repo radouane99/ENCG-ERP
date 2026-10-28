@@ -32,5 +32,8 @@ class ScheduleChangeRequest extends Model
         return $this->belongsTo(Exam::class);
     }
 
-    public function schedule(): BelongsTo { return $this->belongsTo(Schedule::class); }
+    public function schedule(): BelongsTo
+    {
+        return $this->belongsTo(Schedule::class);
+    }
 }

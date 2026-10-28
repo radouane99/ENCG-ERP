@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('pdf_document_records', function (Blueprint $table) {
@@ -29,5 +30,9 @@ return new class extends Migration {
             $table->index(['institution_id', 'status', 'issued_at']);
         });
     }
-    public function down(): void { Schema::dropIfExists('pdf_document_records'); }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('pdf_document_records');
+    }
 };

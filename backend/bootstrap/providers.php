@@ -3,12 +3,13 @@
 use App\Providers\AiServiceProvider;
 use App\Providers\AppServiceProvider;
 use App\Providers\HorizonServiceProvider;
+use App\Providers\PdfDocumentServiceProvider;
 use App\Providers\TelescopeServiceProvider;
 
 $providers = [
     AiServiceProvider::class,
     AppServiceProvider::class,
-    \App\Providers\PdfDocumentServiceProvider::class,
+    PdfDocumentServiceProvider::class,
     HorizonServiceProvider::class,
 ];
 

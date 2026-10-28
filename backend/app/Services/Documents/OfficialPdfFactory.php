@@ -27,7 +27,10 @@ class OfficialPdfFactory
         }
 
         $pdf = Pdf::loadView($view, $data);
-        if ($view === 'pdf.carte_etudiant_cr80') { return $pdf->setPaper([0, 0, 153.01, 242.64], 'landscape'); }
+        if ($view === 'pdf.carte_etudiant_cr80') {
+            return $pdf->setPaper([0, 0, 153.01, 242.64], 'landscape');
+        }
+
         return $pdf->setPaper('a4', str_contains($view, 'emploi_du_temps') ? 'landscape' : 'portrait');
     }
 }

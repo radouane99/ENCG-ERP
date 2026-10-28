@@ -10,6 +10,7 @@ use App\Models\GeneratedDocument;
 use App\Models\Group;
 use App\Models\Module;
 use App\Models\ModulePvSignature;
+use App\Models\PdfDocumentRecord;
 use App\Models\Professor;
 use App\Models\ProfessorDocumentRequest;
 use App\Models\Room;
@@ -27,9 +28,12 @@ class PublicVerificationController extends Controller
     public function verifyDocument(Request $request, string $documentId): JsonResponse
     {
         if (str_starts_with($documentId, 'DOC-')) {
-            $record = \App\Models\PdfDocumentRecord::where('verification_token', $documentId)->first();
-            if (! $record) { return response()->json(['success' => false, 'is_valid' => false, 'message' => 'Référence documentaire introuvable.'], 404); }
+            $record = PdfDocumentRecord::where('verification_token', $documentId)->first();
+            if (! $record) {
+                return response()->json(['success' => false, 'is_valid' => false, 'message' => 'Référence documentaire introuvable.'], 404);
+            }
             $issued = $record->status === 'issued';
+
             return response()->json(['success' => true, 'is_valid' => $issued, 'data' => [
                 'registry_document' => true, 'is_valid' => $issued,
                 'digital_identifier' => $record->digital_identifier, 'document_type' => $record->document_label,

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AuditTrailMiddleware;
+use App\Http\Middleware\CheckBrowserOrigin;
 use App\Http\Middleware\EnsureInstitutionContext;
 use App\Http\Middleware\EnsurePasswordChanged;
 use App\Http\Middleware\QueryTokenAuth;
@@ -56,7 +57,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->api(prepend: [
-            \App\Http\Middleware\CheckBrowserOrigin::class,
+            CheckBrowserOrigin::class,
             QueryTokenAuth::class,
             SetLocale::class,
         ]);

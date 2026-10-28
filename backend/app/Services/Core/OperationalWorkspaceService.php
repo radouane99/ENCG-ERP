@@ -2,7 +2,18 @@
 
 namespace App\Services\Core;
 
-use App\Models\{AcademicYear, DocumentRequest, ExamSeating, ExamSurveillance, Student, StudentRegistration, User};
+use App\Models\AcademicYear;
+use App\Models\DocumentRequest;
+use App\Models\ExamSeating;
+use App\Models\ExamSurveillance;
+use App\Models\Module;
+use App\Models\ModuleProfessor;
+use App\Models\NotificationLog;
+use App\Models\ProfessorDocumentRequest;
+use App\Models\Student;
+use App\Models\StudentRegistration;
+use App\Models\User;
+use App\Notifications\SystemNotification;
 use Illuminate\Support\Facades\DB;
 
 class OperationalWorkspaceService
@@ -35,7 +46,7 @@ class OperationalWorkspaceService
         $upcoming = ExamSurveillance::where('professor_id', $user->id)->whereHas('exam', fn ($q) => $q->whereDate('exam_date', '>=', today())->whereHas('examSession', fn ($s) => $s->where('institution_id', $user->institution_id)))->count();
         if ($user->hasAnyRole(['professor', 'professeur', 'vacataire'])) {
             $tasks[] = ['label' => 'Surveillances à venir', 'count' => $upcoming, 'url' => '/professor/proctor-convocations'];
-            $tasks[] = ['label' => 'Mes demandes enseignant en cours', 'count' => \App\Models\ProfessorDocumentRequest::where('user_id', $user->id)->whereIn('status', ['pending', 'processing'])->count(), 'url' => '/professor/documents'];
+            $tasks[] = ['label' => 'Mes demandes enseignant en cours', 'count' => ProfessorDocumentRequest::where('user_id', $user->id)->whereIn('status', ['pending', 'processing'])->count(), 'url' => '/professor/documents'];
         }
         if ($user->hasAnyRole(['student', 'etudiant'])) {
             $tasks[] = ['label' => 'Convocations à venir', 'count' => ExamSeating::whereHas('student', fn ($q) => $q->where('user_id', $user->id)->where('institution_id', $user->institution_id))->where('status', 'sent')->whereHas('exam', fn ($q) => $q->whereDate('exam_date', '>=', today()))->count(), 'url' => '/student/convocations'];
@@ -45,6 +56,7 @@ class OperationalWorkspaceService
             'staff' => $staff, 'tasks' => $tasks, 'generated_at' => now()->toIso8601String(),
             'requests' => $requests->map(function ($row) use ($followups, $staff) {
                 $follow = $followups->get($row->id);
+
                 return ['id' => $row->id, 'label' => $row->documentType?->name ?? 'Document', 'person' => $row->student?->user?->name,
                     'status' => $row->status, 'requested_at' => $row->requested_at ?? $row->created_at,
                     'email_state' => ($row->admin_notes['email_sent'] ?? false) ? 'accepted' : (! empty($row->admin_notes['email_error']) ? 'failed' : 'unknown'),
@@ -54,8 +66,12 @@ class OperationalWorkspaceService
             }),
         ];
         if ($staff) {
-            try { $data['backup'] = app(VerifiedDatabaseBackupService::class)->latestStatus(); }
-            catch (\Throwable $e) { report($e); $data['backup'] = ['error' => 'État des sauvegardes indisponible.']; }
+            try {
+                $data['backup'] = app(VerifiedDatabaseBackupService::class)->latestStatus();
+            } catch (\Throwable $e) {
+                report($e);
+                $data['backup'] = ['error' => 'État des sauvegardes indisponible.'];
+            }
             $year = AcademicYear::where('institution_id', $user->institution_id)->where('is_current', true)->first();
             $students = Student::where('institution_id', $user->institution_id);
             $duplicateCnes = (clone $students)->whereNotNull('cne')->where('cne', '!=', '')->selectRaw('LOWER(TRIM(cne)) as normalized, COUNT(*) as total')->groupByRaw('LOWER(TRIM(cne))')->havingRaw('COUNT(*) > 1')->get();
@@ -64,16 +80,21 @@ class OperationalWorkspaceService
                 'missing_cne' => (clone $students)->where(fn ($q) => $q->whereNull('cne')->orWhereRaw("TRIM(cne) = ''"))->count(),
                 'registrations_without_group' => $year ? StudentRegistration::where('academic_year_id', $year->id)->whereNull('group_id')->whereIn('status', ['academic_validated', 'admin_validated', 'validated'])->whereHas('student', fn ($q) => $q->where('institution_id', $user->institution_id))->count() : null,
                 'academic_year' => $year?->displayLabel(),
-                'modules_without_assignment' => $year ? \App\Models\Module::where('institution_id', $user->institution_id)
+                'modules_without_assignment' => $year ? Module::where('institution_id', $user->institution_id)
                     ->whereIn('filiere_id', StudentRegistration::where('academic_year_id', $year->id)->whereHas('student', fn ($q) => $q->where('institution_id', $user->institution_id))->select('filiere_id'))
-                    ->whereNotIn('id', \App\Models\ModuleProfessor::where('academic_year_id', $year->id)->select('module_id'))->count() : null,
+                    ->whereNotIn('id', ModuleProfessor::where('academic_year_id', $year->id)->select('module_id'))->count() : null,
                 'duplicate_cne_samples' => $duplicateCnes->take(10)->map(fn ($row) => ['cne' => $row->normalized, 'count' => (int) $row->total])->values(),
                 'missing_cne_ids' => (clone $students)->where(fn ($q) => $q->whereNull('cne')->orWhereRaw("TRIM(cne) = ''"))->limit(10)->pluck('id'),
             ];
             $data['agents'] = User::where('institution_id', $user->institution_id)->where('is_active', true)->get()->filter(fn ($agent) => $this->isStaff($agent))->map(fn ($agent) => $agent->only('id', 'name'))->values();
-            $data['notification_activity'] = DB::table('notifications')->where('type', \App\Notifications\SystemNotification::class)->where('notifiable_type', (new User)->getMorphClass())->whereIn('notifiable_id', User::where('institution_id', $user->institution_id)->select('id'))->latest()->limit(30)->get(['id', 'notifiable_id', 'data', 'read_at', 'created_at'])->map(function ($row) { $row->data = json_decode($row->data, true); return $row; });
-            $data['transport_logs'] = \App\Models\NotificationLog::whereHas('user', fn ($q) => $q->where('institution_id', $user->institution_id))->latest()->limit(30)->get(['id', 'type', 'recipient', 'status', 'created_at']);
+            $data['notification_activity'] = DB::table('notifications')->where('type', SystemNotification::class)->where('notifiable_type', (new User)->getMorphClass())->whereIn('notifiable_id', User::where('institution_id', $user->institution_id)->select('id'))->latest()->limit(30)->get(['id', 'notifiable_id', 'data', 'read_at', 'created_at'])->map(function ($row) {
+                $row->data = json_decode($row->data, true);
+
+                return $row;
+            });
+            $data['transport_logs'] = NotificationLog::whereHas('user', fn ($q) => $q->where('institution_id', $user->institution_id))->latest()->limit(30)->get(['id', 'type', 'recipient', 'status', 'created_at']);
         }
+
         return $data;
     }
 }

@@ -286,8 +286,8 @@ class AdmissionWorkflowController extends Controller
         if (! $hasValidSignature) {
             // Check alternate scheme in case of SSL termination proxy (http <-> https)
             $altScheme = $request->isSecure() ? 'http' : 'https';
-            $altUrl = preg_replace('/^https?:/', $altScheme . ':', $request->url());
-            $altRequest = Request::create($altUrl . '?' . (string) $request->server->get('QUERY_STRING'), $request->method(), [], [], [], $request->server->all());
+            $altUrl = preg_replace('/^https?:/', $altScheme.':', $request->url());
+            $altRequest = Request::create($altUrl.'?'.(string) $request->server->get('QUERY_STRING'), $request->method(), [], [], [], $request->server->all());
             if ($altRequest->hasValidSignature()) {
                 $hasValidSignature = true;
             }
@@ -315,7 +315,7 @@ class AdmissionWorkflowController extends Controller
             'Content-Type' => $doc->mime_type ?: 'application/pdf',
             'X-Content-Type-Options' => 'nosniff',
             'Cache-Control' => 'private, no-store',
-            'Content-Disposition' => 'inline; filename="' . $safeFilename . '"',
+            'Content-Disposition' => 'inline; filename="'.$safeFilename.'"',
         ]);
     }
 

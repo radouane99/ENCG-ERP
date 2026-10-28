@@ -209,11 +209,14 @@ return new class extends Migration
             throw new RuntimeException('Admission migration requires manual reconciliation of duplicate campaign/CNE keys; no records were deleted.');
         }
         Schema::table('applications', fn (Blueprint $t) => $t->unique(['admission_campaign_id', 'cne'], 'applications_campaign_cne_unique'));
-        DB::statement('CREATE UNIQUE INDEX admission_current_document_unique ON student_documents (application_id, type) WHERE is_current = true AND application_id IS NOT NULL');
         $keys = Schema::getForeignKeys('student_documents');
         if (! collect($keys)->contains(fn ($fk) => $fk['columns'] === ['application_id'])) {
             Schema::table('student_documents', fn (Blueprint $t) => $t->foreign('application_id', 'admission_document_application_fk')->references('id')->on('applications')->restrictOnDelete());
         }
+        DB::statement('DROP INDEX IF EXISTS admission_current_document_unique');
+        $isSqlite = DB::getDriverName() === 'sqlite';
+        $condition = $isSqlite ? 'is_current = 1' : 'is_current = true';
+        DB::statement("CREATE UNIQUE INDEX admission_current_document_unique ON student_documents (application_id, type) WHERE {$condition} AND application_id IS NOT NULL");
     }
 
     public function down(): void

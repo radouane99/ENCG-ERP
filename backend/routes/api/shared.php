@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Api\AcademicCalendarController;
-use App\Http\Controllers\Api\SmartSchedulingController;
 use App\Http\Controllers\Api\Admin\AdminBlockchainController;
 use App\Http\Controllers\Api\AdmissionController;
 use App\Http\Controllers\Api\AiAssistantController;
@@ -12,12 +11,14 @@ use App\Http\Controllers\Api\CalendarController;
 use App\Http\Controllers\Api\ConvocationController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DocumentController;
+use App\Http\Controllers\Api\DocumentRegistryController;
 use App\Http\Controllers\Api\ExamPdfController;
 use App\Http\Controllers\Api\InternalApiController;
 use App\Http\Controllers\Api\InternshipConversationController;
 use App\Http\Controllers\Api\InternshipDocumentController;
 use App\Http\Controllers\Api\LmsCourseController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\OperationalWorkspaceController;
 use App\Http\Controllers\Api\PdfExportController;
 use App\Http\Controllers\Api\PilotageController;
 use App\Http\Controllers\Api\PrivacyController;
@@ -26,7 +27,9 @@ use App\Http\Controllers\Api\PublicVerificationController;
 use App\Http\Controllers\Api\ReinscriptionController;
 use App\Http\Controllers\Api\RenewalCampaignController;
 use App\Http\Controllers\Api\RoomBookingController;
+use App\Http\Controllers\Api\ScheduleChangeRequestController;
 use App\Http\Controllers\Api\SearchController;
+use App\Http\Controllers\Api\SmartSchedulingController;
 use App\Http\Controllers\Api\StudentCardController;
 use App\Http\Controllers\Api\TimelineController;
 use App\Http\Controllers\Api\TimetableController;
@@ -100,15 +103,14 @@ Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
         Route::post('/versions/{versionId}/publish', [SmartSchedulingController::class, 'publishVersion']);
     });
 
-
-    Route::get('/timetable/change-requests', [\App\Http\Controllers\Api\ScheduleChangeRequestController::class, 'index']);
-    Route::post('/timetable/change-requests', [\App\Http\Controllers\Api\ScheduleChangeRequestController::class, 'storeTimetable']);
-    Route::patch('/timetable/change-requests/{id}/status', [\App\Http\Controllers\Api\ScheduleChangeRequestController::class, 'updateStatus']);
-    Route::get('/documents/registry', [\App\Http\Controllers\Api\DocumentRegistryController::class, 'index']);
-    Route::get('/documents/registry/{id}/download', [\App\Http\Controllers\Api\DocumentRegistryController::class, 'download']);
-    Route::post('/documents/registry/{id}/revoke', [\App\Http\Controllers\Api\DocumentRegistryController::class, 'revoke']);
-    Route::get('/workspace/today', [\App\Http\Controllers\Api\OperationalWorkspaceController::class, 'index']);
-    Route::patch('/workspace/requests/{id}/followup', [\App\Http\Controllers\Api\OperationalWorkspaceController::class, 'assign']);
+    Route::get('/timetable/change-requests', [ScheduleChangeRequestController::class, 'index']);
+    Route::post('/timetable/change-requests', [ScheduleChangeRequestController::class, 'storeTimetable']);
+    Route::patch('/timetable/change-requests/{id}/status', [ScheduleChangeRequestController::class, 'updateStatus']);
+    Route::get('/documents/registry', [DocumentRegistryController::class, 'index']);
+    Route::get('/documents/registry/{id}/download', [DocumentRegistryController::class, 'download']);
+    Route::post('/documents/registry/{id}/revoke', [DocumentRegistryController::class, 'revoke']);
+    Route::get('/workspace/today', [OperationalWorkspaceController::class, 'index']);
+    Route::patch('/workspace/requests/{id}/followup', [OperationalWorkspaceController::class, 'assign']);
     Route::post('/broadcasting/auth', fn (Request $request) => Broadcast::auth($request));
     Route::match(['get', 'post'], '/exams/{examId}/pv-pdf', [ExamPdfController::class, 'pvExamen']);
     Route::get('/user', function (Request $request) {

@@ -30,6 +30,7 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -74,7 +75,9 @@ class ExamWorkflowReliabilityTest extends TestCase
         foreach (['academic_validated', 'admin_validated', 'pending', 'rejected'] as $status) {
             $student = $this->makeTestStudent();
             StudentRegistration::create(['student_id' => $student->id, 'academic_year_id' => $this->session->academic_year_id, 'filiere_id' => $this->exam->module->filiere_id, 'semester_number' => 1, 'group_id' => $this->exam->group_id, 'status' => $status, 'registration_type' => 'new_enrollment']);
-            if (in_array($status, ['academic_validated', 'admin_validated'], true)) { $eligible[] = $student->id; }
+            if (in_array($status, ['academic_validated', 'admin_validated'], true)) {
+                $eligible[] = $student->id;
+            }
         }
         $this->postJson('/api/convocations/generate-session', ['session_id' => $this->session->id])->assertOk()->assertJsonPath('generated_count', 2);
         $this->assertEqualsCanonicalizing($eligible, $this->exam->seatings()->pluck('student_id')->all());
@@ -83,7 +86,7 @@ class ExamWorkflowReliabilityTest extends TestCase
     public function test_serial_session_workflow_publishes_then_records_attendance_and_locks_the_pv(): void
     {
         Mail::fake();
-        \Illuminate\Support\Facades\Storage::fake('private');
+        Storage::fake('private');
         $created = $this->postJson('/api/exam-sessions', ['name' => 'Recette intégrée synthétique', 'type' => 'normal', 'academic_year_id' => $this->session->academic_year_id, 'semester_id' => $this->session->semester_id, 'start_date' => '2027-01-10', 'end_date' => '2027-01-20', 'is_active' => true])->assertCreated()->json('data.id');
         $planned = $this->postJson('/api/exam-planning/store', ['exam_session_id' => $created, 'module_id' => $this->exam->module_id, 'group_id' => $this->exam->group_id, 'room_id' => $this->exam->room_id, 'exam_date' => '2027-01-13', 'start_time' => '08:30', 'duration_minutes' => 120])->assertOk()->json('exam.id');
         $exam = Exam::findOrFail($planned);
@@ -94,6 +97,7 @@ class ExamWorkflowReliabilityTest extends TestCase
             $teacher = $this->makeTestProfessor()->user;
             $teacher->assignRole(Role::findOrCreate('professor', 'sanctum'));
             ExamSurveillance::create(['exam_id' => $exam->id, 'room_id' => $exam->room_id, 'professor_id' => $teacher->id, 'role' => $index === 1 ? 'president_salle' : 'surveillant']);
+
             return $teacher;
         });
         $this->postJson('/api/convocations/generate-session', ['session_id' => $created])->assertOk()->assertJsonPath('generated_count', 1);

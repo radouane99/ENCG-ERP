@@ -3,21 +3,25 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\Academic\ExamWorkflowGuard;
 use App\Services\Academic\SlotSuggestionService;
 use App\Services\Academic\SmartSchedulingEngine;
 use App\Services\Academic\TimetableCampaignService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
 
-class SmartSchedulingController extends Controller implements \Illuminate\Routing\Controllers\HasMiddleware
+class SmartSchedulingController extends Controller implements HasMiddleware
 {
     public static function middleware(): array
     {
         return [function ($request, $next) {
-            app(\App\Services\Academic\ExamWorkflowGuard::class)->manage($request->user());
+            app(ExamWorkflowGuard::class)->manage($request->user());
+
             return $next($request);
         }];
     }
+
     public function __construct(
         private SmartSchedulingEngine $engine,
         private SlotSuggestionService $slotSuggestions,

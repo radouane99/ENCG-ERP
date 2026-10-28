@@ -2,11 +2,18 @@
 
 namespace Tests\Feature;
 
-use App\Models\{PdfDocumentRecord, User};
+use App\Jobs\GenerateOfficialPdfJob;
+use App\Models\BlockchainCertificate;
+use App\Models\Institution;
+use App\Models\PdfDocumentRecord;
+use App\Models\User;
+use App\Services\Documents\OfficialPdfFactory;
 use App\Services\Documents\RegisteredPdf;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -87,11 +94,11 @@ class PdfDocumentRegistryTest extends TestCase
     public function test_diploma_registry_extract_uses_the_registered_pdf_and_rejects_other_institutions(): void
     {
         $student = $this->makeTestStudent();
-        $cert = \App\Models\BlockchainCertificate::create(['student_id' => $student->id, 'diploma_name' => 'Diplôme synthétique', 'hash' => '0x'.str_repeat('a', 64), 'transaction_id' => 'TEST-TRANSACTION', 'certified_at' => now(), 'network_status' => 'UNVERIFIED']);
+        $cert = BlockchainCertificate::create(['student_id' => $student->id, 'diploma_name' => 'Diplôme synthétique', 'hash' => '0x'.str_repeat('a', 64), 'transaction_id' => 'TEST-TRANSACTION', 'certified_at' => now(), 'network_status' => 'UNVERIFIED']);
         $response = $this->get('/api/admin/blockchain/certificates/'.$cert->id.'/pdf')->assertOk()->assertHeader('Content-Type', 'application/pdf');
         $this->assertStringStartsWith('%PDF-', $response->getContent());
         $this->assertDatabaseHas('pdf_document_records', ['source_view' => 'pdf.workflow_record', 'status' => 'issued']);
-        $otherInstitution = \App\Models\Institution::create(['name' => 'Établissement synthétique', 'code' => 'PDF-OTHER', 'slug' => 'pdf-other']);
+        $otherInstitution = Institution::create(['name' => 'Établissement synthétique', 'code' => 'PDF-OTHER', 'slug' => 'pdf-other']);
         $student->update(['institution_id' => $otherInstitution->id]);
         $this->getJson('/api/admin/blockchain/certificates/'.$cert->id.'/pdf')->assertNotFound();
     }
@@ -105,10 +112,10 @@ class PdfDocumentRegistryTest extends TestCase
     {
         $actor = auth()->user();
         Storage::fake('local');
-        $job = new \App\Jobs\GenerateOfficialPdfJob('pdf.workflow_record', ['title' => 'Document de test', 'facts' => [], 'headers' => [], 'rows' => [], 'notice' => 'Recette'], 'audit/job.pdf');
+        $job = new GenerateOfficialPdfJob('pdf.workflow_record', ['title' => 'Document de test', 'facts' => [], 'headers' => [], 'rows' => [], 'notice' => 'Recette'], 'audit/job.pdf');
         app('auth')->forgetGuards();
         $this->assertNull(auth()->id());
-        $job->handle(app(\App\Services\Documents\OfficialPdfFactory::class));
+        $job->handle(app(OfficialPdfFactory::class));
         $record = PdfDocumentRecord::firstOrFail();
         $this->assertEquals($actor->institution_id, $record->institution_id);
         $this->assertEquals($actor->id, $record->created_by);
@@ -117,7 +124,7 @@ class PdfDocumentRegistryTest extends TestCase
 
     public function test_compact_card_keeps_cr80_dimensions_and_its_numeric_reference(): void
     {
-        $pdf = app(\App\Services\Documents\OfficialPdfFactory::class)->make('pdf.carte_etudiant_cr80', ['studentName' => 'ÉTUDIANTE SYNTHÉTIQUE', 'cne' => 'SYNTH-001', 'studentNumber' => 'TEST-2026-001', 'filiereName' => 'Tronc commun', 'academicYear' => '2026-2027']);
+        $pdf = app(OfficialPdfFactory::class)->make('pdf.carte_etudiant_cr80', ['studentName' => 'ÉTUDIANTE SYNTHÉTIQUE', 'cne' => 'SYNTH-001', 'studentNumber' => 'TEST-2026-001', 'filiereName' => 'Tronc commun', 'academicYear' => '2026-2027']);
         $bytes = $pdf->output();
         file_put_contents(storage_path('app/audits/pdf-design/carte-cr80.pdf'), $bytes);
         $this->assertSame(1, PdfDocumentRecord::firstOrFail()->page_count);
@@ -128,7 +135,7 @@ class PdfDocumentRegistryTest extends TestCase
     private function renderSamples(): void
     {
         $directory = storage_path('app/audits/pdf-design');
-        \Illuminate\Support\Facades\File::ensureDirectoryExists($directory);
+        File::ensureDirectoryExists($directory);
         $student = $this->makeTestStudent();
         $days = [1 => 'Lundi', 2 => 'Mardi', 3 => 'Mercredi', 4 => 'Jeudi', 5 => 'Vendredi'];
         $catalog = function (int $count) use ($days) {
@@ -145,15 +152,19 @@ class PdfDocumentRegistryTest extends TestCase
             'rapport-multipage' => ['pdf.workflow_record', ['title' => 'Rapport de suivi synthétique', 'facts' => ['Campagne' => 'Recette PDF', 'Établissement' => 'ENCG Fès'], 'headers' => ['Référence', 'Observation'], 'rows' => array_map(fn ($i) => ['TEST-'.$i, 'Contrôle documentaire synthétique avec accents français : é è à ç.'], range(1, 90)), 'notice' => 'Données de démonstration.'], 'portrait'],
             'emploi-du-temps' => ['pdf.emploi_du_temps_officiel', ['catalog' => $catalog(8)], 'landscape'],
             'emploi-du-temps-dense' => ['pdf.emploi_du_temps_officiel', ['catalog' => $catalog(24)], 'landscape'],
-            'preinscription' => ['pdf.admission-preregistration', ['app' => $application, 'photoData' => null, 'qrData' => 'data:image/svg+xml;base64,'.base64_encode((string) \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')->generate('DOSSIER-DE-DEMONSTRATION'))], 'portrait'],
+            'preinscription' => ['pdf.admission-preregistration', ['app' => $application, 'photoData' => null, 'qrData' => 'data:image/svg+xml;base64,'.base64_encode((string) QrCode::format('svg')->generate('DOSSIER-DE-DEMONSTRATION'))], 'portrait'],
             'attestation-travail' => ['pdf.attestation_travail', ['professor' => (object) ['first_name' => 'Enseignant', 'last_name' => 'SYNTHÉTIQUE', 'cin' => 'TEST-PR001', 'specialty' => 'Gestion', 'department' => (object) ['name' => 'Département de test']], 'year' => '2026-2027', 'trackingCode' => 'EXEMPLE-SANS-VALEUR'], 'portrait'],
         ];
         foreach ($samples as $name => [$view, $data, $orientation]) {
             $bytes = Pdf::loadView($view, $data)->setPaper('a4', $orientation)->output();
             file_put_contents($directory.'/'.$name.'.pdf', $bytes);
             $this->assertStringStartsWith('%PDF-', $bytes);
-            if (str_starts_with($name, 'emploi-du-temps')) { $this->assertSame(1, PdfDocumentRecord::latest('id')->first()->page_count, $name); }
-            if (in_array($name, ['preinscription', 'attestation-travail', 'attestation-scolarite', 'convocation'], true)) { $this->assertSame(1, PdfDocumentRecord::latest('id')->first()->page_count, $name); }
+            if (str_starts_with($name, 'emploi-du-temps')) {
+                $this->assertSame(1, PdfDocumentRecord::latest('id')->first()->page_count, $name);
+            }
+            if (in_array($name, ['preinscription', 'attestation-travail', 'attestation-scolarite', 'convocation'], true)) {
+                $this->assertSame(1, PdfDocumentRecord::latest('id')->first()->page_count, $name);
+            }
         }
         $this->assertGreaterThan(1, PdfDocumentRecord::where('source_view', 'pdf.workflow_record')->firstOrFail()->page_count);
     }

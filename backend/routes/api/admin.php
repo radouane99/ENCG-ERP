@@ -24,6 +24,8 @@ use App\Http\Controllers\Api\Admin\AuditForensicController;
 use App\Http\Controllers\Api\Admin\InstitutionSettingsController;
 use App\Http\Controllers\Api\Admin\LibraryController as AdminLibraryController;
 use App\Http\Controllers\Api\Admin\MobilityPartnerController;
+use App\Http\Controllers\Api\Admin\PublicPortalController;
+use App\Http\Controllers\Api\Admin\PublicSupportController;
 use App\Http\Controllers\Api\Admin\StudentChatbotController;
 use App\Http\Controllers\Api\Admin\TuitionFinanceController;
 use App\Http\Controllers\Api\AdminAiController;
@@ -156,12 +158,12 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::get('admin/holidays/{holiday}/impact', [HolidayController::class, 'impact']);
     // 🏛️ Institution & Global ERP Settings
     Route::get('/admin/institution-settings', [InstitutionSettingsController::class, 'getSettings']);
-    Route::get('/admin/public-portal', [\App\Http\Controllers\Api\Admin\PublicPortalController::class, 'show']);
-    Route::get('/admin/public-support', [\App\Http\Controllers\Api\Admin\PublicSupportController::class, 'index']);
-    Route::patch('/admin/public-support/{id}', [\App\Http\Controllers\Api\Admin\PublicSupportController::class, 'update'])->whereNumber('id');
-    Route::put('/admin/public-portal', [\App\Http\Controllers\Api\Admin\PublicPortalController::class, 'save']);
-    Route::post('/admin/public-portal/attachments', [\App\Http\Controllers\Api\Admin\PublicPortalController::class, 'upload'])->middleware('throttle:uploads');
-    Route::get('/admin/public-portal/attachments/{id}', [\App\Http\Controllers\Api\Admin\PublicPortalController::class, 'preview'])->whereUuid('id');
+    Route::get('/admin/public-portal', [PublicPortalController::class, 'show']);
+    Route::get('/admin/public-support', [PublicSupportController::class, 'index']);
+    Route::patch('/admin/public-support/{id}', [PublicSupportController::class, 'update'])->whereNumber('id');
+    Route::put('/admin/public-portal', [PublicPortalController::class, 'save']);
+    Route::post('/admin/public-portal/attachments', [PublicPortalController::class, 'upload'])->middleware('throttle:uploads');
+    Route::get('/admin/public-portal/attachments/{id}', [PublicPortalController::class, 'preview'])->whereUuid('id');
     Route::post('/admin/institution-settings', [InstitutionSettingsController::class, 'updateSettings']);
     Route::post('/admin/institution-settings/test-email', [InstitutionSettingsController::class, 'testResendEmail']);
     Route::get('/institution-settings', [InstitutionSettingsController::class, 'getSettings']);

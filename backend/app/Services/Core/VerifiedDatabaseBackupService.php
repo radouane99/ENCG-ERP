@@ -11,8 +11,11 @@ class VerifiedDatabaseBackupService
     {
         $files = glob(storage_path('app/private/database-backups/encg_*.dump.json')) ?: [];
         rsort($files);
-        if (! $files) { return null; }
+        if (! $files) {
+            return null;
+        }
         $manifest = json_decode(File::get($files[0]), true, flags: JSON_THROW_ON_ERROR);
+
         return array_intersect_key($manifest, array_flip(['created_at', 'bytes', 'archive_readable', 'restore_verified', 'restored_at', 'restored_grades']));
     }
 
@@ -69,14 +72,23 @@ class VerifiedDatabaseBackupService
         $lastVerified = null;
         foreach ($manifests as $file) {
             $data = json_decode(File::get($file), true);
-            if (($data['restore_verified'] ?? false) === true) { $lastVerified = basename($file, '.json'); break; }
+            if (($data['restore_verified'] ?? false) === true) {
+                $lastVerified = basename($file, '.json');
+                break;
+            }
         }
-        if (! $lastVerified) { return; }
+        if (! $lastVerified) {
+            return;
+        }
         foreach ($manifests as $file) {
             $name = basename($file, '.json');
-            if (! preg_match('/^encg_[0-9]{8}_[0-9]{6}_[a-f0-9]{8}\.dump$/D', $name) || $name === $current || $name === $lastVerified) { continue; }
+            if (! preg_match('/^encg_[0-9]{8}_[0-9]{6}_[a-f0-9]{8}\.dump$/D', $name) || $name === $current || $name === $lastVerified) {
+                continue;
+            }
             $dump = $directory.'/'.$name;
-            if (is_file($dump) && filemtime($dump) < time() - 30 * 86400) { File::delete($dump, $file); }
+            if (is_file($dump) && filemtime($dump) < time() - 30 * 86400) {
+                File::delete($dump, $file);
+            }
         }
     }
 

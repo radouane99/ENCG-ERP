@@ -13,9 +13,12 @@ use App\Models\ProfessorDocumentRequest;
 use App\Models\Student;
 use App\Models\User;
 use App\Services\Academic\DeliberationService;
+use App\Services\Core\OperationalWorkspaceService;
 use App\Services\DocumentRequestService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -429,16 +432,18 @@ class AdminDocumentRequestController extends Controller
      */
     public function sendEmailNotification(DocumentRequest $documentRequest): JsonResponse
     {
-        $workspace = app(\App\Services\Core\OperationalWorkspaceService::class);
+        $workspace = app(OperationalWorkspaceService::class);
         abort_unless($workspace->isStaff(auth()->user()), 403);
         $documentRequest = $workspace->requests(auth()->user())->whereKey($documentRequest->id)->firstOrFail();
-        $lock = \Illuminate\Support\Facades\Cache::lock('document-email:'.$documentRequest->id, 120);
+        $lock = Cache::lock('document-email:'.$documentRequest->id, 120);
         if (! $lock->get()) {
             return response()->json(['message' => 'Un envoi est déjà en cours. Réessayez plus tard.'], 409);
         }
         try {
             return $this->deliverEmailNotification($documentRequest->fresh());
-        } finally { $lock->release(); }
+        } finally {
+            $lock->release();
+        }
     }
 
     private function deliverEmailNotification(DocumentRequest $documentRequest): JsonResponse
@@ -460,7 +465,7 @@ class AdminDocumentRequestController extends Controller
         $fingerprint = hash('sha256', json_encode($emailData + ['recipient' => $studentUser->email]));
         $previous = $documentRequest->admin_notes ?? [];
         if (($previous['email_notification_fingerprint'] ?? null) === $fingerprint && ($previous['email_sent'] ?? false)
-            && ! empty($previous['email_sent_at']) && \Carbon\Carbon::parse($previous['email_sent_at'])->gt(now()->subMinutes(2))) {
+            && ! empty($previous['email_sent_at']) && Carbon::parse($previous['email_sent_at'])->gt(now()->subMinutes(2))) {
             return response()->json(['success' => true, 'deduplicated' => true, 'email_sent' => true, 'message' => 'Envoi déjà accepté récemment. Aucun nouvel email envoyé.']);
         }
 

@@ -10,10 +10,13 @@ use App\Models\Professor;
 use App\Models\Room;
 use App\Models\RoomBooking;
 use App\Models\Schedule;
+use App\Models\StudentRegistration;
 use App\Models\User;
 use App\Services\Academic\SemesterReadinessService;
 use App\Services\Academic\SmartSchedulingEngine;
 use App\Services\Academic\TimetableCampaignService;
+use App\Services\Academic\TimetablePerformanceStrategy;
+use App\Services\Academic\TimetableRoomGuard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Spatie\Permission\Models\Role;
@@ -54,12 +57,13 @@ class SemesterPlanningReliabilityTest extends TestCase
     {
         $c = $this->setupPlanning();
         $student = $this->makeTestStudent();
-        \App\Models\StudentRegistration::create(['student_id' => $student->id, 'academic_year_id' => $c['year']->id, 'filiere_id' => $c['filiere']->id, 'group_id' => $c['group']->id, 'semester_number' => 1, 'status' => 'admin_validated', 'registration_type' => 'new_enrollment']);
-        $guard = app(\App\Services\Academic\TimetableRoomGuard::class);
+        StudentRegistration::create(['student_id' => $student->id, 'academic_year_id' => $c['year']->id, 'filiere_id' => $c['filiere']->id, 'group_id' => $c['group']->id, 'semester_number' => 1, 'status' => 'admin_validated', 'registration_type' => 'new_enrollment']);
+        $guard = app(TimetableRoomGuard::class);
         $this->assertSame(1, $guard->groupsHeadcount([$c['group']->id]));
-        $lab = clone $c['room']; $lab->type = 'lab';
+        $lab = clone $c['room'];
+        $lab->type = 'lab';
         $rooms = collect([$c['room'], $lab]);
-        $this->assertTrue($guard->roomFits($c['room'], ['group_size' => 24, 'required_type' => 'classroom', 'occupied_group_ids' => [1,2], 'session_type' => 'cm'], $rooms));
+        $this->assertTrue($guard->roomFits($c['room'], ['group_size' => 24, 'required_type' => 'classroom', 'occupied_group_ids' => [1, 2], 'session_type' => 'cm'], $rooms));
         $this->assertFalse($guard->roomFits($lab, ['group_size' => 24, 'required_type' => 'classroom'], $rooms));
         $this->assertFalse($guard->roomFits($c['room'], ['group_size' => 24, 'required_type' => 'lab'], $rooms));
         $this->assertTrue($guard->roomFits($lab, ['group_size' => 24, 'required_type' => 'lab'], $rooms));
@@ -70,7 +74,8 @@ class SemesterPlanningReliabilityTest extends TestCase
 
     public function test_replacement_draft_preserves_the_legacy_timetable_until_publication(): void
     {
-        $c = $this->setupPlanning(); $this->assign($c);
+        $c = $this->setupPlanning();
+        $this->assign($c);
         $legacy = Schedule::create(['institution_id' => 1, 'academic_year_id' => $c['year']->id, 'semester_id' => $c['semester']->id, 'module_id' => $c['module']->id, 'group_id' => $c['group']->id, 'room_id' => $c['room']->id, 'professor_id' => $c['professor']->id, 'professor_type' => Professor::class, 'day_of_week' => 1, 'start_time' => '08:30:00', 'end_time' => '10:30:00', 'session_type' => 'td', 'is_active' => true]);
         $this->assertTrue($c['service']->addSession($c['versionId'], $c['payload'])['success']);
         $this->assertTrue($legacy->fresh()->is_active);
@@ -91,10 +96,13 @@ class SemesterPlanningReliabilityTest extends TestCase
         foreach ([1, 2] as $id) {
             $variables[] = ['var_id' => $id, 'occurrence_index' => 1, 'group_id' => $id, 'occupied_group_ids' => [$id], 'group_name' => 'Test '.$id, 'group_size' => 20, 'module_id' => $c['module']->id, 'module_name' => 'Informatique', 'professor_id' => $c['professor']->id, 'session_type' => 'cm', 'required_type' => 'lab'];
         }
-        $result = app(\App\Services\Academic\TimetablePerformanceStrategy::class)->place($variables, collect([$c['room']]));
+        $result = app(TimetablePerformanceStrategy::class)->place($variables, collect([$c['room']]));
         $this->assertTrue($result['success']);
         $this->assertCount(2, $result['assignments']);
-        foreach ($result['assignments'] as $row) { $this->assertCount(1, $row['occupied_group_ids']); $this->assertSame($c['room']->id, $row['room_id']); }
+        foreach ($result['assignments'] as $row) {
+            $this->assertCount(1, $row['occupied_group_ids']);
+            $this->assertSame($c['room']->id, $row['room_id']);
+        }
     }
 
     public function test_empty_programme_is_not_reported_as_a_successful_timetable(): void
@@ -113,8 +121,10 @@ class SemesterPlanningReliabilityTest extends TestCase
 
     public function test_administration_publishes_directly_without_teacher_confirmation(): void
     {
-        $c = $this->setupPlanning(); $this->assign($c);
-        $id = $c['versionId']; $service = $c['service'];
+        $c = $this->setupPlanning();
+        $this->assign($c);
+        $id = $c['versionId'];
+        $service = $c['service'];
         $this->assertTrue($service->addSession($id, $c['payload'])['success']);
         $session = Schedule::where('schedule_version_id', $id)->firstOrFail();
         $c['professor']->user->assignRole(Role::findOrCreate('professor', 'sanctum'));
@@ -135,18 +145,21 @@ class SemesterPlanningReliabilityTest extends TestCase
 
     private function publishedChangeFixture(): array
     {
-        $c = $this->setupPlanning(); $this->assign($c);
+        $c = $this->setupPlanning();
+        $this->assign($c);
         $c['service']->addSession($c['versionId'], $c['payload']);
         $this->assertTrue($c['service']->publish($c['versionId'])['success']);
         $row = Schedule::where('schedule_version_id', $c['versionId'])->firstOrFail();
         $c['professor']->user->assignRole(Role::findOrCreate('professor', 'sanctum'));
         Sanctum::actingAs($c['professor']->user);
+
         return [$c, $row];
     }
 
     public function test_professor_cannot_use_either_alias_to_generate_or_publish(): void
     {
-        $c = $this->setupPlanning(); $this->assign($c);
+        $c = $this->setupPlanning();
+        $this->assign($c);
         $c['service']->addSession($c['versionId'], $c['payload']);
         $c['professor']->user->assignRole(Role::findOrCreate('professor', 'sanctum'));
         Sanctum::actingAs($c['professor']->user);
@@ -159,9 +172,11 @@ class SemesterPlanningReliabilityTest extends TestCase
 
     public function test_scolarite_can_publish_and_access_the_change_inbox(): void
     {
-        $c = $this->setupPlanning(); $this->assign($c);
+        $c = $this->setupPlanning();
+        $this->assign($c);
         $c['service']->addSession($c['versionId'], $c['payload']);
-        $staff = User::factory()->create(['institution_id' => 1]); $staff->assignRole(Role::findOrCreate('scolarite', 'sanctum'));
+        $staff = User::factory()->create(['institution_id' => 1]);
+        $staff->assignRole(Role::findOrCreate('scolarite', 'sanctum'));
         Sanctum::actingAs($staff);
         $this->getJson('/api/admin/smart-scheduling/workspace')->assertOk();
         $this->postJson('/api/admin/smart-scheduling/versions/'.$c['versionId'].'/publish')->assertOk();
@@ -172,10 +187,14 @@ class SemesterPlanningReliabilityTest extends TestCase
     {
         [$c, $row] = $this->publishedChangeFixture();
         $c['group']->update(['capacity' => 15]);
-        $group = $c['group']->replicate(); $group->name = 'Second groupe'; $group->save();
-        $shared = $row->replicate(); $shared->group_id = $group->id; $shared->save();
+        $group = $c['group']->replicate();
+        $group->name = 'Second groupe';
+        $group->save();
+        $shared = $row->replicate();
+        $shared->group_id = $group->id;
+        $shared->save();
         $student = $this->makeTestStudent();
-        \App\Models\StudentRegistration::create(['student_id' => $student->id, 'academic_year_id' => $c['year']->id, 'filiere_id' => $c['filiere']->id, 'group_id' => $c['group']->id, 'semester_number' => 1, 'status' => 'admin_validated', 'registration_type' => 'new_enrollment']);
+        StudentRegistration::create(['student_id' => $student->id, 'academic_year_id' => $c['year']->id, 'filiere_id' => $c['filiere']->id, 'group_id' => $c['group']->id, 'semester_number' => 1, 'status' => 'admin_validated', 'registration_type' => 'new_enrollment']);
         $data = ['schedule_id' => $row->id, 'day_of_week' => 2, 'start_time' => '08:30', 'end_time' => '10:30', 'reason' => 'Déplacement demandé pour une réunion pédagogique.'];
         $id = $this->postJson('/api/timetable/change-requests', $data)->assertCreated()->json('data.id');
         $this->assertSame(1, $row->fresh()->day_of_week);
@@ -195,7 +214,10 @@ class SemesterPlanningReliabilityTest extends TestCase
     {
         [$c, $row] = $this->publishedChangeFixture();
         $id = $this->postJson('/api/timetable/change-requests', ['schedule_id' => $row->id, 'day_of_week' => 2, 'start_time' => '08:30', 'end_time' => '10:30', 'reason' => 'Réunion pédagogique exceptionnelle.'])->assertCreated()->json('data.id');
-        $blocking = $row->replicate(); $blocking->day_of_week = 2; $blocking->schedule_version_id = null; $blocking->save();
+        $blocking = $row->replicate();
+        $blocking->day_of_week = 2;
+        $blocking->schedule_version_id = null;
+        $blocking->save();
         Sanctum::actingAs($c['actor']);
         $this->patchJson('/api/timetable/change-requests/'.$id.'/status', ['status' => 'approved', 'review_note' => 'Vérification administrative du créneau.'])->assertUnprocessable();
         $this->assertSame(1, $row->fresh()->day_of_week);
@@ -208,9 +230,12 @@ class SemesterPlanningReliabilityTest extends TestCase
     {
         [$c, $row] = $this->publishedChangeFixture();
         $data = ['schedule_id' => $row->id, 'day_of_week' => 2, 'start_time' => '08:30', 'end_time' => '10:30', 'reason' => 'Réunion pédagogique exceptionnelle.'];
-        $other = $this->makeTestProfessor()->user; $other->assignRole(Role::findOrCreate('professor', 'sanctum'));
-        Sanctum::actingAs($other); $this->postJson('/api/timetable/change-requests', $data)->assertForbidden();
-        Sanctum::actingAs($c['professor']->user); $id = $this->postJson('/api/timetable/change-requests', $data)->assertCreated()->json('data.id');
+        $other = $this->makeTestProfessor()->user;
+        $other->assignRole(Role::findOrCreate('professor', 'sanctum'));
+        Sanctum::actingAs($other);
+        $this->postJson('/api/timetable/change-requests', $data)->assertForbidden();
+        Sanctum::actingAs($c['professor']->user);
+        $id = $this->postJson('/api/timetable/change-requests', $data)->assertCreated()->json('data.id');
         $row->update(['start_time' => '10:45:00', 'end_time' => '12:45:00']);
         Sanctum::actingAs($c['actor']);
         $this->patchJson('/api/timetable/change-requests/'.$id.'/status', ['status' => 'approved', 'review_note' => 'Créneau contrôlé par la scolarité.'])->assertStatus(409);
@@ -220,8 +245,13 @@ class SemesterPlanningReliabilityTest extends TestCase
     {
         [$c, $row] = $this->publishedChangeFixture();
         $id = $this->postJson('/api/timetable/change-requests', ['schedule_id' => $row->id, 'day_of_week' => 2, 'start_time' => '16:45', 'end_time' => '18:45', 'reason' => 'Déplacement proposé pour réunion pédagogique.'])->assertCreated()->json('data.id');
-        foreach ([['08:30','10:30'],['10:30','12:30'],['12:30','14:30'],['14:30','16:30']] as [$start,$end]) {
-            $other = $row->replicate(); $other->schedule_version_id = null; $other->day_of_week = 2; $other->start_time = $start; $other->end_time = $end; $other->save();
+        foreach ([['08:30', '10:30'], ['10:30', '12:30'], ['12:30', '14:30'], ['14:30', '16:30']] as [$start,$end]) {
+            $other = $row->replicate();
+            $other->schedule_version_id = null;
+            $other->day_of_week = 2;
+            $other->start_time = $start;
+            $other->end_time = $end;
+            $other->save();
         }
         Sanctum::actingAs($c['actor']);
         $this->patchJson('/api/timetable/change-requests/'.$id.'/status', ['status' => 'approved', 'review_note' => 'Vérification de la charge journalière.'])->assertUnprocessable()->assertJsonPath('message', 'Charge quotidienne maximale de l’enseignant dépassée.');

@@ -12,6 +12,7 @@ use App\OCR\Engines\PdfTextEngine;
 use App\OCR\Engines\TesseractEngine;
 use App\Services\Admissions\TafemQualityReportService;
 use App\Services\AI\GeminiApiService;
+use Dompdf\Dompdf;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
@@ -120,7 +121,7 @@ class TafemDeepScanAuditTest extends TestCase
     {
         Http::preventStrayRequests();
         // OCR ingests external identity evidence, not a branded ERP document with a registry footer.
-        $fixture = new \Dompdf\Dompdf;
+        $fixture = new Dompdf;
         $fixture->loadHtml('<html><body><h1>SYNTHETIC AUDIT DOCUMENT</h1><p>CIN AB123456</p><p>CNE N123456789</p><p>NOM SYNTHETIQUE</p></body></html>');
         $fixture->render();
         $pdf = $fixture->output();

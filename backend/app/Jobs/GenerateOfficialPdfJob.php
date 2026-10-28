@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Services\Documents\OfficialPdfFactory;
+use App\Services\Documents\RegisteredPdf;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -13,7 +14,9 @@ use Illuminate\Support\Facades\Storage;
 class GenerateOfficialPdfJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
     public ?int $documentInstitutionId = null;
+
     public ?int $documentActorId = null;
 
     /**
@@ -32,7 +35,7 @@ class GenerateOfficialPdfJob implements ShouldQueue
     public function handle(OfficialPdfFactory $factory): void
     {
         $pdf = $factory->make($this->view, $this->data);
-        if ($pdf instanceof \App\Services\Documents\RegisteredPdf) {
+        if ($pdf instanceof RegisteredPdf) {
             $pdf->withDocumentContext($this->documentInstitutionId, $this->documentActorId);
         }
         Storage::disk($this->disk)->put($this->outputPath, $pdf->output());

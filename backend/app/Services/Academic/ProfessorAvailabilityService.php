@@ -4,11 +4,15 @@ namespace App\Services\Academic;
 
 use App\Models\Professor;
 use App\Models\ProfessorAvailability;
+use Illuminate\Support\Facades\Schema;
 
 final class ProfessorAvailabilityService
 {
     public static function map(?int $year = null): array
     {
+        if (! Schema::hasTable('professors') || ! Schema::hasTable('professor_availabilities')) {
+            return [];
+        }
         $users = Professor::pluck('id', 'user_id');
         $map = [];
         $rows = ProfessorAvailability::where('academic_year_id', $year ?? AcademicContext::yearId())->get();

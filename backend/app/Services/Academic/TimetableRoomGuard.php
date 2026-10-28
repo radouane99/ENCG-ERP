@@ -21,6 +21,7 @@ class TimetableRoomGuard
     {
         return $sessionType === 'tp' || str_contains(mb_strtolower($moduleName), 'informatique') ? 'lab' : ($headcount > 50 ? 'amphitheater' : 'classroom');
     }
+
     public function isAmphitheater(object $room): bool
     {
         $type = strtolower((string) ($room->type ?? ''));
@@ -87,7 +88,9 @@ class TimetableRoomGuard
         }
 
         // Reserve computer laboratories for sessions that actually require computers.
-        if (($var['required_type'] ?? '') !== 'lab' && in_array(strtolower((string) ($room->type ?? '')), ['lab', 'laboratory', 'tp', 'computer_lab', 'informatique'], true)) { return false; }
+        if (($var['required_type'] ?? '') !== 'lab' && in_array(strtolower((string) ($room->type ?? '')), ['lab', 'laboratory', 'tp', 'computer_lab', 'informatique'], true)) {
+            return false;
+        }
         $smallEnough = $this->isTeachingRoom($room) && ! $this->isAmphitheater($room);
         $hasSmall = $allRooms->contains(fn ($candidate) => $this->roomOperational($candidate)
             && $this->isTeachingRoom($candidate)
@@ -228,6 +231,7 @@ class TimetableRoomGuard
             ->whereIn('g.id', $groupIds)->whereColumn('r.academic_year_id', 'g.academic_year_id')
             ->whereIn('r.status', ['academic_validated', 'admin_validated'])
             ->selectRaw('g.id, count(distinct r.student_id) as total')->groupBy('g.id')->pluck('total', 'id');
+
         return Group::whereIn('id', $groupIds)->get()->mapWithKeys(fn ($group) => [$group->id => (int) ($counts[$group->id] ?? ($group->capacity ?: 35))])->all();
     }
 
