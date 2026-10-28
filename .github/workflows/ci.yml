@@ -95,7 +95,7 @@ jobs:
       - name: 🧪 Execute Pest / PHPUnit Test Suite
         run: |
           cp phpunit.postgres.xml phpunit.xml
-          php artisan test --env=testing
+          ./vendor/bin/pest --compact 2>&1 | tee pest_output.log
         env:
           DB_CONNECTION: pgsql
           DB_HOST: 127.0.0.1
@@ -103,6 +103,14 @@ jobs:
           DB_DATABASE: encg_erp_test
           DB_USERNAME: encg_user
           DB_PASSWORD: encg_password
+
+      - name: 📝 Test Suite Execution Summary
+        if: always()
+        run: |
+          echo "### 🐘 Backend Pest / PHPUnit Results" >> $GITHUB_STEP_SUMMARY
+          echo '```text' >> $GITHUB_STEP_SUMMARY
+          tail -n 120 pest_output.log >> $GITHUB_STEP_SUMMARY 2>/dev/null || true
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
   frontend-quality:
     name: ⚛️ Frontend Lint, Tests & Production Build (Node 22)
