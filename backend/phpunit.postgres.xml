@@ -3,6 +3,9 @@
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="vendor/autoload.php"
          colors="true"
+         failOnWarning="false"
+         failOnDeprecation="false"
+         failOnNotice="false"
 >
     <testsuites>
         <testsuite name="Unit">
@@ -25,7 +28,11 @@
         <env name="BROADCAST_CONNECTION" value="null" force="true"/>
         <env name="CACHE_STORE" value="array" force="true"/>
         <env name="DB_CONNECTION" value="pgsql" force="true"/>
+        <env name="DB_HOST" value="127.0.0.1"/>
+        <env name="DB_PORT" value="5432"/>
         <env name="DB_DATABASE" value="encg_erp_test"/>
+        <env name="DB_USERNAME" value="encg_user"/>
+        <env name="DB_PASSWORD" value="encg_password"/>
         <env name="DB_URL" value="" force="true"/>
         <env name="MAIL_MAILER" value="array" force="true"/>
         <env name="QUEUE_CONNECTION" value="sync" force="true"/>

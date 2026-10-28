@@ -67,6 +67,12 @@ jobs:
       - name: 🔑 Configure Environment & App Key
         run: |
           cp .env.example .env.testing
+          sed -i 's/DB_CONNECTION=sqlite/DB_CONNECTION=pgsql/' .env.testing
+          echo "DB_HOST=127.0.0.1" >> .env.testing
+          echo "DB_PORT=5432" >> .env.testing
+          echo "DB_DATABASE=encg_erp_test" >> .env.testing
+          echo "DB_USERNAME=encg_user" >> .env.testing
+          echo "DB_PASSWORD=encg_password" >> .env.testing
           php artisan key:generate --env=testing
         env:
           DB_CONNECTION: pgsql
@@ -87,7 +93,9 @@ jobs:
           DB_PASSWORD: encg_password
 
       - name: 🧪 Execute Pest / PHPUnit Test Suite
-        run: php artisan test --configuration=phpunit.postgres.xml --env=testing
+        run: |
+          cp phpunit.postgres.xml phpunit.xml
+          php artisan test --env=testing
         env:
           DB_CONNECTION: pgsql
           DB_HOST: 127.0.0.1
