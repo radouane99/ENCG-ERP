@@ -47,6 +47,11 @@ class AdmissionCampaign extends Model
         return $this->belongsTo(Institution::class);
     }
 
+    public function academicYear(): BelongsTo
+    {
+        return $this->belongsTo(AcademicYear::class);
+    }
+
     public function filiere(): BelongsTo
     {
         return $this->belongsTo(Filiere::class);
