@@ -7,6 +7,8 @@ final class AdmissionFieldsParser
 {
     public const FIELDS = ['cin', 'cne', 'first_name_fr', 'last_name_fr', 'first_name_ar', 'last_name_ar',
         'birth_date', 'birth_city', 'birth_city_ar', 'address', 'address_ar', 'gender', 'nationality', 'nationality_ar',
+        'father_first_name', 'father_last_name', 'father_first_name_ar', 'father_last_name_ar',
+        'mother_first_name', 'mother_last_name', 'mother_first_name_ar', 'mother_last_name_ar',
         'bac_average', 'bac_type', 'bac_mention', 'bac_year', 'high_school', 'academy', 'bac_province',
         'bac_regional_average', 'bac_national_average', 'bac_continuous_average'];
 
@@ -16,7 +18,13 @@ final class AdmissionFieldsParser
         $aliases = ['birth_city' => ['birth_city_fr', 'birth_place_fr'], 'birth_city_ar' => ['birth_place_ar'],
             'address' => ['address_fr'], 'bac_mention' => ['mention'], 'bac_average' => ['moyenne_bac'],
             'bac_regional_average' => ['note_regional'], 'bac_national_average' => ['note_national'],
-            'bac_continuous_average' => ['note_controle']];
+            'bac_continuous_average' => ['note_controle'],
+            'father_first_name' => ['father_name_fr', 'father_name', 'father_prenom'],
+            'father_first_name_ar' => ['father_name_ar'],
+            'mother_first_name' => ['mother_name_fr', 'mother_name', 'mother_prenom'],
+            'mother_first_name_ar' => ['mother_name_ar'],
+            'father_last_name' => ['father_last_name_fr'],
+            'mother_last_name' => ['mother_last_name_fr']];
         if ($type !== 'cnie') {
             $aliases['bac_province'] = ['province', 'prefecture'];
         }
@@ -36,6 +44,10 @@ final class AdmissionFieldsParser
             'address' => 'Adresse(?: de r[eé]sidence)?(?: \(Fr\))?',
             'address_ar' => 'العنوان|عنوان السكن|عنوان الإقامة|Adresse \(Ar\)',
             'nationality' => 'Nationalit[eé](?: \(Fr\))?', 'nationality_ar' => 'الجنسية|Nationalit[eé] \(Ar\)',
+            'father_first_name' => 'Fils de|Nom du p[eè]re|Pr[eé]nom du p[eè]re',
+            'father_first_name_ar' => 'ابن|اسم الأب',
+            'mother_first_name' => 'et de|Nom de la m[eè]re|Pr[eé]nom de la m[eè]re',
+            'mother_first_name_ar' => 'و|اسم الأم',
         ];
         if ($type !== 'cnie') {
             $labels += ['bac_province' => 'Province|Pr[eé]fecture|Direction provinciale|المديرية الإقليمية|الإقليم',
