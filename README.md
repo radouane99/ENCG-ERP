@@ -1,5 +1,7 @@
 # 🎓 ENCG-ERP — Plateforme Intégrée de Gestion Académique & Universitaire (Grande École)
 
+Supervision : [Prometheus et Grafana — accès et exploitation](docs/OBSERVABILITY.md). Infrastructure : [bootstrap Terraform portable](infra/terraform/README.md), à relier au fournisseur d’hébergement lorsqu’il sera choisi.
+
 [![CI / Quality Gate](https://img.shields.io/badge/CI%2FCD-Passing%20100%25-success?style=for-the-badge&logo=githubactions)](https://github.com/radouane99/ENCG-ERP/actions)
 [![PHP](https://img.shields.io/badge/PHP-8.4-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://php.net)
 [![Laravel](https://img.shields.io/badge/Laravel-11%20%2F%2012-FF2D20?style=for-the-badge&logo=laravel&logoColor=white)](https://laravel.com)

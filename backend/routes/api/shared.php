@@ -43,6 +43,7 @@ use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
 
 // Public Documents, Diplomas & Cards Verification
+Route::get('/internal/metrics', \App\Http\Controllers\Api\MetricsController::class);
 Route::get('/health/ready', function () {
     try {
         DB::select('SELECT 1');

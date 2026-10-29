@@ -1,0 +1,52 @@
+groups:
+  - name: encg-erp
+    rules:
+      - alert: ErpMetricsUnavailable
+        expr: up{job="encg-application"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ERP : métriques indisponibles"
+      - alert: ErpNotReady
+        expr: probe_success{job="encg-readiness"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ERP : contrôle de disponibilité en échec"
+      - alert: ErpDependencyDown
+        expr: encg_database_up == 0 or encg_redis_up == 0 or encg_horizon_up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ERP : PostgreSQL, Redis ou Horizon indisponible"
+      - alert: ErpHttpErrors
+        expr: sum(rate(encg_http_requests_total{status_class="5xx"}[5m])) / clamp_min(sum(rate(encg_http_requests_total[5m])), 0.001) > 0.05 and sum(increase(encg_http_requests_total[5m])) > 20
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ERP : plus de 5 % d’erreurs serveur"
+      - alert: ErpQueueBacklog
+        expr: encg_queue_depth > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ERP : accumulation de tâches en attente"
+      - alert: ErpOcrStalled
+        expr: encg_ocr_oldest_pending_seconds > 600
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ERP : une extraction OCR attend depuis plus de dix minutes"
+      - alert: ErpCollectorUnavailable
+        expr: encg_metrics_collection_success == 0 or encg_http_metrics_storage_up == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ERP : une collecte de métriques est incomplète"

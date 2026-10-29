@@ -5,6 +5,7 @@ use App\Http\Middleware\CheckBrowserOrigin;
 use App\Http\Middleware\EnsureInstitutionContext;
 use App\Http\Middleware\EnsurePasswordChanged;
 use App\Http\Middleware\QueryTokenAuth;
+use App\Http\Middleware\RecordHttpMetrics;
 use App\Http\Middleware\RequireAdmin2FA;
 use App\Http\Middleware\RoleMiddleware;
 use App\Http\Middleware\SetLocale;
@@ -43,6 +44,7 @@ return Application::configure(basePath: dirname(__DIR__))
         }
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append(RecordHttpMetrics::class);
         $trustedProxies = array_filter(array_map('trim', explode(',', (string) env('TRUSTED_PROXIES', '*'))));
         $middleware->trustProxies(at: $trustedProxies ?: '*');
         $middleware->alias([

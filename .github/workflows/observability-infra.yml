@@ -1,0 +1,49 @@
+name: Observability and infrastructure configuration
+
+on:
+  pull_request:
+    paths:
+      - 'infra/**'
+      - 'docker/monitoring/**'
+      - 'docker-compose.monitoring.yml'
+      - 'scripts/setup_monitoring.py'
+      - 'scripts/tests/**'
+      - '.github/workflows/observability-infra.yml'
+  push:
+    branches: [main, master, docker-v2]
+    paths:
+      - 'infra/**'
+      - 'docker/monitoring/**'
+      - 'docker-compose.monitoring.yml'
+      - 'scripts/setup_monitoring.py'
+      - 'scripts/tests/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.17.1
+      - name: Validate portable Terraform bootstrap without cloud credentials
+        working-directory: infra/terraform/bootstrap
+        run: |
+          terraform fmt -check -recursive
+          terraform init -backend=false -input=false
+          terraform validate
+          terraform test
+      - name: Verify secret setup without real credentials
+        run: python3 -m unittest discover -s scripts/tests -p 'test_monitoring_setup.py'
+      - name: Validate Prometheus configuration and alert expressions
+        run: |
+          printf '%s' 'synthetic-token-used-only-for-config-validation' > "$RUNNER_TEMP/metrics-token"
+          docker run --rm \
+            -v "$PWD/docker/monitoring:/etc/prometheus:ro" \
+            -v "$RUNNER_TEMP/metrics-token:/run/secrets/metrics_token:ro" \
+            --entrypoint /bin/promtool prom/prometheus:v3.15.1 \
+            check config /etc/prometheus/prometheus.yml
