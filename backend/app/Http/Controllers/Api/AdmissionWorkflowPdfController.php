@@ -21,6 +21,22 @@ class AdmissionWorkflowPdfController extends Controller
         return app(AdmissionPreregistrationService::class)->render($app);
     }
 
+    public function engagement(Request $request)
+    {
+        $app = AdmissionAccess::dossier($request);
+        abort_unless($app->submitted_at && ! in_array($app->dossier_status, ['draft', 'rejected']), 422, 'Soumettez votre dossier avant de télécharger votre engagement.');
+
+        return app(AdmissionPreregistrationService::class)->renderEngagement($app);
+    }
+
+    public function medical(Request $request)
+    {
+        $app = AdmissionAccess::dossier($request);
+        abort_unless($app->submitted_at && ! in_array($app->dossier_status, ['draft', 'rejected']), 422, 'Soumettez votre dossier avant de télécharger votre fiche médicale.');
+
+        return app(AdmissionPreregistrationService::class)->renderMedical($app);
+    }
+
     public function list(Request $request)
     {
         AdmissionAccess::review($request);

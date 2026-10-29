@@ -13,7 +13,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   AlertCircle, CheckCircle2, FileText, Loader2, Save, Upload,
   Sparkles, BrainCircuit, Check, Clock, ArrowRight, GraduationCap,
-  CreditCard, Camera, FileCheck2, ShieldCheck, Eye, Trash2
+  CreditCard, Camera, FileCheck2, ShieldCheck, Eye, Trash2, Download
 } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { toast } from 'sonner'
@@ -328,28 +328,117 @@ export default function CandidateAdmissionWorkspace() {
     )}
 
     {app.submitted_at && !['draft', 'rejected'].includes(app.dossier_status) && (
-      <section className="relative overflow-hidden rounded-3xl border border-emerald-200 bg-gradient-to-r from-emerald-50 via-teal-50 to-white p-6 shadow-sm dark:border-emerald-900/60 dark:from-emerald-950/30 dark:via-teal-950/20 dark:to-slate-900">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-3.5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-md shadow-emerald-600/20">
-              <FileCheck2 className="h-6 w-6" />
+      <section className="relative overflow-hidden rounded-3xl border-2 border-emerald-300 bg-gradient-to-br from-emerald-50/90 via-white to-teal-50/80 p-6 shadow-md dark:border-emerald-800/80 dark:from-emerald-950/40 dark:via-slate-900 dark:to-teal-950/30">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-600/30">
+              <FileCheck2 className="h-7 w-7" />
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-emerald-950 dark:text-emerald-200">{tr("Votre préinscription a été déposée")}</h2>
-              <p className="mt-1 text-sm text-emerald-800/90 dark:text-emerald-300/80 leading-relaxed">
-                {tr("Téléchargez votre fiche avec photo, informations déclarées et QR du dossier. Présentez-la avec les originaux au guichet pour la comparaison physique et numérique.")}
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-0.5 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                <Check size={13} />
+                {ar ? 'تم تسجيل وتأكيد ترشيحكم بنجاح' : 'Préinscription officiellement enregistrée'}
+              </div>
+              <h2 className="text-xl font-extrabold text-slate-900 dark:text-white">
+                {ar ? 'ملف التسجيل الورقي المطلوب للإيداع بالشباك' : 'Documents officiels à imprimer et à fournir le jour du dépôt'}
+              </h2>
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl">
+                {ar
+                  ? 'يرجى تحميل الوثائق الرسمية أسفله وتجهيزها قبل الحضور إلى شباك التسجيل بالمؤسسة. يجب المصادقة على الالتزام لدى السلطات المختصة، وملء الفحص الطبي لدى طبيب معتمد.'
+                  : 'Veuillez télécharger les 3 documents officiels ci-dessous. L’engagement doit être légalisé auprès des autorités locales (Moqataâ), et la fiche médicale visée par un médecin avant votre passage au guichet.'}
               </p>
             </div>
           </div>
-          <a
-            className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-emerald-600/20 transition-all hover:bg-emerald-700 active:scale-95 cursor-pointer"
-            href={`${api.defaults.baseURL}${workflowBase}/receipt?application_id=${app.id}`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <FileText size={16} />
-            {tr("Télécharger ma fiche de préinscription")}
-          </a>
+
+          {/* 3 Action Cards for Documents */}
+          <div className="grid gap-3 sm:grid-cols-3 pt-2">
+            {/* 1. Fiche de préinscription */}
+            <a
+              className="group flex flex-col justify-between rounded-2xl border border-emerald-300/80 bg-white p-4 shadow-xs transition-all hover:border-emerald-500 hover:shadow-md dark:border-emerald-900/60 dark:bg-slate-900"
+              href={`${api.defaults.baseURL}${workflowBase}/receipt?application_id=${app.id}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                    <FileText size={16} />
+                  </div>
+                  <span className="rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">
+                    {ar ? 'إلزامي' : 'Obligatoire'}
+                  </span>
+                </div>
+                <h3 className="font-bold text-xs text-slate-900 dark:text-white group-hover:text-emerald-600">
+                  {ar ? '1. وصل التسجيل القبلي (PDF)' : '1. Fiche de Préinscription (PDF)'}
+                </h3>
+                <p className="text-[11px] text-slate-500 leading-snug">
+                  {ar ? 'يتضمن صورتكم، المعطيات المصرح بها ورمز التحقق QR' : 'Avec photo, récapitulatif officiel et QR code scolarité.'}
+                </p>
+              </div>
+              <div className="mt-4 flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 group-hover:underline">
+                <Download size={14} />
+                <span>{ar ? 'تحميل الوصل' : 'Télécharger la fiche'}</span>
+              </div>
+            </a>
+
+            {/* 2. Engagement légalisé */}
+            <a
+              className="group flex flex-col justify-between rounded-2xl border border-blue-300/80 bg-white p-4 shadow-xs transition-all hover:border-blue-500 hover:shadow-md dark:border-blue-900/60 dark:bg-slate-900"
+              href={`${api.defaults.baseURL}${workflowBase}/engagement-pdf?application_id=${app.id}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                    <ShieldCheck size={16} />
+                  </div>
+                  <span className="rounded bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200">
+                    {ar ? 'للمصادقة' : 'À légaliser'}
+                  </span>
+                </div>
+                <h3 className="font-bold text-xs text-slate-900 dark:text-white group-hover:text-blue-600">
+                  {ar ? '2. التزام الطالب بالنظام الداخلي (PDF)' : '2. Engagement Règlementaire (PDF)'}
+                </h3>
+                <p className="text-[11px] text-slate-500 leading-snug">
+                  {ar ? 'تعهد باحترام النظام الداخلي للمؤسسة (يجب تصحيح الإمضاء)' : 'Engagement déontologique à signer et faire légaliser.'}
+                </p>
+              </div>
+              <div className="mt-4 flex items-center gap-1.5 text-xs font-bold text-blue-700 dark:text-blue-400 group-hover:underline">
+                <Download size={14} />
+                <span>{ar ? 'تحميل الالتزام' : 'Télécharger l’engagement'}</span>
+              </div>
+            </a>
+
+            {/* 3. Fiche médicale */}
+            <a
+              className="group flex flex-col justify-between rounded-2xl border border-indigo-300/80 bg-white p-4 shadow-xs transition-all hover:border-indigo-500 hover:shadow-md dark:border-indigo-900/60 dark:bg-slate-900"
+              href={`${api.defaults.baseURL}${workflowBase}/medical-pdf?application_id=${app.id}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                    <GraduationCap size={16} />
+                  </div>
+                  <span className="rounded bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 border border-indigo-200">
+                    {ar ? 'فحص طبي' : 'Visite médicale'}
+                  </span>
+                </div>
+                <h3 className="font-bold text-xs text-slate-900 dark:text-white group-hover:text-indigo-600">
+                  {ar ? '3. الملف الطبي وشهادة الفحص (PDF)' : '3. Fiche Médicale d’Aptitude (PDF)'}
+                </h3>
+                <p className="text-[11px] text-slate-500 leading-snug">
+                  {ar ? 'تُعرض على طبيب معتمد لإجراء الفحص وتوقيع شهادة الأهلية' : 'À faire remplir et certifier par un médecin assermenté.'}
+                </p>
+              </div>
+              <div className="mt-4 flex items-center gap-1.5 text-xs font-bold text-indigo-700 dark:text-indigo-400 group-hover:underline">
+                <Download size={14} />
+                <span>{ar ? 'تحميل الملف الطبي' : 'Télécharger la fiche médicale'}</span>
+              </div>
+            </a>
+          </div>
         </div>
       </section>
     )}

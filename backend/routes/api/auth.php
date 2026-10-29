@@ -66,6 +66,8 @@ Route::prefix('admissions/workflow')->middleware(['auth:sanctum', 'institution.c
     Route::post('notify', [$workflow, 'notify'])->middleware('throttle:3,1');
     Route::post('notifications/{id}/retry', [$workflow, 'retryNotification'])->middleware('throttle:10,1');
     Route::get('receipt', [AdmissionWorkflowPdfController::class, 'receipt']);
+    Route::get('engagement-pdf', [AdmissionWorkflowPdfController::class, 'engagement']);
+    Route::get('medical-pdf', [AdmissionWorkflowPdfController::class, 'medical']);
     Route::get('applications', [$workflow, 'listing']);
     Route::get('stats', [$workflow, 'stats']);
     Route::post('imports/preview', [$workflow, 'previewImport']);
