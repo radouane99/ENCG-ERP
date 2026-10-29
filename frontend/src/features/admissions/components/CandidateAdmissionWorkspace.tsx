@@ -624,9 +624,30 @@ export default function CandidateAdmissionWorkspace() {
                     <button
                       className="rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:text-indigo-300 cursor-pointer transition-colors"
                       onClick={() => {
-                        const map: Record<string, string> = { first_name_fr: 'first_name', last_name_fr: 'last_name', bac_type: 'bac_series' };
-                        setForm(f => ({ ...f, [map[key] || key]: field.value }));
-                        setDirty(true)
+                        const map: Record<string, string> = {
+                          first_name_fr: 'first_name',
+                          last_name_fr: 'last_name',
+                          bac_type: 'bac_series',
+                          father_name_fr: 'father_first_name',
+                          father_name: 'father_first_name',
+                          mother_name_fr: 'mother_first_name',
+                          mother_name: 'mother_first_name',
+                          father_name_ar: 'father_first_name_ar',
+                          mother_name_ar: 'mother_first_name_ar',
+                        };
+                        let val = field.value;
+                        const targetKey = map[key] || key;
+                        if (targetKey === 'bac_series' && typeof val === 'string') {
+                          if (/sciences\s+physiques/i.test(val)) val = 'Sciences Physiques';
+                          else if (/sciences\s+math[eé]matiques\s*a/i.test(val)) val = 'Sciences Mathématiques A';
+                          else if (/sciences\s+math[eé]matiques\s*b/i.test(val)) val = 'Sciences Mathématiques B';
+                          else if (/sciences\s+math[eé]matiques/i.test(val)) val = 'Sciences Mathématiques';
+                          else if (/sciences\s+(?:de\s+la\s+vie|svt)/i.test(val)) val = 'Sciences de la Vie et de la Terre';
+                          else if (/sciences\s+[eé]conomiques/i.test(val)) val = 'Sciences Économiques';
+                          else if (/techniques?\s+de\s+gestion/i.test(val)) val = 'Techniques de Gestion et Comptabilité';
+                        }
+                        setForm(f => ({ ...f, [targetKey]: val }));
+                        setDirty(true);
                       }}
                     >
                       {tr("Utiliser")}

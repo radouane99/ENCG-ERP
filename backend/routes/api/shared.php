@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\InternalApiController;
 use App\Http\Controllers\Api\InternshipConversationController;
 use App\Http\Controllers\Api\InternshipDocumentController;
 use App\Http\Controllers\Api\LmsCourseController;
+use App\Http\Controllers\Api\MetricsController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OperationalWorkspaceController;
 use App\Http\Controllers\Api\PdfExportController;
@@ -43,7 +44,7 @@ use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Route;
 
 // Public Documents, Diplomas & Cards Verification
-Route::get('/internal/metrics', \App\Http\Controllers\Api\MetricsController::class);
+Route::get('/internal/metrics', MetricsController::class);
 Route::get('/health/ready', function () {
     try {
         DB::select('SELECT 1');

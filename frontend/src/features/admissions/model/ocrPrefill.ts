@@ -11,6 +11,12 @@ const fieldMap: Record<string, string> = {
   birth_date: 'birth_date',
   birth_city: 'birth_city', birth_city_fr: 'birth_city', birth_place_fr: 'birth_city',
   birth_city_ar: 'birth_city_ar', birth_place_ar: 'birth_city_ar', address: 'address', address_fr: 'address', address_ar: 'address_ar',
+  father_first_name: 'father_first_name', father_name_fr: 'father_first_name', father_name: 'father_first_name',
+  father_first_name_ar: 'father_first_name_ar', father_name_ar: 'father_first_name_ar',
+  father_last_name: 'father_last_name', father_last_name_ar: 'father_last_name_ar',
+  mother_first_name: 'mother_first_name', mother_name_fr: 'mother_first_name', mother_name: 'mother_first_name',
+  mother_first_name_ar: 'mother_first_name_ar', mother_name_ar: 'mother_first_name_ar',
+  mother_last_name: 'mother_last_name', mother_last_name_ar: 'mother_last_name_ar',
   nationality_ar: 'nationality_ar', bac_mention: 'bac_mention', mention: 'bac_mention',
   bac_province: 'bac_province', bac_regional_average: 'bac_regional_average', bac_national_average: 'bac_national_average', bac_continuous_average: 'bac_continuous_average',
   bac_average: 'bac_average',
@@ -29,6 +35,20 @@ export function ocrPrefill(run: OcrRun, current: Record<string, unknown>, replac
     const target = fieldMap[key]
     if (!target || field.conflict || field.value === null || field.value === '' || !['string', 'number'].includes(typeof field.value)) continue
     if (!replace && current[target] !== null && current[target] !== undefined && String(current[target]).trim() !== '') continue
+
+    if (target === 'bac_series' && typeof field.value === 'string') {
+      let s = field.value
+      if (/sciences\s+physiques/i.test(s)) s = 'Sciences Physiques'
+      else if (/sciences\s+math[eé]matiques\s*a/i.test(s)) s = 'Sciences Mathématiques A'
+      else if (/sciences\s+math[eé]matiques\s*b/i.test(s)) s = 'Sciences Mathématiques B'
+      else if (/sciences\s+math[eé]matiques/i.test(s)) s = 'Sciences Mathématiques'
+      else if (/sciences\s+(?:de\s+la\s+vie|svt)/i.test(s)) s = 'Sciences de la Vie et de la Terre'
+      else if (/sciences\s+[eé]conomiques/i.test(s)) s = 'Sciences Économiques'
+      else if (/techniques?\s+de\s+gestion/i.test(s)) s = 'Techniques de Gestion et Comptabilité'
+      result[target] = s
+      continue
+    }
+
     result[target] = field.value
   }
 
