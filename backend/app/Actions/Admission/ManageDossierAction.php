@@ -182,11 +182,19 @@ class ManageDossierAction
     {
         return DB::transaction(function () use ($request) {
             $app = $this->locked($request);
-            abort_unless($app->eligibility === 'main', 422, 'Une admission sur la liste principale est requise avant soumission.');
+            abort_if(in_array($app->dossier_status, ['approved', 'under_review']), 422, 'Le dossier est déjà en cours d’examen ou validé.');
             $data = array_replace($app->profile ?? [], ['first_name' => $app->first_name, 'last_name' => $app->last_name]);
-            validator($data, ['first_name' => 'required', 'last_name' => 'required', 'phone' => 'required',
-                'birth_date' => 'required|date_format:Y-m-d|before:today', 'gender' => 'required|in:male,female',
-                'address' => 'required', 'bac_average' => 'required|numeric|between:0,20', 'bac_year' => 'required|integer'])->validate();
+            $isTempsAmenage = str_starts_with((string) ($app->campaign->entry_route ?? ''), 'temps_amenage');
+            validator($data, [
+                'first_name' => 'required',
+                'last_name' => 'required',
+                'phone' => 'required',
+                'birth_date' => 'required|date_format:Y-m-d|before:today',
+                'gender' => 'required|in:male,female',
+                'address' => 'required',
+                'bac_average' => $isTempsAmenage ? 'nullable|numeric|between:0,20' : 'required|numeric|between:0,20',
+                'bac_year' => $isTempsAmenage ? 'nullable|integer' : 'required|integer',
+            ])->validate();
             $types = StudentDocument::where('application_id', $app->id)->where('is_current', true)->whereNull('withdrawn_at')->pluck('type')->all();
             abort_if(array_diff(AdmissionEntryRules::documents($app->campaign->entry_route), $types), 422, 'Ajoutez toutes les pièces requises pour ce concours avant de soumettre.');
             abort_if(StudentDocument::where('application_id', $app->id)->where('is_current', true)->whereNull('withdrawn_at')->where('status', 'rejected')->exists(), 422, 'Remplacez les pièces signalées à corriger avant de soumettre à nouveau.');

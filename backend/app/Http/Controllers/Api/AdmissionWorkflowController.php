@@ -82,17 +82,29 @@ class AdmissionWorkflowController extends Controller
     public function saveCampaign(Request $request, ?int $id = null)
     {
         AdmissionAccess::review($request);
-        $data = $request->validate(['name' => 'required|string|max:180', 'academic_year_id' => 'required|integer', 'filiere_id' => 'required|integer',
-            'open_date' => 'required|date_format:Y-m-d', 'close_date' => 'required|date_format:Y-m-d|after_or_equal:open_date',
-            'status' => 'required|in:draft,open,closed', 'target_capacity' => 'required|integer|min:1|max:20000', 'entry_route' => 'sometimes|in:tafem,cnaem', 'entry_semester' => 'sometimes|integer|in:1,5,7']);
+        $routes = ['tafem', 'cnaem', 'passerelle_concours', 'temps_amenage_master', 'temps_amenage_licence', 'temps_amenage_du'];
+        $data = $request->validate([
+            'name' => 'required|string|max:180',
+            'academic_year_id' => 'required|integer',
+            'filiere_id' => 'required|integer',
+            'open_date' => 'required|date_format:Y-m-d',
+            'close_date' => 'required|date_format:Y-m-d|after_or_equal:open_date',
+            'status' => 'required|in:draft,open,closed',
+            'target_capacity' => 'required|integer|min:1|max:20000',
+            'entry_route' => 'sometimes|in:'.implode(',', $routes),
+            'entry_semester' => 'sometimes|integer|in:1,3,5,7',
+        ]);
         $previous = $id ? AdmissionCampaign::where('institution_id', AdmissionAccess::institution($request))->findOrFail($id) : null;
         $data['entry_route'] ??= $previous?->entry_route ?? 'tafem';
         $data['entry_semester'] ??= $previous?->entry_semester ?? 1;
-        abort_unless(AdmissionEntryRules::validEntry($data['entry_route'], $data['entry_semester']), 422, 'TAFEM : entrée S1 ; CNAEM : entrée S5 ou S7 selon la décision officielle.');
+        abort_unless(AdmissionEntryRules::validEntry($data['entry_route'], (int) $data['entry_semester']), 422, 'Niveau d’entrée ou voie d’accès non conforme pour ce concours.');
         $inst = AdmissionAccess::institution($request);
         AcademicYear::whereKey($data['academic_year_id'])->where('institution_id', $inst)->firstOrFail();
         $filiere = Filiere::whereKey($data['filiere_id'])->where('institution_id', $inst)->firstOrFail();
-        abort_if($filiere->requiresTuitionPayment(), 422, 'TAFEM et CNAEM concernent la formation initiale gratuite.');
+        $isTempsAmenage = str_starts_with((string) $data['entry_route'], 'temps_amenage');
+        if (! $isTempsAmenage) {
+            abort_if($filiere->requiresTuitionPayment(), 422, 'La formation initiale concerne les filières classiques non payantes.');
+        }
         $campaign = DB::transaction(function () use ($id, $inst, $data) {
             $c = $id ? AdmissionCampaign::whereKey($id)->where('institution_id', $inst)->lockForUpdate()->firstOrFail() : new AdmissionCampaign(['institution_id' => $inst]);
             if ($c->exists && Application::where('admission_campaign_id', $c->id)->exists()) {
@@ -520,5 +532,22 @@ class AdmissionWorkflowController extends Controller
         });
 
         return response()->json(['message' => 'Document rapproché après vérification humaine.']);
+    }
+
+    public function changeEligibility(Request $request, int $id)
+    {
+        AdmissionAccess::review($request);
+        $data = $request->validate([
+            'eligibility' => 'required|in:main,waiting,unconfirmed,not_admitted,rejected',
+        ]);
+        $app = Application::findOrFail($id);
+        $old = $app->eligibility;
+        $app->update([
+            'eligibility' => $data['eligibility'],
+            'version' => $app->version + 1,
+        ]);
+        $this->action->event($app, 'eligibility_updated', ['from' => $old, 'to' => $data['eligibility']]);
+
+        return response()->json(['success' => true, 'candidate' => $this->resource($app->fresh())]);
     }
 }

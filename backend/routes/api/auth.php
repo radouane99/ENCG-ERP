@@ -71,6 +71,7 @@ Route::prefix('admissions/workflow')->middleware(['auth:sanctum', 'institution.c
     Route::post('imports/preview', [$workflow, 'previewImport']);
     Route::post('imports/{batch}/commit', [$workflow, 'commitImport']);
     Route::post('applications/{id}/activation', [$workflow, 'issueActivation'])->middleware('throttle:10,1');
+    Route::post('applications/{id}/eligibility', [$workflow, 'changeEligibility']);
     Route::post('documents/{document}/review', [$workflow, 'reviewDocument']);
     Route::get('documents/{document}/file', [$workflow, 'download']);
     Route::get('unlinked-documents', [$workflow, 'unlinkedDocuments']);

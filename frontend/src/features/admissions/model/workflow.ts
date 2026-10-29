@@ -11,7 +11,8 @@ export const extendedDocumentTypes = [
   'assurance_etudiant',
   'attestation_admission',
   'releve_parcours',
-  'diplome_bac2', 'attestation_admissibilite', 'diplome', 'licence'
+  'diplome_bac2', 'attestation_admissibilite', 'diplome', 'licence',
+  'cv', 'attestation_travail'
 ] as const
 
 export type DocumentType = typeof extendedDocumentTypes[number]
@@ -26,7 +27,9 @@ export const documentLabels: Record<DocumentType, string> = {
   assurance_etudiant: 'Attestation d’Assurance / AMO Étudiants',
   attestation_admission: 'Attestation officielle d’admission',
   releve_parcours: 'Relevés du parcours antérieur',
-  diplome_bac2: 'Diplôme Bac+2 / DEUG / DUT / BTS (Passerelle)'
+  diplome_bac2: 'Diplôme Bac+2 / DEUG / DUT / BTS (Passerelle)',
+  cv: 'Curriculum Vitae (CV actualisé)',
+  attestation_travail: 'Attestation de travail / Justificatif d’expérience'
 }
 
 export const documentLabelsAr: Record<DocumentType, string> = {
@@ -39,7 +42,18 @@ export const documentLabelsAr: Record<DocumentType, string> = {
   assurance_etudiant: 'شهادة التأمين الصحي الطلابي (AMO)',
   attestation_admission: 'شهادة القبول الرسمية في مباراة طافيم',
   releve_parcours: 'بيانات نقط المسار الجامعي السابق',
-  diplome_bac2: 'دبلوم باك+2 (مسالك الولوج المباشر)'
+  diplome_bac2: 'دبلوم باك+2 (مسالك الولوج المباشر)',
+  cv: 'السيرة الذاتية المحينة (CV)',
+  attestation_travail: 'شهادة العمل / إثبات التجربة المهنية'
+}
+
+export const entryRouteLabels: Record<string, string> = {
+  tafem: 'TAFEM — 1ère année (Formation initiale)',
+  cnaem: 'Passerelle CNAEM — 3e / 4e année (Formation initiale)',
+  passerelle_concours: 'Passerelle Concours Universitaire — 3e année (Formation initiale)',
+  temps_amenage_master: 'Master Spécialisé d’Université (Temps aménagé / Continue)',
+  temps_amenage_licence: 'Licence Professionnelle d’Université (Temps aménagé / Continue)',
+  temps_amenage_du: 'Diplôme d’Université / Executive (Temps aménagé / Continue)',
 }
 
 export const statusLabels: Record<string, string> = {

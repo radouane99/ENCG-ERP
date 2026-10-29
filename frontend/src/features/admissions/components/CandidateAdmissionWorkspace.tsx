@@ -273,6 +273,52 @@ export default function CandidateAdmissionWorkspace() {
       </section>
     )}
 
+    {/* ── STEPPER DE SUIVI DU DOSSIER CANDIDAT ── */}
+    <section className="rounded-3xl border border-slate-200/90 bg-white/95 p-4 sm:p-5 shadow-xs backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+        {/* Étape 1 */}
+        <div className={`flex items-center gap-3.5 rounded-2xl p-3.5 transition-all ${complete === requiredDocuments.length ? 'bg-emerald-50 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-200' : 'bg-indigo-50 text-indigo-950 dark:bg-indigo-950/40 dark:text-indigo-200'}`}>
+          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-black shadow-xs ${complete === requiredDocuments.length ? 'bg-emerald-600 text-white' : 'bg-indigo-600 text-white'}`}>
+            {complete === requiredDocuments.length ? '✓' : '1'}
+          </span>
+          <div className="min-w-0">
+            <p className="font-bold text-xs">{ar ? '1. الوثائق والمعلومات' : '1. Pièces & Profil'}</p>
+            <p className="text-[11px] opacity-80 truncate">{complete}/{requiredDocuments.length} {ar ? 'وثيقة مودعة' : 'pièce(s) déposée(s)'}</p>
+          </div>
+        </div>
+        {/* Étape 2 */}
+        <div className={`flex items-center gap-3.5 rounded-2xl p-3.5 transition-all ${app.submitted_at ? 'bg-emerald-50 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-200' : complete === requiredDocuments.length ? 'bg-amber-50 text-amber-950 dark:bg-amber-950/40 dark:text-amber-200' : 'bg-slate-50 text-slate-700 dark:bg-slate-800/40 dark:text-slate-300'}`}>
+          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-black shadow-xs ${app.submitted_at ? 'bg-emerald-600 text-white' : complete === requiredDocuments.length ? 'bg-amber-500 text-white' : 'bg-slate-300 text-slate-700 dark:bg-slate-700 dark:text-slate-300'}`}>
+            {app.submitted_at ? '✓' : '2'}
+          </span>
+          <div className="min-w-0">
+            <p className="font-bold text-xs">{ar ? '2. إرسال الملف الرقمي' : '2. Transmission du dossier'}</p>
+            <p className="text-[11px] opacity-80 truncate">{app.submitted_at ? (ar ? 'تم الإرسال بنجاح' : 'Dossier transmis') : (ar ? 'في انتظار الإرسال' : 'Prêt à soumettre')}</p>
+          </div>
+        </div>
+        {/* Étape 3 */}
+        <div className={`flex items-center gap-3.5 rounded-2xl p-3.5 transition-all ${app.appointment ? 'bg-emerald-50 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-200' : app.eligibility === 'main' ? 'bg-indigo-50 text-indigo-950 dark:bg-indigo-950/40 dark:text-indigo-200' : 'bg-slate-50 text-slate-700 dark:bg-slate-800/40 dark:text-slate-300'}`}>
+          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-black shadow-xs ${app.appointment ? 'bg-emerald-600 text-white' : app.eligibility === 'main' ? 'bg-indigo-600 text-white' : 'bg-slate-300 text-slate-700 dark:bg-slate-700 dark:text-slate-300'}`}>
+            {app.appointment ? '✓' : '3'}
+          </span>
+          <div className="min-w-0">
+            <p className="font-bold text-xs">{ar ? '3. موعد الشباك' : '3. RDV au Guichet'}</p>
+            <p className="text-[11px] opacity-80 truncate">{app.appointment ? (ar ? `تم الحجز (شباك ${app.appointment.desk})` : `Réservé · Guichet ${app.appointment.desk}`) : app.eligibility === 'main' ? (ar ? 'اختر موعدك' : 'Créneau à choisir') : (ar ? 'بعد إعلان الأهلية' : 'Dès proclamation')}</p>
+          </div>
+        </div>
+        {/* Étape 4 */}
+        <div className={`flex items-center gap-3.5 rounded-2xl p-3.5 transition-all ${app.dossier_status === 'approved' ? 'bg-emerald-50 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-200' : 'bg-slate-50 text-slate-700 dark:bg-slate-800/40 dark:text-slate-300'}`}>
+          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-black shadow-xs ${app.dossier_status === 'approved' ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700 dark:bg-slate-700 dark:text-slate-300'}`}>
+            {app.dossier_status === 'approved' ? '✓' : '4'}
+          </span>
+          <div className="min-w-0">
+            <p className="font-bold text-xs">{ar ? '4. التسجيل النهائي' : '4. Inscription définitive'}</p>
+            <p className="text-[11px] opacity-80 truncate">{app.dossier_status === 'approved' ? (ar ? 'تم التثبيت وتخصيص أبوجي' : 'Validée · Numéro Apogée') : (ar ? 'مراقبة النسخ الأصلية' : 'Contrôle des originaux')}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <AdmissionConsistencyAlerts applicationId={app.id} showOriginals ar={ar}/>
     {prefillNotice && (
       <div role="status" className="flex items-center gap-3 rounded-2xl border border-indigo-200 bg-indigo-50/90 p-4 text-sm font-medium text-indigo-950 shadow-xs dark:border-indigo-900/60 dark:bg-indigo-950/30 dark:text-indigo-200">
@@ -699,6 +745,19 @@ export default function CandidateAdmissionWorkspace() {
             </select>
           </label>
         )}
+        {editable && app.eligibility !== 'main' && (
+          <div className="mt-4 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4 text-xs text-indigo-950 dark:border-indigo-900/40 dark:bg-indigo-950/20 dark:text-indigo-200">
+            <p className="font-bold flex items-center gap-1.5">
+              <CheckCircle2 size={15} className="text-indigo-600" />
+              <span>{app.eligibility === 'waiting' ? (ar ? 'لوائح الانتظار الرسمية' : 'Liste d’Attente officielle') : (ar ? 'الملف مكتمل وقيد المعالجة' : 'Dossier complet et en cours d’examen')}</span>
+            </p>
+            <p className="mt-1.5 leading-relaxed text-[11px] opacity-90">
+              {app.eligibility === 'waiting'
+                ? (ar ? 'أنت مسجل في لائحة الانتظار. ستتاح لك إمكانية حجز موعد الشباك فور تحرير مقعد رسمي وإشعارك بالبريد.' : 'Vous êtes inscrit(e) sur la liste d’attente. La prise de rendez-vous sera débloquée dès attribution d’une place officielle.')
+                : (ar ? 'تم استلام وثائقك بنجاح. ستتاح مواعيد الشباك بمجرد إعلان لوائح المقبولين الرسمية (Liste Principale).' : 'Votre dossier est bien enregistré. La réservation des créneaux au guichet sera activée dès publication des listes officielles des admis.')}
+            </p>
+          </div>
+        )}
         {app.appointment && (
           <div className="mt-4 rounded-2xl border bg-white p-4 text-center dark:bg-slate-900 shadow-2xs">
             <div className="inline-block p-2 rounded-xl bg-white border shadow-2xs">
@@ -772,8 +831,9 @@ export default function CandidateAdmissionWorkspace() {
                 <span>{copy.save}</span>
               </button>
               <button
-                disabled={!!busy || draft.saving || draft.conflict || app.eligibility !== 'main'}
+                disabled={!!busy || draft.saving || draft.conflict || complete < requiredDocuments.length}
                 className={buttonClass}
+                title={complete < requiredDocuments.length ? `Déposez toutes les pièces requises (${complete}/${requiredDocuments.length}) pour vérifier et soumettre` : undefined}
                 onClick={() => void perform('review', async () => {
                   const current = dirty ? await saveNow() : app;
                   setReviewDossier(current)

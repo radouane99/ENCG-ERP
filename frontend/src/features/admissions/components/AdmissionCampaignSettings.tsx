@@ -21,8 +21,53 @@ export default function AdmissionCampaignSettings({ campaignId, onSelect }: { ca
       <label className="text-sm">Nom<input required className={input} value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}/></label>
       <label className="text-sm">Année universitaire<select required className={input} value={form.academic_year_id} onChange={e => setForm(f => ({ ...f, academic_year_id: e.target.value }))}><option value="">Choisir</option>{references.data?.years.map(y => <option key={y.id} value={y.id}>{y.label}</option>)}</select></label>
       <label className="text-sm">Filière<select required className={input} value={form.filiere_id} onChange={e => setForm(f => ({ ...f, filiere_id: e.target.value }))}><option value="">Choisir</option>{references.data?.filieres.map(y => <option key={y.id} value={y.id}>{y.name}</option>)}</select></label>
-      <label className="text-sm">Voie d’accès<select className={input} value={form.entry_route} onChange={e => setForm(f => ({ ...f, entry_route: e.target.value, entry_semester: e.target.value === 'tafem' ? '1' : '5' }))}><option value="tafem">TAFEM — formation initiale</option><option value="cnaem">CNAEM — formation initiale</option></select></label>
-      <label className="text-sm">Niveau d’entrée officiel<select className={input} value={form.entry_semester} onChange={e => setForm(f => ({ ...f, entry_semester: e.target.value }))}>{form.entry_route === 'tafem' ? <option value="1">1re année — S1</option> : <><option value="5">3e année — S5</option><option value="7">4e année — S7</option></>}</select></label>
+      <label className="text-sm">Voie d’accès & type de formation
+        <select
+          className={input}
+          value={form.entry_route}
+          onChange={e => {
+            const r = e.target.value;
+            const defSem = r === 'tafem' ? '1' : ['cnaem', 'passerelle_concours', 'temps_amenage_licence'].includes(r) ? '5' : '1';
+            setForm(f => ({ ...f, entry_route: r, entry_semester: defSem }));
+          }}
+        >
+          <optgroup label="🎓 Formation Initiale (Gratuite)">
+            <option value="tafem">TAFEM — 1re année (Baccalauréat)</option>
+            <option value="cnaem">Passerelle CNAEM — CPGE (3e ou 4e année)</option>
+            <option value="passerelle_concours">Passerelle Concours — DUT / BTS / DEUG (3e année)</option>
+          </optgroup>
+          <optgroup label="💼 Formation en Temps Aménagé (Formation Continue)">
+            <option value="temps_amenage_master">Master Spécialisé d’Université (MSU — S1 ou S7)</option>
+            <option value="temps_amenage_licence">Licence Professionnelle d’Université (LPU — S5)</option>
+            <option value="temps_amenage_du">Diplôme d’Université / Executive (DU — S1)</option>
+          </optgroup>
+        </select>
+      </label>
+      <label className="text-sm">Niveau d’entrée officiel
+        <select className={input} value={form.entry_semester} onChange={e => setForm(f => ({ ...f, entry_semester: e.target.value }))}>
+          {form.entry_route === 'tafem' && <option value="1">1re année — S1</option>}
+          {['cnaem', 'passerelle_concours'].includes(form.entry_route) && (
+            <>
+              <option value="5">3e année — S5</option>
+              <option value="7">4e année — S7</option>
+            </>
+          )}
+          {form.entry_route === 'temps_amenage_master' && (
+            <>
+              <option value="1">Master 1 — S1</option>
+              <option value="7">Master 2 — S7</option>
+            </>
+          )}
+          {form.entry_route === 'temps_amenage_licence' && <option value="5">3e année (Licence Pro) — S5</option>}
+          {form.entry_route === 'temps_amenage_du' && (
+            <>
+              <option value="1">Cycle 1 — S1</option>
+              <option value="3">Cycle 2 — S3</option>
+              <option value="5">Cycle 3 — S5</option>
+            </>
+          )}
+        </select>
+      </label>
       <label className="text-sm">Capacité<input required min={1} max={20000} type="number" className={input} value={form.target_capacity} onChange={e => setForm(f => ({ ...f, target_capacity: e.target.value }))}/></label>
       <label className="text-sm">Ouverture à 00 h 00<input required type="date" className={input} value={form.open_date} onChange={e => setForm(f => ({ ...f, open_date: e.target.value }))}/></label><label className="text-sm">Clôture à 23 h 59<input required type="date" className={input} value={form.close_date} onChange={e => setForm(f => ({ ...f, close_date: e.target.value }))}/></label>
       <p className="text-sm text-muted-foreground sm:col-span-2">Brouillon : invisible au public. Publiée : ouverture et fermeture automatiques selon les dates, heure du Maroc. Fermée : inscriptions arrêtées immédiatement, même avant la date de clôture.</p>

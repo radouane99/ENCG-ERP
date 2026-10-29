@@ -93,7 +93,61 @@ export default function AdmissionAdminWorkbench() {
       <div className="grid gap-5 xl:grid-cols-[.8fr_1.2fr]">
         <section className={`${panel} overflow-hidden`}><div className="mb-3 flex justify-between text-sm"><h2 className="font-bold">File de dossiers</h2><span>{rows.data?.total ?? 0} résultat(s)</span></div><div className="overflow-x-auto"><table className="w-full text-start text-sm"><thead className="bg-muted/50 text-xs text-muted-foreground dark:bg-card"><tr><th className="p-3">Candidat</th><th className="p-3">Rang</th><th className="p-3">État</th><th className="p-3">Revue</th></tr></thead><tbody>{rows.data?.data.map(row => <tr key={row.id} className={`border-t ${selected === row.id ? "bg-primary/5 dark:bg-blue-950" : ''}`}><td className="p-3"><p className="font-semibold">{row.last_name} {row.first_name}</p><p className="text-xs text-muted-foreground">{row.cne}</p><p className="text-xs text-muted-foreground">{statusLabels[row.eligibility]}</p></td><td className="p-3">{row.ranking ?? '—'}</td><td className="p-3">{statusLabels[row.dossier_status]}</td><td className="p-3"><button className="min-h-11 text-primary underline dark:text-blue-300" onClick={() => setSelected(row.id)}>Ouvrir</button></td></tr>)}</tbody></table>{rows.isFetching && <p className="p-4" role="status">Chargement…</p>}{!rows.isFetching && rows.data?.data.length === 0 && <p className="p-6 text-sm text-muted-foreground">Aucun dossier ne correspond aux filtres.</p>}</div><div className="mt-4 flex items-center justify-between text-sm"><button disabled={page === 1} onClick={() => setPage(x => x - 1)} className="min-h-11 underline disabled:opacity-40">Précédent</button><span>Page {page} / {rows.data?.last_page ?? 1}</span><button disabled={page >= (rows.data?.last_page ?? 1)} onClick={() => setPage(x => x + 1)} className="min-h-11 underline disabled:opacity-40">Suivant</button></div></section>
         <section className={panel}>{dossier.isLoading && selected ? <p role="status">Chargement du dossier…</p> : !app ? <div className="p-10 text-center text-muted-foreground"><ClipboardCheck className="mx-auto mb-4" size={36}/><h2 className="font-bold">Sélectionnez un dossier à examiner</h2><p className="mt-2 text-sm">Vous pourrez comparer la pièce, les informations déclarées et la liste officielle.</p></div> : <>
-          <div className="flex flex-wrap justify-between gap-2"><div><h2 className="text-lg font-bold">{app.last_name} {app.first_name}</h2><p className="mt-1 text-xs text-muted-foreground">{app.reference_number} · v{app.version} · {statusLabels[app.dossier_status]}</p></div><span className="rounded-full bg-primary/5 px-3 py-2 text-xs text-primary">{statusLabels[app.eligibility]}</span></div>
+          <div className="flex flex-wrap justify-between items-start gap-3">
+            <div>
+              <h2 className="text-lg font-bold">{app.last_name} {app.first_name}</h2>
+              <p className="mt-1 text-xs text-muted-foreground">{app.reference_number} · v{app.version} · {statusLabels[app.dossier_status]}</p>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <span className={`rounded-full px-3 py-1 text-xs font-bold ${
+                app.eligibility === 'main'
+                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                  : app.eligibility === 'waiting'
+                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                  : 'bg-primary/10 text-primary'
+              }`}>
+                {statusLabels[app.eligibility] || app.eligibility}
+              </span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  disabled={busy || app.eligibility === 'main'}
+                  className={`min-h-8 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer ${app.eligibility === 'main' ? 'bg-emerald-600 text-white shadow-xs' : 'border border-emerald-300 text-emerald-800 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-300'}`}
+                  onClick={() => void perform(async () => {
+                    const r = await api.post(`${workflowBase}/applications/${app.id}/eligibility`, { eligibility: 'main' });
+                    cache.setQueryData(['admission-dossier', app.id], r.data.candidate);
+                    toast.success('Candidat retenu sur Liste Principale ⭐');
+                  })}
+                >
+                  ⭐ Liste Principale
+                </button>
+                <button
+                  type="button"
+                  disabled={busy || app.eligibility === 'waiting'}
+                  className={`min-h-8 rounded-lg px-2.5 text-xs font-bold transition-all cursor-pointer ${app.eligibility === 'waiting' ? 'bg-amber-600 text-white shadow-xs' : 'border border-amber-300 text-amber-800 hover:bg-amber-50 dark:border-amber-700 dark:text-amber-300'}`}
+                  onClick={() => void perform(async () => {
+                    const r = await api.post(`${workflowBase}/applications/${app.id}/eligibility`, { eligibility: 'waiting' });
+                    cache.setQueryData(['admission-dossier', app.id], r.data.candidate);
+                    toast.success('Candidat placé sur Liste d’Attente ⏳');
+                  })}
+                >
+                  ⏳ Liste d’Attente
+                </button>
+                <button
+                  type="button"
+                  disabled={busy || app.eligibility === 'unconfirmed'}
+                  className={`min-h-8 rounded-lg px-2.5 text-xs font-medium transition-all cursor-pointer ${app.eligibility === 'unconfirmed' ? 'bg-slate-700 text-white' : 'border border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-200'}`}
+                  onClick={() => void perform(async () => {
+                    const r = await api.post(`${workflowBase}/applications/${app.id}/eligibility`, { eligibility: 'unconfirmed' });
+                    cache.setQueryData(['admission-dossier', app.id], r.data.candidate);
+                    toast.success('Admissibilité remise à confirmer');
+                  })}
+                >
+                  📋 À confirmer
+                </button>
+              </div>
+            </div>
+          </div>
           <AdmissionConsistencyAlerts applicationId={app.id}/><AdmissionDossierOperations key={app.id} applicationId={app.id}/>
           <details className="my-4 rounded-lg border p-3"><summary className="cursor-pointer text-sm font-semibold">Vérifier le contact personnel / activer l’accès</summary><p className="my-3 text-xs text-muted-foreground">À effectuer après contrôle des justificatifs du titulaire. Un compte personnel existant conserve son mot de passe.</p><label className="text-sm">Email personnel<input className={`${input} my-2`} type="email" value={contactEmail} onChange={e => setContactEmail(e.target.value)}/></label><label className="flex gap-2 text-sm"><input type="checkbox" checked={verifiedContact} onChange={e => setVerifiedContact(e.target.checked)}/>J’ai vérifié ce contact auprès du titulaire.</label><button disabled={busy || !verifiedContact || !contactEmail} className={`${button} mt-3`} onClick={() => void perform(async () => { const r = await api.post(`${workflowBase}/applications/${app.id}/activation`, { email: contactEmail, contact_verified: verifiedContact }); toast.success(r.data.message) })}>Enregistrer le contact et préparer l’accès</button></details>
           <div className="mb-3 flex flex-wrap gap-2">{requiredDocuments.map(type => <button className={`min-h-11 rounded-lg border px-3 text-xs ${documentType === type ? "border-primary bg-primary/5 text-primary" : ''}`} key={type} onClick={() => setDocumentType(type)}>{documentLabels[type]} · {app.documents[type]?.status === 'verified' ? '✓' : app.documents[type] ? 'À examiner' : 'Absent'}</button>)}</div>
