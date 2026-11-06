@@ -369,7 +369,7 @@ class ProfessorAssignmentController extends Controller
             abort_if($professors->isEmpty(), 422, 'Aucun enseignant actif.');
 
             $semesterPeriod = $request->input('semester_period', 'all');
-            $shouldReset = $request->boolean('reset', true);
+            $shouldReset = $request->boolean('reset', false);
 
             if ($shouldReset) {
                 $cleanQuery = ModuleProfessor::where('academic_year_id', $currentYear->id)

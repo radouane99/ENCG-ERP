@@ -626,6 +626,10 @@ class AdmissionWorkflowTest extends TestCase
         $a = $this->candidate();
         $this->login($a);
         $disk = Storage::disk('private');
+        $check = new Process(['pdftoppm', '-v']);
+        if ($check->run() !== 0) {
+            $this->markTestSkipped('pdftoppm (poppler-utils) is not installed in this environment.');
+        }
         $disk->put('scan-source.pdf', app('dompdf.wrapper')->loadHTML('<html><body style="font-family:DejaVu Sans;font-size:26px"><p>SYNTHETIC DOCUMENT</p><p>CNE N123456789</p><p>CIN AB123456</p></body></html>')->output());
         $rasterize = new Process(['pdftoppm', '-singlefile', '-r', '150', '-png', $disk->path('scan-source.pdf'), $disk->path('scan-image')]);
         $rasterize->setTimeout(15)->mustRun();

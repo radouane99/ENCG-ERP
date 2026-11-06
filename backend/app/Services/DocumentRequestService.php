@@ -549,12 +549,12 @@ class DocumentRequestService
             $data['endDateStr'] = now()->addMonths(3)->format('d/m/Y');
         }
 
-        $filename = sprintf('%s_%s_%s.pdf', $type->code, $student->id, now()->timestamp);
+        $existing = $this->getGeneratedDocument($request);
+        $filename = sprintf('%s_%s_%s_%s.pdf', $type->code, $student->id, now()->format('YmdHis'), Str::random(8));
         $pdfPath = $this->pdfEngine->generateFromView($viewName, $data, 'documents/generated/'.now()->format('Y/m'), $filename, 'private');
 
-        // Supprimer l'ancien document
-        $existing = $this->getGeneratedDocument($request);
-        if ($existing && Storage::disk('private')->exists($existing->file_path)) {
+        // Supprimer l'ancien document s'il est différent
+        if ($existing && $existing->file_path && $existing->file_path !== $pdfPath && Storage::disk('private')->exists($existing->file_path)) {
             Storage::disk('private')->delete($existing->file_path);
         }
 

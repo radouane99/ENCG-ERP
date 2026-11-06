@@ -54,6 +54,11 @@ jobs:
           extensions: pdo_pgsql, pgsql, mbstring, dom, fileinfo, gd, zip, bcmath, intl, pcov
           coverage: pcov
 
+      - name: 📦 Install System OCR & PDF Utilities
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq poppler-utils tesseract-ocr
+
       - name: ⚡ Cache Composer Dependencies
         uses: actions/cache@v5
         with:
