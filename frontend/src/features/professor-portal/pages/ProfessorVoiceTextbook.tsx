@@ -431,8 +431,8 @@ const [historySearch, setHistorySearch] = useState('');
       const savedDraft = localStorage.getItem(draftStorageKey);
       if (savedDraft) {
         const parsed = JSON.parse(savedDraft);
-        if (parsed?.transcription && !transcription) {
-          setTranscription(String(parsed.transcription));
+        if (parsed?.transcription) {
+          setTranscription((prev) => prev || String(parsed.transcription));
         }
       }
     } catch {

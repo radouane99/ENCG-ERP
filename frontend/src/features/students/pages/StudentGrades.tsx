@@ -81,11 +81,8 @@ export default function StudentGrades() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'validated' | 'retake' | 'failed'>('all');
 
-  // Interactive Simulator Modal state (CC1 25% + CC2 25% + Exam 50%)
+  // Interactive Simulator Modal state
   const [simulatorModalOpen, setSimulatorModalOpen] = useState(false);
-  const [simCc1, setSimCc1] = useState<string>('13');
-  const [simCc2, setSimCc2] = useState<string>('14');
-  const [simExam, setSimExam] = useState<string>('12');
 
   // Modal Réclamation LMD 48h
   const [appealModalOpen, setAppealModalOpen] = useState(false);
@@ -230,14 +227,6 @@ export default function StudentGrades() {
       return true;
     });
   }, [grades, selectedSemester, searchQuery, statusFilter]);
-
-  // Calculation for quick simulator: CC1 (25%) + CC2 (25%) + Examen (50%)
-  const simulatedAverage = useMemo(() => {
-    const cc1 = parseFloat(simCc1) || 0;
-    const cc2 = parseFloat(simCc2) || 0;
-    const exam = parseFloat(simExam) || 0;
-    return Number(((cc1 * 0.25) + (cc2 * 0.25) + (exam * 0.50)).toFixed(2));
-  }, [simCc1, simCc2, simExam]);
 
   const handleSubmitAppeal = async (e: React.FormEvent) => {
     e.preventDefault();

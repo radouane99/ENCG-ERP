@@ -7,14 +7,12 @@ import {
   FileText,
   CheckCircle2,
   AlertCircle,
-  ExternalLink,
   Pencil,
   Lock,
   ShieldCheck,
   Scale,
   Building2,
   Eye,
-  Check,
   AlertTriangle,
 } from 'lucide-react'
 import { Modal } from '@shared/components/ui/Modal'

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -22,12 +22,10 @@ import {
   Check,
   Loader2,
   Settings,
-  Layers,
   FileText,
   UserCheck,
   QrCode,
   AlertCircle,
-  Eye,
   ShieldCheck,
   Building2,
   Inbox
@@ -72,7 +70,7 @@ interface ImportPreview {
 }
 
 export default function AdmissionAdminWorkbench() {
-  const [params, setParams] = useSearchParams()
+  const [params, _setParams] = useSearchParams()
   const linkedCampaign = Number(params.get('campaign_id'))
   const linkedApplication = Number(params.get('application_id'))
 
@@ -122,7 +120,7 @@ export default function AdmissionAdminWorkbench() {
   const [reconcileReason, setReconcileReason] = useState('')
 
   // Appointments & Reception states
-  const [allocation, setAllocation] = useState<{
+  const [_allocation, setAllocation] = useState<{
     id: string
     assignments: { reference: string; starts_at: string; desk: string }[]
     unassigned: number
