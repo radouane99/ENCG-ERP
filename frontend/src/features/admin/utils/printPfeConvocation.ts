@@ -1,6 +1,7 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { QRCodeSVG } from 'qrcode.react';
+import { escapeHtml } from '@shared/lib/escapeHtml';
 
 export interface SoutenanceConvocationData {
   id?: number | string;
@@ -25,13 +26,22 @@ export function generatePfeConvocationHtml(data: SoutenanceConvocationData): str
     year: 'numeric'
   });
 
-  const refNumber = `ENCG-FÈS/DP-SCOL/PFE-2026/N° ${String(data.id || 1).padStart(4, '0')}`;
-  const academicYear = data.academicYear || '2025 - 2026';
-  const cne = data.cne || 'N138094' + String(100 + Number(data.id || 1));
-  const cin = data.cin || 'CD' + String(600000 + Number(data.id || 1) * 31);
-  const filiere = data.filiere || 'Management & Commerce International';
+  const refNumber = escapeHtml(`ENCG-FÈS/DP-SCOL/PFE-2026/N° ${String(data.id || 1).padStart(4, '0')}`);
+  const academicYear = escapeHtml(data.academicYear || '2025 - 2026');
+  const cne = escapeHtml(data.cne || 'N138094' + String(100 + Number(data.id || 1)));
+  const cin = escapeHtml(data.cin || 'CD' + String(600000 + Number(data.id || 1) * 31));
+  const filiere = escapeHtml(data.filiere || 'Management & Commerce International');
+  const studentSafe = escapeHtml(data.student);
+  const studentUpperSafe = escapeHtml(String(data.student || '').toUpperCase());
+  const topicSafe = escapeHtml(data.topic);
+  const dateSafe = escapeHtml(data.date);
+  const timeSafe = escapeHtml(data.time);
+  const roomSafe = escapeHtml(data.room);
+  const presidentSafe = escapeHtml(data.president);
+  const encadrantSafe = escapeHtml(data.encadrant);
+  const rapporteurSafe = escapeHtml(data.rapporteur);
 
-  const verificationUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://encg-fes.ac.ma'}/verify/soutenance/${data.id || 1}`;
+  const verificationUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://encg-fes.ac.ma'}/verify/soutenance/${encodeURIComponent(String(data.id || 1))}`;
 
   let qrCodeSvg = '';
   try {
@@ -53,8 +63,8 @@ export function generatePfeConvocationHtml(data: SoutenanceConvocationData): str
 <html lang="fr" dir="ltr">
 <head>
   <meta charset="UTF-8">
-  <base href="${typeof window !== 'undefined' ? window.location.origin : ''}">
-  <title>Convocation Officielle de Soutenance PFE — ${data.student}</title>
+  <base href="${escapeHtml(typeof window !== 'undefined' ? window.location.origin : '')}">
+  <title>Convocation Officielle de Soutenance PFE — ${studentSafe}</title>
   <style>
     @page {
       size: A4 portrait;
@@ -650,7 +660,7 @@ export function generatePfeConvocationHtml(data: SoutenanceConvocationData): str
           <tr>
             <td style="width: 38%;">
               <div class="bento-label">Étudiant(e) Candidat(e)</div>
-              <div class="bento-val">${data.student.toUpperCase()}</div>
+              <div class="bento-val">${studentUpperSafe}</div>
             </td>
             <td style="width: 32%;">
               <div class="bento-label">Filière / Spécialité</div>
@@ -666,7 +676,7 @@ export function generatePfeConvocationHtml(data: SoutenanceConvocationData): str
         <!-- Intitulé du Sujet -->
         <div class="topic-box">
           <div class="topic-label">Intitulé Officiel du Projet de Fin d'Études (PFE) :</div>
-          <div class="topic-text">« ${data.topic} »</div>
+          <div class="topic-text">« ${topicSafe} »</div>
         </div>
 
         <!-- ── Section 5 : Cadre Spatio-Temporel & Logistique ──── -->
@@ -674,17 +684,17 @@ export function generatePfeConvocationHtml(data: SoutenanceConvocationData): str
           <tr>
             <td class="logistics-card active" style="border-right: none; border-radius: 4px 0 0 4px;">
               <div class="icon-lbl">📅 Date d'Audience</div>
-              <div class="main-val">${data.date}</div>
+              <div class="main-val">${dateSafe}</div>
               <div class="sub-val">Session Principale Juin 2026</div>
             </td>
             <td class="logistics-card active" style="border-right: none;">
               <div class="icon-lbl">⏰ Horaire & Durée</div>
-              <div class="main-val">${data.time}</div>
+              <div class="main-val">${timeSafe}</div>
               <div class="sub-val">Durée : 90 min (Exposé + Débat + Délibération)</div>
             </td>
             <td class="logistics-card active" style="border-radius: 0 4px 4px 0;">
               <div class="icon-lbl">📍 Lieu d'Affectation</div>
-              <div class="main-val">${data.room}</div>
+              <div class="main-val">${roomSafe}</div>
               <div class="sub-val">Campus Universitaire ENCG Fès</div>
             </td>
           </tr>
@@ -706,19 +716,19 @@ export function generatePfeConvocationHtml(data: SoutenanceConvocationData): str
           <tbody>
             <tr>
               <td><span class="role-badge role-pres">Président du Jury</span></td>
-              <td><strong>${data.president}</strong></td>
+              <td><strong>${presidentSafe}</strong></td>
               <td>Professeur de l'Ens. Sup. (PES) &bull; ENCG Fès</td>
               <td><div class="sign-box">Visa</div></td>
             </tr>
             <tr>
               <td><span class="role-badge role-enc">Encadrant Pédagogique</span></td>
-              <td><strong>${data.encadrant}</strong></td>
+              <td><strong>${encadrantSafe}</strong></td>
               <td>Professeur Habilité (PH) &bull; ENCG Fès</td>
               <td><div class="sign-box">Visa</div></td>
             </tr>
             <tr>
               <td><span class="role-badge role-rap">Rapporteur / Examinateur</span></td>
-              <td><strong>${data.rapporteur}</strong></td>
+              <td><strong>${rapporteurSafe}</strong></td>
               <td>Professeur Chercheur (PA) &bull; ENCG Fès</td>
               <td><div class="sign-box">Visa</div></td>
             </tr>

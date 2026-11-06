@@ -11,7 +11,14 @@ export const ADMIN_ROLES = [
   'director',
 ]
 
-export const ACADEMIC_ROLES = [...ADMIN_ROLES, 'department-head', 'filiere-head']
+export const ACADEMIC_ROLES = [
+  ...ADMIN_ROLES,
+  'scolarite',
+  'pedagogy-officer',
+  'pedagogy_officer',
+  'department-head',
+  'filiere-head',
+]
 export const TEACHING_ROLES = [...ACADEMIC_ROLES, 'professor', 'vacataire']
 export const HR_ROLES = [...ADMIN_ROLES, 'hr-officer']
 export const STAFF_ROLES = [...TEACHING_ROLES, 'finance-officer', 'hr-officer', 'library-manager', 'discipline-committee']

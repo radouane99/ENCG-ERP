@@ -5,13 +5,14 @@ import AppShell from '@shared/components/layout/AppShell'
 import AuthLayout from '@shared/components/layout/AuthLayout'
 import LoadingScreen from '@shared/components/ui/LoadingScreen'
 import {
-ADMIN_ROLES,
-ACADEMIC_ROLES,
-TEACHING_ROLES,
-HR_ROLES,
-STAFF_ROLES,
-userCanAccessRoles,
+  ADMIN_ROLES,
+  ACADEMIC_ROLES,
+  TEACHING_ROLES,
+  HR_ROLES,
+  STAFF_ROLES,
+  userCanAccessRoles,
 } from '@shared/lib/routeAccess'
+
 // ── Lazy-loaded feature routes ─────────────────────────────────
 const LoginPage = lazy(() => import('@features/auth/pages/LoginPage'))
 const TwoFactorPage = lazy(() => import('@features/auth/pages/TwoFactorPage'))
@@ -23,7 +24,7 @@ const VerifyPv = lazy(() => import('@features/documents/pages/VerifyPv'))
 const LandingPage = lazy(() => import('@features/public/pages/LandingPage'))
 const InscriptionPage = lazy(() => import('@features/public/pages/InscriptionPage'))
 const ModifierDossierPage = lazy(() => import('@features/public/pages/ModifierDossierPage'))
-const InfrastructurePage = lazy(() => import('@features/public/pages/LandingPage')) // Fallback for now if it doesn't exist
+const InfrastructurePage = lazy(() => import('@features/public/pages/LandingPage'))
 
 const StudentRouter = lazy(() => import('./StudentRouter'))
 const ProfessorRouter = lazy(() => import('./ProfessorRouter'))
@@ -68,7 +69,6 @@ const ExamSessionsPage = lazy(() => import('@features/exams/pages/ExamSessionsPa
 const AdminExamGlobalLiveDashboardPage = lazy(() => import('@features/exams/pages/AdminExamGlobalLiveDashboardPage'))
 const AdminExamAnalyticsPage = lazy(() => import('@features/exams/pages/AdminExamAnalyticsPage'))
 
-
 const DocumentRequestsPage = lazy(() => import('@features/documents/pages/AdminDocumentRequestsPage'))
 const DocumentTemplatesPage = lazy(() => import('@features/documents/pages/DocumentTemplatesPage'))
 const DiplomasPage = lazy(() => import('@features/documents/pages/DiplomasPage'))
@@ -78,12 +78,10 @@ const CoursesPage = lazy(() => import('@features/lms/pages/CoursesPage'))
 const CourseDetailPage = lazy(() => import('@features/lms/pages/CourseDetailPage'))
 const AssignmentsPage = lazy(() => import('@features/lms/pages/AssignmentsPage'))
 
-
 const DeliberationJuryPage = lazy(() => import('@features/deliberation/pages/DeliberationJuryPage'))
 
 const InternshipsPage = lazy(() => import('@features/internships/pages/InternshipsPage'))
 const FinalProjectsPage = lazy(() => import('@features/finalprojects/pages/FinalProjectsPage'))
-
 
 const MessagesPage = lazy(() => import('@features/communication/pages/MessagesPage'))
 const AnnouncementsPage = lazy(() => import('@features/communication/pages/AnnouncementsPage'))
@@ -122,7 +120,6 @@ const NotificationsPage = lazy(() => import('@features/notifications/pages/Notif
 const DocumentRegistryPage = lazy(() => import('@features/documents/pages/DocumentRegistryPage'))
 
 // Administration
-const ActivityLogsPage = lazy(() => import('@features/admin/pages/ActivityLogsPage'))
 const TextbooksPage = lazy(() => import('@features/admin/pages/TextbooksPage'))
 const AdminClubsPage = lazy(() => import('@features/admin/pages/ClubsPage'))
 const AdminTafem = lazy(() => import('@features/admin/pages/AdminTafem'))
@@ -154,7 +151,6 @@ const AdminSpecialtyAllocationPage = lazy(() => import('@features/admin/pages/Ad
 const AdminReservistesPage = lazy(() => import('@features/admin/pages/AdminReservistesPage'))
 const AdminAbsencesPage = lazy(() => import('@features/admin/pages/AdminAbsencesPage'))
 const StudentsRiskPage = lazy(() => import('@features/admin/pages/StudentsRiskPage'))
-const AdminTextbooksPage = lazy(() => import('@features/admin/pages/AdminTextbooksPage'))
 const AdminInternshipsPage = lazy(() => import('@features/internships/ui/pages/AdminInternshipsPage'))
 const StudentInternshipsPage = lazy(() => import('@features/internships/ui/pages/StudentInternshipsPage'))
 const AdminConvocationsUIPage = lazy(() => import('@features/exams/ui/pages/AdminConvocationsPage'))
@@ -202,6 +198,15 @@ const DepartmentSubstitutionsPage = lazy(() => import('@features/admin/pages/Dep
 const AdminRolesPermissionsPage = lazy(() => import('@features/admin/pages/AdminRolesPermissionsPage'))
 const AdminParapheurPage = lazy(() => import('@features/hr/pages/AdminParapheurPage'))
 
+const CANDIDATE_ALLOWED_PATHS = ['/dashboard', '/profile', '/notifications', '/admissions/mon-dossier']
+
+function isCandidateAllowedPath(pathname: string): boolean {
+  return (
+    CANDIDATE_ALLOWED_PATHS.includes(pathname) ||
+    pathname.startsWith('/admissions/')
+  )
+}
+
 // ── Route Guard ────────────────────────────────────────────────
 function RequireAuth({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading, user } = useAuthStore()
@@ -214,6 +219,13 @@ function RequireAuth({ children }: { children: ReactNode }) {
   }
   if (user?.two_factor_required && !user.two_factor_enabled && location.pathname !== '/profile') {
     return <Navigate to="/profile?setup-2fa=1" replace />
+  }
+  if (
+    user?.admission_pending === true &&
+    !userCanAccessRoles(user?.roles, STAFF_ROLES) &&
+    !isCandidateAllowedPath(location.pathname)
+  ) {
+    return <Navigate to="/dashboard" replace />
   }
   return <>{children}</>
 }
@@ -231,6 +243,14 @@ function ProtectedRoute({ roles, children }: { roles: string[]; children?: React
 
   if (isLoading) return <LoadingScreen />
   if (!isAuthenticated) return <Navigate to="/login" state={{ returnTo: location.pathname + location.search }} replace />
+
+  if (
+    user?.admission_pending === true &&
+    !userCanAccessRoles(user?.roles, STAFF_ROLES) &&
+    !isCandidateAllowedPath(location.pathname)
+  ) {
+    return <Navigate to="/dashboard" replace />
+  }
 
   if (!userCanAccessRoles(user?.roles, roles)) return <Navigate to="/dashboard" replace />
 
@@ -279,7 +299,7 @@ export default function RootRouter() {
           <Route path="/admissions/mon-dossier" element={<InscriptionPage editMode />} />
 
           <Route element={<ProtectedRoute roles={['student', 'professor', 'super-admin']} />}>
-          <Route path="/cedoc/dashboard" element={<DoctorantDashboard />} />
+            <Route path="/cedoc/dashboard" element={<DoctorantDashboard />} />
           </Route>
 
           {/* Students — staff directory */}
@@ -339,9 +359,8 @@ export default function RootRouter() {
             <Route path="/academic/years" element={<AcademicYearsPage />} />
             <Route path="/admin/academic" element={<AcademicYearSettingsPage />} />
             <Route path="/admin/professor-assignments" element={<AcademicYearSettingsPage />} />
-            <Route path="/admin/textbooks" element={<AdminTextbooksPage />} />
+            <Route path="/admin/textbooks" element={<TextbooksPage />} />
             <Route path="/admin/substitutions" element={<DepartmentSubstitutionsPage />} />
-            <Route path="/admin/roles-permissions" element={<AdminRolesPermissionsPage />} />
             <Route path="/admin/parapheur" element={<AdminParapheurPage />} />
             <Route path="/academic/architecture" element={<AcademicArchitecturePage />} />
             <Route path="/academic/groups" element={<AcademicArchitecturePage />} />
@@ -350,45 +369,43 @@ export default function RootRouter() {
             <Route path="/academic/modules" element={<ModulesListPage />} />
             <Route path="/academic/deliberations" element={<DeliberationManager />} />
             <Route path="/professors" element={<ProfessorsListPage />} />
+            <Route path="/admin/grades/edit" element={<AdminGradesEditPage />} />
+            <Route path="/admin/grades/pv" element={<AdminGradesPVPage />} />
+            <Route path="/admin/specialty-allocation" element={<AdminSpecialtyAllocationPage />} />
+            <Route path="/admin/ai-timetable-scheduler" element={<AdminAiTimetableSchedulerPage />} />
+            <Route path="/admin/schedules/engine" element={<AdminAiTimetableSchedulerPage />} />
+            <Route path="/admin/timetable/engine" element={<AdminAiTimetableSchedulerPage />} />
+            <Route path="/admin/timetable/calendar" element={<AdminAiTimetableSchedulerPage />} />
+            <Route path="/admin/academic-calendar" element={<AdminAcademicCalendarPage />} />
+            <Route path="/admin/exams/pv-archive" element={<AdminExamPvArchivePage />} />
+            <Route path="/admin/exams/archives" element={<AdminExamPvArchivePage />} />
+            <Route path="/admin/exams/analytics" element={<AdminExamAnalyticsPage />} />
           </Route>
 
           {/* Grades & PV Routes */}
           <Route element={<ProtectedRoute roles={TEACHING_ROLES} />}>
             <Route path="/admin/grades" element={<AdminGradesPage />} />
-            <Route path="/admin/grades/edit" element={<AdminGradesEditPage />} />
-            <Route path="/admin/grades/pv" element={<AdminGradesPVPage />} />
             <Route path="/professor/grades" element={<AdminGradesPage />} />
             <Route path="/admin/grade-appeals" element={<AdminGradeAppealsPage />} />
             <Route path="/professor/grade-appeals" element={<AdminGradeAppealsPage />} />
-            <Route path="/admin/specialty-allocation" element={<AdminSpecialtyAllocationPage />} />
           </Route>
 
           {/* Timetable & Exams */}
           <Route element={<ProtectedRoute roles={TEACHING_ROLES} />}>
             <Route path="/timetable" element={<TimetablePage />} />
             <Route path="/academic/timetable" element={<TimetableAdminView />} />
-            <Route path="/admin/ai-timetable-scheduler" element={<AdminAiTimetableSchedulerPage />} />
-            <Route path="/admin/schedules/engine" element={<AdminAiTimetableSchedulerPage />} />
-            <Route path="/admin/timetable/engine" element={<AdminAiTimetableSchedulerPage />} />
-            <Route path="/admin/timetable/calendar" element={<AdminAiTimetableSchedulerPage />} />
             <Route path="/professor/schedules" element={<ProfessorSchedulePage />} />
-            <Route path="/admin/academic-calendar" element={<AdminAcademicCalendarPage />} />
             <Route path="/academic/exam-planning/:examId/live" element={<ExamLivePresence />} />
             <Route path="/academic/exam-planning/:examId/affichage" element={<ExamDisplayList />} />
             <Route path="/academic/exam-planning/:examId/emargement" element={<ExamAttendanceSheet />} />
             <Route path="/academic/exam-planning/:id/surveillance" element={<AdminExamSurveillanceHubPage />} />
             <Route path="/admin/exams/:id/surveillance" element={<AdminExamSurveillanceHubPage />} />
-            <Route path="/admin/exams/pv-archive" element={<AdminExamPvArchivePage />} />
-            <Route path="/admin/exams/archives" element={<AdminExamPvArchivePage />} />
-            <Route path="/admin/exams/analytics" element={<AdminExamAnalyticsPage />} />
           </Route>
 
           <Route element={<ProtectedRoute roles={[...TEACHING_ROLES, 'scolarite']} />}>
             <Route path="/admin/rooms/availability" element={<AdminRoomAvailabilityPage />} />
           </Route>
 
-
-          
           {/* Convocations Officielles */}
           <Route element={<ProtectedRoute roles={TEACHING_ROLES} />}>
             <Route path="/academic/convocations/dashboard" element={<AdminConvocationsUIPage />} />
@@ -399,7 +416,6 @@ export default function RootRouter() {
 
           {/* Core Academic Administration */}
           <Route element={<ProtectedRoute roles={ACADEMIC_ROLES} />}>
-
             <Route path="/academic/holidays" element={<HolidayManager />} />
             <Route path="/academic/credits-derogations" element={<CreditsAndDerogations />} />
             <Route path="/academic/internships" element={<AdminInternshipsPage />} />
@@ -411,7 +427,9 @@ export default function RootRouter() {
           <Route element={<ProtectedRoute roles={['student']} />}>
             <Route path="/student/internships" element={<StudentInternshipsPage />} />
           </Route>
-          <Route path="/alumni/dashboard" element={<AlumniDashboard />} />
+          <Route element={<ProtectedRoute roles={STAFF_ROLES} />}>
+            <Route path="/alumni/dashboard" element={<AlumniDashboard />} />
+          </Route>
 
           {/* Attendance */}
           <Route element={<ProtectedRoute roles={TEACHING_ROLES} />}>
@@ -422,7 +440,6 @@ export default function RootRouter() {
           <Route element={<ProtectedRoute roles={TEACHING_ROLES} />}>
             <Route path="/exams" element={<ExamSessionsPage />} />
             <Route path="/exams/deliberations" element={<Navigate to="/admin/grades/pv" replace />} />
-            <Route path="/academic/deliberations" element={<Navigate to="/admin/grades/pv" replace />} />
             <Route path="/exams/deliberations/:id/jury" element={<DeliberationJuryPage />} />
           </Route>
 
@@ -445,8 +462,6 @@ export default function RootRouter() {
             <Route path="/final-projects" element={<FinalProjectsPage />} />
             <Route path="/infrastructure" element={<InfrastructurePage />} />
             <Route path="/infrastructure/classrooms" element={<ClassroomsPage />} />
-            <Route path="/admin/rooms/availability" element={<RoomAvailabilityHubPage />} />
-            <Route path="/admin/reservations" element={<RoomAvailabilityHubPage />} />
             <Route path="/infrastructure/availability" element={<RoomAvailabilityHubPage />} />
           </Route>
 
@@ -456,9 +471,11 @@ export default function RootRouter() {
           <Route path="/support" element={<TicketsPage />} />
 
           {/* Library */}
-          <Route path="/library" element={<AdminLibraryPage />} />
-          <Route path="/admin/library" element={<AdminLibraryPage />} />
-          <Route path="/library/borrowings" element={<AdminLibraryPage />} />
+          <Route element={<ProtectedRoute roles={STAFF_ROLES} />}>
+            <Route path="/library" element={<AdminLibraryPage />} />
+            <Route path="/admin/library" element={<AdminLibraryPage />} />
+            <Route path="/library/borrowings" element={<AdminLibraryPage />} />
+          </Route>
 
           {/* Clubs & Discipline */}
           <Route path="/clubs" element={<ClubsPage />} />
@@ -485,10 +502,8 @@ export default function RootRouter() {
 
           {/* Administration */}
           <Route element={<ProtectedRoute roles={ADMIN_ROLES} />}>
-            <Route path="/admin/activity-logs" element={<ActivityLogsPage />} />
-            <Route path="/admin/textbooks" element={<TextbooksPage />} />
+            <Route path="/admin/roles-permissions" element={<AdminRolesPermissionsPage />} />
             <Route path="/admin/evaluations" element={<AdminEvaluationsPage />} />
-
             <Route path="/admin/clubs" element={<AdminClubsPage />} />
             <Route path="/admin/clubs/calendar" element={<AdminClubsCalendarPage />} />
             <Route path="/admin/clubs-room-requests" element={<AdminClubsRoomRequestsPage />} />
@@ -499,14 +514,12 @@ export default function RootRouter() {
             <Route path="/admin/workflow-builder" element={<AdminWorkflowBuilder />} />
             <Route path="/admin/exam-locking" element={<ExamLockingPage />} />
             <Route path="/admin/smart-campus" element={<AdminSmartCampus />} />
-            <Route path="/admin/academic" element={<AcademicYearSettingsPage />} />
             <Route path="/admin/users" element={<StaffProfessorsPage />} />
             <Route path="/admin/users/create" element={<AddUserPage />} />
             <Route path="/admin/users/:id/edit" element={<EditUserPage />} />
             <Route path="/admin/users/:id" element={<ViewUserPage />} />
             <Route path="/admin/students" element={<AdminStudentsPage />} />
             <Route path="/admin/students/:id" element={<AdminStudentDetailPage />} />
-            <Route path="/admin/ai-timetable-scheduler" element={<AdminAiTimetableSchedulerPage />} />
             <Route path="/admin/timetable/ai-scheduler" element={<AdminAiTimetableSchedulerPage />} />
             <Route path="/admin/schedules" element={<AdminAiTimetableSchedulerPage />} />
             <Route path="/admin/schedules/create" element={<CreateSchedulePage />} />
@@ -515,13 +528,9 @@ export default function RootRouter() {
             <Route path="/admin/reservations/:id/edit" element={<ReservationEditPage />} />
             <Route path="/admin/students-credits" element={<StudentsCreditsPage />} />
             <Route path="/admin/students-credits/:id/manage" element={<ManageStudentCreditPage />} />
-            <Route path="/admin/grades" element={<AdminGradesPage />} />
-            <Route path="/admin/grades/edit" element={<AdminGradesEditPage />} />
-            <Route path="/admin/grades/pv" element={<AdminGradesPVPage />} />
             <Route path="/admin/reservistes" element={<AdminReservistesPage />} />
             <Route path="/admin/absences" element={<AdminAbsencesPage />} />
             <Route path="/admin/students-risk" element={<StudentsRiskPage />} />
-            <Route path="/admin/textbooks" element={<AdminTextbooksPage />} />
             <Route path="/admin/requests" element={<AdminGuichetPage />} />
             <Route path="/admin/messages" element={<AdminMessagesPage />} />
             <Route path="/admin/activity-logs" element={<AdminActivityLogsPage />} />
@@ -535,12 +544,7 @@ export default function RootRouter() {
             <Route path="/admin/push-notifications" element={<AdminPwaPushHubPage />} />
             <Route path="/admin/finance" element={<AdminFinanceDashboard />} />
             <Route path="/admin/finance-dashboard" element={<AdminFinanceDashboard />} />
-
             <Route path="/admin/blockchain-diplomas" element={<AdminBlockchainDiplomas />} />
-            <Route path="/admin/predictive-analytics" element={<AdminPredictiveAnalytics />} />
-            <Route path="/admin/smart-campus" element={<AdminSmartCampus />} />
-            <Route path="/admin/mobility" element={<AdminMobility />} />
-            <Route path="/admin/jury-pfe" element={<AdminPFEWorkflowPage />} />
             <Route path="/admin/alumni" element={<AlumniNetwork />} />
             <Route path="/admin/pilotage" element={<PilotagePage />} />
             <Route path="/admin/exams" element={<AdminExamsPage />} />
@@ -556,7 +560,6 @@ export default function RootRouter() {
             <Route path="/admin/exams/scan" element={<AdminExamScanPage />} />
             <Route path="/admin/convocations/print-professors" element={<AdminPrintProfessorsConvocationPage />} />
             <Route path="/admin/professor-availability" element={<AdminProfessorAvailabilityPage />} />
-            <Route path="/admin/exams/analytics" element={<AdminExamAnalyticsPage />} />
             <Route path="/admin/analytics" element={<AdminAnalyticsDashboard />} />
             <Route path="/admin/guichet" element={<AdminGuichetPage />} />
           </Route>

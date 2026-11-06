@@ -247,7 +247,8 @@ Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
 
     // Removed REST API (Protected endpoints for third-party integrations) routes as they were mocked
     // Public PDF streaming for Disciplinary Council
-    Route::get('/incidents/batch-pdf', [PdfExportController::class, 'batchDisciplinePdf']);
+    Route::get('/incidents/batch-pdf', [PdfExportController::class, 'batchDisciplinePdf'])
+        ->middleware('role:admin|super-admin|super_admin|institution-admin|institution_admin|director|scolarite|department-head|filiere-head|exam_coordinator');
     Route::get('/incidents/{id}/convocation-pdf', [PdfExportController::class, 'convocationDisciplinePdf']);
     Route::get('/incidents/{id}/decision-pdf', [PdfExportController::class, 'decisionDisciplinePdf']);
     // AI Chatbot Assistant (Accessible to all authenticated users)

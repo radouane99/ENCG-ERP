@@ -267,6 +267,16 @@ class ProfessorAssignmentController extends Controller
      */
     public function unassignAll(Request $request): JsonResponse
     {
+        $user = $request->user();
+        abort_if(
+            ! $user || $user->hasRole('vacataire') || ! $user->hasAnyRole([
+                'admin', 'super-admin', 'super_admin', 'institution-admin', 'institution_admin',
+                'director', 'scolarite', 'department-head', 'filiere-head',
+            ]),
+            403,
+            'Accès refusé : vous n\'êtes pas autorisé à réinitialiser toutes les affectations.'
+        );
+
         $currentYear = AcademicYear::where('institution_id', $request->user()->institution_id)->find(AcademicContext::yearId());
         $semesterPeriod = $request->input('semester_period', 'all');
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Actions\Exam\StoreBulkGradesAction;
+use App\Domain\Deliberation\LmdRules;
 use App\Exports\GradesExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreGradeRequest;
@@ -59,16 +60,26 @@ class GradeController extends Controller
         $isRattrapage = $this->gradeService->isRattrapageAssessment($assessment);
         $isExam = $this->gradeService->isExamAssessment($assessment);
         $assessmentSession = $isRattrapage ? 'rattrapage' : 'normale';
-        $isSigned = $this->gradeService->isPvSigned($assessment->module_id, $assessmentSession);
+        $isSigned = $this->gradeService->isPvSigned($assessment->module_id, $assessmentSession, $groupId);
 
-        $signatureRecord = ModulePvSignature::where('module_id', $assessment->module_id)
-            ->where('session', $assessmentSession)
-            ->with('signer')->latest('signed_at')->first();
+        $signatureQuery = ModulePvSignature::where('module_id', $assessment->module_id)
+            ->where('session', $assessmentSession);
+        if ($groupId !== null && ! in_array($groupId, ['all', '', 'undefined', 'null'], true) && is_numeric($groupId)) {
+            $numericGroupId = (int) $groupId;
+            $signatureQuery->where(function ($q) use ($numericGroupId) {
+                $q->where('group_id', $numericGroupId)
+                    ->orWhereNull('group_id');
+            });
+        }
+        $signatureRecord = $signatureQuery->with('signer')->latest('signed_at')->first();
 
-        $data = $students->map(function ($student) use ($assessment, $fraudIds, $isExam) {
-            $grade = Grade::where('student_id', $student->id)
-                ->where('assessment_id', $assessment->id)
-                ->first();
+        $gradesByStudent = Grade::where('assessment_id', $assessment->id)
+            ->whereIn('student_id', $students->pluck('id'))
+            ->get()
+            ->keyBy('student_id');
+
+        $data = $students->map(function ($student) use ($gradesByStudent, $fraudIds, $isExam) {
+            $grade = $gradesByStudent->get($student->id);
 
             $hasFraud = $this->gradeService->isStudentFraud($student->id, $fraudIds);
             // La fraude ne bloque à 0/20 QUE lors de l'examen. Pour les contrôles continus (CC), le prof garde l'accès.
@@ -134,7 +145,7 @@ class GradeController extends Controller
         }
 
         // Vérification PV signé : Le verrouillage du PV ne bloque QUE les notes d'examen ! Les contrôles continus (CC) restent toujours éditables.
-        if (! $isAdmin && $this->gradeService->isExamAssessment($assessment) && $this->gradeService->isPvSigned($assessment->module_id, $session)) {
+        if (! $isAdmin && $this->gradeService->isExamAssessment($assessment) && $this->gradeService->isPvSigned($assessment->module_id, $session, $request->input('group_id'))) {
             return response()->json([
                 'message' => "Le Procès-Verbal d'examen ({$session}) est déjà signé. La modification des notes d'examen est verrouillée.",
             ], 403);
@@ -913,7 +924,7 @@ class GradeController extends Controller
                 $modDecision = 'NV';
 
                 if ($rVal !== null && $session !== 'normale') {
-                    $rCappedExam = min(10.00, $rVal);
+                    $rCappedExam = min(LmdRules::VALIDATION_THRESHOLD, $rVal);
                     $newSum = 0;
                     $newW = 0;
                     $examA = $normaleAssessments->first(fn ($a) => str_contains(strtolower($a->type), 'exam'));
@@ -924,12 +935,12 @@ class GradeController extends Controller
                         $newW += $a->weight;
                     }
                     $rMoy = $newW > 0 ? round($newSum * (100 / $newW), 2) : 0;
-                    $finalModNote = max($moyNormale ?? 0, min(10.00, $rMoy));
+                    $finalModNote = max($moyNormale ?? 0, min(LmdRules::VALIDATION_THRESHOLD, $rMoy));
                 }
 
                 if ($finalModNote !== null) {
-                    if ($finalModNote >= 10.00) {
-                        $modDecision = ($moyNormale !== null && $moyNormale >= 10.00) ? 'V' : 'VAR';
+                    if ($finalModNote >= LmdRules::VALIDATION_THRESHOLD) {
+                        $modDecision = ($moyNormale !== null && $moyNormale >= LmdRules::VALIDATION_THRESHOLD) ? 'V' : 'VAR';
                         if ($modDecision === 'VAR') {
                             $hasVarModule = true;
                         }
@@ -938,7 +949,7 @@ class GradeController extends Controller
                         $hasRattrapageModule = true;
                     }
 
-                    if ($finalModNote < 6.00) {
+                    if ($finalModNote < LmdRules::ELIMINATORY_THRESHOLD) {
                         $hasEliminatoire = true;
                     }
 
@@ -954,7 +965,7 @@ class GradeController extends Controller
                 $isHistorical = false;
                 $validationYear = $academicYear?->name ?? '2026/2027';
 
-                if ($histVal && floatval($histVal->final_grade) >= 10.00) {
+                if ($histVal && floatval($histVal->final_grade) >= LmdRules::VALIDATION_THRESHOLD) {
                     $finalModNote = floatval($histVal->final_grade);
                     $modDecision = 'V';
                     $isHistorical = true;
@@ -980,14 +991,14 @@ class GradeController extends Controller
             // ENCG Compensation Rule: Max 2 weak modules (<10) allowed for compensation eligibility
             $weakModulesCount = 0;
             foreach ($moduleGrades as $mInfo) {
-                if ($mInfo['note'] !== null && $mInfo['note'] < 10.00) {
+                if ($mInfo['note'] !== null && $mInfo['note'] < LmdRules::VALIDATION_THRESHOLD) {
                     $weakModulesCount++;
                 }
             }
 
             $canCompensate = ($weakModulesCount <= 2);
             $decisionGlobal = 'NV';
-            $isSemesterValidated = ($moyenneSemestrielle !== null && $moyenneSemestrielle >= 10.00 && ! $hasEliminatoire && $canCompensate);
+            $isSemesterValidated = ($moyenneSemestrielle !== null && $moyenneSemestrielle >= LmdRules::VALIDATION_THRESHOLD && ! $hasEliminatoire && $canCompensate);
 
             if ($isSemesterValidated) {
                 // Règle ENCG PV Semestriel : Si au moins un module compensé (6.00 <= note < 10.00), décision = VPC (Validé Par Compensation)
@@ -1001,7 +1012,7 @@ class GradeController extends Controller
 
                 // Apply Compensation code VPC to the weak modules (6.00 <= note < 10.00)
                 foreach ($moduleGrades as $mId => &$mInfo) {
-                    if ($mInfo['note'] !== null && $mInfo['note'] >= 6.00 && $mInfo['note'] < 10.00) {
+                    if ($mInfo['note'] !== null && $mInfo['note'] >= LmdRules::ELIMINATORY_THRESHOLD && $mInfo['note'] < LmdRules::VALIDATION_THRESHOLD) {
                         $mInfo['decision'] = 'VPC'; // Validé Par Compensation
                     }
                 }

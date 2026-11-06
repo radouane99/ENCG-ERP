@@ -2,6 +2,7 @@ import { useState,useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Plus,Trash2,Clock,CheckCircle2,Loader2,Sparkles,Building2,Check,X,Printer,QrCode,Key } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
+import { escapeHtml } from '@shared/lib/escapeHtml'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
@@ -46,22 +47,24 @@ export default function ReservationsPage() {
       await api.patch(`/room-bookings/${id}`, { status })
       setReservations(prev => prev.map(r => r.id === id ? { ...r, status } : r))
       toast.success(status === 'approved' ? 'Réservation approuvée !' : 'Réservation rejetée.')
-    } catch {
-      // Optimistic update
-      setReservations(prev => prev.map(r => r.id === id ? { ...r, status } : r))
-      toast.success(status === 'approved' ? 'Réservation approuvée avec succès !' : 'Réservation rejetée.')
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Erreur lors de la mise à jour du statut de la réservation.')
     }
   }
 
   const handlePrintBookingSlip = (res: any) => {
     const win = window.open('', '_blank')
     if (!win) return
-    const bookerName = res.booker ? `${res.booker.first_name} ${res.booker.last_name}` : 'Enseignant ENCG'
+    const bookerName = escapeHtml(res.booker ? `${res.booker.first_name ?? ''} ${res.booker.last_name ?? ''}`.trim() : 'Enseignant ENCG')
+    const safeRoomName = escapeHtml(res.room_name || 'Amphi ENCG')
+    const safePurpose = escapeHtml(res.purpose || 'Événement Académique')
+    const safeStartTime = escapeHtml(res.start_time ? new Date(res.start_time).toLocaleString('fr-FR') : 'Créneau validé')
+    const safeStatus = escapeHtml((res.status || 'APPROVED').toUpperCase())
     win.document.write(`
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Attestation de Réservation - ${res.room_name}</title>
+          <title>Attestation de Réservation - ${safeRoomName}</title>
           <style>
             body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #0f2863; max-width: 800px; margin: 0 auto; }
             .header { text-align: center; border-bottom: 3px double #0f2863; padding-bottom: 20px; margin-bottom: 30px; }
@@ -82,10 +85,10 @@ export default function ReservationsPage() {
 
           <div class="box">
             <div class="row"><span class="lbl">Demandeur :</span><span class="val">${bookerName}</span></div>
-            <div class="row"><span class="lbl">Salle / Espace réservé :</span><span class="val" style="color: #2563eb;">${res.room_name || 'Amphi ENCG'}</span></div>
-            <div class="row"><span class="lbl">Motif de réservation :</span><span class="val">${res.purpose || 'Événement Académique'}</span></div>
-            <div class="row"><span class="lbl">Date & Créneau :</span><span class="val">${res.start_time ? new Date(res.start_time).toLocaleString('fr-FR') : 'Créneau validé'}</span></div>
-            <div class="row"><span class="lbl">Statut d'approbation :</span><span class="val" style="color: #16a34a;">${(res.status || 'APPROVED').toUpperCase()}</span></div>
+            <div class="row"><span class="lbl">Salle / Espace réservé :</span><span class="val" style="color: #2563eb;">${safeRoomName}</span></div>
+            <div class="row"><span class="lbl">Motif de réservation :</span><span class="val">${safePurpose}</span></div>
+            <div class="row"><span class="lbl">Date & Créneau :</span><span class="val">${safeStartTime}</span></div>
+            <div class="row"><span class="lbl">Statut d'approbation :</span><span class="val" style="color: #16a34a;">${safeStatus}</span></div>
           </div>
 
           <div class="footer">

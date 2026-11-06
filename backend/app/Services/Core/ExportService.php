@@ -63,6 +63,10 @@ class ExportService
 
         // Audit Trail
         $user = Auth::user();
+        $institutionId = isset($filters['institution_id']) && $filters['institution_id']
+            ? (int) $filters['institution_id']
+            : ($user?->institution_id ? (int) $user->institution_id : null);
+
         if (class_exists(AuditLog::class)) {
             AuditLog::record([
                 'user_id' => $user?->id,
@@ -78,7 +82,7 @@ class ExportService
             ]);
         }
 
-        return Excel::download(new $exportClass(false), $filename);
+        return Excel::download(new $exportClass(false, $institutionId), $filename);
     }
 
     /**

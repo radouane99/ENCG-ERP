@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Student;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -13,6 +14,11 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class StudentsExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStyles, WithTitle
 {
+    public function __construct(
+        protected bool $isTemplate = false,
+        protected ?int $institutionId = null
+    ) {}
+
     public function title(): string
     {
         return 'Étudiants';
@@ -20,7 +26,15 @@ class StudentsExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
 
     public function collection()
     {
-        return Student::with('latestPathway.filiere')->get();
+        if ($this->isTemplate) {
+            return collect([]);
+        }
+
+        $instId = $this->institutionId ?? Auth::user()?->institution_id;
+
+        return Student::with('latestPathway.filiere')
+            ->when($instId, fn ($q) => $q->where('institution_id', $instId))
+            ->get();
     }
 
     public function headings(): array

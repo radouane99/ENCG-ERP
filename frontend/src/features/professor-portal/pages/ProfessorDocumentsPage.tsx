@@ -99,8 +99,10 @@ export default function ProfessorDocumentsPage() {
   useEffect(() => {
     fetchDocumentsData(false);
     const interval = setInterval(() => {
-      fetchDocumentsData(true);
-    }, 6000);
+      if (typeof document === 'undefined' || !document.hidden) {
+        fetchDocumentsData(true);
+      }
+    }, 30000);
     return () => clearInterval(interval);
   }, [fetchDocumentsData]);
 

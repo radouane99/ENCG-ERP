@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Group;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -13,6 +14,11 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class GroupsExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStyles, WithTitle
 {
+    public function __construct(
+        protected bool $isTemplate = false,
+        protected ?int $institutionId = null
+    ) {}
+
     public function title(): string
     {
         return 'Groupes';
@@ -20,7 +26,15 @@ class GroupsExport implements FromCollection, ShouldAutoSize, WithHeadings, With
 
     public function collection()
     {
-        return Group::with('filiere')->get();
+        if ($this->isTemplate) {
+            return collect([]);
+        }
+
+        $instId = $this->institutionId ?? Auth::user()?->institution_id;
+
+        return Group::with('filiere')
+            ->when($instId, fn ($q) => $q->whereHas('filiere', fn ($fq) => $fq->where('institution_id', $instId)))
+            ->get();
     }
 
     public function headings(): array

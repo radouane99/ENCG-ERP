@@ -19,28 +19,50 @@ use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Schema;
 
 class PublicVerificationController extends Controller
 {
+    private const APPROVED_DOCUMENT_STATUSES = [
+        'ready',
+        'approved',
+        'delivered',
+        'completed',
+        'signed',
+    ];
+
     /**
      * Vérifier un document par son token ou tracking code.
      */
     public function verifyDocument(Request $request, string $documentId): JsonResponse
     {
+        $documentId = trim($documentId);
+
+        if ($documentId === '' || ctype_digit($documentId)) {
+            return response()->json([
+                'success' => false,
+                'is_valid' => false,
+                'message' => 'Document invalide, introuvable ou falsifié.',
+            ], 404);
+        }
+
         if (str_starts_with($documentId, 'DOC-')) {
             $record = PdfDocumentRecord::where('verification_token', $documentId)->first();
-            if (! $record) {
+            if ($record) {
+                $issued = $record->status === 'issued';
+
+                return response()->json(['success' => true, 'is_valid' => $issued, 'data' => [
+                    'registry_document' => true, 'is_valid' => $issued,
+                    'digital_identifier' => $record->digital_identifier, 'document_type' => $record->document_label,
+                    'status' => $record->status, 'issued_at' => $record->issued_at?->toIso8601String(),
+                    'page_count' => $record->page_count, 'file_sha256' => $issued ? $record->file_sha256 : null,
+                    'message' => $issued ? 'Référence enregistrée. Comparez le fichier PDF pour vérifier son intégrité.' : ($record->status === 'revoked' ? 'Ce document a été retiré du registre.' : 'Émission du document non terminée.'),
+                ]]);
+            }
+
+            if (! str_starts_with($documentId, 'DOC-PROF-') && ! str_starts_with($documentId, 'DOC-ENCG-')) {
                 return response()->json(['success' => false, 'is_valid' => false, 'message' => 'Référence documentaire introuvable.'], 404);
             }
-            $issued = $record->status === 'issued';
-
-            return response()->json(['success' => true, 'is_valid' => $issued, 'data' => [
-                'registry_document' => true, 'is_valid' => $issued,
-                'digital_identifier' => $record->digital_identifier, 'document_type' => $record->document_label,
-                'status' => $record->status, 'issued_at' => $record->issued_at?->toIso8601String(),
-                'page_count' => $record->page_count, 'file_sha256' => $issued ? $record->file_sha256 : null,
-                'message' => $issued ? 'Référence enregistrée. Comparez le fichier PDF pour vérifier son intégrité.' : ($record->status === 'revoked' ? 'Ce document a été retiré du registre.' : 'Émission du document non terminée.'),
-            ]]);
         }
         // 0. Token Crypté Haute Sécurité (Format ENC-)
         if (str_starts_with($documentId, 'ENC-')) {
@@ -72,13 +94,28 @@ class PublicVerificationController extends Controller
             return $this->verifyRoomDocument($request, $documentId);
         }
 
-        // 2. Document étudiant généré (GeneratedDocument)
-        $document = GeneratedDocument::with(['student.user', 'student.registrations.filiere'])
+        // 2. Document étudiant généré (GeneratedDocument - uniquement par verification_token)
+        $document = GeneratedDocument::with(['student.user', 'student.registrations.filiere', 'request'])
             ->where('verification_token', $documentId)
-            ->orWhere('id', is_numeric($documentId) ? (int) $documentId : 0)
             ->first();
 
         if ($document && $document->student) {
+            if ($document->expires_at !== null && ! $document->expires_at->isFuture()) {
+                return response()->json([
+                    'success' => false,
+                    'is_valid' => false,
+                    'message' => 'Ce document a expiré.',
+                ], 404);
+            }
+
+            if ($document->request && ! in_array($document->request->status, self::APPROVED_DOCUMENT_STATUSES, true)) {
+                return response()->json([
+                    'success' => false,
+                    'is_valid' => false,
+                    'message' => 'Ce document n\'est pas encore validé ou a été rejeté.',
+                ], 404);
+            }
+
             $stUser = $document->student->user;
             $filiereName = $document->student->registrations?->first()?->filiere?->name ?? 'Tronc Commun ENCG';
 
@@ -113,13 +150,23 @@ class PublicVerificationController extends Controller
             ]);
         }
 
-        // 3. Document Enseignant (ProfessorDocumentRequest)
+        // 3. Document Enseignant (ProfessorDocumentRequest - uniquement par tracking_code ou qr_token)
         $pDoc = ProfessorDocumentRequest::with('user')
-            ->where('tracking_code', $documentId)
-            ->orWhere('qr_token', $documentId)
+            ->where(function ($q) use ($documentId) {
+                $q->where('tracking_code', $documentId)
+                    ->orWhere('qr_token', $documentId);
+            })
             ->first();
 
         if ($pDoc) {
+            if (! in_array($pDoc->status, self::APPROVED_DOCUMENT_STATUSES, true)) {
+                return response()->json([
+                    'success' => false,
+                    'is_valid' => false,
+                    'message' => 'Ce document est en attente de validation ou a été rejeté.',
+                ], 404);
+            }
+
             $user = $pDoc->user;
             $typeLabel = match ($pDoc->document_type) {
                 'attestation_travail' => 'Attestation de Travail',
@@ -147,13 +194,18 @@ class PublicVerificationController extends Controller
             ]);
         }
 
-        // 4. Demande administrative (DocumentRequest)
-        $docReq = DocumentRequest::with(['student.user', 'documentType', 'student.registrations.filiere'])
-            ->where('id', is_numeric($documentId) ? (int) $documentId : 0)
-            ->latest()
-            ->first();
+        // 4. Demande administrative (DocumentRequest - uniquement via référence signée DOC-ENCG-{id}-{hash} ou reference_number)
+        $docReq = $this->resolveDocumentRequestByToken($documentId);
 
         if ($docReq && $docReq->student) {
+            if (! in_array($docReq->status, self::APPROVED_DOCUMENT_STATUSES, true)) {
+                return response()->json([
+                    'success' => false,
+                    'is_valid' => false,
+                    'message' => 'Ce document n\'est pas encore validé ou a été rejeté.',
+                ], 404);
+            }
+
             $stUser = $docReq->student->user;
             $filiereName = $docReq->student->registrations?->first()?->filiere?->name ?? 'Tronc Commun ENCG';
 
@@ -177,6 +229,7 @@ class PublicVerificationController extends Controller
 
         return response()->json([
             'success' => false,
+            'is_valid' => false,
             'message' => 'Document invalide, introuvable ou falsifié.',
         ], 404);
     }
@@ -289,7 +342,7 @@ class PublicVerificationController extends Controller
      */
     public function universalVerify(Request $request): JsonResponse
     {
-        $code = trim($request->input('code') ?? '');
+        $code = trim((string) ($request->input('code') ?? ''));
         $file = $request->file('pdf_file');
 
         // 1. Calcul du Hash si un fichier est envoyé
@@ -298,56 +351,157 @@ class PublicVerificationController extends Controller
             $fileHash = hash_file('sha256', $file->getRealPath());
         }
 
-        // 2. Recherche Document Enseignant (ProfessorDocumentRequest)
-        if ($code) {
-            $pDoc = ProfessorDocumentRequest::with('user')
-                ->where('tracking_code', $code)
-                ->orWhere('qr_token', $code)
-                ->orWhere('id', is_numeric($code) ? (int) $code : 0)
-                ->first();
+        if ($code === '' && $fileHash === null) {
+            return response()->json([
+                'success' => false,
+                'is_valid' => false,
+                'message' => 'Veuillez fournir un code de vérification ou un fichier PDF.',
+            ], 404);
+        }
 
-            if ($pDoc) {
-                $user = $pDoc->user;
-                $typeLabel = match ($pDoc->document_type) {
-                    'attestation_travail' => 'Attestation de Travail',
-                    'ordre_de_mission' => 'Ordre de Mission',
-                    'attestation_salaire' => 'Attestation de Salaire',
-                    'autorisation_absence' => 'Autorisation d\'Absence',
-                    default => ucwords(str_replace('_', ' ', $pDoc->document_type))
-                };
+        // Reject raw sequential numeric IDs
+        if ($code !== '' && ctype_digit($code)) {
+            return response()->json([
+                'success' => false,
+                'is_valid' => false,
+                'message' => 'Référence de vérification invalide.',
+            ], 404);
+        }
+
+        // 1.b Vérification par empreinte SHA-256 ou registre officiel PDF
+        if ($fileHash !== null) {
+            $recordByHash = PdfDocumentRecord::where('file_sha256', $fileHash)->first();
+            if ($recordByHash) {
+                $issued = $recordByHash->status === 'issued';
 
                 return response()->json([
-                    'success' => true,
-                    'is_valid' => true,
+                    'success' => $issued,
+                    'is_valid' => $issued,
                     'data' => [
-                        'document_type' => $typeLabel,
-                        'tracking_code' => $pDoc->tracking_code,
-                        'beneficiary' => $user ? "Pr. {$user->first_name} {$user->last_name}" : 'Enseignant',
-                        'role' => 'Enseignant-Chercheur (Statutaire)',
-                        'cin' => $user?->cin ?? 'N/A',
-                        'issued_at' => $pDoc->signed_at ? $pDoc->signed_at->format('d/m/Y H:i') : $pDoc->created_at->format('d/m/Y H:i'),
-                        'signer' => $pDoc->signed_by ?? 'Secrétaire Général ENCG Fès',
-                        'preview_url' => url("/api/professor-portal/documents/{$pDoc->id}/pdf"),
-                        'purpose' => $pDoc->purpose,
-                        'destination' => $pDoc->destination,
-                        'status' => $pDoc->status === 'ready' || $pDoc->status === 'approved' ? 'Authentique & Certifié Conforme (Loi 53-05)' : 'En cours de validation',
-                        'sha256_hash' => hash('sha256', "encg-prof-doc-{$pDoc->id}-{$pDoc->tracking_code}-{$pDoc->created_at}"),
-                        'institution' => 'École Nationale de Commerce et de Gestion de Fès (Université Sidi Mohamed Ben Abdellah)',
+                        'registry_document' => true,
+                        'is_valid' => $issued,
+                        'digital_identifier' => $recordByHash->digital_identifier,
+                        'document_type' => $recordByHash->document_label,
+                        'tracking_code' => $recordByHash->verification_token,
+                        'status' => $recordByHash->status,
+                        'issued_at' => $recordByHash->issued_at?->toIso8601String(),
+                        'page_count' => $recordByHash->page_count,
+                        'file_sha256' => $issued ? $recordByHash->file_sha256 : null,
+                        'sha256_hash' => $issued ? $recordByHash->file_sha256 : null,
                     ],
-                ]);
+                ], $issued ? 200 : 404);
             }
         }
 
-        // 3. Recherche Document Étudiant (GeneratedDocument ou DocumentRequest)
+        if ($code !== '' && str_starts_with($code, 'DOC-')) {
+            $recordByToken = PdfDocumentRecord::where('verification_token', $code)->first();
+            if ($recordByToken) {
+                $issued = $recordByToken->status === 'issued';
+
+                return response()->json([
+                    'success' => $issued,
+                    'is_valid' => $issued,
+                    'data' => [
+                        'registry_document' => true,
+                        'is_valid' => $issued,
+                        'digital_identifier' => $recordByToken->digital_identifier,
+                        'document_type' => $recordByToken->document_label,
+                        'tracking_code' => $recordByToken->verification_token,
+                        'status' => $recordByToken->status,
+                        'issued_at' => $recordByToken->issued_at?->toIso8601String(),
+                        'page_count' => $recordByToken->page_count,
+                        'file_sha256' => $issued ? $recordByToken->file_sha256 : null,
+                        'sha256_hash' => $issued ? $recordByToken->file_sha256 : null,
+                    ],
+                ], $issued ? 200 : 404);
+            }
+        }
+
+        // 2. Recherche Document Enseignant (ProfessorDocumentRequest - par tracking_code, qr_token ou digital_seal)
+        $pDoc = null;
+        if ($code !== '') {
+            $pDoc = ProfessorDocumentRequest::with('user')
+                ->where(function ($q) use ($code) {
+                    $q->where('tracking_code', $code)
+                        ->orWhere('qr_token', $code);
+                })
+                ->first();
+        }
+        if (! $pDoc && $fileHash !== null) {
+            $pDoc = ProfessorDocumentRequest::with('user')
+                ->where('digital_seal', $fileHash)
+                ->first();
+        }
+
+        if ($pDoc) {
+            if (! in_array($pDoc->status, self::APPROVED_DOCUMENT_STATUSES, true)) {
+                return response()->json([
+                    'success' => false,
+                    'is_valid' => false,
+                    'message' => 'Ce document est en attente de validation ou a été rejeté.',
+                ], 404);
+            }
+
+            $user = $pDoc->user;
+            $typeLabel = match ($pDoc->document_type) {
+                'attestation_travail' => 'Attestation de Travail',
+                'ordre_de_mission' => 'Ordre de Mission',
+                'attestation_salaire' => 'Attestation de Salaire',
+                'autorisation_absence' => 'Autorisation d\'Absence',
+                default => ucwords(str_replace('_', ' ', $pDoc->document_type))
+            };
+
+            return response()->json([
+                'success' => true,
+                'is_valid' => true,
+                'data' => [
+                    'document_type' => $typeLabel,
+                    'tracking_code' => $pDoc->tracking_code,
+                    'beneficiary' => $user ? "Pr. {$user->first_name} {$user->last_name}" : 'Enseignant',
+                    'role' => 'Enseignant-Chercheur (Statutaire)',
+                    'cin' => $user?->cin ?? 'N/A',
+                    'issued_at' => $pDoc->signed_at ? $pDoc->signed_at->format('d/m/Y H:i') : $pDoc->created_at->format('d/m/Y H:i'),
+                    'signer' => $pDoc->signed_by ?? 'Secrétaire Général ENCG Fès',
+                    'preview_url' => url("/api/professor-portal/documents/{$pDoc->id}/pdf"),
+                    'purpose' => $pDoc->purpose,
+                    'destination' => $pDoc->destination,
+                    'status' => 'Authentique & Certifié Conforme (Loi 53-05)',
+                    'sha256_hash' => hash('sha256', "encg-prof-doc-{$pDoc->id}-{$pDoc->tracking_code}-{$pDoc->created_at}"),
+                    'institution' => 'École Nationale de Commerce et de Gestion de Fès (Université Sidi Mohamed Ben Abdellah)',
+                ],
+            ]);
+        }
+
+        // 3. Recherche Document Étudiant (GeneratedDocument - par verification_token ou file_hash)
         $genDoc = null;
-        if ($code) {
-            $genDoc = GeneratedDocument::with(['student.user', 'student.registrations.filiere'])
+        if ($code !== '') {
+            $genDoc = GeneratedDocument::with(['student.user', 'student.registrations.filiere', 'request'])
                 ->where('verification_token', $code)
-                ->orWhere('id', is_numeric($code) ? (int) $code : 0)
+                ->first();
+        }
+        if (! $genDoc && $fileHash !== null && Schema::hasColumn('generated_documents', 'file_hash')) {
+            $genDoc = GeneratedDocument::with(['student.user', 'student.registrations.filiere', 'request'])
+                ->where('file_hash', $fileHash)
                 ->first();
         }
 
         if ($genDoc && $genDoc->student) {
+            if ($genDoc->expires_at !== null && ! $genDoc->expires_at->isFuture()) {
+                return response()->json([
+                    'success' => false,
+                    'is_valid' => false,
+                    'message' => 'Ce document a expiré.',
+                ], 404);
+            }
+
+            if ($genDoc->request && ! in_array($genDoc->request->status, self::APPROVED_DOCUMENT_STATUSES, true)) {
+                return response()->json([
+                    'success' => false,
+                    'is_valid' => false,
+                    'message' => 'Ce document n\'est pas encore validé ou a été rejeté.',
+                ], 404);
+            }
+
             $stUser = $genDoc->student->user;
             $filiereName = $genDoc->student->registrations?->first()?->filiere?->name ?? 'Tronc Commun / Gestion';
 
@@ -372,98 +526,45 @@ class PublicVerificationController extends Controller
             ]);
         }
 
-        // 3.b Recherche dans DocumentRequest (par ID de demande, CNE ou Hash généré)
-        if ($code) {
+        // 3.b Recherche dans DocumentRequest (uniquement par référence signée DOC-ENCG-{id}-{hash} ou pdf_hash)
+        $docReq = null;
+        if ($code !== '') {
+            $docReq = $this->resolveDocumentRequestByToken($code);
+        }
+        if (! $docReq && $fileHash !== null && Schema::hasColumn('document_requests', 'pdf_hash')) {
             $docReq = DocumentRequest::with(['student.user', 'documentType', 'student.registrations.filiere'])
-                ->where('id', is_numeric($code) ? (int) $code : 0)
-                ->orWhereHas('student', function ($q) use ($code) {
-                    $q->where('cne', $code)->orWhere('student_number', $code);
-                })
-                ->latest()
+                ->where('pdf_hash', $fileHash)
                 ->first();
-
-            if ($docReq && $docReq->student) {
-                $stUser = $docReq->student->user;
-                $filiereName = $docReq->student->registrations?->first()?->filiere?->name ?? 'Tronc Commun ENCG';
-
-                return response()->json([
-                    'success' => true,
-                    'is_valid' => true,
-                    'data' => [
-                        'document_type' => $docReq->documentType?->name ?? 'Attestation de Scolarité',
-                        'tracking_code' => "DOC-ENCG-{$docReq->id}-".strtoupper(substr(md5((string) $docReq->id), 0, 6)),
-                        'beneficiary' => $stUser ? strtoupper($stUser->last_name).' '.$stUser->first_name : 'Étudiant ENCG',
-                        'role' => 'Étudiant ENCG Fès',
-                        'filiere' => $filiereName,
-                        'academic_year' => '2025/2026',
-                        'cne' => $docReq->student->cne ?? $docReq->student->student_number,
-                        'issued_at' => $docReq->processed_at?->format('d/m/Y H:i') ?? $docReq->created_at?->format('d/m/Y H:i') ?? now()->format('d/m/Y H:i'),
-                        'signer' => 'Direction & Scolarité ENCG Fès',
-                        'status' => in_array($docReq->status, ['ready', 'approved', 'processed']) ? 'Authentique & Certifié Conforme (Loi 53-05)' : 'En attente de traitement',
-                        'preview_url' => url("/api/admin/document-requests/{$docReq->id}/preview"),
-                        'sha256_hash' => hash('sha256', "encg-req-{$docReq->id}-{$docReq->student_id}-{$docReq->created_at}"),
-                        'institution' => 'École Nationale de Commerce et de Gestion de Fès (USMBA)',
-                    ],
-                ]);
-            }
         }
 
-        // 4. Si aucune donnée précise n'est transmise ou pour un test rapide sur le dernier document réel en base
-        $latestStudentDoc = DocumentRequest::with(['student.user', 'documentType', 'student.registrations.filiere'])->latest()->first();
-        if ($latestStudentDoc && $latestStudentDoc->student) {
-            $stUser = $latestStudentDoc->student->user;
-            $filiereName = $latestStudentDoc->student->registrations?->first()?->filiere?->name ?? 'Tronc Commun ENCG';
+        if ($docReq && $docReq->student) {
+            if (! in_array($docReq->status, self::APPROVED_DOCUMENT_STATUSES, true)) {
+                return response()->json([
+                    'success' => false,
+                    'is_valid' => false,
+                    'message' => 'Ce document est en attente de traitement ou a été rejeté.',
+                ], 404);
+            }
+
+            $stUser = $docReq->student->user;
+            $filiereName = $docReq->student->registrations?->first()?->filiere?->name ?? 'Tronc Commun ENCG';
 
             return response()->json([
                 'success' => true,
                 'is_valid' => true,
-                'is_demo_test' => true,
                 'data' => [
-                    'document_type' => $latestStudentDoc->documentType?->name ?? 'Attestation de Scolarité',
-                    'tracking_code' => "DOC-ENCG-{$latestStudentDoc->id}-".strtoupper(substr(md5((string) $latestStudentDoc->id), 0, 6)),
+                    'document_type' => $docReq->documentType?->name ?? 'Attestation de Scolarité',
+                    'tracking_code' => "DOC-ENCG-{$docReq->id}-".strtoupper(substr(md5((string) $docReq->id), 0, 6)),
                     'beneficiary' => $stUser ? strtoupper($stUser->last_name).' '.$stUser->first_name : 'Étudiant ENCG',
                     'role' => 'Étudiant ENCG Fès',
                     'filiere' => $filiereName,
                     'academic_year' => '2025/2026',
-                    'cne' => $latestStudentDoc->student->cne ?? $latestStudentDoc->student->student_number,
-                    'issued_at' => $latestStudentDoc->processed_at?->format('d/m/Y H:i') ?? $latestStudentDoc->created_at?->format('d/m/Y H:i') ?? now()->format('d/m/Y H:i'),
+                    'cne' => $docReq->student->cne ?? $docReq->student->student_number,
+                    'issued_at' => $docReq->processed_at?->format('d/m/Y H:i') ?? $docReq->created_at?->format('d/m/Y H:i') ?? now()->format('d/m/Y H:i'),
                     'signer' => 'Direction & Scolarité ENCG Fès',
-                    'status' => in_array($latestStudentDoc->status, ['ready', 'approved', 'processed']) ? 'Authentique & Certifié Conforme (Loi 53-05)' : 'En attente de traitement',
-                    'preview_url' => url("/api/admin/document-requests/{$latestStudentDoc->id}/preview"),
-                    'sha256_hash' => hash('sha256', "encg-req-{$latestStudentDoc->id}-{$latestStudentDoc->student_id}-{$latestStudentDoc->created_at}"),
-                    'institution' => 'École Nationale de Commerce et de Gestion de Fès (USMBA)',
-                ],
-            ]);
-        }
-
-        $latestProfDoc = ProfessorDocumentRequest::with('user')->latest()->first();
-        if ($latestProfDoc) {
-            $user = $latestProfDoc->user;
-            $typeLabel = match ($latestProfDoc->document_type) {
-                'attestation_travail' => 'Attestation de Travail',
-                'ordre_de_mission' => 'Ordre de Mission',
-                'attestation_salaire' => 'Attestation de Salaire',
-                'autorisation_absence' => 'Autorisation d\'Absence',
-                default => ucwords(str_replace('_', ' ', $latestProfDoc->document_type))
-            };
-
-            return response()->json([
-                'success' => true,
-                'is_valid' => true,
-                'is_demo_test' => true,
-                'data' => [
-                    'document_type' => $typeLabel,
-                    'tracking_code' => $latestProfDoc->tracking_code,
-                    'beneficiary' => $user ? "Pr. {$user->first_name} {$user->last_name}" : 'Enseignant ENCG',
-                    'role' => 'Enseignant-Chercheur (Statutaire)',
-                    'cin' => $user?->cin ?? 'N/A',
-                    'issued_at' => $latestProfDoc->created_at->format('d/m/Y H:i'),
-                    'signer' => $latestProfDoc->signed_by ?? 'Secrétaire Général ENCG Fès',
-                    'purpose' => $latestProfDoc->purpose,
-                    'destination' => $latestProfDoc->destination,
                     'status' => 'Authentique & Certifié Conforme (Loi 53-05)',
-                    'preview_url' => url("/api/professor-portal/documents/{$latestProfDoc->id}/pdf"),
-                    'sha256_hash' => hash('sha256', "encg-prof-doc-{$latestProfDoc->id}-{$latestProfDoc->tracking_code}-{$latestProfDoc->created_at}"),
+                    'preview_url' => url("/api/admin/document-requests/{$docReq->id}/preview"),
+                    'sha256_hash' => hash('sha256', "encg-req-{$docReq->id}-{$docReq->student_id}-{$docReq->created_at}"),
                     'institution' => 'École Nationale de Commerce et de Gestion de Fès (USMBA)',
                 ],
             ]);
@@ -474,6 +575,29 @@ class PublicVerificationController extends Controller
             'is_valid' => false,
             'message' => 'Aucun document correspondant trouvé. Veuillez vérifier le code ou le fichier téléversé.',
         ], 404);
+    }
+
+    /**
+     * Résoudre une demande de document uniquement via une référence cryptographique valide (sans énumération d'ID ni de CNE).
+     */
+    private function resolveDocumentRequestByToken(string $token): ?DocumentRequest
+    {
+        if (preg_match('/^DOC-ENCG-(\d+)-([A-F0-9]{6})$/i', $token, $matches)) {
+            $reqId = (int) $matches[1];
+            $expectedHash = strtoupper(substr(md5((string) $reqId), 0, 6));
+            if (hash_equals($expectedHash, strtoupper($matches[2]))) {
+                return DocumentRequest::with(['student.user', 'documentType', 'student.registrations.filiere'])
+                    ->find($reqId);
+            }
+        }
+
+        if (Schema::hasColumn('document_requests', 'reference_number')) {
+            return DocumentRequest::with(['student.user', 'documentType', 'student.registrations.filiere'])
+                ->where('reference_number', $token)
+                ->first();
+        }
+
+        return null;
     }
 
     /**

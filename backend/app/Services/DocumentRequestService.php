@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Domain\Deliberation\LmdRules;
 use App\Mail\DocumentRequestCreatedMail;
 use App\Mail\DocumentRequestStatusMail;
 use App\Models\AcademicYear;
@@ -355,23 +356,23 @@ class DocumentRequestService
                     $annualAvg = round(floatval($studentRow['annual_average'] ?? 0), 2);
                     $oddAvg = round(floatval($studentRow['odd_semester_avg'] ?? 0), 2);
                     $evenAvg = round(floatval($studentRow['even_semester_avg'] ?? 0), 2);
-                    $annualDecision = $studentRow['decision'] ?? ($annualAvg >= 10.0 ? 'V' : 'AJ');
+                    $annualDecision = $studentRow['decision'] ?? ($annualAvg >= LmdRules::VALIDATION_THRESHOLD ? 'V' : 'AJ');
                     $oddSemesterLabel = $studentRow['odd_semester_label'] ?? $oddSemesterLabel;
                     $evenSemesterLabel = $studentRow['even_semester_label'] ?? $evenSemesterLabel;
 
                     foreach ($studentRow['modules_detail'] as $m) {
                         $score = floatval($m['final_grade']);
-                        $rawDec = $m['decision'] ?? ($score >= 10.0 ? 'V' : ($annualAvg >= 10.0 && $score >= 5.0 ? 'V.Comp' : 'NV'));
+                        $rawDec = $m['decision'] ?? ($score >= LmdRules::VALIDATION_THRESHOLD ? 'V' : ($annualAvg >= LmdRules::VALIDATION_THRESHOLD && $score >= LmdRules::ELIMINATORY_THRESHOLD ? 'V.Comp' : 'NV'));
 
-                        $isCompensated = ($rawDec === 'V.Comp' || $rawDec === 'VPC' || ($annualAvg >= 10.0 && $score >= 5.0 && $score < 10.0));
-                        $decCode = $isCompensated ? 'V.COMP' : ($score >= 10.0 ? 'VALIDÉ' : 'NON VALIDÉ');
+                        $isCompensated = ($rawDec === 'V.Comp' || $rawDec === 'VPC' || ($annualAvg >= LmdRules::VALIDATION_THRESHOLD && $score >= LmdRules::ELIMINATORY_THRESHOLD && $score < LmdRules::VALIDATION_THRESHOLD));
+                        $decCode = $isCompensated ? 'V.COMP' : ($score >= LmdRules::VALIDATION_THRESHOLD ? 'VALIDÉ' : 'NON VALIDÉ');
 
                         $yearShort = AcademicYear::toShortLabel($m['validation_year'] ?? null);
                         $modItem = [
                             'code' => $m['code'] ?? 'MOD',
                             'name' => Utf8Text::repair($m['name'] ?? 'Module') ?? 'Module',
                             'score' => $score,
-                            'is_validated' => $score >= 10.0 || $isCompensated,
+                            'is_validated' => $score >= LmdRules::VALIDATION_THRESHOLD || $isCompensated,
                             'is_comp' => $isCompensated,
                             'decision' => $decCode,
                             'semester' => $m['semester_number'] ?? 1,
@@ -404,9 +405,9 @@ class DocumentRequestService
                             'code' => $m->code,
                             'name' => Utf8Text::repair($m->name) ?? $m->name,
                             'score' => $score,
-                            'is_validated' => $score >= 10.0,
+                            'is_validated' => $score >= LmdRules::VALIDATION_THRESHOLD,
                             'is_comp' => false,
-                            'decision' => $score >= 10.0 ? 'VALIDÉ' : 'V.COMP',
+                            'decision' => $score >= LmdRules::VALIDATION_THRESHOLD ? 'VALIDÉ' : 'V.COMP',
                             'semester' => $sem,
                             'session' => 'Session Normale',
                             'academic_year' => $defaultYearLabel,
@@ -489,7 +490,7 @@ class DocumentRequestService
 
                 if ($studentRow) {
                     $annualAvg = round(floatval($studentRow['annual_average'] ?? 0), 2);
-                    $annualDecision = $studentRow['decision'] ?? ($annualAvg >= 10.0 ? 'V' : 'AJ');
+                    $annualDecision = $studentRow['decision'] ?? ($annualAvg >= LmdRules::VALIDATION_THRESHOLD ? 'V' : 'AJ');
                 }
             } catch (\Throwable $e) {
                 Log::warning('Attestation de réussite check fallback: '.$e->getMessage());

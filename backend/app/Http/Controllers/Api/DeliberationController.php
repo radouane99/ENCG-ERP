@@ -80,7 +80,7 @@ class DeliberationController extends Controller
         $modules = Module::where('semester_id', $semesterId)->with('assessments')->get();
 
         $results = ['total_students' => 0, 'admitted' => 0, 'rattrapage' => 0, 'ajourne' => 0];
-        $students = Student::has('registrations')->get();
+        $students = Student::with('grades')->has('registrations')->get();
 
         foreach ($students as $student) {
             $results['total_students']++;
@@ -133,7 +133,7 @@ class DeliberationController extends Controller
         $studentId = $request->input('student_id');
         $semesterId = $request->input('semester_id', 1);
 
-        $student = Student::findOrFail($studentId);
+        $student = Student::with('grades')->findOrFail($studentId);
         $modules = Module::where('semester_id', $semesterId)->with('assessments')->get();
         $deliberation = $this->engine->calculateSemesterDeliberation($student, $modules);
 
@@ -190,7 +190,7 @@ class DeliberationController extends Controller
                     'coefficient' => (float) ($module?->coefficient ?? 1),
                     'result' => [
                         'average' => $average,
-                        'status' => $average >= 10 ? 'V' : 'RAT',
+                        'status' => $average >= LmdRules::VALIDATION_THRESHOLD ? 'V' : 'RAT',
                         'missing_grades' => false,
                     ],
                 ];
@@ -211,7 +211,7 @@ class DeliberationController extends Controller
         $delib = Deliberation::with(['semester', 'filiere', 'academicYear'])->findOrFail($id);
 
         $modules = Module::where('semester_id', $delib->semester_id)->with('assessments')->get();
-        $students = Student::whereHas('registrations', function ($q) use ($delib) {
+        $students = Student::with('grades')->whereHas('registrations', function ($q) use ($delib) {
             $q->where('filiere_id', $delib->filiere_id)
                 ->where('academic_year_id', $delib->academic_year_id);
         })->get();
@@ -250,7 +250,7 @@ class DeliberationController extends Controller
         }
 
         $modules = Module::where('semester_id', $delib->semester_id)->with('assessments')->get();
-        $students = Student::whereHas('registrations', function ($q) use ($delib) {
+        $students = Student::with('grades')->whereHas('registrations', function ($q) use ($delib) {
             $q->where('filiere_id', $delib->filiere_id)
                 ->where('academic_year_id', $delib->academic_year_id);
         })->get();

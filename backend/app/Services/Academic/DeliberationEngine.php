@@ -49,9 +49,11 @@ class DeliberationEngine
         $missingGrades = false;
 
         foreach ($assessments as $assessment) {
-            $grade = Grade::where('student_id', $student->id)
-                ->where('assessment_id', $assessment->id)
-                ->first();
+            $grade = $student->relationLoaded('grades')
+                ? $student->grades->firstWhere('assessment_id', $assessment->id)
+                : Grade::where('student_id', $student->id)
+                    ->where('assessment_id', $assessment->id)
+                    ->first();
 
             if (! $grade) {
                 $missingGrades = true;

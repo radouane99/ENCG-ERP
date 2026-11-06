@@ -74,13 +74,21 @@ class GradeService
     }
 
     /**
-     * Vérifie si le PV de note est signé pour une session donnée.
+     * Vérifie si le PV de note est signé pour une session donnée (et optionnellement un groupe donné).
      */
-    public function isPvSigned(int $moduleId, ?string $session = null): bool
+    public function isPvSigned(int $moduleId, ?string $session = null, $groupId = null): bool
     {
         $query = ModulePvSignature::where('module_id', $moduleId);
         if ($session) {
             $query->where('session', $session);
+        }
+
+        if ($groupId !== null && ! in_array($groupId, ['all', '', 'undefined', 'null'], true) && is_numeric($groupId)) {
+            $numericGroupId = (int) $groupId;
+            $query->where(function ($q) use ($numericGroupId) {
+                $q->where('group_id', $numericGroupId)
+                    ->orWhereNull('group_id');
+            });
         }
 
         return $query->exists();
@@ -239,9 +247,11 @@ class GradeService
 
         foreach ($normaleAssessments as $assessment) {
             $weight = (float) ($assessment->weight ?? 1.0);
-            $grade = Grade::where('student_id', $student->id)
-                ->where('assessment_id', $assessment->id)
-                ->first();
+            $grade = $student->relationLoaded('grades')
+                ? $student->grades->firstWhere('assessment_id', $assessment->id)
+                : Grade::where('student_id', $student->id)
+                    ->where('assessment_id', $assessment->id)
+                    ->first();
 
             if ($grade) {
                 $hasGrades = true;
@@ -282,9 +292,11 @@ class GradeService
      */
     public function calculateRattrapageAverage(Student $student, $normaleAssessments, Assessment $rattrapageAssessment): ?float
     {
-        $rGrade = Grade::where('student_id', $student->id)
-            ->where('assessment_id', $rattrapageAssessment->id)
-            ->first();
+        $rGrade = $student->relationLoaded('grades')
+            ? $student->grades->firstWhere('assessment_id', $rattrapageAssessment->id)
+            : Grade::where('student_id', $student->id)
+                ->where('assessment_id', $rattrapageAssessment->id)
+                ->first();
 
         if (! $rGrade || $rGrade->absent || $rGrade->value === null) {
             return null;
@@ -304,9 +316,11 @@ class GradeService
                 $weightedSum += $rattrapageValue * $weight;
             } else {
                 // Les contrôles continus (CC1, CC2, TP...) sont conservés
-                $g = Grade::where('student_id', $student->id)
-                    ->where('assessment_id', $assessment->id)
-                    ->first();
+                $g = $student->relationLoaded('grades')
+                    ? $student->grades->firstWhere('assessment_id', $assessment->id)
+                    : Grade::where('student_id', $student->id)
+                        ->where('assessment_id', $assessment->id)
+                        ->first();
                 if ($g && ! $g->absent && $g->value !== null) {
                     $weightedSum += ((float) $g->value) * $weight;
                 }
@@ -329,8 +343,8 @@ class GradeService
         if ($moyenneFinale === null) {
             return $this->determineDecision($moyenneNormale);
         }
-        if ($moyenneFinale >= 10.0) {
-            return ($moyenneNormale !== null && $moyenneNormale < 10.0) ? 'VAR' : 'V';
+        if ($moyenneFinale >= LmdRules::VALIDATION_THRESHOLD) {
+            return ($moyenneNormale !== null && $moyenneNormale < LmdRules::VALIDATION_THRESHOLD) ? 'VAR' : 'V';
         }
 
         return 'NV';
@@ -350,8 +364,8 @@ class GradeService
 
         $rawAverage = max($moyenneNormale ?? 0, $moyenneRattrapage);
 
-        if ($rawAverage >= 10.0) {
-            $isValidatedViaRattrapage = ($moyenneNormale === null || $moyenneNormale < 10.0);
+        if ($rawAverage >= LmdRules::VALIDATION_THRESHOLD) {
+            $isValidatedViaRattrapage = ($moyenneNormale === null || $moyenneNormale < LmdRules::VALIDATION_THRESHOLD);
             if ($isValidatedViaRattrapage) {
                 // Plafonnement à 12.00/20 pour la validation après rattrapage (VAR)
                 return [

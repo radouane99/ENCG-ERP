@@ -1,3 +1,5 @@
+import { escapeHtml } from '@shared/lib/escapeHtml'
+
 /**
  * Official ENCG Fès Club Document Generator
  * Generates institutional-grade HTML documents for printing/PDF export
@@ -13,26 +15,30 @@ export function generateClubAgrementHtml(club: any): string {
     year: 'numeric'
   })
   
-  const president = club.president
+  const rawPresident = club.president
     ? (typeof club.president === 'string' ? club.president : `${club.president.first_name || ''} ${club.president.last_name || ''}`.trim())
     : (club.president_name || 'Président du Bureau Exécutif')
 
-  const membersCount = club.members_count || club.members?.length || 30
-  const clubRef = `AGR-ENCG-${currentYear}-${String(club.id || 1).padStart(4, '0')}`
-  const budget = club.budget || '15 000'
-  const category = club.category || 'Pôle Entrepreneuriat & Management'
+  const clubName = escapeHtml(club.name || 'Club Universitaire ENCG Fès')
+  const president = escapeHtml(rawPresident)
+  const membersCount = escapeHtml(club.members_count || club.members?.length || 30)
+  const clubRef = escapeHtml(`AGR-ENCG-${currentYear}-${String(club.id || 1).padStart(4, '0')}`)
+  const budget = escapeHtml(club.budget || '15 000')
+  const category = escapeHtml(club.category || 'Pôle Entrepreneuriat & Management')
 
   // Encrypted Verification Token & Scannable QR Code URL
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://encg-fes.ac.ma'
-  const verifyToken = club.encrypted_verify_token || (club.id ? `AGR-ENCG-${currentYear}-${String(club.id).padStart(4, '0')}` : clubRef)
-  const verifyUrl = club.verification_url || `${baseUrl}/verify-document/${verifyToken}`
-  const qrCodeImgSrc = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=1&data=${encodeURIComponent(verifyUrl)}`
+  const rawVerifyToken = String(club.encrypted_verify_token || (club.id ? `AGR-ENCG-${currentYear}-${String(club.id).padStart(4, '0')}` : clubRef))
+  const rawVerifyUrl = String(club.verification_url || `${baseUrl}/verify-document/${rawVerifyToken}`)
+  const verifyTokenDisplay = escapeHtml(rawVerifyToken.length > 28 ? rawVerifyToken.slice(0, 24) + '...' : rawVerifyToken)
+  const verifyUrl = escapeHtml(rawVerifyUrl)
+  const qrCodeImgSrc = escapeHtml(`https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=1&data=${encodeURIComponent(rawVerifyUrl)}`)
 
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Attestation d'Agrément Officiel — ${club.name}</title>
+  <title>Attestation d'Agrément Officiel — ${clubName}</title>
   <style>
     @page {
       size: A4 portrait;
@@ -442,7 +448,7 @@ export function generateClubAgrementHtml(club: any): string {
       </tr>
       <tr>
         <td class="lbl">Nom Officiel du Club :</td>
-        <td class="val" style="color: #002e5b; font-size: 8.5pt;">${club.name}</td>
+        <td class="val" style="color: #002e5b; font-size: 8.5pt;">${clubName}</td>
         <td class="lbl">Pôle / Catégorie :</td>
         <td class="val" style="color: #0284c7;">${category}</td>
       </tr>
@@ -562,7 +568,7 @@ export function generateClubAgrementHtml(club: any): string {
             </strong><br>
             <span style="color: #64748b; line-height: 1.15;">
               Document certifié conforme aux dispositions du décret N° 2-15-260 et de la loi 53-05 sur l'échange électronique des données juridiques.<br>
-              <strong>Authentification Sécurisée :</strong> ${clubRef} • <strong>Jeton Crypté :</strong> <span style="font-family: monospace; font-size: 5.5pt; color: #002e5b;">${verifyToken.length > 28 ? verifyToken.slice(0, 24) + '...' : verifyToken}</span>
+              <strong>Authentification Sécurisée :</strong> ${clubRef} • <strong>Jeton Crypté :</strong> <span style="font-family: monospace; font-size: 5.5pt; color: #002e5b;">${verifyTokenDisplay}</span>
             </span>
           </td>
           <td style="width: 150px; text-align: right; vertical-align: middle;">
@@ -591,20 +597,23 @@ export function generateClubImpactReportHtml(club: any): string {
     year: 'numeric'
   })
   
-  const president = club.president
+  const rawPresident = club.president
     ? (typeof club.president === 'string' ? club.president : `${club.president.first_name || ''} ${club.president.last_name || ''}`.trim())
     : (club.president_name || 'Président du Bureau')
 
-  const membersCount = club.members_count || club.members?.length || 48
-  const eventsCount = club.events ?? club.events_count ?? 12
-  const budget = club.budget || '15 000'
-  const reportRef = `RPT-IMPACT-${currentYear}-${String(club.id || 1).padStart(4, '0')}`
+  const clubName = escapeHtml(club.name || 'Club Universitaire ENCG Fès')
+  const clubNameUpper = escapeHtml(String(club.name || 'Club Universitaire ENCG Fès').toUpperCase())
+  const president = escapeHtml(rawPresident)
+  const membersCount = escapeHtml(club.members_count || club.members?.length || 48)
+  const eventsCount = escapeHtml(club.events ?? club.events_count ?? 12)
+  const budget = escapeHtml(club.budget || '15 000')
+  const reportRef = escapeHtml(`RPT-IMPACT-${currentYear}-${String(club.id || 1).padStart(4, '0')}`)
 
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Rapport d'Impact Annuel — ${club.name}</title>
+  <title>Rapport d'Impact Annuel — ${clubName}</title>
   <style>
     @page {
       size: A4 portrait;
@@ -748,7 +757,7 @@ export function generateClubImpactReportHtml(club: any): string {
         RAPPORT ANNUEL D'IMPACT ÉTUDIANT &amp; BILAN D'ACTIVITÉ
       </div>
       <div style="font-size: 7.2pt; font-weight: bold; color: #93c5fd; margin-top: 2px;">
-        Structure : ${club.name.toUpperCase()} • Année Universitaire ${academicYear}
+        Structure : ${clubNameUpper} • Année Universitaire ${academicYear}
       </div>
     </div>
 

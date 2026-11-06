@@ -1,5 +1,6 @@
 import { describe,it,expect } from 'vitest'
 import { escapeHtml,formatSafeRichText,isPasswordPolicyValid } from '@shared/lib/htmlSafe'
+import { safeHtml } from '@shared/lib/escapeHtml'
 
 describe('htmlSafe — XSS and password policy', () => {
   it('escapes HTML tags in chatbot-style content', () => {
@@ -7,6 +8,12 @@ describe('htmlSafe — XSS and password policy', () => {
     expect(escapeHtml(raw)).not.toContain('<img')
     expect(escapeHtml(raw)).toContain('&lt;img')
     expect(formatSafeRichText(raw)).not.toMatch(/<img/i)
+  })
+
+  it('escapes interpolated values in safeHtml tagged templates', () => {
+    const untrusted = '<script>alert("xss")</script>'
+    const rendered = safeHtml`<div>${untrusted}</div>`
+    expect(rendered).toBe('<div>&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;</div>')
   })
 
   it('keeps bold markdown after escape', () => {

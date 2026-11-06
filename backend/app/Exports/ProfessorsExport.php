@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Professor;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -13,6 +14,11 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class ProfessorsExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStyles, WithTitle
 {
+    public function __construct(
+        protected bool $isTemplate = false,
+        protected ?int $institutionId = null
+    ) {}
+
     public function title(): string
     {
         return 'Professeurs';
@@ -20,7 +26,15 @@ class ProfessorsExport implements FromCollection, ShouldAutoSize, WithHeadings, 
 
     public function collection()
     {
-        return Professor::all();
+        if ($this->isTemplate) {
+            return collect([]);
+        }
+
+        $instId = $this->institutionId ?? Auth::user()?->institution_id;
+
+        return Professor::query()
+            ->when($instId, fn ($q) => $q->where('institution_id', $instId))
+            ->get();
     }
 
     public function headings(): array

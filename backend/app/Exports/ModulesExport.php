@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Module;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -15,9 +16,12 @@ class ModulesExport implements FromCollection, ShouldAutoSize, WithHeadings, Wit
 {
     protected bool $isTemplate;
 
-    public function __construct(bool $isTemplate = false)
+    protected ?int $institutionId;
+
+    public function __construct(bool $isTemplate = false, ?int $institutionId = null)
     {
         $this->isTemplate = $isTemplate;
+        $this->institutionId = $institutionId;
     }
 
     public function title(): string
@@ -31,7 +35,11 @@ class ModulesExport implements FromCollection, ShouldAutoSize, WithHeadings, Wit
             return collect([]);
         }
 
-        return Module::with('filiere')->get();
+        $instId = $this->institutionId ?? Auth::user()?->institution_id;
+
+        return Module::with('filiere')
+            ->when($instId, fn ($q) => $q->where('institution_id', $instId))
+            ->get();
     }
 
     public function headings(): array

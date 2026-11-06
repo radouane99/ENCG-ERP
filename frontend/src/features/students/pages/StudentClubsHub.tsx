@@ -5,6 +5,7 @@ Calendar,Megaphone,Plus,Heart,MessageCircle,
 Sparkles,Tent,Search,Send,Check,X,Printer,MapPin,UserPlus,LogOut,CheckCircle2
 } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
+import { escapeHtml } from '@shared/lib/escapeHtml';
 import api from '@/shared/lib/api';
 import EmptyState from '@shared/components/ui/EmptyState';
 import { toast } from 'sonner';
@@ -179,9 +180,10 @@ export default function StudentClubsHub() {
   };
 
   const handlePrintMemberCard = (club: any) => {
-    const studentName = user?.name || 'Yassine Bennani';
-    const studentCne = user?.cne || 'N130094821';
-    const role = club.my_role ? club.my_role.toUpperCase() : 'MEMBRE ACTIF';
+    const studentName = escapeHtml(user?.name || 'Yassine Bennani');
+    const studentCne = escapeHtml(user?.cne || 'N130094821');
+    const role = escapeHtml(club.my_role ? club.my_role.toUpperCase() : 'MEMBRE ACTIF');
+    const safeClubName = escapeHtml(club.name);
 
     const win = window.open('', '_blank');
     if (!win) return;
@@ -189,7 +191,7 @@ export default function StudentClubsHub() {
     <html>
     <head>
       <meta charset="utf-8">
-      <title>Carte Officielle de Membre — ${club.name}</title>
+      <title>Carte Officielle de Membre — ${safeClubName}</title>
       <style>
         body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; padding: 40px; background: #f8fafc; color: #001A4B; margin: 0; display: flex; justify-content: center; }
         .card { width: 420px; background: linear-gradient(135deg, #001A4B 0%, #0a2f7d 100%); color: white; border-radius: 24px; padding: 28px; box-shadow: 0 20px 40px rgba(0,26,75,0.25); position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.15); }
@@ -216,7 +218,7 @@ export default function StudentClubsHub() {
           </div>
           <span class="tag">Certifiée ✅</span>
         </div>
-        <div class="club-name">${club.name}</div>
+        <div class="club-name">${safeClubName}</div>
         <div class="member-info">
           <div class="name">${studentName}</div>
           <div class="role">${role}</div>

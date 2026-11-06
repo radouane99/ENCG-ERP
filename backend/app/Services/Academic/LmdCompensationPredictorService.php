@@ -2,6 +2,8 @@
 
 namespace App\Services\Academic;
 
+use App\Domain\Deliberation\LmdRules;
+
 class LmdCompensationPredictorService
 {
     /**
@@ -9,11 +11,11 @@ class LmdCompensationPredictorService
      * Tronc Commun (S1-S4) : 06.00/20
      * Cycle Master / Spécialité (S5-S10) : 07.00/20
      */
-    const ELIMINATORY_THRESHOLD_TRONC_COMMUN = 6.00;
+    const ELIMINATORY_THRESHOLD_TRONC_COMMUN = LmdRules::ELIMINATORY_THRESHOLD;
 
     const ELIMINATORY_THRESHOLD_MASTER = 7.00;
 
-    const VALIDATION_THRESHOLD = 10.00;
+    const VALIDATION_THRESHOLD = LmdRules::VALIDATION_THRESHOLD;
 
     /**
      * Simule le résultat d'un semestre selon les notes fournies.
@@ -22,7 +24,7 @@ class LmdCompensationPredictorService
      * @param  int  $semesterNumber  Numéro du semestre (1 à 10)
      * @param  float  $targetGpa  Moyenne cible souhaitée (ex: 10.00, 12.00, 14.00)
      */
-    public function simulate(array $modules, int $semesterNumber = 2, float $targetGpa = 10.00): array
+    public function simulate(array $modules, int $semesterNumber = 2, float $targetGpa = LmdRules::VALIDATION_THRESHOLD): array
     {
         $isMaster = $semesterNumber >= 5;
         $eliminatoryThreshold = $isMaster ? self::ELIMINATORY_THRESHOLD_MASTER : self::ELIMINATORY_THRESHOLD_TRONC_COMMUN;
@@ -113,7 +115,7 @@ class LmdCompensationPredictorService
             $honour = 'Bien';
         } elseif ($calculatedAverage >= 12.0) {
             $honour = 'Assez Bien';
-        } elseif ($calculatedAverage >= 10.0) {
+        } elseif ($calculatedAverage >= LmdRules::VALIDATION_THRESHOLD) {
             $honour = 'Passable';
         }
 

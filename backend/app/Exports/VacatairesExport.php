@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\VacationContract;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -13,6 +14,11 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class VacatairesExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStyles, WithTitle
 {
+    public function __construct(
+        protected bool $isTemplate = false,
+        protected ?int $institutionId = null
+    ) {}
+
     public function title(): string
     {
         return 'Vacataires';
@@ -20,7 +26,15 @@ class VacatairesExport implements FromCollection, ShouldAutoSize, WithHeadings, 
 
     public function collection()
     {
-        return VacationContract::with('vacataire')->get();
+        if ($this->isTemplate) {
+            return collect([]);
+        }
+
+        $instId = $this->institutionId ?? Auth::user()?->institution_id;
+
+        return VacationContract::with('vacataire')
+            ->when($instId, fn ($q) => $q->whereHas('professor', fn ($pq) => $pq->where('institution_id', $instId)))
+            ->get();
     }
 
     public function headings(): array

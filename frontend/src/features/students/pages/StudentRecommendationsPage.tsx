@@ -4,6 +4,7 @@ FileText,Sparkles,Send,Download,Loader2,CheckCircle2,Clock,ShieldCheck,Plus
 } from 'lucide-react'
 import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query'
 import api from '@shared/lib/api'
+import { escapeHtml } from '@shared/lib/escapeHtml'
 import { cn } from '@shared/lib/utils'
 import { toast } from 'sonner'
 
@@ -36,6 +37,13 @@ export default function StudentRecommendationsPage() {
     // Generate simple printable version
     const printWindow = window.open('', '_blank')
     if (printWindow) {
+      const safeBody = req.ai_recommendation_text
+        ? escapeHtml(req.ai_recommendation_text).replace(/\n/g, '<br/>')
+        : 'Lettre de recommandation académique officielle.'
+      const safeProfessorName = escapeHtml(req.professor_name ?? 'Enseignant Chercheur')
+      const safeSignedAt = escapeHtml(req.signed_at ? new Date(req.signed_at).toLocaleDateString('fr-FR') : 'Récemment')
+      const safeId = escapeHtml(req.id)
+
       printWindow.document.write(`
         <html>
           <head>
@@ -56,14 +64,14 @@ export default function StudentRecommendationsPage() {
               <p>Université Sidi Mohamed Ben Abdellah — Direction des Études</p>
             </div>
             <div class="content">
-              ${req.ai_recommendation_text ? req.ai_recommendation_text.replace(/\n/g, '<br/>') : 'Lettre de recommandation académique officielle.'}
+              ${safeBody}
             </div>
             <div class="signature">
-              <p>Pr. ${req.professor_name ?? 'Enseignant Chercheur'}</p>
-              <p style="font-size: 11px; color: #555;">Signé électroniquement le ${req.signed_at ? new Date(req.signed_at).toLocaleDateString('fr-FR') : 'Récemment'}</p>
+              <p>Pr. ${safeProfessorName}</p>
+              <p style="font-size: 11px; color: #555;">Signé électroniquement le ${safeSignedAt}</p>
             </div>
             <div class="qr-box">
-              🔒 Document Officiel Authentifié — Validation par QR Code ENCG Fès (ID: REC-${req.id})
+              🔒 Document Officiel Authentifié — Validation par QR Code ENCG Fès (ID: REC-${safeId})
             </div>
             <script>window.print();</script>
           </body>

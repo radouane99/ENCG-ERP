@@ -2,6 +2,7 @@
 
 namespace App\Services\Academic;
 
+use App\Domain\Deliberation\LmdRules;
 use App\Models\Institution;
 
 class ApogeeDeliberationEngine
@@ -19,7 +20,7 @@ class ApogeeDeliberationEngine
 
         return [
             'grade' => $finalGrade,
-            'validated' => $finalGrade >= 10.0,
+            'validated' => $finalGrade >= LmdRules::VALIDATION_THRESHOLD,
             'absent' => false,
         ];
     }
@@ -41,7 +42,7 @@ class ApogeeDeliberationEngine
 
         return [
             'grade' => $finalGrade,
-            'validated' => $finalGrade >= 10.0,
+            'validated' => $finalGrade >= LmdRules::VALIDATION_THRESHOLD,
             'absent' => false,
         ];
     }
@@ -57,12 +58,12 @@ class ApogeeDeliberationEngine
         }
 
         $semesterAverage = round(array_sum(array_column($moduleGrades, 'grade')) / $count, 2);
-        $isValidated = $semesterAverage >= 10.0;
+        $isValidated = $semesterAverage >= LmdRules::VALIDATION_THRESHOLD;
         $compensated = [];
 
         if ($isValidated) {
             foreach ($moduleGrades as $mg) {
-                if ($mg['grade'] < 10.0) {
+                if ($mg['grade'] < LmdRules::VALIDATION_THRESHOLD) {
                     $compensated[] = $mg['module_id'];
                 }
             }
@@ -114,7 +115,7 @@ class ApogeeDeliberationEngine
         }
 
         if ($failedModulesCount === 0) {
-            return $annualAverage >= 10 ? 'PASS' : 'REPEAT_YEAR';
+            return $annualAverage >= LmdRules::VALIDATION_THRESHOLD ? 'PASS' : 'REPEAT_YEAR';
         }
 
         return $failedModulesCount <= $maxReservedModules

@@ -1,6 +1,7 @@
 import { useState,useEffect,useRef,useCallback } from 'react'
 import { Search,UserCheck,Clock,FileSignature,CheckCircle2,FileText,Banknote,Plus,Edit2,Trash2,X,Download,LayoutGrid,List,XCircle,ChevronDown,Check,Building2,BookOpen,GraduationCap,Sparkles } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
+import { escapeHtml } from '@shared/lib/escapeHtml'
 import api from '@shared/lib/api'
 import { toast } from 'sonner'
 import { DragDropContext,Droppable,Draggable,DropResult } from '@hello-pangea/dnd'
@@ -260,6 +261,15 @@ export default function VacataireList() {
     const ir = Math.round(brut * 0.17)
     const net = brut - ir
 
+    const safeLastName = escapeHtml(vac.last_name)
+    const safeFirstName = escapeHtml(vac.first_name)
+    const safeEmail = escapeHtml(vac.email)
+    const safeQualification = escapeHtml(vac.qualification || 'Intervenant Professionnel')
+    const safeModule = escapeHtml(vac.module || 'Sciences de Gestion')
+    const safeModuleRow = escapeHtml(vac.module || 'Module de Gestion')
+    const safeAgreedHours = escapeHtml(vac.agreed_hours || 30)
+    const safeHourlyRate = escapeHtml(vac.hourly_rate || 400)
+
     const win = window.open('', '_blank')
     if (!win) return
 
@@ -267,7 +277,7 @@ export default function VacataireList() {
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Bordereau de Réglement Vacations - ${vac.last_name} ${vac.first_name}</title>
+          <title>Bordereau de Réglement Vacations - ${safeLastName} ${safeFirstName}</title>
           <style>
             body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #1e293b; max-width: 800px; margin: 0 auto; }
             .header { text-align: center; border-bottom: 3px double #0f2863; padding-bottom: 20px; margin-bottom: 30px; }
@@ -294,10 +304,10 @@ export default function VacataireList() {
           </div>
 
           <div class="info-grid">
-            <div class="info-item"><strong>Enseignant Vacataire:</strong> ${vac.last_name} ${vac.first_name}</div>
-            <div class="info-item"><strong>Email:</strong> ${vac.email}</div>
-            <div class="info-item"><strong>Qualification / Grade:</strong> ${vac.qualification || 'Intervenant Professionnel'}</div>
-            <div class="info-item"><strong>Module Assigné:</strong> ${vac.module || 'Sciences de Gestion'}</div>
+            <div class="info-item"><strong>Enseignant Vacataire:</strong> ${safeLastName} ${safeFirstName}</div>
+            <div class="info-item"><strong>Email:</strong> ${safeEmail}</div>
+            <div class="info-item"><strong>Qualification / Grade:</strong> ${safeQualification}</div>
+            <div class="info-item"><strong>Module Assigné:</strong> ${safeModule}</div>
           </div>
 
           <table>
@@ -311,9 +321,9 @@ export default function VacataireList() {
             </thead>
             <tbody>
               <tr>
-                <td>Enseignement théorique & travaux dirigés (${vac.module || 'Module de Gestion'})</td>
-                <td>${vac.agreed_hours || 30} H</td>
-                <td>${vac.hourly_rate || 400} MAD</td>
+                <td>Enseignement théorique & travaux dirigés (${safeModuleRow})</td>
+                <td>${safeAgreedHours} H</td>
+                <td>${safeHourlyRate} MAD</td>
                 <td><strong>${brut.toLocaleString()} MAD</strong></td>
               </tr>
               <tr>

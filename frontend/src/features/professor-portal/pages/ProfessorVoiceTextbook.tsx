@@ -7,6 +7,7 @@ import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 import { CustomSelect, SelectOption } from '@shared/components/ui/CustomSelect';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/authStore';
+import { escapeHtml } from '@shared/lib/escapeHtml';
 
 interface ModuleItem {
   id: number;
@@ -412,22 +413,49 @@ const [historySearch, setHistorySearch] = useState('');
   const [historyTypeFilter, setHistoryTypeFilter] = useState('ALL');
   const [expandedSessionId, setExpandedSessionId] = useState<number | null>(null);
 
-  // ── Tactile Handwritten Signature State ──
-  // ── Tactile Handwritten Signature State ──
-const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
+  // ── Tactile Handwritten Signature State (Scoped per Professor User ID) ──
+  const draftStorageKey = user?.id ? `encg_voice_textbook_drafts_${user.id}` : 'encg_voice_textbook_drafts';
+  const signatureStorageKey = user?.id ? `encg_prof_signature_data_${user.id}` : 'encg_prof_signature_data';
+  const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
   const [professorSignature, setProfessorSignature] = useState<string | null>(() => {
     try {
-        return localStorage.getItem('encg_prof_signature_data') || null;
+      return localStorage.getItem(signatureStorageKey) || null;
+    } catch {
+      return null;
     }
-    catch {
-        return null;
+  });
+
+  useEffect(() => {
+    try {
+      setProfessorSignature(localStorage.getItem(signatureStorageKey) || null);
+      const savedDraft = localStorage.getItem(draftStorageKey);
+      if (savedDraft) {
+        const parsed = JSON.parse(savedDraft);
+        if (parsed?.transcription && !transcription) {
+          setTranscription(String(parsed.transcription));
+        }
+      }
+    } catch {
+      // Ignore storage read errors
     }
-});
+  }, [signatureStorageKey, draftStorageKey]);
+
+  useEffect(() => {
+    try {
+      if (transcription) {
+        localStorage.setItem(draftStorageKey, JSON.stringify({ transcription }));
+      } else {
+        localStorage.removeItem(draftStorageKey);
+      }
+    } catch {
+      // Ignore storage write errors
+    }
+  }, [transcription, draftStorageKey]);
 
   const handleSaveSignature = (sigDataUrl: string) => {
     setProfessorSignature(sigDataUrl);
     try {
-      localStorage.setItem('encg_prof_signature_data', sigDataUrl);
+      localStorage.setItem(signatureStorageKey, sigDataUrl);
     } catch (e) {
       console.error(e);
     }
@@ -436,7 +464,7 @@ const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
   const handleClearSignature = () => {
     setProfessorSignature(null);
     try {
-      localStorage.removeItem('encg_prof_signature_data');
+      localStorage.removeItem(signatureStorageKey);
     } catch (e) {
       console.error(e);
     }
@@ -786,13 +814,27 @@ const { data: textbookData } = useQuery({
   // ── Print Session Sheet (Certified Official Moroccan Academic Document) ──
   const handlePrintSessionSheet = () => {
     const dataToPrint = structuredData || SPECIMEN_SAMPLE;
-    const currentModName = activeModuleItem?.name || 'Aucun module affecté (Spécimen)';
-    const currentModCode = activeModuleItem?.code || 'S/O';
-    const filiereName = activeModuleItem?.filiere?.name || 'Département Sciences de Gestion';
-    const filiereCode = activeModuleItem?.filiere?.code || 'ENCG';
-    const refCode = `ENCG-CT-2026-${filiereCode}-${Math.floor(1000 + Math.random() * 9000)}`;
-    const logoUrl = `${window.location.origin}/logo-encg.png`;
-    const verifyUrl = `${window.location.origin}/verify/${refCode}`;
+    const currentModName = escapeHtml(activeModuleItem?.name || 'Aucun module affecté (Spécimen)');
+    const currentModCode = escapeHtml(activeModuleItem?.code || 'S/O');
+    const filiereName = escapeHtml(activeModuleItem?.filiere?.name || 'Département Sciences de Gestion');
+    const filiereCode = escapeHtml(activeModuleItem?.filiere?.code || 'ENCG');
+    const rawRefCode = `ENCG-CT-2026-${activeModuleItem?.filiere?.code || 'ENCG'}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const refCode = escapeHtml(rawRefCode);
+    const logoUrl = escapeHtml(`${window.location.origin}/logo-encg.png`);
+    const verifyUrl = escapeHtml(`${window.location.origin}/verify/${encodeURIComponent(rawRefCode)}`);
+    const safeTitle = escapeHtml(dataToPrint.title);
+    const safeNotions = escapeHtml(dataToPrint.notions_covered || (dataToPrint as any).content || '');
+    const safeWorkAssigned = escapeHtml(dataToPrint.work_assigned || (dataToPrint as any).summary || '');
+    const safeMethod = escapeHtml(dataToPrint.pedagogical_method || pedagogicalMethod);
+    const safeProfName = escapeHtml(professorFullName);
+    const safeGroupName = escapeHtml(groupName || 'Section Complète (Amphithéâtre)');
+    const safeSessionDate = escapeHtml(sessionDate);
+    const safeSessionDuration = escapeHtml(sessionDuration);
+    const safeProgress = escapeHtml(dataToPrint.estimated_progress || 8);
+    const safeObjectivesHtml = (dataToPrint.pedagogical_objectives || []).map(o => `<li>${escapeHtml(o)}</li>`).join('');
+    const safeSignatureSrc = professorSignature && professorSignature.startsWith('data:image/')
+      ? escapeHtml(professorSignature)
+      : '';
     
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
@@ -802,7 +844,7 @@ const { data: textbookData } = useQuery({
       <html lang="fr">
       <head>
         <meta charset="UTF-8">
-        <title>Fiche Pédagogique Officielle — ENCG Fès — ${dataToPrint.title}</title>
+        <title>Fiche Pédagogique Officielle — ENCG Fès — ${safeTitle}</title>
         <style>
           @page {
             size: A4 portrait;
@@ -1075,7 +1117,7 @@ const { data: textbookData } = useQuery({
             <!-- ── TITLE BANNER ── -->
             <div class="title-banner">
               <div class="title-badge">FICHE CERTIFIÉE DE SÉANCE PÉDAGOGIQUE — VALIDATION DU SERVICE FAIT</div>
-              <div class="main-title">${dataToPrint.title}</div>
+              <div class="main-title">${safeTitle}</div>
             </div>
 
             <!-- ── ACADEMIC CARTOUCHE / IDENTITY GRID ── -->
@@ -1095,25 +1137,25 @@ const { data: textbookData } = useQuery({
               <tr>
                 <td>
                   <span class="c-label">Enseignant Chercheur :</span><br>
-                  <span class="c-val" style="color: #001A4B;">${professorFullName}</span> &nbsp;
+                  <span class="c-val" style="color: #001A4B;">${safeProfName}</span> &nbsp;
                   <span style="font-size: 6.5pt; color: #64748b;">(Corps Professoral Permanent / Vacataire)</span>
                 </td>
                 <td>
                   <span class="c-label">Type de Séance &amp; Groupe :</span><br>
                   <span class="c-val">${sessionType === 'CM' ? 'Cours Magistral (CM)' : sessionType === 'TD' ? 'Travaux Dirigés (TD)' : 'Travaux Pratiques (TP)'}</span> &nbsp;•&nbsp; 
-                  <strong style="color: #059669;">${groupName || 'Section Complète (Amphithéâtre)'}</strong>
+                  <strong style="color: #059669;">${safeGroupName}</strong>
                 </td>
               </tr>
               <tr>
                 <td>
                   <span class="c-label">Date &amp; Volume Horaire Certifié :</span><br>
-                  <span class="c-val">${sessionDate}</span> &nbsp;•&nbsp; 
-                  <span style="color: #001A4B; font-weight: 900;">${sessionDuration} Heures Pédagogiques</span> 
+                  <span class="c-val">${safeSessionDate}</span> &nbsp;•&nbsp; 
+                  <span style="color: #001A4B; font-weight: 900;">${safeSessionDuration} Heures Pédagogiques</span> 
                   <span style="font-size: 6.5pt; color: #64748b;">(Norme : 36h / module)</span>
                 </td>
                 <td>
                   <span class="c-label">Validation &amp; Décompte Service Fait :</span><br>
-                  <span style="color: #059669; font-weight: 900;">+${dataToPrint.estimated_progress || 8}% du Syllabus</span> &nbsp;•&nbsp; 
+                  <span style="color: #059669; font-weight: 900;">+${safeProgress}% du Syllabus</span> &nbsp;•&nbsp; 
                   <span style="color: #001A4B; font-weight: bold;">Transmis pour Décompte &amp; Émargement</span>
                 </td>
               </tr>
@@ -1127,7 +1169,7 @@ const { data: textbookData } = useQuery({
               </div>
               <div class="section-content">
                 <ul class="obj-list">
-                  ${dataToPrint.pedagogical_objectives.map(o => `<li>${o}</li>`).join('')}
+                  ${safeObjectivesHtml}
                 </ul>
               </div>
             </div>
@@ -1139,7 +1181,7 @@ const { data: textbookData } = useQuery({
                 <span class="section-pill">Contenu du Syllabus</span>
               </div>
               <div class="section-content">
-                <p style="margin: 0;">${dataToPrint.notions_covered}</p>
+                <p style="margin: 0;">${safeNotions}</p>
               </div>
             </div>
 
@@ -1150,7 +1192,7 @@ const { data: textbookData } = useQuery({
                 <span class="section-pill" style="background: #fef3c7; color: #92400e; border: 0.5px solid #fde68a;">Travail Étudiant</span>
               </div>
               <div class="section-content">
-                <p style="margin: 0; font-weight: 600; color: #78350f;">${dataToPrint.work_assigned}</p>
+                <p style="margin: 0; font-weight: 600; color: #78350f;">${safeWorkAssigned}</p>
               </div>
             </div>
 
@@ -1161,7 +1203,7 @@ const { data: textbookData } = useQuery({
                 <span class="section-pill">Modalité</span>
               </div>
               <div class="section-content">
-                <p style="margin: 0; color: #334155;">${dataToPrint.pedagogical_method || pedagogicalMethod}</p>
+                <p style="margin: 0; color: #334155;">${safeMethod}</p>
               </div>
             </div>
 
@@ -1173,20 +1215,20 @@ const { data: textbookData } = useQuery({
                   <div class="sig-title">L'Enseignant Responsable</div>
                   <div class="sig-caption">« Déclare sur l'honneur le déroulement effectif »</div>
                   <div style="font-size: 7.2pt; font-weight: 900; color: #001A4B; text-align: center; margin-top: 2px;">
-                    ${professorFullName}
+                    ${safeProfName}
                   </div>
                   
-                  ${professorSignature ? `
+                  ${safeSignatureSrc ? `
                     <!-- Handwritten Tactile Signature -->
                     <div style="text-align: center; margin: 1px 0; height: 35px; display: flex; align-items: center; justify-content: center;">
                       <img 
-                        src="${professorSignature}" 
+                        src="${safeSignatureSrc}" 
                         alt="Signature Manuelle" 
                         style="max-height: 35px; max-width: 140px; object-fit: contain;" 
                       />
                     </div>
                     <div style="font-size: 5.2pt; color: #047857; font-weight: 800; text-align: center;">
-                      ✓ Émargement Manuel Tactile — ${sessionDate}
+                      ✓ Émargement Manuel Tactile — ${safeSessionDate}
                     </div>
                   ` : `
                     <!-- Calligraphic Fallback Signature -->
@@ -1195,7 +1237,7 @@ const { data: textbookData } = useQuery({
                         <path d="M10,24 C18,10 26,4 34,4 C40,4 36,24 42,26 C48,28 54,14 60,10 C66,4 72,20 78,18 C84,16 98,8 108,14" stroke="#001A4B" stroke-width="2.2" stroke-linecap="round"/>
                       </svg>
                     </div>
-                    <div style="font-size: 5.2pt; color: #94a3b8; text-align: center;">Émargé électroniquement le ${sessionDate}</div>
+                    <div style="font-size: 5.2pt; color: #94a3b8; text-align: center;">Émargé électroniquement le ${safeSessionDate}</div>
                   `}
                 </td>
 

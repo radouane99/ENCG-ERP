@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { cn } from '@shared/lib/utils'
 import api from '@shared/lib/api'
 import { formatSafeRichText } from '@shared/lib/htmlSafe'
+import { useAuthStore } from '@stores/authStore'
 
 interface Message {
   id: number
@@ -20,6 +21,7 @@ const QUICK_QUESTIONS = [
 ]
 
 export default function ChatbotWidget() {
+  const { user, activeRole } = useAuthStore()
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([{
     id: 0,
@@ -95,7 +97,8 @@ export default function ChatbotWidget() {
     setIsTyping(true)
 
     try {
-      const res = await api.post('/chatbot/message', { message: msg, role: 'Étudiant' })
+      const resolvedRole = activeRole || user?.roles?.[0] || 'student'
+      const res = await api.post('/chatbot/message', { message: msg, role: resolvedRole })
       const reply = res.data?.reply ?? res.data?.message ?? 'Je suis à votre disposition. Pour toute assistance immédiate, contactez la scolarité à **scolarite@encg-fes.ma**.'
       setMessages(prev => [...prev, { id: counter + 1, role: 'assistant', content: reply }])
       setCounter(n => n + 2)

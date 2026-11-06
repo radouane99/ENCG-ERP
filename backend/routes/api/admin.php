@@ -37,7 +37,6 @@ use App\Http\Controllers\Api\AdminRolePermissionController;
 use App\Http\Controllers\Api\AdminSmartCampusController;
 use App\Http\Controllers\Api\AdmissionCampaignController;
 use App\Http\Controllers\Api\AdmissionController;
-use App\Http\Controllers\Api\AiChatController;
 use App\Http\Controllers\Api\AiFeatureController;
 use App\Http\Controllers\Api\AiScolarBotController;
 use App\Http\Controllers\Api\AiTimetableSchedulerController;
@@ -430,8 +429,6 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
         Route::post('copilot/query', [AdminAiController::class, 'copilotQuery']);
         Route::get('predictive-analytics', [AdminAiController::class, 'getPredictiveAnalytics']);
         Route::get('financial-forecast', [AdminAiController::class, 'getFinancialForecast']);
-        // Groq AI Chatbot — used by ChatbotWidget (all roles)
-        Route::post('chat', [AiChatController::class, 'chat']);
     });
 
     // HR & Personnel
@@ -955,12 +952,14 @@ Route::middleware(['auth:sanctum', 'institution.context', $staffRoles])->group(f
     // ──────────────────────────────────────────────────────────────────────────────
     // PFE Workflow
     // ──────────────────────────────────────────────────────────────────────────────
-    Route::get('/admin/pfe/workflow', function () {
+    Route::get('/admin/pfe/workflow', function (Request $request) {
         try {
             $table = Schema::hasTable('final_projects') ? 'final_projects' : null;
             if (! $table) {
                 return response()->json(['success' => true, 'stages' => [], 'stats' => []]);
             }
+
+            $institutionId = $request->user()?->institution_id;
 
             $allPfe = DB::table($table)
                 ->leftJoin('students', $table.'.student_id', '=', 'students.id')
@@ -968,6 +967,7 @@ Route::middleware(['auth:sanctum', 'institution.context', $staffRoles])->group(f
                 ->leftJoin('users as prof', $table.'.supervisor_id', '=', 'prof.id')
                 ->leftJoin('professors as prf', $table.'.supervisor_id', '=', 'prf.id')
                 ->leftJoin('users as prof_user', 'prf.user_id', '=', 'prof_user.id')
+                ->when($institutionId, fn ($q) => $q->where('students.institution_id', $institutionId))
                 ->select(
                     $table.'.id',
                     $table.'.title',
@@ -1003,22 +1003,75 @@ Route::middleware(['auth:sanctum', 'institution.context', $staffRoles])->group(f
         } catch (Exception $e) {
             return response()->json(['success' => false, 'error' => 'Une erreur interne est survenue.', 'stages' => [], 'stats' => []]);
         }
-    });
+    })->middleware('role:admin|super-admin|super_admin|institution-admin|institution_admin|director|scolarite|department-head|filiere-head|professor');
 
     Route::patch('/admin/pfe/{id}/status', function (Request $request, $id) {
+        $validated = $request->validate([
+            'status' => 'required|string|max:50|in:submitted,pending,soumis,under_review,en_revue,reviewing,validated,approved,valide,assigned,in_progress,encadre,completed,soutenu,rejected,rejete,defended',
+            'supervisor_id' => 'nullable|integer',
+        ]);
+
         try {
+            $user = $request->user();
             $table = Schema::hasTable('final_projects') ? 'final_projects' : 'internships';
-            DB::table($table)->where('id', $id)->update([
-                'status' => $request->input('status'),
-                'supervisor_id' => $request->input('supervisor_id'),
-                'updated_at' => now(),
+
+            $record = DB::table($table)
+                ->leftJoin('students', $table.'.student_id', '=', 'students.id')
+                ->select($table.'.*', 'students.institution_id as student_institution_id')
+                ->where($table.'.id', (int) $id)
+                ->first();
+
+            if (! $record) {
+                return response()->json(['success' => false, 'message' => 'Projet introuvable.'], 404);
+            }
+
+            if ($user?->institution_id && $record->student_institution_id && (int) $record->student_institution_id !== (int) $user->institution_id) {
+                return response()->json(['success' => false, 'message' => 'Accès refusé (établissement différent).'], 403);
+            }
+
+            $isAdminOrHead = $user && $user->hasAnyRole([
+                'admin', 'super-admin', 'super_admin', 'institution-admin', 'institution_admin',
+                'director', 'scolarite', 'department-head', 'filiere-head',
             ]);
+
+            if (! $isAdminOrHead) {
+                $profId = $user?->professor?->id;
+                $isSupervisor = ((int) ($record->supervisor_id ?? 0) === (int) $user?->id)
+                    || ($profId && (int) ($record->supervisor_id ?? 0) === (int) $profId);
+
+                $isJuryMember = false;
+                if (! $isSupervisor && Schema::hasTable('final_project_juries')) {
+                    $isJuryMember = DB::table('final_project_juries')
+                        ->where('final_project_id', (int) $id)
+                        ->where(function ($q) use ($user, $profId) {
+                            $q->where('professor_id', $user?->id);
+                            if ($profId) {
+                                $q->orWhere('professor_id', $profId);
+                            }
+                        })
+                        ->exists();
+                }
+
+                if (! $isSupervisor && ! $isJuryMember) {
+                    return response()->json(['success' => false, 'message' => 'Accès refusé : vous n\'êtes ni encadrant ni membre du jury de ce PFE.'], 403);
+                }
+            }
+
+            $updatePayload = [
+                'status' => $validated['status'],
+                'updated_at' => now(),
+            ];
+            if ($isAdminOrHead && array_key_exists('supervisor_id', $validated)) {
+                $updatePayload['supervisor_id'] = $validated['supervisor_id'];
+            }
+
+            DB::table($table)->where('id', (int) $id)->update($updatePayload);
 
             return response()->json(['success' => true, 'message' => 'Statut PFE mis à jour.']);
         } catch (Exception $e) {
             return response()->json(['success' => false, 'error' => 'Une erreur interne est survenue.'], 500);
         }
-    });
+    })->middleware('role:admin|super-admin|super_admin|institution-admin|institution_admin|director|scolarite|department-head|filiere-head|professor');
 
     // Student Progress Report (full DB pull for one student)
     Route::get('/admin/students/{id}/progress-report', function (\Illuminate\Http\Request $request, int $id) {

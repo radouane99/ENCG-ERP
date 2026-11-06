@@ -80,6 +80,18 @@ class DocumentCenterController extends Controller
     {
         $professor = Professor::with(['user', 'department', 'vacationContracts.module', 'vacationContracts.group'])->where('institution_id', $institutionId)->findOrFail($id);
 
+        $isVacataire = ($professor->contract_type === 'vacataire')
+            || ($professor->type === 'vacataire')
+            || (bool) $professor->user?->hasRole('vacataire');
+
+        if ($isVacataire && $view === 'pdf.attestation_travail') {
+            abort(403, 'Accès restreint : Un enseignant vacataire ne peut pas obtenir d\'Attestation de Travail statutaire.');
+        }
+
+        if (! $isVacataire && $view === 'pdf.attestation_vacations') {
+            abort(403, 'Accès restreint : L\'Attestation d\'Heures de Vacation est réservée aux enseignants vacataires.');
+        }
+
         $data = array_merge($commonData, [
             'professor' => $professor,
             'contracts' => $professor->vacationContracts,

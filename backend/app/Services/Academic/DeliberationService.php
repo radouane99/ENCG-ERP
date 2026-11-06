@@ -67,13 +67,13 @@ class DeliberationService
                 }
             }
 
-            if ($hasAbsent || $finalScore < 5) {
+            if ($hasAbsent || $finalScore < LmdRules::ELIMINATORY_THRESHOLD) {
                 $failed++;
                 StudentModuleRetake::updateOrCreate(
                     ['student_id' => $studentId, 'module_id' => $moduleId, 'academic_year_id' => $sessionId],
                     ['status' => 'pending']
                 );
-            } elseif ($finalScore >= 10) {
+            } elseif ($finalScore >= LmdRules::VALIDATION_THRESHOLD) {
                 $validated++;
                 ModuleValidation::updateOrCreate(
                     ['student_id' => $studentId, 'module_id' => $moduleId],
@@ -164,7 +164,7 @@ class DeliberationService
 
                     if ($currentGradeRaw !== null) {
                         $record['grade'] = round($currentGradeRaw, 2);
-                        $record['status'] = $record['grade'] >= 10 ? 'validated' : 'failed';
+                        $record['status'] = $record['grade'] >= LmdRules::VALIDATION_THRESHOLD ? 'validated' : 'failed';
                     }
                 }
 
@@ -183,7 +183,7 @@ class DeliberationService
                 'academic_year_id' => $academicYearId,
                 'modules' => $pv,
                 'global_average' => $globalAverage,
-                'global_status' => $globalAverage >= 10 ? 'passed' : 'failed',
+                'global_status' => $globalAverage >= LmdRules::VALIDATION_THRESHOLD ? 'passed' : 'failed',
             ];
 
         });
@@ -261,8 +261,8 @@ class DeliberationService
 
                 $semesterAvg = $totalCoef > 0 ? round($totalScore / $totalCoef, 2) : 0;
                 $decision = match (true) {
-                    $semesterAvg >= 10.0 && ! $hasEliminatory => 'V',
-                    $semesterAvg >= 5.0 => 'RAT',
+                    $semesterAvg >= LmdRules::VALIDATION_THRESHOLD && ! $hasEliminatory => 'V',
+                    $semesterAvg >= LmdRules::ELIMINATORY_THRESHOLD => 'RAT',
                     default => 'AJ',
                 };
 
@@ -508,7 +508,7 @@ class DeliberationService
                     $isHistorical = false;
                     $validationYear = $academicYearName;
 
-                    if ($histVal && floatval($histVal->final_grade) >= 10.00) {
+                    if ($histVal && floatval($histVal->final_grade) >= LmdRules::VALIDATION_THRESHOLD) {
                         $finalNote = floatval($histVal->final_grade);
                         $moyNormale = $finalNote;
                         $modDecision = 'V';
@@ -545,7 +545,9 @@ class DeliberationService
                             $finalNote = max($moyNormale, min(12.00, $rVal));
                         }
 
-                        $modDecision = $finalNote >= 10.0 ? ($moyNormale >= 10.0 ? 'V' : 'VAR') : ($finalNote < 6.0 ? 'NV' : 'R');
+                        $modDecision = $finalNote >= LmdRules::VALIDATION_THRESHOLD
+                            ? ($moyNormale >= LmdRules::VALIDATION_THRESHOLD ? 'V' : 'VAR')
+                            : ($finalNote < LmdRules::ELIMINATORY_THRESHOLD ? 'NV' : 'R');
                     }
 
                     if (LmdRules::isEliminatory($finalNote)) {
@@ -609,8 +611,8 @@ class DeliberationService
 
                 $fraudModules = array_unique($fraudModules);
 
-                $failedOdd = $oddModuleList->filter(fn ($m) => $m['final_grade'] < 10.00)->values();
-                $failedEven = $evenModuleList->filter(fn ($m) => $m['final_grade'] < 10.00)->values();
+                $failedOdd = $oddModuleList->filter(fn ($m) => $m['final_grade'] < LmdRules::VALIDATION_THRESHOLD)->values();
+                $failedEven = $evenModuleList->filter(fn ($m) => $m['final_grade'] < LmdRules::VALIDATION_THRESHOLD)->values();
                 $eliminatoryMods = collect($allModuleDetails)->filter(fn ($m) => LmdRules::isEliminatory((float) $m['final_grade']))->map(fn ($m) => "{$m['code']} ({$m['final_grade']}/20)")->values()->toArray();
 
                 $oddAvg = $oddModuleList->isNotEmpty() ? round($oddModuleList->avg('final_grade'), 2) : 0;
@@ -624,24 +626,24 @@ class DeliberationService
                 $hasEliminatoryEven = $evenModuleList->contains(fn ($m) => LmdRules::isEliminatory((float) $m['final_grade']));
                 $hasEliminatory = $hasEliminatoryOdd || $hasEliminatoryEven;
 
-                // 1. Semester Compensation S1 (Moyenne S1 >= 10.00 & pas de note < 5.0)
+                // 1. Semester Compensation S1 (Moyenne S1 >= 10.00 & pas de note < 6.0)
                 $isOddCompensated = false;
-                if ($oddAvg >= 10.00 && ! $hasEliminatoryOdd && ! $hasFraud) {
+                if ($oddAvg >= LmdRules::VALIDATION_THRESHOLD && ! $hasEliminatoryOdd && ! $hasFraud) {
                     $isOddCompensated = true;
                     foreach ($allModuleDetails as &$md) {
-                        if (($md['semester_number'] == $oddSemNumber || $md['semester_number'] % 2 !== 0) && $md['final_grade'] < 10.00) {
+                        if (($md['semester_number'] == $oddSemNumber || $md['semester_number'] % 2 !== 0) && $md['final_grade'] < LmdRules::VALIDATION_THRESHOLD) {
                             $md['decision'] = 'VPC';
                         }
                     }
                     unset($md);
                 }
 
-                // 2. Semester Compensation S2 (Moyenne S2 >= 10.00 & pas de note < 5.0)
+                // 2. Semester Compensation S2 (Moyenne S2 >= 10.00 & pas de note < 6.0)
                 $isEvenCompensated = false;
-                if ($evenAvg >= 10.00 && ! $hasEliminatoryEven && ! $hasFraud) {
+                if ($evenAvg >= LmdRules::VALIDATION_THRESHOLD && ! $hasEliminatoryEven && ! $hasFraud) {
                     $isEvenCompensated = true;
                     foreach ($allModuleDetails as &$md) {
-                        if (($md['semester_number'] == $evenSemNumber || $md['semester_number'] % 2 === 0) && $md['final_grade'] < 10.00) {
+                        if (($md['semester_number'] == $evenSemNumber || $md['semester_number'] % 2 === 0) && $md['final_grade'] < LmdRules::VALIDATION_THRESHOLD) {
                             $md['decision'] = 'VPC';
                         }
                     }
@@ -652,10 +654,10 @@ class DeliberationService
 
                 // 3. Annual Compensation S1+S2 (Moyenne Annuelle >= 10.00 & aucune note éliminatoire < 6.0 dans tout le bilan)
                 $isAnnualCompensated = false;
-                if ($annualAvg >= 10.00 && ! $hasEliminatory && ! $hasFraud) {
+                if ($annualAvg >= LmdRules::VALIDATION_THRESHOLD && ! $hasEliminatory && ! $hasFraud) {
                     $isAnnualCompensated = true;
                     foreach ($allModuleDetails as &$md) {
-                        if ($md['final_grade'] < 10.00) {
+                        if ($md['final_grade'] < LmdRules::VALIDATION_THRESHOLD) {
                             $md['decision'] = 'VPC';
                         }
                     }
@@ -664,7 +666,7 @@ class DeliberationService
 
                 $oddDecision = match (true) {
                     $hasFraud => 'FRAUDE',
-                    $oddAvg >= 10.00 && ! $hasEliminatoryOdd => ($oddModuleList->every(fn ($m) => $m['final_grade'] >= 10.0) ? 'V' : 'V.Comp'),
+                    $oddAvg >= LmdRules::VALIDATION_THRESHOLD && ! $hasEliminatoryOdd => ($oddModuleList->every(fn ($m) => $m['final_grade'] >= LmdRules::VALIDATION_THRESHOLD) ? 'V' : 'V.Comp'),
                     $isAnnualCompensated => 'V.Comp',
                     $failedOddCount <= 1 => 'PASS_DETTES',
                     default => 'NV',
@@ -672,20 +674,20 @@ class DeliberationService
 
                 $evenDecision = match (true) {
                     $hasFraud => 'FRAUDE',
-                    $evenAvg >= 10.00 && ! $hasEliminatoryEven => ($evenModuleList->every(fn ($m) => $m['final_grade'] >= 10.0) ? 'V' : 'V.Comp'),
+                    $evenAvg >= LmdRules::VALIDATION_THRESHOLD && ! $hasEliminatoryEven => ($evenModuleList->every(fn ($m) => $m['final_grade'] >= LmdRules::VALIDATION_THRESHOLD) ? 'V' : 'V.Comp'),
                     $isAnnualCompensated => 'V.Comp',
                     $failedEvenCount <= 1 => 'PASS_DETTES',
                     default => 'NV',
                 };
 
                 // Décision Annuelle Officielle : Validé Direct, Validé par Compensation, Passage avec Dettes, Ajourné, Redoublement
-                $allPassed = collect($allModuleDetails)->every(fn ($m) => $m['final_grade'] >= 10.0);
+                $allPassed = collect($allModuleDetails)->every(fn ($m) => $m['final_grade'] >= LmdRules::VALIDATION_THRESHOLD);
                 $decision = match (true) {
                     $hasFraud => 'FRAUDE',
                     $allPassed => 'V',
-                    ($annualAvg >= 10.00 && ! $hasEliminatory) => 'V.Comp',
-                    $failedTotal <= 1 && $annualAvg >= 6.0 => 'PASS_DETTES',
-                    $annualAvg < 6.0 => 'REDOUBLE',
+                    ($annualAvg >= LmdRules::VALIDATION_THRESHOLD && ! $hasEliminatory) => 'V.Comp',
+                    $failedTotal <= 1 && $annualAvg >= LmdRules::ELIMINATORY_THRESHOLD => 'PASS_DETTES',
+                    $annualAvg < LmdRules::ELIMINATORY_THRESHOLD => 'REDOUBLE',
                     default => 'AJ',
                 };
 
@@ -698,7 +700,7 @@ class DeliberationService
                 } elseif ($decision === 'V.Comp') {
                     $decisionReason = 'Validation par Compensation Annuelle (Pas de note < 6.0)';
                 } elseif ($decision === 'PASS_DETTES') {
-                    $failedNames = collect($allModuleDetails)->filter(fn ($m) => $m['final_grade'] < 10.00)->pluck('code')->toArray();
+                    $failedNames = collect($allModuleDetails)->filter(fn ($m) => $m['final_grade'] < LmdRules::VALIDATION_THRESHOLD)->pluck('code')->toArray();
                     $modStr = ! empty($failedNames) ? implode(', ', $failedNames) : '';
                     $decisionReason = "Passage avec Dettes (1 seul module NV : {$modStr})";
                 } elseif ($decision === 'REDOUBLE') {

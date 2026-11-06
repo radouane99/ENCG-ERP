@@ -12,6 +12,7 @@ import { LanguageSwitcher } from './LanguageSwitcher'
 import { NotificationBell } from './NotificationBell'
 import { InstallPWAPrompt } from './InstallPWAPrompt'
 import RoleContextSwitcher from './RoleContextSwitcher'
+import { ADMIN_ROLES, userCanAccessRoles } from '@shared/lib/routeAccess'
 
 interface HeaderProps {
   onOpenCommand?: () => void;
@@ -176,13 +177,15 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
                     {t('profile') || 'Mon Profil'}
                   </button>
 
-                  <button
-                    onClick={() => { navigate('/admin/settings'); setShowUserMenu(false) }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-foreground hover:bg-primary/5 dark:hover:bg-indigo-950/40 hover:text-primary dark:hover:text-indigo-400 rounded-xl transition-colors text-start cursor-pointer"
-                  >
-                    <Settings className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-                    {t('settings', { defaultValue: 'Settings' })}
-                  </button>
+                  {userCanAccessRoles(user?.roles, ADMIN_ROLES) && (
+                    <button
+                      onClick={() => { navigate('/admin/settings'); setShowUserMenu(false) }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 dark:text-foreground hover:bg-primary/5 dark:hover:bg-indigo-950/40 hover:text-primary dark:hover:text-indigo-400 rounded-xl transition-colors text-start cursor-pointer"
+                    >
+                      <Settings className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                      {t('settings', { defaultValue: 'Settings' })}
+                    </button>
+                  )}
                 </div>
 
                 <div className="border-t border-border dark:border-border my-1 mx-2" />

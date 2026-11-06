@@ -2,6 +2,7 @@ import { useState,useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Hourglass,CheckSquare,XCircle,List,Mailbox,Loader2,Check,X,CalendarDays,Sparkles,User,Building2,Download,Users,Cpu } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
+import { escapeHtml } from '@shared/lib/escapeHtml'
 import { examsApi } from '@shared/api/exams'
 import { toast } from 'sonner'
 
@@ -92,11 +93,11 @@ export default function AdminScheduleChangeRequestsPage() {
             <tbody>
               ${requests.map(r => `
                 <tr>
-                  <td><strong>${r.professor_name}</strong><br><small>${r.department}</small></td>
-                  <td>${r.module_name}</td>
-                  <td>${r.old_date} (${r.old_start_time})</td>
-                  <td><strong>${r.proposed_date} (${r.proposed_start_time})</strong></td>
-                  <td>${r.status.toUpperCase()}</td>
+                  <td><strong>${escapeHtml(r.professor_name)}</strong><br><small>${escapeHtml(r.department)}</small></td>
+                  <td>${escapeHtml(r.module_name)}</td>
+                  <td>${escapeHtml(r.old_date)} (${escapeHtml(r.old_start_time)})</td>
+                  <td><strong>${escapeHtml(r.proposed_date)} (${escapeHtml(r.proposed_start_time)})</strong></td>
+                  <td>${escapeHtml(String(r.status ?? '').toUpperCase())}</td>
                 </tr>
               `).join('')}
             </tbody>

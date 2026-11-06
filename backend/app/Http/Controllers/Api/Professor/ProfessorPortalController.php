@@ -202,11 +202,11 @@ class ProfessorPortalController extends Controller
      * Suivi de la Charge Statutaire et des Heures Supplémentaires / Vacations.
      * Calculé dynamiquement à partir de la base de données (Schedules, Modules, Groups, AttendanceSessions).
      */
-    public function getWorkloadSummary(Request $request): JsonResponse
+    public function getWorkloadSummary(Request $request, ?User $targetUser = null): JsonResponse
     {
-        $user = $request->user();
+        $user = $targetUser ?? $request->user();
         $prof = $user->professor;
-        $isVacataire = ($prof?->contract_type === 'vacataire') || $user->hasRole('vacataire');
+        $isVacataire = ($prof?->contract_type === 'vacataire') || ($prof?->type === 'vacataire') || $user->hasRole('vacataire');
 
         $profId = $prof?->id;
         $userId = $user->id;
@@ -216,8 +216,9 @@ class ProfessorPortalController extends Controller
             ->where(function ($q) use ($profId, $userId) {
                 if ($profId) {
                     $q->where('professor_id', $profId);
+                } else {
+                    $q->where('professor_id', $userId)->where('professor_type', User::class);
                 }
-                $q->orWhere('professor_id', $userId);
             })
             ->where('is_active', true)
             ->orderBy('day_of_week')
@@ -835,8 +836,8 @@ class ProfessorPortalController extends Controller
         $prof = $user->professor;
         $isVacataire = ($prof?->contract_type === 'vacataire') || ($prof?->type === 'vacataire') || $user->hasRole('vacataire');
 
-        // Security check: Vacataire CANNOT request statutory permanent documents (Attestation de travail / salaire)
-        if ($isVacataire && in_array($validated['document_type'], ['attestation_travail', 'attestation_salaire', 'autorisation_absence'])) {
+        // Security check: Vacataire CANNOT request statutory permanent documents (Attestation de travail / salaire / service fait)
+        if ($isVacataire && in_array($validated['document_type'], ['attestation_travail', 'attestation_salaire', 'autorisation_absence', 'attestation_service_fait'], true)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Accès restreint : En tant qu\'enseignant vacataire, vous ne pouvez pas demander d\'Attestation de Travail ou de Salaire statutaire. Veuillez solliciter une Attestation d\'Heures de Vacation.',
@@ -844,7 +845,7 @@ class ProfessorPortalController extends Controller
         }
 
         // Security check: Permanent Professor cannot request vacation documents
-        if (! $isVacataire && in_array($validated['document_type'], ['attestation_vacation', 'bordereau_decompte_vacation', 'attestation_igr_vacation'])) {
+        if (! $isVacataire && in_array($validated['document_type'], ['attestation_vacation', 'bordereau_decompte_vacation', 'attestation_igr_vacation'], true)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Accès restreint : Ce document est réservé aux enseignants vacataires. En tant que professeur titulaire, veuillez demander une Attestation de Travail ou de Service Fait.',
@@ -983,9 +984,13 @@ class ProfessorPortalController extends Controller
         $doc = ProfessorDocumentRequest::with(['user.professor.department'])
             ->whereHas('user', fn ($query) => $query->where('institution_id', $currentUser->institution_id))
             ->findOrFail($id);
-        $isStaff = $currentUser->hasAnyRole(['admin', 'super-admin', 'director', 'institution-admin', 'hr-officer', 'secretaire-general']);
+        $isStaff = $currentUser->hasAnyRole(['admin', 'super-admin', 'super_admin', 'director', 'institution-admin', 'institution_admin', 'hr-officer', 'secretaire-general', 'scolarite']);
         if (! $isStaff && (int) $doc->user_id !== (int) $currentUser->id) {
             abort(403, 'Accès non autorisé à ce document.');
+        }
+
+        if (! $isStaff && ! in_array($doc->status, ['ready', 'approved', 'delivered', 'completed', 'signed'], true)) {
+            abort(403, 'Ce document est en attente de validation et ne peut pas encore être téléchargé.');
         }
 
         $user = $doc->user;
@@ -996,9 +1001,14 @@ class ProfessorPortalController extends Controller
 
         $isVacataire = ($prof?->contract_type === 'vacataire') || ($prof?->type === 'vacataire') || $user?->hasRole('vacataire');
 
-        // Security check: if vacataire attempts to download attestation_travail, block it!
-        if ($isVacataire && in_array($doc->document_type, ['attestation_travail', 'attestation_salaire', 'autorisation_absence'])) {
+        // Security check: if vacataire attempts to download statutory permanent documents, block it!
+        if ($isVacataire && in_array($doc->document_type, ['attestation_travail', 'attestation_salaire', 'autorisation_absence', 'attestation_service_fait'], true)) {
             abort(403, 'Document non autorisé pour un enseignant vacataire. Veuillez télécharger une Attestation d\'Heures de Vacation.');
+        }
+
+        // Security check: if permanent professor attempts to download vacation documents, block it!
+        if (! $isVacataire && in_array($doc->document_type, ['attestation_vacation', 'bordereau_decompte_vacation', 'attestation_igr_vacation'], true)) {
+            abort(403, 'Document réservé aux enseignants vacataires. Veuillez télécharger une Attestation de Travail ou de Service Fait.');
         }
 
         $trackingCode = $doc?->tracking_code ?? ('DOC-PROF-'.date('Y').'-'.str_pad($id, 4, '0', STR_PAD_LEFT));
@@ -1053,9 +1063,8 @@ class ProfessorPortalController extends Controller
                     ->where(function ($q) use ($prof, $user) {
                         if ($prof?->id) {
                             $q->where('professor_id', $prof->id);
-                        }
-                        if ($user?->id) {
-                            $q->orWhere('professor_id', $user->id);
+                        } elseif ($user?->id) {
+                            $q->where('professor_id', $user->id)->where('professor_type', User::class);
                         }
                     })
                     ->get()
@@ -1101,7 +1110,7 @@ class ProfessorPortalController extends Controller
 
         // 2. Bordereau de Vacation pour Paiement (Vacataire)
         if ($doc?->document_type === 'bordereau_decompte_vacation') {
-            $summaryResponse = $this->getWorkloadSummary($request);
+            $summaryResponse = $this->getWorkloadSummary($request, $user);
             $summaryData = $summaryResponse->getData(true)['data'] ?? [];
 
             $data = [
@@ -1130,7 +1139,7 @@ class ProfessorPortalController extends Controller
 
         // 3. Attestation Fiscale IGR (Vacataires)
         if ($doc?->document_type === 'attestation_igr_vacation') {
-            $summaryResponse = $this->getWorkloadSummary($request);
+            $summaryResponse = $this->getWorkloadSummary($request, $user);
             $summaryData = $summaryResponse->getData(true)['data'] ?? [];
 
             $hoursDone = $summaryData['hours_done'] ?? 36;
@@ -1164,7 +1173,7 @@ class ProfessorPortalController extends Controller
 
         // 4. Attestation de Service Fait (Permanent)
         if ($doc?->document_type === 'attestation_service_fait') {
-            $summaryResponse = $this->getWorkloadSummary($request);
+            $summaryResponse = $this->getWorkloadSummary($request, $user);
             $summaryData = $summaryResponse->getData(true)['data'] ?? [];
 
             $data = [
@@ -1270,9 +1279,8 @@ class ProfessorPortalController extends Controller
                 ->where(function ($q) use ($prof, $user) {
                     if ($prof?->id) {
                         $q->where('professor_id', $prof->id);
-                    }
-                    if ($user?->id) {
-                        $q->orWhere('professor_id', $user->id);
+                    } elseif ($user?->id) {
+                        $q->where('professor_id', $user->id)->where('professor_type', User::class);
                     }
                 })->first();
 
@@ -1328,8 +1336,9 @@ class ProfessorPortalController extends Controller
             ->where(function ($q) use ($profId, $userId) {
                 if ($profId) {
                     $q->where('professor_id', $profId);
+                } else {
+                    $q->where('user_id', $userId);
                 }
-                $q->orWhere('user_id', $userId);
             });
 
         if ($request->filled('module_id')) {
@@ -1348,8 +1357,9 @@ class ProfessorPortalController extends Controller
             ->where(function ($q) use ($profId, $userId) {
                 if ($profId) {
                     $q->where('professor_id', $profId);
+                } else {
+                    $q->where('professor_id', $userId)->where('professor_type', User::class);
                 }
-                $q->orWhere('professor_id', $userId);
             });
 
         $dbSchedules = $schedulesQuery->get();
@@ -1554,8 +1564,12 @@ class ProfessorPortalController extends Controller
 
         // Fetch all textbook entries for this professor and module
         $entries = Textbook::where('module_id', $moduleId)
-            ->where(function ($q) use ($profId, $user) {
-                $q->where('professor_id', $profId)->orWhere('user_id', $user->id);
+            ->where(function ($q) use ($prof, $user) {
+                if ($prof?->id) {
+                    $q->where('professor_id', $prof->id);
+                } else {
+                    $q->where('user_id', $user->id);
+                }
             })
             ->orderBy('session_date', 'asc')
             ->get();
@@ -1564,8 +1578,12 @@ class ProfessorPortalController extends Controller
         if ($completedHours <= 0) {
             // Check schedules if no explicit textbook entries yet
             $schedCount = Schedule::where('module_id', $moduleId)
-                ->where(function ($q) use ($profId, $user) {
-                    $q->where('professor_id', $profId)->orWhere('professor_id', $user->id);
+                ->where(function ($q) use ($prof, $user) {
+                    if ($prof?->id) {
+                        $q->where('professor_id', $prof->id);
+                    } else {
+                        $q->where('professor_id', $user->id)->where('professor_type', User::class);
+                    }
                 })
                 ->count();
             $completedHours = $schedCount > 0 ? ($schedCount * 2 * 14) : 36.0;
@@ -1633,8 +1651,12 @@ class ProfessorPortalController extends Controller
 
         // 1. Gather teaching modules and verified hours
         $schedules = Schedule::with(['module.filiere', 'group'])
-            ->where(function ($q) use ($profId, $user) {
-                $q->where('professor_id', $profId)->orWhere('professor_id', $user->id);
+            ->where(function ($q) use ($prof, $user) {
+                if ($prof?->id) {
+                    $q->where('professor_id', $prof->id);
+                } else {
+                    $q->where('professor_id', $user->id)->where('professor_type', User::class);
+                }
             })
             ->get();
 
@@ -1785,8 +1807,9 @@ class ProfessorPortalController extends Controller
                 $scheduleGroups = Schedule::where(function ($q) use ($profId, $userId) {
                     if ($profId) {
                         $q->where('professor_id', $profId);
+                    } else {
+                        $q->where('professor_id', $userId)->where('professor_type', User::class);
                     }
-                    $q->orWhere('professor_id', $userId);
                 })->whereNotNull('group_id')->pluck('module_id', 'group_id')->toArray();
 
                 foreach ($scheduleGroups as $gId => $mId) {

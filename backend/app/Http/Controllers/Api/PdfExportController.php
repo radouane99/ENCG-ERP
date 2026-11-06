@@ -1916,7 +1916,16 @@ class PdfExportController extends Controller
     public function convocationDisciplinePdf(int $incidentId)
     {
         $incident = ExamIncident::with(['exam.module.filiere', 'student.user'])->findOrFail($incidentId);
-        app(ExamWorkflowGuard::class)->viewExam($incident->exam);
+        $actor = request()->user();
+        if ($actor?->hasRole('student')) {
+            abort_unless(
+                $actor->student && (int) $incident->student_id === (int) $actor->student->id,
+                403,
+                'Accès refusé : vous ne pouvez télécharger que votre propre convocation disciplinaire.'
+            );
+        } else {
+            app(ExamWorkflowGuard::class)->viewExam($incident->exam);
+        }
 
         abort_unless($incident->hearing_date && $incident->hearing_room, 422, 'Enregistrer la convocation avant de générer son document.');
         $student = $incident->student;
@@ -1991,7 +2000,16 @@ class PdfExportController extends Controller
     public function decisionDisciplinePdf(int $incidentId)
     {
         $incident = ExamIncident::with(['exam.module.filiere', 'student.user'])->findOrFail($incidentId);
-        app(ExamWorkflowGuard::class)->viewExam($incident->exam);
+        $actor = request()->user();
+        if ($actor?->hasRole('student')) {
+            abort_unless(
+                $actor->student && (int) $incident->student_id === (int) $actor->student->id,
+                403,
+                'Accès refusé : vous ne pouvez télécharger que votre propre décision disciplinaire.'
+            );
+        } else {
+            app(ExamWorkflowGuard::class)->viewExam($incident->exam);
+        }
 
         abort_unless(in_array($incident->status, ['resolved', 'dismissed']) && $incident->decision, 422, 'Aucune décision enregistrée pour ce dossier.');
         $student = $incident->student;
@@ -2056,6 +2074,7 @@ class PdfExportController extends Controller
 
     public function batchDisciplinePdf(Request $request)
     {
+        abort_if($request->user()?->hasRole('student'), 403, 'Accès refusé aux étudiants.');
         app(ExamWorkflowGuard::class)->manage();
         $incidents = ExamIncident::with(['exam.module.filiere', 'student.user'])->whereNotNull('hearing_date')->whereHas('exam.examSession', fn ($q) => $q->where('institution_id', $request->user()->institution_id))
             ->latest()

@@ -1,5 +1,5 @@
 import { describe,it,expect } from 'vitest'
-import { ADMIN_ROLES,TEACHING_ROLES,userCanAccessRoles } from '@shared/lib/routeAccess'
+import { ADMIN_ROLES,ACADEMIC_ROLES,TEACHING_ROLES,userCanAccessRoles } from '@shared/lib/routeAccess'
 
 describe('routeAccess — ProtectedRoute RBAC', () => {
   it('blocks a student from admin routes', () => {
@@ -13,5 +13,12 @@ describe('routeAccess — ProtectedRoute RBAC', () => {
   it('allows a professor on teaching routes but not admin-only', () => {
     expect(userCanAccessRoles(['professor'], TEACHING_ROLES)).toBe(true)
     expect(userCanAccessRoles(['professor'], ADMIN_ROLES)).toBe(false)
+  })
+
+  it('allows scolarite and department-head on academic routes while blocking vacataires and students', () => {
+    expect(userCanAccessRoles(['scolarite'], ACADEMIC_ROLES)).toBe(true)
+    expect(userCanAccessRoles(['department-head'], ACADEMIC_ROLES)).toBe(true)
+    expect(userCanAccessRoles(['vacataire'], ACADEMIC_ROLES)).toBe(false)
+    expect(userCanAccessRoles(['student'], ACADEMIC_ROLES)).toBe(false)
   })
 })

@@ -269,6 +269,16 @@ class AiTimetableSchedulerController extends Controller
      */
     public function apply(Request $request): JsonResponse
     {
+        $user = $request->user();
+        abort_if(
+            ! $user || $user->hasRole('vacataire') || ! $user->hasAnyRole([
+                'admin', 'super-admin', 'super_admin', 'institution-admin', 'institution_admin',
+                'director', 'scolarite', 'department-head', 'filiere-head',
+            ]),
+            403,
+            'Accès refusé : vous n\'êtes pas autorisé à publier l\'emploi du temps.'
+        );
+
         $data = $request->validate(['version_id' => 'required|integer']);
         $result = app(TimetableCampaignService::class)->publish($data['version_id']);
 
@@ -277,6 +287,16 @@ class AiTimetableSchedulerController extends Controller
 
     public function clear(Request $request): JsonResponse
     {
+        $user = $request->user();
+        abort_if(
+            ! $user || $user->hasRole('vacataire') || ! $user->hasAnyRole([
+                'admin', 'super-admin', 'super_admin', 'institution-admin', 'institution_admin',
+                'director', 'scolarite', 'department-head', 'filiere-head',
+            ]),
+            403,
+            'Accès refusé : vous n\'êtes pas autorisé à réinitialiser l\'emploi du temps.'
+        );
+
         $data = $request->validate(['version_id' => 'required|integer']);
         $ids = Schedule::where('schedule_version_id', $data['version_id'])->pluck('id')->all();
         $result = app(TimetableCampaignService::class)->deleteSession($data['version_id'], $ids);

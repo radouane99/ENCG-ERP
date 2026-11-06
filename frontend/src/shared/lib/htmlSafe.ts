@@ -1,13 +1,8 @@
-/** Escape HTML then allow only bold + line breaks from markdown-like text. */
-export function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
-}
+import { escapeHtml, safeHtml } from './escapeHtml'
 
+export { escapeHtml, safeHtml }
+
+/** Escape HTML then allow only bold + line breaks from markdown-like text. */
 export function formatSafeRichText(content: string): string {
   return escapeHtml(content)
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
