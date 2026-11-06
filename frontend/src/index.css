@@ -61,9 +61,9 @@
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 2px);
-  --radius-xl: 1rem;
+    --radius-xl: 0.75rem;
   --radius-2xl: 1rem;
-  --radius-3xl: 1rem;
+  --radius-3xl: 1.5rem;
 
   /* Typography */
   --font-sans: 'Inter', 'Noto Sans Arabic', system-ui, sans-serif;
@@ -258,8 +258,8 @@
   .glass {
     backdrop-filter: blur(12px) saturate(1.6);
     -webkit-backdrop-filter: blur(12px) saturate(1.6);
-    background: hsl(var(--card) / 0.75);
-    border: 1px solid hsl(var(--border) / 0.6);
+    background: color-mix(in srgb, var(--card) 80%, transparent);
+    border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
   }
 
   /* ── Brand gradient ── */

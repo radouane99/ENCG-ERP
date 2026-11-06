@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: encg-erp
+  labels:
+    app.kubernetes.io/name: encg-erp
+    app.kubernetes.io/instance: encg-fes-production
+    institution: encg-fes-usmba
+

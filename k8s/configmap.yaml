@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: encg-erp-config
+  namespace: encg-erp
+data:
+  APP_NAME: "ENCG Fès ERP"
+  APP_ENV: "production"
+  APP_DEBUG: "false"
+  APP_TIMEZONE: "Africa/Casablanca"
+  APP_LOCALE: "fr"
+  APP_FALLBACK_LOCALE: "fr"
+  LOG_CHANNEL: "stderr"
+  LOG_LEVEL: "info"
+
+  # Database & Redis internal K8s DNS
+  DB_CONNECTION: "pgsql"
+  DB_HOST: "encg-postgres.encg-erp.svc.cluster.local"
+  DB_PORT: "5432"
+  DB_DATABASE: "encg_erp"
+  DB_USERNAME: "encg"
+
+  REDIS_CLIENT: "phpredis"
+  REDIS_HOST: "encg-redis.encg-erp.svc.cluster.local"
+  REDIS_PORT: "6379"
+  CACHE_STORE: "redis"
+  SESSION_DRIVER: "redis"
+  QUEUE_CONNECTION: "redis"
+
+  # Broadcast / Reverb WebSocket Server
+  BROADCAST_CONNECTION: "reverb"
+  REVERB_HOST: "encg-reverb.encg-erp.svc.cluster.local"
+  REVERB_PORT: "8080"
+  REVERB_SCHEME: "http"
+
+  # Official ENCG Fès Resend Mail Configuration (Rule #5)
+  MAIL_MAILER: "resend"
+  MAIL_FROM_ADDRESS: "noreply@encg-fes.ac.ma"
+  MAIL_FROM_NAME: "ENCG Portail"
+
+  # Security & 2FA Enforcement
+  ENFORCE_2FA_STRICT: "true"
+

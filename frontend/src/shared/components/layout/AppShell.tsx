@@ -4,16 +4,13 @@ import Sidebar from './Sidebar'
 import Header from './Header'
 import { GlobalSearchModal } from './GlobalSearchModal'
 import { useEffect,useState } from 'react'
-import CommandPalette from './CommandPalette'
 import ChatbotWidget from '../ui/ChatbotWidget'
 import { ErrorBoundary } from '@shared/components/ui/ErrorBoundary'
-import InstallPrompt from '../pwa/InstallPrompt'
 
 import MobileBottomNav from './MobileBottomNav'
 import { cn } from '@shared/lib/utils'
 
 export default function AppShell() {
-  const [isCommandOpen, setIsCommandOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const location = useLocation()
@@ -68,8 +65,6 @@ export default function AppShell() {
         <MobileBottomNav onOpenSearch={() => setSearchOpen(true)} />
       </div>
 
-      <CommandPalette isOpen={isCommandOpen} onClose={() => setIsCommandOpen(false)} />
-
       {/* Premium Toast Notifications */}
       <Toaster
         position="top-center"
@@ -83,9 +78,6 @@ export default function AppShell() {
       
       {/* Global AI Assistant Floating Widget — Gemini-powered with real DB context */}
       <ChatbotWidget />
-
-      {/* PWA Install Prompt */}
-      <InstallPrompt />
     </div>
   )
 }

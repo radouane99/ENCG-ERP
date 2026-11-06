@@ -1,0 +1,113 @@
+# 1. Laravel Horizon Queue Workers (Bulk PDFs, Deliberations, Resend Emails)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: encg-horizon
+  namespace: encg-erp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: encg-horizon
+  template:
+    metadata:
+      labels:
+        app: encg-horizon
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: horizon
+          image: encg-erp-v1-backend:latest
+          command: ["php", "artisan", "horizon"]
+          envFrom:
+            - configMapRef:
+                name: encg-erp-config
+            - secretRef:
+                name: encg-erp-secrets
+          lifecycle:
+            preStop:
+              exec:
+                command: ["php", "artisan", "horizon:terminate"]
+          resources:
+            requests:
+              cpu: "300m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+---
+# 2. Laravel Reverb WebSocket Server (Live Attendance QR, Real-time Notifications)
+apiVersion: v1
+kind: Service
+metadata:
+  name: encg-reverb
+  namespace: encg-erp
+spec:
+  selector:
+    app: encg-reverb
+  ports:
+    - name: ws
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: encg-reverb
+  namespace: encg-erp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: encg-reverb
+  template:
+    metadata:
+      labels:
+        app: encg-reverb
+    spec:
+      containers:
+        - name: reverb
+          image: encg-erp-v1-backend:latest
+          command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080", "--no-interaction"]
+          ports:
+            - containerPort: 8080
+              name: ws
+          envFrom:
+            - configMapRef:
+                name: encg-erp-config
+            - secretRef:
+                name: encg-erp-secrets
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"
+---
+# 3. Laravel Scheduler CronJob (Runs every minute for SLA alerts, backups, snapshots)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: encg-scheduler
+  namespace: encg-erp
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: scheduler
+              image: encg-erp-v1-backend:latest
+              command: ["php", "artisan", "schedule:run", "--no-interaction"]
+              envFrom:
+                - configMapRef:
+                    name: encg-erp-config
+                - secretRef:
+                    name: encg-erp-secrets
+

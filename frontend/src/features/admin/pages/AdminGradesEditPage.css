@@ -1,26 +1,34 @@
-﻿/* ============================================================
+/* ============================================================
    AdminGradesEditPage.css  —  Premium Design System (agp-*)
    ============================================================ */
 
-/* ── Google Font ─────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-
 /* ── CSS Variables ───────────────────────────────────────── */
 .admin-grades-page {
-  --agp-primary: #0f2863;
-  --agp-primary-mid: #1e50b4;
-  --agp-primary-light: #2563eb;
+  --agp-bg: var(--background);
+  --agp-surface: var(--card);
+  --agp-border: var(--border);
+  --agp-text: var(--foreground);
+  --agp-primary: var(--primary, #1a3673);
+  --agp-primary-mid: color-mix(in srgb, var(--primary, #1a3673) 82%, #2563eb);
+  --agp-primary-light: color-mix(in srgb, var(--primary, #1a3673) 65%, #3b82f6);
   --agp-radius: 1rem;
   --agp-radius-sm: 0.625rem;
   --agp-radius-lg: 1.25rem;
   --agp-shadow: 0 2px 16px rgba(15,40,99,0.08);
   --agp-shadow-lg: 0 8px 32px rgba(15,40,99,0.15);
 
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
+  background-color: var(--agp-bg);
+  color: var(--agp-text);
   min-height: 100vh;
   padding: 1.5rem 2rem 6rem;
   max-width: 1280px;
   margin: 0 auto;
+}
+
+.dark .admin-grades-page {
+  --agp-shadow: 0 2px 16px rgba(0,0,0,0.35);
+  --agp-shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
 }
 
 /* ── Breadcrumb ──────────────────────────────────────────── */
@@ -107,23 +115,23 @@
   white-space: nowrap;
 }
 .agp-btn-ghost {
-  background: rgba(15,40,99,.06);
+  background: color-mix(in srgb, var(--agp-primary) 8%, transparent);
   color: var(--agp-primary);
-  border: 1px solid rgba(15,40,99,.12);
+  border: 1px solid color-mix(in srgb, var(--agp-primary) 18%, transparent);
 }
-.agp-btn-ghost:hover { background: rgba(15,40,99,.1); }
+.agp-btn-ghost:hover { background: color-mix(in srgb, var(--agp-primary) 14%, transparent); }
 .agp-btn-outline {
-  background: #eff6ff;
+  background: color-mix(in srgb, var(--agp-primary) 10%, var(--agp-surface));
   color: var(--agp-primary);
-  border: 1px solid #bfdbfe;
+  border: 1px solid color-mix(in srgb, var(--agp-primary) 25%, var(--agp-border));
 }
-.agp-btn-outline:hover { background: #dbeafe; border-color: #93c5fd; }
+.agp-btn-outline:hover { background: color-mix(in srgb, var(--agp-primary) 16%, var(--agp-surface)); border-color: color-mix(in srgb, var(--agp-primary) 40%, var(--agp-border)); }
 .agp-btn-back {
   background: var(--muted, #f1f5f9);
   color: var(--muted-foreground, #64748b);
-  border: 1px solid var(--border, #e2e8f0);
+  border: 1px solid var(--agp-border, #e2e8f0);
 }
-.agp-btn-back:hover { background: #e2e8f0; }
+.agp-btn-back:hover { background: color-mix(in srgb, var(--muted) 80%, var(--agp-border)); }
 
 .agp-btn-save {
   display: inline-flex;
@@ -171,8 +179,8 @@
   flex-wrap: wrap;
   animation: agpFadeIn .3s ease;
 }
-.agp-pv-alert--exam { background: rgba(245,158,11,.07); border-color: rgba(245,158,11,.35); color: #78350f; }
-.agp-pv-alert--cc  { background: rgba(59,130,246,.07); border-color: rgba(59,130,246,.3);  color: #1e3a5f; }
+.agp-pv-alert--exam { background: rgba(245,158,11,.09); border-color: rgba(245,158,11,.35); color: var(--warning-text, #78350f); }
+.agp-pv-alert--cc  { background: rgba(59,130,246,.09); border-color: rgba(59,130,246,.3);  color: var(--agp-primary); }
 .agp-pv-alert__icon {
   font-size: 1.5rem;
   flex-shrink: 0;

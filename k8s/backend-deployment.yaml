@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: encg-backend
+  namespace: encg-erp
+spec:
+  selector:
+    app: encg-backend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: encg-backend
+  namespace: encg-erp
+  labels:
+    app: encg-backend
+    tier: api
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: encg-backend
+  template:
+    metadata:
+      labels:
+        app: encg-backend
+        tier: api
+    spec:
+      containers:
+        - name: backend-php
+          image: encg-erp-v1-backend:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: encg-erp-config
+            - secretRef:
+                name: encg-erp-secrets
+          ports:
+            - containerPort: 9000
+              name: fpm
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "1500m"
+              memory: "1Gi"
+        - name: nginx-sidecar
+          image: nginx:alpine
+          ports:
+            - containerPort: 8080
+              name: http
+          readinessProbe:
+            httpGet:
+              path: /up
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /up
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+
