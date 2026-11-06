@@ -56,6 +56,7 @@ try {
             $contents = $zip->getFromIndex($index);
             if ($contents === $original) {
                 echo json_encode(['restored_database' => $target, 'registered_pdf_matches_archive' => true]).PHP_EOL;
+
                 return;
             }
             break;

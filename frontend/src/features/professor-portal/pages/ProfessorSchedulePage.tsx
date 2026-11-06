@@ -38,7 +38,7 @@ const TIME_SLOTS = [
 ];
 
 export default function ProfessorSchedulePage() {
-  const { t } = useTranslation('timetable', { keyPrefix: 'professor_schedule' });
+  const { t, i18n } = useTranslation('timetable', { keyPrefix: 'professor_schedule' });
   const { user } = useAuthStore();
   const [activeSession, setActiveSession] = useState<any | null>(null);
   const [viewMode, setViewMode] = useState<'matrix' | 'list' | 'official'>('matrix');
@@ -55,6 +55,18 @@ export default function ProfessorSchedulePage() {
     ...item, session_id: item.id, title: item.module_name, location: item.room,
     group: item.group_code, time_formatted: `${item.start_time} - ${item.end_time}`,
   }));
+  const minutesFromMidnight = (time: string) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+  const weeklyHours = activeSessions.reduce((total: number, session: any) =>
+    total + (minutesFromMidnight(session.end_time) - minutesFromMidnight(session.start_time)) / 60, 0);
+  const formattedWeeklyHours = new Intl.NumberFormat(i18n.resolvedLanguage, {
+    style: 'unit',
+    unit: 'hour',
+    unitDisplay: 'long',
+    maximumFractionDigits: 2,
+  }).format(weeklyHours);
   const { data: matrixData, refetch: refetchMatrix, isFetching: isMatrixFetching } = useQuery({
     queryKey: ['official-timetable-matrix-prof', professorId], enabled: !!professorId,
     queryFn: () => api.get(`/timetable/export/professor/${professorId}/matrix`).then(res => res.data.data || res.data),
@@ -181,7 +193,7 @@ export default function ProfessorSchedulePage() {
 
         <div className="bg-card rounded-2xl p-5 shadow-sm border border-border">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">{t('weekly_hours')}</span>
-          <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{Math.round(activeSessions.reduce((sum: number, item: any) => { const minutes = (time: string) => { const parts = time.split(":" ).map(Number); return parts[0] * 60 + parts[1] }; return sum + (minutes(item.end_time) - minutes(item.start_time)) / 60 }, 0) * 100) / 100} heures</div>
+          <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{formattedWeeklyHours}</div>
           <div className="text-[10px] font-bold text-muted-foreground mt-1">{t('teaching_slots')}</div>
         </div>
 

@@ -1099,7 +1099,7 @@ Route::middleware(['auth:sanctum', 'institution.context', $staffRoles])->group(f
     })->middleware('role:admin|super-admin|super_admin|institution-admin|institution_admin|director|scolarite|department-head|filiere-head|professor');
 
     // Student Progress Report (full DB pull for one student)
-    Route::get('/admin/students/{id}/progress-report', function (\Illuminate\Http\Request $request, int $id) {
+    Route::get('/admin/students/{id}/progress-report', function (Request $request, int $id) {
         try {
             $institutionId = $request->user()->institution_id;
             $student = DB::table('students')

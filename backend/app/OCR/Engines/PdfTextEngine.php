@@ -7,6 +7,7 @@ use App\OCR\OcrProcess;
 use App\OCR\OcrResult;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
+use Smalot\PdfParser\Parser;
 use Throwable;
 
 class PdfTextEngine implements OcrEngineInterface
@@ -47,7 +48,7 @@ class PdfTextEngine implements OcrEngineInterface
 
         if ($returnVar !== 0 || empty(trim($text))) {
             try {
-                $parsed = (new \Smalot\PdfParser\Parser)->parseFile($filePath)->getText();
+                $parsed = (new Parser)->parseFile($filePath)->getText();
                 if (! empty(trim($parsed))) {
                     return $parsed;
                 }

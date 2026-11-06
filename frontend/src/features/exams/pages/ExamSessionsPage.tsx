@@ -213,8 +213,8 @@ export default function ExamSessionsPage() {
             </div>
             <form onSubmit={handleSubmit} className="p-5 space-y-4">
               <div>
-                <label className={labelCls}>{t('name')}</label>
-                <input required value={form.name} onChange={e => setForm(p => ({...p, name: e.target.value}))} className={inputCls} placeholder={t('example')} />
+                <label htmlFor="exam-session-name" className={labelCls}>{t('name')}</label>
+                <input id="exam-session-name" required value={form.name} onChange={e => setForm(p => ({...p, name: e.target.value}))} className={inputCls} placeholder={t('example')} />
               </div>
               
               <div>

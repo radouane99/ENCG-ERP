@@ -44,7 +44,7 @@ class DocumentRequestPolicy
     {
         return $user->institution_id && (int) $documentRequest->student?->institution_id === (int) $user->institution_id
             && $this->hasPermissionOrRole($user, 'documents.process', [
-            'admin', 'super-admin', 'institution-admin', 'director', 'scolarite',
-        ]);
+                'admin', 'super-admin', 'institution-admin', 'director', 'scolarite',
+            ]);
     }
 }

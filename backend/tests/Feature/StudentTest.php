@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Models\Institution;
 use App\Models\DocumentType;
+use App\Models\Institution;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
