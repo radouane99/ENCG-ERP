@@ -9,12 +9,14 @@ backend/.env.*
 !backend/.env.example
 backend/storage
 backend/bootstrap/cache/*.php
+*.sql
 backend/*.sql
 backend/.phpunit.result.cache
 backups
 certbot
 docs/audits
 **/node_modules
+.env
 .env.staging
 .env.database-maintenance
 .env.staging.database-maintenance

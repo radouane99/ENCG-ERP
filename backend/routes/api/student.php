@@ -61,6 +61,7 @@ $studentPortalRoutes = function () {
     Route::prefix('ai')->group(function () {
         Route::post('tutor', [StudentAiController::class, 'tutorQuery']);
         Route::get('simulate-grade', [StudentAiController::class, 'simulateGrade']);
+        Route::post('simulate-semester', [StudentAiController::class, 'simulateSemesterCompensation']);
         Route::post('lmd-judge', [StudentAiController::class, 'lmdJudge']);
         Route::post('pfe-oral', [StudentAiController::class, 'pfeOral']);
         Route::get('career-recommendations', [StudentAiController::class, 'getCareerRecommendations']);

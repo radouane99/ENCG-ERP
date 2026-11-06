@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api\Student;
 
 use App\Domain\AI\Services\GroundedAiService;
+use App\Domain\Deliberation\LmdRules;
 use App\Http\Controllers\Controller;
 use App\Models\Exam;
 use App\Models\Student;
+use App\Services\Academic\LmdCompensationPredictorService;
 use App\Services\Academic\LmdJudgeService;
 use App\Services\AI\GeminiApiService;
 use App\Services\AI\StudentAiService;
@@ -18,7 +20,8 @@ class StudentAiController extends Controller
         private StudentAiService $studentAiService,
         private GeminiApiService $geminiApi,
         private LmdJudgeService $lmdJudge,
-        private GroundedAiService $groundedAi
+        private GroundedAiService $groundedAi,
+        private LmdCompensationPredictorService $compensationPredictor
     ) {}
 
     /**
@@ -49,6 +52,37 @@ class StudentAiController extends Controller
         $result = $this->studentAiService->simulateGrade((int) $student->id, $targetGrade);
 
         return response()->json($result);
+    }
+
+    /**
+     * Simulateur interactif de compensation semestrielle LMD ("What-If" + Plan de sauvetage rattrapage).
+     */
+    public function simulateSemesterCompensation(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'semester_number' => 'nullable|integer|min:1|max:10',
+            'target_gpa' => 'nullable|numeric|min:10|max:20',
+            'modules' => 'required|array|min:1|max:20',
+            'modules.*.name' => 'required|string|max:255',
+            'modules.*.coefficient' => 'nullable|numeric|min:0.5|max:20',
+            'modules.*.grade' => 'nullable|numeric|min:0|max:20',
+        ]);
+
+        $student = $request->user()?->student;
+        $defaultSemester = (int) ($student?->latestPathway?->current_semester ?? $student?->current_semester ?? 2);
+        $semesterNumber = (int) ($validated['semester_number'] ?? $defaultSemester);
+        $targetGpa = (float) ($validated['target_gpa'] ?? LmdRules::VALIDATION_THRESHOLD);
+
+        $simulation = $this->compensationPredictor->simulate(
+            $validated['modules'],
+            max(1, min(10, $semesterNumber)),
+            $targetGpa
+        );
+
+        return response()->json([
+            'success' => true,
+            'data' => $simulation,
+        ]);
     }
 
     /**

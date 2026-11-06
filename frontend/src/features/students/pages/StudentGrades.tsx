@@ -30,6 +30,7 @@ import LmdBadge from '@shared/components/academic/LmdBadge';
 import EmptyState from '@shared/components/ui/EmptyState';
 import { decisionLabel,normalizeDecision } from '@shared/lib/lmd';
 import { toast } from 'sonner';
+import LmdWhatIfSimulatorModal from '../components/LmdWhatIfSimulatorModal';
 
 function cleanMojibake(str?: string | null): string {
   if (!str) return '';
@@ -1098,117 +1099,16 @@ export default function StudentGrades() {
         </div>
       )}
 
-      {/* ── Interactive LMD Simulator Modal ── */}
-      {simulatorModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 max-w-xl w-full shadow-sm border border-border dark:border-border space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-border dark:border-border">
-              <div className="flex items-center gap-2 text-primary">
-                <FlaskConical className="w-5 h-5" />
-                <h3 className="text-base font-bold text-foreground dark:text-white">Simulateur de Validation & Moteur IA LMD</h3>
-              </div>
-              <button 
-                onClick={() => setSimulatorModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-muted-foreground cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Quick Interactive Calculator */}
-            <div className="p-5 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/40 border border-primary/20 dark:border-primary space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase text-primary dark:text-indigo-300 tracking-wider flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5" /> Simulation Instantanée de Module
-                </span>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-bold text-primary dark:text-indigo-300 bg-primary/10 dark:bg-indigo-900/60 px-2 py-0.5 rounded-full font-mono">
-                    Formule LMD : 25% + 25% + 50%
-                  </span>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-foreground block mb-1">CC 1 (25%)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="20"
-                    step="0.25"
-                    value={simCc1}
-                    onChange={(e) => setSimCc1(e.target.value)}
-                    className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-sm font-bold rounded-[var(--control-radius)]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-foreground block mb-1">CC 2 (25%)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="20"
-                    step="0.25"
-                    value={simCc2}
-                    onChange={(e) => setSimCc2(e.target.value)}
-                    className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-sm font-bold rounded-[var(--control-radius)]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-700 dark:text-foreground block mb-1">Examen (50%)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="20"
-                    step="0.25"
-                    value={simExam}
-                    onChange={(e) => setSimExam(e.target.value)}
-                    className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-sm font-bold rounded-[var(--control-radius)]"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-2 border-t border-indigo-200/60 dark:border-primary">
-                <span className="text-xs font-bold text-muted-foreground dark:text-muted-foreground">Moyenne simulée :</span>
-                <div className="flex items-center gap-2">
-                  <span className={cn(
-                    "text-xl font-bold font-mono",
-                    simulatedAverage >= 10 ? "text-emerald-600" : (simulatedAverage >= 6 ? "text-amber-600" : "text-rose-600")
-                  )}>
-                    {simulatedAverage} / 20
-                  </span>
-                  <span className={cn(
-                    "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase",
-                    simulatedAverage >= 10 ? "bg-emerald-100 text-emerald-800" : (simulatedAverage >= 6 ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800")
-                  )}>
-                    {simulatedAverage >= 10 ? 'V (Validé)' : (simulatedAverage >= 6 ? 'RAT (Rattrapage)' : 'NV (Éliminatoire)')}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* AI Copilot Ask */}
-            <div className="space-y-3 pt-2">
-              <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider">
-                Consulter l'IA LMD sur l'ensemble de votre semestre
-              </h4>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Le moteur IA analyse l'ensemble de vos notes réelles enregistrées sur votre dossier étudiant, vérifie l'absence de note éliminatoire (&lt; 6/20) et simule la compensation semestrielle officielle.
-              </p>
-              <button
-                onClick={async () => {
-                  await handleRunAiJudge();
-                  setSimulatorModalOpen(false);
-                }}
-                disabled={judgeLoading}
-                className="w-full py-3 rounded-2xl bg-[#001A4B] hover:bg-[#082663] text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
-              >
-                <Sparkles className="w-4 h-4 text-amber-300" />
-                {judgeLoading ? "Analyse en cours par le Jury IA..." : "Lancer l'Analyse Globale de mon Semestre"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Interactive LMD Simulator Modal ("What-If" Compensation & Rescue Plan) ── */}
+      <LmdWhatIfSimulatorModal
+        open={simulatorModalOpen}
+        onClose={() => setSimulatorModalOpen(false)}
+        grades={grades}
+        selectedSemester={selectedSemester}
+        currentSemesterCode={currentSemesterCode}
+        judgeLoading={judgeLoading}
+        onRunAiJudge={handleRunAiJudge}
+      />
 
       {/* ── Grade Appeal Modal (Guichet 48h) ── */}
       {appealModalOpen && selectedModuleForAppeal && (

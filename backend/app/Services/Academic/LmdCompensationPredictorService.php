@@ -121,6 +121,7 @@ class LmdCompensationPredictorService
 
         // Calcul du besoin pour la moyenne cible
         $targetCalculation = $this->calculateRequiredGradeForTarget($modules, $targetGpa, $totalCoeff, $eliminatoryThreshold);
+        $rescuePlan = $this->buildRattrapageRescuePlan($modulesResult, $totalWeighted, $totalCoeff, $targetGpa, $eliminatoryThreshold);
 
         return [
             'semester_number' => $semesterNumber,
@@ -136,6 +137,7 @@ class LmdCompensationPredictorService
             'non_validated_modules_count' => $nonValidatedCount,
             'missing_grades_count' => $missingGradeCount,
             'modules' => $modulesResult,
+            'rescue_plan' => $rescuePlan,
             'target_simulation' => [
                 'target_gpa' => $targetGpa,
                 'is_achievable' => $targetCalculation['is_achievable'],
@@ -143,6 +145,57 @@ class LmdCompensationPredictorService
                 'advice' => $targetCalculation['advice'],
             ],
         ];
+    }
+
+    /**
+     * Génère un plan de sauvetage précis module par module (session de rattrapage / compensation).
+     */
+    protected function buildRattrapageRescuePlan(
+        array $modulesResult,
+        float $totalWeighted,
+        float $totalCoeff,
+        float $targetGpa,
+        float $eliminatoryThreshold
+    ): array {
+        if ($totalCoeff <= 0) {
+            return [];
+        }
+
+        $targetSum = $targetGpa * $totalCoeff;
+        $pointsDeficit = max(0.0, $targetSum - $totalWeighted);
+        $plan = [];
+
+        foreach ($modulesResult as $mod) {
+            $grade = $mod['grade'];
+            $coeff = max(1.0, (float) ($mod['coefficient'] ?? 1.0));
+
+            if ($grade !== null && $grade >= self::VALIDATION_THRESHOLD && $pointsDeficit <= 0) {
+                continue;
+            }
+
+            $currentContribution = ($grade ?? 0.0) * $coeff;
+            $otherModulesSum = $totalWeighted - $currentContribution;
+            $neededInThisModuleAlone = ($targetSum - $otherModulesSum) / $coeff;
+            $minRequiredAlone = round(max($eliminatoryThreshold, $neededInThisModuleAlone), 2);
+
+            if ($grade === null || $grade < self::VALIDATION_THRESHOLD) {
+                $plan[] = [
+                    'name' => $mod['name'],
+                    'coefficient' => $coeff,
+                    'current_grade' => $grade,
+                    'is_eliminatory' => (bool) ($mod['is_eliminatory'] ?? false),
+                    'min_to_lift_eliminatory' => $eliminatoryThreshold,
+                    'min_to_validate_module' => self::VALIDATION_THRESHOLD,
+                    'target_alone_for_semester_goal' => $minRequiredAlone <= 20.0 ? $minRequiredAlone : null,
+                    'can_compensate_alone' => $minRequiredAlone <= 20.0,
+                    'points_gained_at_10' => $grade !== null && $grade < self::VALIDATION_THRESHOLD
+                        ? round((self::VALIDATION_THRESHOLD - $grade) * $coeff, 2)
+                        : round(self::VALIDATION_THRESHOLD * $coeff, 2),
+                ];
+            }
+        }
+
+        return $plan;
     }
 
     /**

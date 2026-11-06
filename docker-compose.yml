@@ -132,7 +132,7 @@ services:
       - /app/node_modules
     ports:
       - '5173:5173'
-    command: sh -c "which chromium >/dev/null 2>&1 || apk add --no-cache chromium; npm install && npm run dev -- --host"
+    command: sh -c "if [ \"$$INSTALL_CHROMIUM\" = 'true' ]; then which chromium >/dev/null 2>&1 || apk add --no-cache chromium; fi; [ -d node_modules/.bin ] || npm install; npm run dev -- --host"
     environment:
       - WATCHPACK_POLLING=true
       - CHOKIDAR_USEPOLLING=true
@@ -174,7 +174,7 @@ services:
     container_name: encg_redis
     ports:
       - '127.0.0.1:6379:6379'
-    command: redis-server --requirepass secret --maxmemory 256mb --maxmemory-policy allkeys-lru
+    command: redis-server --requirepass secret --maxmemory 256mb --maxmemory-policy noeviction
     volumes:
       - redis_data:/data
     networks:
