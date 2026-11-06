@@ -31,7 +31,7 @@ export default function DeliberationManager() {
 
   const openGradePeriod = async () => {
     try {
-      await api.post('/academic/grade-periods', {
+      await api.post('/dashboard/academic/grade-periods', {
         academic_year_id: 1,
         semester_id: 1,
         exam_session_id: 1,

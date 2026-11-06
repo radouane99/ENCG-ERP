@@ -26,7 +26,7 @@ return [
                  * The list of directories and files that will be included in the backup.
                  */
                 'include' => [
-                    base_path(),
+                    storage_path('app'),
                     // storage_path(),  // Include if you use zero downtime deployments and don't follow symlinks
                 ],
 
@@ -39,6 +39,10 @@ return [
                     base_path('vendor'),
                     base_path('node_modules'),
                     storage_path('framework'),
+                    storage_path('app/private/database-backups'),
+                    storage_path('app/backups'),
+                    storage_path('app/backup-temp'),
+                    storage_path('app/private/'.env('APP_NAME', 'laravel-backup')),
                 ],
 
                 /*
@@ -163,9 +167,7 @@ return [
             /*
              * The disk names on which the backups will be stored.
              */
-            'disks' => [
-                'local',
-            ],
+            'disks' => array_values(array_filter(explode(',', env('BACKUP_DISKS', 'local')))),
 
             /*
              * Determines whether to allow backups to continue when some targets fail instead of failing completely.
@@ -198,7 +200,7 @@ return [
          * After creating the zip, verify it can be opened and contains files.
          * Recommended for critical backups but adds a small overhead.
          */
-        'verify_backup' => false,
+        'verify_backup' => true,
 
         /*
          * The number of attempts, in case the backup command encounters an exception
@@ -236,7 +238,8 @@ return [
         'notifiable' => Notifiable::class,
 
         'mail' => [
-            'to' => env('BACKUP_NOTIFICATION_EMAIL', 'admin@encg-fes.ac.ma'),
+            // Spatie validates this even when every notification channel is disabled.
+            'to' => env('BACKUP_NOTIFICATION_EMAIL') ?: 'admin@encg-fes.ac.ma',
 
             'from' => [
                 'address' => env('MAIL_FROM_ADDRESS', 'noreply@encg-fes.ac.ma'),
@@ -297,7 +300,7 @@ return [
     'monitor_backups' => [
         [
             'name' => env('APP_NAME', 'laravel-backup'),
-            'disks' => ['local'],
+            'disks' => array_values(array_filter(explode(',', env('BACKUP_DISKS', 'local')))),
             'health_checks' => [
                 MaximumAgeInDays::class => 1,
                 MaximumStorageInMegabytes::class => 5000,

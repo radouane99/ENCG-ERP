@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Services\Core\VerifiedDatabaseBackupService;
 use App\Services\Monitoring\RuntimeMetrics;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -21,6 +22,7 @@ class ObservabilityTest extends TestCase
         config(['observability.enabled' => true, 'observability.metrics_token' => str_repeat('a', 64), 'observability.cache_store' => 'array']);
         Redis::shouldReceive('connection->ping')->andReturn('PONG');
         $this->mock(MasterSupervisorRepository::class)->shouldReceive('all')->andReturn([(object) ['status' => 'running']]);
+        $this->mock(VerifiedDatabaseBackupService::class)->shouldReceive('latestStatus')->andReturn(null);
     }
 
     public function test_metrics_are_disabled_by_default_and_require_a_dedicated_bearer_token(): void
@@ -68,5 +70,21 @@ class ObservabilityTest extends TestCase
         $this->assertStringContainsString('encg_ocr_oldest_pending_seconds 0.000000', $text);
         $this->assertStringContainsString('encg_metrics_collection_success{collector="ocr"} 1.000000', $text);
         $this->assertSame(0, DB::table('admission_ocr_runs')->count());
+    }
+
+    public function test_backup_and_scheduler_metrics_detect_missing_state_without_exporting_private_paths(): void
+    {
+        $metrics = app(RuntimeMetrics::class)->render();
+        $this->assertStringContainsString('encg_backup_last_success_timestamp_seconds 0.000000', $metrics);
+        $this->assertStringContainsString('encg_backup_restore_verified 0.000000', $metrics);
+        $this->assertStringContainsString('encg_scheduler_last_heartbeat_timestamp_seconds 0.000000', $metrics);
+        $this->mock(VerifiedDatabaseBackupService::class)->shouldReceive('latestStatus')->andReturn([
+            'created_at' => '2026-11-04T10:00:00Z', 'restore_verified' => true,
+        ]);
+        Cache::store('array')->put('encg_scheduler_heartbeat', 1793786400);
+        $metrics = app(RuntimeMetrics::class)->render();
+        $this->assertStringContainsString('encg_backup_restore_verified 1.000000', $metrics);
+        $this->assertStringContainsString('encg_scheduler_last_heartbeat_timestamp_seconds 1793786400.000000', $metrics);
+        $this->assertStringNotContainsString('database-backups', $metrics);
     }
 }

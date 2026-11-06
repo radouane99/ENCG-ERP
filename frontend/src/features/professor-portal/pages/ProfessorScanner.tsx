@@ -11,8 +11,8 @@ export default function ProfessorScanner() {
   const [camera, setCamera] = useState(false);
   const [result, setResult] = useState('');
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { data: exams = [] } = useQuery({ queryKey: ['scanner-exams'], queryFn: () => api.get('/academic/exams').then(r => r.data.data || []) });
-  const { data: rooms = [] } = useQuery({ queryKey: ['scanner-rooms'], queryFn: () => api.get('/academic/rooms').then(r => r.data.data || []) });
+  const { data: exams = [] } = useQuery({ queryKey: ['scanner-exams'], queryFn: () => api.get('/exams').then(r => r.data.data || []) });
+  const { data: rooms = [] } = useQuery({ queryKey: ['scanner-rooms'], queryFn: () => api.get('/rooms').then(r => r.data.data || []) });
   const submit = async (raw: string) => {
     if (busy || !raw.trim()) return;
     if (!exam || !room) { toast.error('Sélectionnez un examen et une salle.'); return; }

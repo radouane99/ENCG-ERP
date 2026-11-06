@@ -457,17 +457,6 @@
         <strong>Notice administrative &amp; CNDP (Loi n° 09-08) :</strong> Ce récépissé confirme l'enregistrement numérique de votre préinscription. Il doit obligatoirement être imprimé et présenté au guichet avec les pièces originales demandées. Conformément à la loi n° 09-08 (Dahir n° 1-09-15), les informations recueillies font l'objet d'un traitement destiné exclusivement à la scolarité et aux inscriptions à l'ENCG Fès (Déclaration CNDP N° A-I-ENCG-0908). Vous bénéficiez d'un droit d'accès et de rectification auprès du service admissions (cndp-privacy@encg-fes.ma).
     </div>
 
-    <!-- Empreinte numérique & Bas de page -->
-    <table class="page-footer" cellpadding="0" cellspacing="0">
-        <tr>
-            <td width="70%" style="vertical-align: middle;">
-                Empreinte d'authenticité numérique : <strong style="font-family: monospace; color: #1a3673;">ENCG-DOC-{{ strtoupper(substr(hash('sha256', $app->reference_number.'|'.$app->cne.'|2026'), 0, 18)) }}</strong>
-                · Horodaté le {{ now()->timezone('Africa/Casablanca')->format('d/m/Y H:i:s') }}
-            </td>
-            <td width="30%" style="vertical-align: middle; text-align: right;">
-                Page 1 / 1 · Registre Officiel des Admissions
-            </td>
-        </tr>
-    </table>
+    {{-- The canonical PDF registry stamps the verified identifier, QR and page count. --}}
 </body>
 </html>

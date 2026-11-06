@@ -6,6 +6,15 @@ const campaign={id:7,name:'CNAEM synthétique S7',academic_year_id:1,filiere_id:
 async function prepare(page:Page){await mockApi(page);await seedSession(page,'admin');await page.route(url=>url.pathname===`${base}/campaigns`,r=>r.fulfill(json({data:[campaign]})));await page.route(url=>url.pathname===`${base}/stats`,r=>r.fulfill(json({stats:{total_candidates:1,submitted:1,approved:0}})));await page.route(url=>url.pathname===`${base}/applications`,r=>r.fulfill(json({data:[{id:17,cne:'SYN-CNAEM',first_name:'Candidate',last_name:'Synthetic',dossier_status:'submitted',eligibility:'main',ranking:1}],total:1,last_page:1})));}
 test.describe('Admissions unifiées et dossiers annuels',()=>{
  test.skip(!process.env.E2E_ROLE_AUDIT,'Données synthétiques uniquement.')
+ test('les filtres des admissions tiennent dans la zone de travail à 320 px', async ({ page }) => {
+   await page.setViewportSize({ width: 320, height: 780 })
+   await prepare(page)
+   await page.goto('/academic/enrollments')
+   await expect(page.getByLabel('Campagne active')).toContainText(campaign.name)
+   await expect(page.getByRole('searchbox').or(page.getByLabel(/Recherche candidat par CNE/))).toBeVisible()
+   const workspace = page.locator('main[data-design-system="encg"]')
+   expect(await workspace.evaluate(element => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(1)
+ })
  for(const mobile of [false,true]){
  const device=mobile?'mobile':'desktop'
  test(`CNAEM : revue physique traçable et inscription unique — ${device}`,async({page})=>{
@@ -16,7 +25,7 @@ test.describe('Admissions unifiées et dossiers annuels',()=>{
   const dossier=()=>({id:17,application_id:17,version:approved?5:4,reference_number:'SYN-CNAEM-17',cne:'SYN-CNAEM',cin:'AB123456',first_name:'Candidate',last_name:'Synthetic',email:'candidate@example.test',dossier_status:approved?'approved':'submitted',eligibility:'main',profile:{},documents:Object.fromEntries(required.map((type,i)=>[type,{id:i+1,type,mime_type:'image/png',version:1,status:'verified',signed_url:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a8N8AAAAASUVORK5CYII='}])),campaign,required_documents:required,physical_requirements:physical,reviews:approved?[{id:1,decision:'approved',created_at:'2026-10-24T10:00:00Z',reviewer_name:'Agent synthétique',physical_checklist:Object.fromEntries(Object.keys(physical).map(k=>[k,true]))}]:[],events:[],notifications:[],document_history:[]})
   await page.route(url=>url.pathname===`${base}/dossier`,r=>r.fulfill(json({candidate:dossier()})))
   await page.route(url=>url.pathname===`${base}/decide`,async r=>{expect(r.request().postDataJSON()).toMatchObject({application_id:17,version:4,official_number:'SYN-APO-17',physical_checklist:Object.fromEntries(Object.keys(physical).map(k=>[k,true]))});decisions++;approved=true;await r.fulfill(json({candidate:dossier()}))})
-  await page.goto('/admin/tafem');await expect(page).toHaveURL(/academic\/enrollments/);await expect(page.getByRole('heading',{name:'Admissions & nouvelles inscriptions',exact:true})).toBeVisible()
+  await page.goto('/admin/tafem');await expect(page).toHaveURL(/academic\/enrollments/);await expect(page.getByRole('heading',{name:/^Admissions & nouvelles inscriptions$/i})).toBeVisible()
   await page.getByRole('button',{name:'Ouvrir',exact:true}).click();const details=page.locator('details').filter({has:page.getByText('Validation physique et inscription définitive',{exact:true})});await details.locator('summary').click()
   await expect(details.getByRole('button',{name:'Valider l’inscription définitive'})).toBeDisabled();await expect(details.getByRole('checkbox')).toHaveCount(6)
   for(const box of await details.getByRole('checkbox').all())await box.check();await details.getByLabel('Numéro APOGEE officiel').fill('SYN-APO-17');await details.getByRole('button',{name:'Valider l’inscription définitive'}).click()

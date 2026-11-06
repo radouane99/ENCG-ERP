@@ -35,12 +35,13 @@ class StudentController extends Controller
     {
         $this->authorize('viewAny', Student::class);
 
-        $perPage = min((int) $request->input('per_page', 20), 100);
+        $perPage = max(1, min((int) $request->input('per_page', 20), 100));
         $sortField = $request->input('sort', 'last_name');
         $sortOrder = $request->input('order', 'asc');
 
         try {
             $paginated = $this->studentService->getPaginatedStudents(
+                (int) $request->user()->institution_id,
                 $request->only(['search', 'status', 'filiere_id', 'semester', 'group_id', 'sub_group', 'include_pending']),
                 $perPage,
                 $sortField,

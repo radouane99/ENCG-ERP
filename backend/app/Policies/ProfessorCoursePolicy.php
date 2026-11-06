@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Group;
 use App\Models\Module;
+use App\Models\Professor;
 use App\Models\User;
 use App\Support\ChecksStaffAccess;
 use Illuminate\Support\Facades\DB;
@@ -59,6 +60,36 @@ class ProfessorCoursePolicy
         }
 
         return $this->isProfessorAssignedToGroup($user, $groupId);
+    }
+
+    public function manageModuleAttendance(User $user, Module $module, Group $group): bool
+    {
+        if ((int) $module->institution_id !== (int) $user->institution_id
+            || (int) $module->filiere_id !== (int) $group->filiere_id
+            || (int) $module->semester_number !== (int) $group->semester_number) {
+            return false;
+        }
+
+        if ($user->hasAnyRole($this->adminRoles)) {
+            return true;
+        }
+
+        $professorId = $user->professor?->id;
+        $scheduled = DB::table('schedules')
+            ->where('institution_id', $user->institution_id)
+            ->where('academic_year_id', $group->academic_year_id)
+            ->where('module_id', $module->id)->where('group_id', $group->id)->where('is_active', true)
+            ->where(function ($query) use ($user, $professorId) {
+                $query->where(fn ($assignment) => $assignment->where('professor_type', User::class)->where('professor_id', $user->id));
+                if ($professorId) {
+                    $query->orWhere(fn ($assignment) => $assignment->where('professor_type', Professor::class)->where('professor_id', $professorId));
+                }
+            })->exists();
+
+        return $scheduled || ($professorId && DB::table('module_professor')
+            ->where('module_id', $module->id)->where('professor_id', $professorId)
+            ->where('academic_year_id', $group->academic_year_id)
+            ->where(fn ($query) => $query->where('group_id', $group->id)->orWhereNull('group_id'))->exists());
     }
 
     /**

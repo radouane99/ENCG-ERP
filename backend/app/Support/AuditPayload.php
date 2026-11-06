@@ -9,7 +9,7 @@ class AuditPayload
     {
         $result = [];
         foreach ($input as $key => $value) {
-            if (preg_match('/password|token|secret|code|signature|sig$|cin|cne|medical|medication|allerg|doctor|disability|health|rib|transcription/i', (string) $key)) {
+            if (preg_match('/password|token|secret|api.?key|authorization|cookie|code|signature|sig$|cin|cne|medical|medication|allerg|doctor|disability|health|rib|transcription/i', (string) $key)) {
                 $result[$key] = '[REDACTED]';
             } elseif (is_array($value)) {
                 $result[$key] = self::redact($value);

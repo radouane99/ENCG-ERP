@@ -41,7 +41,7 @@ const { data: substitutions = [], isLoading } = useQuery({
   // Fetch professors list
 const { data: professors = [] } = useQuery({
     queryKey: ['professors-list'],
-    queryFn: () => api.get('/professors').then(res => res.data.data || res.data)
+    queryFn: () => api.get('/hr/professors').then(res => res.data.data || res.data)
 });
 
   // Fetch modules list

@@ -24,6 +24,10 @@ class DocumentRequestPolicy
 
     public function view(User $user, DocumentRequest $documentRequest): bool
     {
+        if (! $user->institution_id || (int) $documentRequest->student?->institution_id !== (int) $user->institution_id) {
+            return false;
+        }
+
         if ($user->hasRole('student')) {
             return (int) $user->student?->id === (int) $documentRequest->student_id;
         }
@@ -38,7 +42,8 @@ class DocumentRequestPolicy
 
     public function update(User $user, DocumentRequest $documentRequest): bool
     {
-        return $this->hasPermissionOrRole($user, 'documents.process', [
+        return $user->institution_id && (int) $documentRequest->student?->institution_id === (int) $user->institution_id
+            && $this->hasPermissionOrRole($user, 'documents.process', [
             'admin', 'super-admin', 'institution-admin', 'director', 'scolarite',
         ]);
     }

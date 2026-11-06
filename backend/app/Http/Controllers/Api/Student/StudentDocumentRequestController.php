@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Storage;
 
 class StudentDocumentRequestController extends Controller
 {
+    private const DOWNLOADABLE_STATUSES = ['ready', 'approved', 'collected', 'withdrawn'];
+
     public function __construct(
         private DocumentRequestService $documentRequestService
     ) {}
@@ -34,7 +36,7 @@ class StudentDocumentRequestController extends Controller
             ->get()
             ->map(function (DocumentRequest $docRequest) {
                 $generatedDocument = $this->documentRequestService->getGeneratedDocument($docRequest);
-                $isReady = in_array($docRequest->status, ['ready', 'approved', 'collected', 'withdrawn'], true);
+                $isReady = in_array($docRequest->status, self::DOWNLOADABLE_STATUSES, true);
 
                 return [
                     'id' => $docRequest->id,
@@ -97,6 +99,7 @@ class StudentDocumentRequestController extends Controller
         if ((int) $documentRequest->student_id !== (int) $student->id) {
             abort(403, 'Accès non autorisé.');
         }
+        abort_unless(in_array($documentRequest->status, self::DOWNLOADABLE_STATUSES, true), 403, 'Ce document n’est pas encore disponible.');
 
         try {
             // Toujours régénérer ou générer avec le service canonique pour garantir la fidélité avec l'administration
@@ -138,6 +141,7 @@ class StudentDocumentRequestController extends Controller
         if ((int) $documentRequest->student_id !== (int) $student->id) {
             abort(403, 'Accès non autorisé.');
         }
+        abort_unless(in_array($documentRequest->status, self::DOWNLOADABLE_STATUSES, true), 403, 'Ce document n’est pas encore disponible.');
 
         try {
             $generatedDocument = $this->documentRequestService->generateDocumentPdf($documentRequest);

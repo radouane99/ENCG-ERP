@@ -4,6 +4,7 @@ import { cn,cleanMojibake } from '@shared/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface Notification {
   id: string;
@@ -21,7 +22,7 @@ interface Notification {
   created_at: string;
 }
 
-function formatRelativeTime(dateString: string): string {
+function formatRelativeTime(dateString: string, locale: string): string {
   try {
     const now = new Date();
     const past = new Date(dateString);
@@ -31,18 +32,19 @@ function formatRelativeTime(dateString: string): string {
     const diffHours = Math.floor(diffMin / 60);
     const diffDays = Math.floor(diffHours / 24);
 
-    if (diffMin < 1) return "À l'instant";
-    if (diffMin < 60) return `Il y a ${diffMin} min`;
-    if (diffHours < 24) return `Il y a ${diffHours} h`;
-    if (diffDays === 1) return 'Hier';
-    if (diffDays < 7) return `Il y a ${diffDays} j`;
-    return past.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+    const relative = new Intl.RelativeTimeFormat(locale, { numeric: 'auto', style: 'short' });
+    if (diffMin < 1) return relative.format(0, 'second');
+    if (diffMin < 60) return relative.format(-diffMin, 'minute');
+    if (diffHours < 24) return relative.format(-diffHours, 'hour');
+    if (diffDays < 7) return relative.format(-diffDays, 'day');
+    return past.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' });
   } catch {
     return dateString;
   }
 }
 
 export function NotificationBell() {
+  const { t, i18n } = useTranslation('common');
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -63,14 +65,14 @@ export function NotificationBell() {
       if (isBackgroundPoll && prevUnreadCountRef.current !== null && newUnreadCount > prevUnreadCountRef.current) {
         const latestUnread = data.find(n => n.read_at === null);
         if (latestUnread) {
-          const title = cleanMojibake(latestUnread.data.title || 'Nouvelle Notification');
+          const title = cleanMojibake(latestUnread.data.title || t('notifications.new'));
           const message = cleanMojibake(latestUnread.data.message || '');
           const targetUrl = latestUnread.data.action_url || latestUnread.data.url;
 
           toast.info(title, {
             description: message,
             action: targetUrl ? {
-              label: 'Consulter',
+              label: t('view'),
               onClick: () => navigate(targetUrl)
             } : undefined
           });
@@ -83,7 +85,7 @@ export function NotificationBell() {
     } catch {
       // Keep the last known count on a transient failure; the next poll can recover.
     } finally { notificationInFlight.current = false; }
-  }, [navigate]);
+  }, [navigate, t]);
 
   useEffect(() => {
     fetchNotifications(false);
@@ -152,7 +154,7 @@ export function NotificationBell() {
       await api.post('/notifications/mark-all-read');
       setNotifications(prev => prev.map(n => ({ ...n, read_at: new Date().toISOString() })));
       setUnreadCount(0);
-      toast.success('Toutes les notifications sont marquées comme lues.');
+      toast.success(t('notifications.marked_all'));
     } catch (error) {
       console.error('Error marking all as read', error);
     }
@@ -183,27 +185,28 @@ export function NotificationBell() {
             ? "bg-primary/10 text-primary ring-2 ring-primary/20" 
             : "hover:bg-muted text-muted-foreground hover:text-foreground"
         )}
-        title="Centre de notifications"
-        aria-label="Centre de notifications"
+        title={t('notifications.center')}
+        aria-label={t('notifications.center')}
+        aria-expanded={isOpen}
       >
         <Bell className="w-4 h-4" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[19px] h-[19px] px-1 bg-gradient-to-r from-red-600 to-rose-500 text-white text-[10px] font-black rounded-full ring-2 ring-card flex items-center justify-center shadow-sm animate-pulse">
+          <span className="absolute -top-1 -end-1 min-w-[19px] h-[19px] px-1 bg-gradient-to-r from-red-600 to-rose-500 text-white text-[10px] font-black rounded-full ring-2 ring-card flex items-center justify-center shadow-sm animate-pulse">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute end-0 top-11 w-88 sm:w-96 bg-card border border-border rounded-2xl shadow-2xl z-50 flex flex-col animate-in fade-in-50 zoom-in-95 origin-top-right overflow-hidden backdrop-blur-md">
+        <div data-testid="notification-panel" className="fixed inset-x-2 top-16 max-h-[calc(100dvh-5rem)] sm:absolute sm:start-auto sm:end-0 sm:top-11 sm:w-96 bg-card border border-border rounded-2xl shadow-2xl z-50 flex flex-col animate-in fade-in-50 zoom-in-95 origin-top-right overflow-hidden backdrop-blur-md">
           {/* Header */}
           <div className="p-3.5 border-b border-border bg-muted/30">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-foreground text-sm tracking-tight">Notifications</span>
+                <span className="font-bold text-foreground text-sm tracking-tight">{t('notifications.title')}</span>
                 {unreadCount > 0 && (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
-                    {unreadCount} non lue{unreadCount > 1 ? 's' : ''}
+                    {t('notifications.unread', { count: unreadCount })}
                   </span>
                 )}
               </div>
@@ -212,7 +215,7 @@ export function NotificationBell() {
                   onClick={markAllAsRead}
                   className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-semibold transition-colors"
                 >
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Tout marquer lu
+                  <CheckCircle2 className="w-3.5 h-3.5" /> {t('notifications.mark_all')}
                 </button>
               )}
             </div>
@@ -228,7 +231,7 @@ export function NotificationBell() {
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 )}
               >
-                Toutes ({notifications.length})
+                {t('notifications.all', { count: notifications.length })}
               </button>
               <button
                 onClick={() => setFilter('unread')}
@@ -239,30 +242,30 @@ export function NotificationBell() {
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 )}
               >
-                Non lues ({unreadCount})
+                {t('notifications.unread', { count: unreadCount })}
               </button>
             </div>
           </div>
 
           {/* List */}
-          <div className="max-h-96 overflow-y-auto divide-y divide-border/60">
+          <div className="min-h-0 max-h-96 overflow-y-auto divide-y divide-border/60">
             {filteredNotifications.length === 0 ? (
               <div className="py-12 px-6 text-center">
                 <div className="w-12 h-12 rounded-2xl bg-muted/60 border border-border/80 flex items-center justify-center mx-auto mb-3 text-muted-foreground">
                   <Inbox className="w-6 h-6" />
                 </div>
                 <p className="text-sm font-semibold text-foreground">
-                  {filter === 'unread' ? 'Aucune notification non lue' : 'Aucune notification'}
+                  {t(filter === 'unread' ? 'notifications.empty_unread' : 'notifications.empty')}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Vous êtes à jour sur l'ensemble de vos activités académiques.
+                  {t('notifications.up_to_date')}
                 </p>
               </div>
             ) : (
               filteredNotifications.map(notif => {
                 const isUnread = notif.read_at === null;
                 const typeLabel = notif.data.category || notif.data.type || 'system';
-                const title = cleanMojibake(notif.data.title || 'Information ENCG');
+                const title = cleanMojibake(notif.data.title || t('notifications.information'));
                 const message = cleanMojibake(notif.data.message || '');
                 const targetUrl = notif.data.action_url || notif.data.url;
 
@@ -291,7 +294,7 @@ export function NotificationBell() {
                           {title}
                         </p>
                         <span className="text-[10px] text-muted-foreground whitespace-nowrap flex-shrink-0">
-                          {formatRelativeTime(notif.created_at)}
+                          {formatRelativeTime(notif.created_at, i18n.resolvedLanguage ?? 'fr')}
                         </span>
                       </div>
 
@@ -301,7 +304,7 @@ export function NotificationBell() {
 
                       {targetUrl && (
                         <div className="flex items-center gap-1 mt-2 text-[11px] font-semibold text-primary group-hover:translate-x-0.5 transition-transform">
-                          <span>Consulter</span>
+                          <span>{t('view')}</span>
                           <ChevronRight className="w-3.5 h-3.5" />
                         </div>
                       )}
@@ -312,7 +315,7 @@ export function NotificationBell() {
                       <button 
                         onClick={(e) => markAsRead(notif.id, e)}
                         className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-card border border-border shadow-xs text-muted-foreground hover:text-primary hover:bg-muted transition-all self-start"
-                        title="Marquer comme lu"
+                        title={t('notifications.mark_one')}
                       >
                         <Check className="w-3.5 h-3.5" />
                       </button>
@@ -332,7 +335,7 @@ export function NotificationBell() {
               }}
               className="w-full py-2 text-xs text-center text-foreground hover:text-primary font-bold rounded-xl hover:bg-muted/60 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <span>Centre de notifications complet</span>
+              <span>{t('notifications.open_center')}</span>
               <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
             </button>
           </div>

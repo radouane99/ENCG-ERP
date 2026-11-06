@@ -23,11 +23,11 @@ class DocumentController extends Controller
     public function generateAttestation(Request $request, DocumentRequestService $reqService): JsonResponse
     {
         $request->validate([
-            'student_id' => 'required|integer|exists:students,id',
+            'student_id' => 'required|integer',
             'type' => 'required|string',
         ]);
 
-        $student = Student::findOrFail($request->integer('student_id'));
+        $student = Student::where('institution_id', $request->user()->institution_id)->findOrFail($request->integer('student_id'));
 
         $typeMap = ['scolarite' => 1, 'releve' => 2];
         $typeId = $typeMap[$request->string('type')->toString()] ?? 1;
@@ -49,16 +49,17 @@ class DocumentController extends Controller
     public function generate(Request $request, DocumentRequestService $documentRequestService): JsonResponse
     {
         $validated = $request->validate([
-            'document_request_id' => 'nullable|integer|exists:document_requests,id',
-            'student_id' => 'required_without:document_request_id|integer|exists:students,id',
+            'document_request_id' => 'nullable|integer',
+            'student_id' => 'required_without:document_request_id|integer',
             'document_type_id' => 'required_without:document_request_id|integer|exists:document_types,id',
             'signatory_title' => 'nullable|string|max:255',
         ]);
 
         if (! empty($validated['document_request_id'])) {
-            $documentRequest = DocumentRequest::findOrFail($validated['document_request_id']);
+            $documentRequest = DocumentRequest::whereHas('student', fn ($query) => $query->where('institution_id', $request->user()->institution_id))
+                ->findOrFail($validated['document_request_id']);
         } else {
-            $student = Student::findOrFail($validated['student_id']);
+            $student = Student::where('institution_id', $request->user()->institution_id)->findOrFail($validated['student_id']);
             $documentRequest = $documentRequestService->createRequest($student, [
                 'document_type_id' => $validated['document_type_id'],
             ]);

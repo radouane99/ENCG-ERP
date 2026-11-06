@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Schedule;
 use App\Models\ScheduleChange;
 use App\Services\CalendarService;
 use Carbon\Carbon;
@@ -62,6 +63,8 @@ class CalendarController extends Controller
         }
 
         $eventId = $request->input('event_id');
+        $institutionId = $request->user()->institution_id;
+        abort_unless($institutionId, 403);
 
         // Parse event ID (e.g. "schedule_15_2026-07-06" or "makeup_12")
         if (str_starts_with($eventId, 'schedule_')) {
@@ -70,13 +73,15 @@ class CalendarController extends Controller
                 return response()->json(['message' => 'Invalid event ID'], 400);
             }
 
-            $scheduleId = $parts[1];
+            $schedule = Schedule::query()
+                ->where('institution_id', $institutionId)
+                ->findOrFail($parts[1]);
             $originalDate = $request->input('old_date');
 
             // Create or update a schedule change for this specific date
             $change = ScheduleChange::updateOrCreate(
                 [
-                    'schedule_id' => $scheduleId,
+                    'schedule_id' => $schedule->getKey(),
                     'original_date' => $originalDate,
                 ],
                 [
@@ -94,7 +99,9 @@ class CalendarController extends Controller
         if (str_starts_with($eventId, 'makeup_')) {
             $parts = explode('_', $eventId);
             $makeupId = $parts[1];
-            $change = ScheduleChange::findOrFail($makeupId);
+            $change = ScheduleChange::query()
+                ->whereHas('schedule', fn ($query) => $query->where('institution_id', $institutionId))
+                ->findOrFail($makeupId);
 
             $change->update([
                 'new_date' => $request->input('new_date'),

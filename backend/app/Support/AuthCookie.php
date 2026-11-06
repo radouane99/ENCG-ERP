@@ -11,6 +11,11 @@ class AuthCookie
 {
     public const NAME = 'encg_auth_token';
 
+    public static function name(): string
+    {
+        return app()->bound('config') ? (string) config('auth.cookie_name', self::NAME) : self::NAME;
+    }
+
     public static function encode(string $plainTextToken): string
     {
         return rtrim(strtr(base64_encode($plainTextToken), '+/', '-_'), '=');
@@ -42,7 +47,7 @@ class AuthCookie
         $secure = app()->environment('production') || parse_url((string) config('app.url'), PHP_URL_SCHEME) === 'https' || request()->isSecure();
 
         return cookie(
-            self::NAME,
+            self::name(),
             self::encode($plainTextToken),
             $remember ? 8 * 60 : 0,
             '/',
@@ -56,7 +61,7 @@ class AuthCookie
 
     public static function forget(): Cookie
     {
-        return cookie()->forget(self::NAME, '/', env('AUTH_COOKIE_DOMAIN') ?: null);
+        return cookie()->forget(self::name(), '/', env('AUTH_COOKIE_DOMAIN') ?: null);
     }
 
     public static function attach(JsonResponse $response, string $plainTextToken, bool $remember = false): JsonResponse

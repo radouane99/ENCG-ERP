@@ -1,0 +1,109 @@
+name: encg-staging
+
+x-app: &app
+  image: encg-erp-staging:local
+  build:
+    context: .
+    dockerfile: docker/php/Dockerfile.prod
+  env_file: .env.staging
+  entrypoint: ['/bin/sh', '/usr/local/bin/docker-entrypoint.sh']
+  command: php-fpm
+  environment:
+    APP_ENV: staging
+    ERP_INSTITUTION_ID: 1
+    APP_DEBUG: 'false'
+    APP_URL: http://127.0.0.1:8088
+    FRONTEND_URL: http://127.0.0.1:8088
+    AUTH_COOKIE_NAME: encg_staging_auth_token
+    SESSION_COOKIE: encg_staging_session
+    DB_CONNECTION: pgsql
+    DB_HOST: postgres
+    DB_PORT: 5432
+    DB_DATABASE: encg_staging
+    REDIS_HOST: redis
+    REDIS_PASSWORD: 'null'
+    CACHE_STORE: redis
+    SESSION_DRIVER: redis
+    SESSION_SECURE_COOKIE: 'false'
+    QUEUE_CONNECTION: redis
+    MAIL_MAILER: log
+    AI_DRIVER: stub
+    GEMINI_API_KEY: ''
+    GROQ_API_KEY: ''
+    RESEND_API_KEY: ''
+    POSTMARK_API_KEY: ''
+    BACKUP_NOTIFICATION_EMAIL: ''
+    OBSERVABILITY_ENABLED: 'false'
+    REVERB_HOST: reverb
+    REVERB_PORT: 8080
+    REVERB_SCHEME: http
+  volumes:
+    - staging_storage:/var/www/html/storage
+    - ./docker/php/php.prod.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+    - ./docker/php/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
+  networks: [staging]
+  restart: unless-stopped
+
+services:
+  backend:
+    <<: *app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+  worker:
+    <<: *app
+    command: php artisan horizon
+    depends_on: [backend]
+  scheduler:
+    <<: *app
+    command: php artisan schedule:work
+    depends_on: [backend]
+  reverb:
+    <<: *app
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+  nginx:
+    image: nginx:alpine
+    ports: ['127.0.0.1:8088:80']
+    volumes:
+      - ./docker/nginx/prod-bootstrap.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./frontend/dist:/var/www/html/dist:ro
+      - ./backend/public:/var/www/html/public:ro
+      - staging_storage:/var/www/html/storage:ro
+    depends_on: [backend, reverb]
+    networks: [staging, web]
+    restart: unless-stopped
+  postgres:
+    image: postgres:16-alpine
+    env_file:
+      - path: .env.staging.database-maintenance
+        required: false
+    environment:
+      POSTGRES_DB: encg_staging
+      POSTGRES_USER: encg_staging
+    volumes: [staging_postgres:/var/lib/postgresql/data]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U encg_staging -d encg_staging']
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    networks: [staging]
+    restart: unless-stopped
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes: [staging_redis:/data]
+    networks: [staging]
+    restart: unless-stopped
+
+networks:
+  staging:
+    internal: true
+  # Docker Desktop needs a bridge for the loopback-published web port.
+  web:
+    driver: bridge
+volumes:
+  staging_storage:
+  staging_postgres:
+  staging_redis:

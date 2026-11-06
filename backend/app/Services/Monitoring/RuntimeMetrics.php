@@ -2,6 +2,7 @@
 
 namespace App\Services\Monitoring;
 
+use App\Services\Core\VerifiedDatabaseBackupService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
@@ -119,6 +120,20 @@ final class RuntimeMetrics
             $values['encg_metrics_collection_success{collector="ocr"}'] = 1;
         } catch (\Throwable) {
             $values['encg_metrics_collection_success{collector="ocr"}'] = 0;
+        }
+
+        try {
+            $backup = app(VerifiedDatabaseBackupService::class)->latestStatus();
+            $values['encg_backup_last_success_timestamp_seconds'] = $backup ? strtotime($backup['created_at']) : 0;
+            $values['encg_backup_restore_verified'] = ($backup['restore_verified'] ?? false) ? 1 : 0;
+            $values['encg_metrics_collection_success{collector="backup"}'] = 1;
+        } catch (\Throwable) {
+            $values['encg_metrics_collection_success{collector="backup"}'] = 0;
+        }
+        try {
+            $values['encg_scheduler_last_heartbeat_timestamp_seconds'] = (int) Cache::store(config('observability.cache_store'))->get('encg_scheduler_heartbeat', 0);
+        } catch (\Throwable) {
+            $values['encg_scheduler_last_heartbeat_timestamp_seconds'] = 0;
         }
 
         return $values;

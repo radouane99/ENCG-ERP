@@ -3,6 +3,7 @@
 use App\Models\User;
 
 return [
+    'cookie_name' => env('AUTH_COOKIE_NAME', 'encg_auth_token'),
 
     /*
     |--------------------------------------------------------------------------

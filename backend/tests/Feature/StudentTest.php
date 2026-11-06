@@ -3,8 +3,12 @@
 declare(strict_types=1);
 
 use App\Models\Institution;
+use App\Models\DocumentType;
 use App\Models\Student;
 use App\Models\User;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -52,6 +56,57 @@ function makeRestrictedUser(): User
 }
 
 // ── Index ────────────────────────────────────────────────────────────────────
+
+it('lists students only from the administrators institution', function () {
+    $user = makeAdminUser();
+    config(['erp.institution_id' => $user->institution_id]);
+    $other = Institution::create(['name' => 'Other test campus', 'code' => 'OTHER', 'slug' => 'other']);
+    $local = Student::factory()->create(['institution_id' => $user->institution_id, 'status' => 'active']);
+    Student::factory()->create(['institution_id' => $other->id, 'status' => 'active']);
+
+    $this->actingAs($user, 'sanctum')->getJson('/api/students')
+        ->assertOk()
+        ->assertJsonPath('meta.total', 1)
+        ->assertJsonPath('data.0.id', $local->uuid);
+});
+
+it('isolates academic documents and progress reports by role and institution', function () {
+    $user = makeAdminUser();
+    config(['erp.institution_id' => $user->institution_id]);
+    $other = Institution::create(['name' => 'Other test campus', 'code' => 'OTHER', 'slug' => 'other']);
+    $local = Student::factory()->create(['institution_id' => $user->institution_id]);
+    $foreign = Student::factory()->create(['institution_id' => $other->id]);
+    $this->actingAs($user, 'sanctum');
+
+    $type = DocumentType::create(['code' => 'TEST_DOC', 'name' => 'Synthetic document', 'view_name' => 'documents.attestation_scolarite']);
+    $this->postJson('/api/documents/generate', ['student_id' => $foreign->id, 'document_type_id' => $type->id])->assertNotFound();
+    $this->postJson('/api/documents/generate-attestation', ['student_id' => $foreign->id, 'type' => 'scolarite'])->assertNotFound();
+    $this->postJson('/api/admin/document-requests/quick-generate', ['cne_or_name' => $foreign->cne, 'document_type' => 'scolarite'])->assertNotFound();
+    $this->getJson("/api/documents/download/attestation_scolarite/{$foreign->id}?v=synthetic")->assertNotFound();
+    $this->getJson("/api/admin/students/{$foreign->id}/progress-report")->assertNotFound();
+    $this->getJson("/api/admin/students/{$local->id}/progress-report")->assertOk()->assertJsonPath('student.id', $local->id);
+
+    $professor = User::factory()->create(['institution_id' => $user->institution_id]);
+    $professor->assignRole(Role::findOrCreate('professor', 'sanctum'));
+    $this->actingAs($professor, 'sanctum');
+    $this->getJson("/api/documents/download/attestation_scolarite/{$local->id}?v=synthetic")->assertForbidden();
+    $this->getJson("/api/admin/students/{$local->id}/progress-report")->assertForbidden();
+});
+
+it('generates and downloads a registered official PDF for an authorized administrator', function () {
+    Mail::fake();
+    Notification::fake();
+    Storage::fake('private');
+    $user = makeAdminUser();
+    $student = Student::factory()->create(['institution_id' => $user->institution_id]);
+    $type = DocumentType::create(['code' => 'ATT_SCOL', 'name' => 'Attestation de scolarité', 'view_name' => 'documents.attestation_scolarite', 'is_active' => true]);
+    $this->actingAs($user, 'sanctum');
+
+    $generated = $this->postJson('/api/documents/generate', ['student_id' => $student->id, 'document_type_id' => $type->id])
+        ->assertCreated()->assertJsonStructure(['data' => ['request_id', 'verification_token', 'download_url']]);
+    $this->assertNotEmpty($generated->json('data.verification_token'));
+    $this->get('/api/admin/document-requests/'.$generated->json('data.request_id').'/download')->assertOk()->assertDownload();
+});
 
 it('returns a list of students for authorized user', function () {
     $user = makeAdminUser();

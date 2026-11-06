@@ -15,7 +15,7 @@ export default function AdminSmartCampus() {
 
   const { data: campusData, isLoading, refetch } = useQuery({
     queryKey: ['admin-smart-campus'],
-    queryFn: () => api.get('/admin/smart-campus').then((res) => res.data.data),
+    queryFn: () => api.get('/smart-campus').then((res) => res.data.data),
     refetchInterval: 10000 // Auto-refresh every 10s
 });
 

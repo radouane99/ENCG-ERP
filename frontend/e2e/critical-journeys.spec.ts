@@ -59,8 +59,12 @@ test.describe('P2 — 8 parcours critiques', () => {
     await open(page, '/admin/tafem')
     await expect(page.getByTestId('admin-tafem-page')).toBeVisible({ timeout: 15000 })
     await expect(
-      page.getByTestId('admin-tafem-page').getByRole('heading', { name: 'Admissions & nouvelles inscriptions', exact: true }),
+      page.getByTestId('admin-tafem-page').getByRole('heading', { name: /^Admissions & nouvelles inscriptions$/i }),
     ).toBeVisible()
+    await page.getByRole('button', { name: /Import des Admis|Import CSV/ }).first().click()
+    const download = page.waitForEvent('download')
+    await page.getByRole('button', { name: 'Télécharger le modèle CSV officiel' }).click()
+    expect((await download).suggestedFilename()).toMatch(/^modele_import_.*_encg\.csv$/)
   })
 
   test('7. PV admin — cockpit délibération', async ({ page }) => {

@@ -54,6 +54,8 @@ cd ENCG-ERP
 
 ### Étape 2 : Démarrer les Conteneurs Docker
 ```bash
+cp -n backend/.env.example backend/.env
+python scripts/configure_local_database_roles.py local
 docker compose up -d --build
 ```
 > 💡 *Cette commande démarre : `encg_frontend` (React 19), `encg_backend` (Laravel 11/12 PHP 8.4-FPM), `encg_postgres` (PostgreSQL 16), `encg_redis` (Redis 7) et `encg_pgadmin` (pgAdmin 4).*
@@ -1184,3 +1186,6 @@ docker exec encg_frontend npx tsc --noEmit
 <div align="center">
   <sub>🎓 Conçu et développé avec rigueur pour l'École Nationale de Commerce et de Gestion de Fès (ENCG Fès) · Université Sidi Mohamed Ben Abdellah.</sub>
 </div>
+# Fiabilité et exploitation
+
+Procédures de sauvegarde/restauration, staging isolé, alertes et tests de charge : [guide de fiabilité](docs/RELIABILITY.md).

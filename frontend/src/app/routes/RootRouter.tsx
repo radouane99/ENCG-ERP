@@ -404,7 +404,7 @@ export default function RootRouter() {
             <Route path="/academic/credits-derogations" element={<CreditsAndDerogations />} />
             <Route path="/academic/internships" element={<AdminInternshipsPage />} />
             <Route path="/academic/predictive-analytics" element={<PredictiveDashboard />} />
-            <Route path="/academic/documents" element={<DocumentCenter />} />
+            <Route path="/academic/documents" element={<ProtectedRoute roles={ADMIN_ROLES}><DocumentCenter /></ProtectedRoute>} />
             <Route path="/admissions/campaigns" element={<AdmissionCampaignManager />} />
             <Route path="/admissions/applications" element={<ApplicationsPage />} />
           </Route>

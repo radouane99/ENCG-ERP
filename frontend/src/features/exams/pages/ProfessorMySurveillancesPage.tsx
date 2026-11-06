@@ -6,7 +6,7 @@ export default function ProfessorMySurveillancesPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['my-surveillances'],
     queryFn: async () => {
-      const response = await api.get('/v1/professor/my-surveillances')
+      const response = await api.get('/professor/my-surveillances')
       return response.data?.data || []
     },
   })

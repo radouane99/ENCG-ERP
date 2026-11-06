@@ -17,12 +17,13 @@ class StudentService
     /**
      * Liste paginée des étudiants.
      */
-    public function getPaginatedStudents(array $filters, int $perPage = 20, string $sortField = 'last_name', string $sortOrder = 'asc'): LengthAwarePaginator
+    public function getPaginatedStudents(int $institutionId, array $filters, int $perPage = 20, string $sortField = 'last_name', string $sortOrder = 'asc'): LengthAwarePaginator
     {
         // On sélectionne explicitement `students.*` et on fait un leftJoin sur `users`
         // pour permettre le tri et la recherche rapide sur first_name, last_name, email.
         $query = Student::with(['latestPathway.filiere', 'latestPathway.group', 'user'])
             ->select('students.*')
+            ->where('students.institution_id', $institutionId)
             ->leftJoin('users', 'students.user_id', '=', 'users.id');
 
         if (! empty($filters['search'])) {

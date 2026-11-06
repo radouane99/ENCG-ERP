@@ -12,6 +12,19 @@ async function prepare(page: Page, role: 'admin' | 'student' | 'professor', dark
 
 test.describe('Design commun ENCG', () => {
   test.skip(!process.env.E2E_ROLE_AUDIT, 'Données synthétiques uniquement')
+  for (const width of [320, 390, 768, 1440]) {
+    test(`notifications accessibles à ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 640 })
+      await prepare(page, 'admin', false)
+      await page.goto('/dashboard')
+      await page.getByRole('button', { name: 'Centre de notifications' }).click()
+      const panel = page.getByTestId('notification-panel')
+      await expect(panel).toBeVisible()
+      const bounds = await panel.boundingBox()
+      expect(bounds!.x).toBeGreaterThanOrEqual(0)
+      expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width + 1)
+    })
+  }
   for (const dark of [false, true]) for (const mobile of [false, true]) for (const role of ['admin', 'student', 'professor'] as const) {
     test(`${role} · ${dark ? 'sombre' : 'clair'} · ${mobile ? 'mobile' : 'desktop'}`, async ({ page }) => {
       if (mobile) await page.setViewportSize({ width: 390, height: 844 })

@@ -29,7 +29,7 @@ export default function ReservationCreatePage() {
       try {
         const [roomsRes, profsRes] = await Promise.all([
           api.get('/rooms'),
-          api.get('/professors')
+          api.get('/hr/professors')
         ])
         setRooms(roomsRes.data.data || roomsRes.data)
         setProfessors(profsRes.data.data || profsRes.data)

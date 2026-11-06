@@ -28,7 +28,7 @@ docker cp "$DIR/scripts/fix_pks.sql" encg_postgres:/tmp/fix_pks.sql
 
 # 2. Réinitialiser le schéma et restaurer le dump
 echo "🧹 3. Nettoyage du schéma 'public' et restauration..."
-docker exec encg_postgres psql -U encg -d encg_erp -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'encg_erp' AND pid <> pg_backend_pid(); DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO encg; GRANT ALL ON SCHEMA public TO public;"
+docker exec encg_postgres psql -U encg -d encg_erp -c "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'encg_erp' AND pid <> pg_backend_pid(); DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
 docker exec encg_postgres psql -U encg -d encg_erp -f /tmp/restore.sql
 
 # 3. Appliquer les Primary Keys et Contraintes
@@ -37,7 +37,8 @@ docker exec encg_postgres psql -U encg -d encg_erp -f /tmp/fix_pks.sql
 
 # 4. Exécuter les migrations récentes
 echo "🐘 5. Synchronisation des Migrations Laravel..."
-docker exec encg_backend php artisan migrate --force
+(cd "$DIR" && docker compose run --rm --no-deps --env-from-file .env.database-maintenance backend php artisan migrate --force)
+python "$DIR/scripts/configure_local_database_roles.py" local
 
 # 5. Nettoyer les caches Laravel et redémarrer la Queue
 echo "⚡ 6. Nettoyage des caches et redémarrage de la Queue..."

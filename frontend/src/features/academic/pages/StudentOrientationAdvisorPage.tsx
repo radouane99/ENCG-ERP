@@ -22,7 +22,7 @@ export default function StudentOrientationAdvisorPage() {
 const { data: profileData, isLoading, isError, refetch } = useQuery({
     queryKey: ['student-orientation-profile'],
     queryFn: async () => {
-        const res = await api.get('/student/orientation/profile');
+        const res = await api.get('/student-portal/orientation/profile');
         return res.data?.data || res.data || {};
     },
 });
@@ -48,7 +48,7 @@ const [simulatedModules, setSimulatedModules] = useState<ModuleSimItem[]>([]);
   // 2. Simulation Mutation
   const simulationMutation = useMutation({
     mutationFn: async (payload: { modules: ModuleSimItem[]; semester_number: number; target_gpa: number }) => {
-      const res = await api.post('/student/orientation/simulate-compensation', payload);
+      const res = await api.post('/student-portal/orientation/simulate-compensation', payload);
       return res.data?.data || res.data;
     },
     onSuccess: () => {
@@ -104,8 +104,19 @@ const [simulatedModules, setSimulatedModules] = useState<ModuleSimItem[]>([]);
     );
   }
 
-  if (isError) return <div role="alert" className="rounded-xl border border-red-200 p-5">Impossible de charger votre orientation. <button className="min-h-11 underline" onClick={() => void refetch()}>Réessayer</button></div>;
-  if (!topRec) return <div className="rounded-xl border p-5">Aucun résultat exploitable pour proposer une orientation. Vos notes ne sont pas remplacées par des données de démonstration.</div>;
+  if (isError || !topRec) return (
+    <section className="space-y-4">
+      <h1 className="erp-page-title">Mon orientation</h1>
+      {isError ? (
+        <div role="alert" className="rounded-xl border border-border bg-card p-5">
+          <p>Impossible de charger votre orientation.</p>
+          <button type="button" className="mt-2 min-h-11 font-medium text-primary underline" onClick={() => void refetch()}>Réessayer</button>
+        </div>
+      ) : (
+        <p className="rounded-xl border border-border bg-card p-5 text-muted-foreground">Les conseils d’orientation seront disponibles lorsque vos résultats permettront une recommandation.</p>
+      )}
+    </section>
+  );
   return (
     <div className="space-y-8 pb-16 animate-fade-in max-w-7xl mx-auto">
       

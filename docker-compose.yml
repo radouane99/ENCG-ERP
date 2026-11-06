@@ -1,5 +1,28 @@
 services:
 
+  operations-scheduler: &operations-runner
+    profiles: [operations]
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    image: ${OPERATIONS_IMAGE:-encg-erp-v1-backend}
+    entrypoint: &php-entrypoint ['/bin/sh', '/usr/local/bin/docker-entrypoint.sh']
+    command: php artisan schedule:work
+    env_file: ./backend/.env
+    environment:
+      OPERATIONS_ONLY_SCHEDULER: 'true'
+      BACKUP_NOTIFICATION_EMAIL: ''
+    volumes:
+      - ./backend:/var/www/html:cached
+      - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+      - ./docker/php/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
+    networks: [encgnet]
+    restart: unless-stopped
+
+  operations-alerts:
+    <<: *operations-runner
+    command: sh -lc 'while true; do php artisan operations:send-alerts; sleep 300; done'
+
   # ──────────────────────────────────────────────────────────
   # Nginx — Reverse proxy + static assets
   # ──────────────────────────────────────────────────────────
@@ -26,11 +49,16 @@ services:
       context: .
       dockerfile: docker/php/Dockerfile
     container_name: encg_backend
+    entrypoint: *php-entrypoint
+    command: php-fpm
     env_file:
       - ./backend/.env
+    environment:
+      APP_DEBUG: 'false'
     volumes:
       - ./backend:/var/www/html:cached
       - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+      - ./docker/php/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -48,6 +76,7 @@ services:
       context: .
       dockerfile: docker/php/Dockerfile
     container_name: encg_reverb
+    entrypoint: *php-entrypoint
     command: php artisan reverb:start --host="0.0.0.0" --port=8080 --no-interaction
     ports:
       - '8080:8080'
@@ -56,6 +85,7 @@ services:
     volumes:
       - ./backend:/var/www/html:cached
       - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+      - ./docker/php/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
     depends_on:
       backend:
         condition: service_started
@@ -73,12 +103,14 @@ services:
       context: .
       dockerfile: docker/php/Dockerfile
     container_name: encg_queue_worker
+    entrypoint: *php-entrypoint
     command: php artisan horizon
     env_file:
       - ./backend/.env
     volumes:
       - ./backend:/var/www/html:cached
       - ./docker/php/php.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+      - ./docker/php/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
     depends_on:
       backend:
         condition: service_started
@@ -114,12 +146,14 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: encg_postgres
+    env_file:
+      - path: .env.database-maintenance
+        required: false
     ports:
-      - '5432:5432'
+      - '127.0.0.1:5432:5432'
     environment:
       POSTGRES_DB: encg_erp
       POSTGRES_USER: encg
-      POSTGRES_PASSWORD: secret
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -139,7 +173,7 @@ services:
     image: redis:7-alpine
     container_name: encg_redis
     ports:
-      - '6379:6379'
+      - '127.0.0.1:6379:6379'
     command: redis-server --requirepass secret --maxmemory 256mb --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
@@ -159,8 +193,8 @@ services:
     image: axllent/mailpit:latest
     container_name: encg_mailpit
     ports:
-      - '1025:1025'   # SMTP
-      - '8025:8025'   # Web UI → http://localhost:8025
+      - '127.0.0.1:1025:1025'   # SMTP
+      - '127.0.0.1:8025:8025'   # Web UI → http://localhost:8025
     networks:
       - encgnet
     restart: unless-stopped
@@ -172,7 +206,7 @@ services:
     image: dpage/pgadmin4:latest
     container_name: encg_pgadmin
     ports:
-      - '5050:80'     # Web UI → http://localhost:5050
+      - '127.0.0.1:5050:80'     # Web UI → http://localhost:5050
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@encg.ma
       PGADMIN_DEFAULT_PASSWORD: admin

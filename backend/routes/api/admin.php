@@ -151,8 +151,9 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::post('/complaints/grade-appeal', [ComplaintController::class, 'submitGradeAppeal']);
     Route::get('/complaints/grade-appeals', [ComplaintController::class, 'listGradeAppeals']);
     Route::post('/complaints/grade-appeals/{id}/resolve', [ComplaintController::class, 'resolveGradeAppeal']);
-    Route::post('/documents/generate', [DocumentCenterController::class, 'generate']);
-    Route::get('/documents/download/{type}/{id}', [DocumentCenterController::class, 'downloadDocument']);
+    Route::middleware('role:admin|super-admin|super_admin|institution-admin|institution_admin|director')->group(function () {
+        Route::get('/documents/download/{type}/{id}', [DocumentCenterController::class, 'downloadDocument']);
+    });
     Route::get('holidays/{holiday}/impact', [HolidayController::class, 'impact']);
     Route::apiResource('holidays', HolidayController::class)->except(['show']);
     Route::get('admin/holidays/{holiday}/impact', [HolidayController::class, 'impact']);
@@ -467,7 +468,6 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::post('import/{model}', [ExcelController::class, 'import'])->middleware('throttle:uploads');
 
     // Secure Documents & Anti-Fraud
-    Route::post('documents/generate-attestation', [DocumentController::class, 'generateAttestation']);
     Route::get('documents/verify/{trackingCode}', [DocumentController::class, 'verifyDocument']);
 
     // Admissions (TAFEM & Applications)
@@ -683,7 +683,6 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
 
     // Anti-Fraud Documents & PDFs
     Route::prefix('documents')->group(function () {
-        Route::post('/generate', [DocumentController::class, 'generate']);
         Route::get('/verify/{token}', [DocumentController::class, 'verify']);
 
         // PDF Previews
@@ -1022,8 +1021,9 @@ Route::middleware(['auth:sanctum', 'institution.context', $staffRoles])->group(f
     });
 
     // Student Progress Report (full DB pull for one student)
-    Route::get('/admin/students/{id}/progress-report', function ($id) {
+    Route::get('/admin/students/{id}/progress-report', function (\Illuminate\Http\Request $request, int $id) {
         try {
+            $institutionId = $request->user()->institution_id;
             $student = DB::table('students')
                 ->join('users', 'students.user_id', '=', 'users.id')
                 ->leftJoin('student_pathways', function ($join) {
@@ -1032,6 +1032,7 @@ Route::middleware(['auth:sanctum', 'institution.context', $staffRoles])->group(f
                 })
                 ->leftJoin('filieres', 'student_pathways.filiere_id', '=', 'filieres.id')
                 ->where('students.id', $id)
+                ->where('students.institution_id', $institutionId)
                 ->select(
                     'students.id', 'students.cne', 'students.student_number as apogee_code',
                     'users.name', 'users.email',
@@ -1046,24 +1047,32 @@ Route::middleware(['auth:sanctum', 'institution.context', $staffRoles])->group(f
                 ->join('assessments', 'grades.assessment_id', '=', 'assessments.id')
                 ->join('modules', 'assessments.module_id', '=', 'modules.id')
                 ->where('grades.student_id', $id)
-                ->select('modules.name as module', 'modules.code', 'grades.grade', 'assessments.type')
+                ->where('modules.institution_id', $institutionId)
+                ->select('modules.name as module', 'modules.code', 'grades.value as grade', 'assessments.type')
                 ->get();
 
-            $absences = DB::table('absences')
-                ->where('student_id', $id)
-                ->select('date', 'is_justified', 'reason')
-                ->orderBy('date', 'desc')
+            $absences = DB::table('attendances')
+                ->join('attendance_sessions', 'attendances.attendance_session_id', '=', 'attendance_sessions.id')
+                ->join('modules', 'attendance_sessions.module_id', '=', 'modules.id')
+                ->where('attendances.student_id', $id)
+                ->where('modules.institution_id', $institutionId)
+                ->whereIn('attendances.status', ['absent', 'excused'])
+                ->select('attendance_sessions.session_date as date', 'attendances.is_justified', 'attendances.notes as reason')
+                ->orderByDesc('attendance_sessions.session_date')
                 ->get();
 
             $internships = DB::table('internships')
                 ->where('student_id', $id)
+                ->when(Schema::hasColumn('internships', 'institution_id'), fn ($query) => $query->where('institution_id', $institutionId))
                 ->select('company_name', 'status', 'start_date', 'end_date', 'type')
                 ->get();
 
             $clubMemberships = Schema::hasTable('club_members')
                 ? DB::table('club_members')
                     ->join('clubs', 'club_members.club_id', '=', 'clubs.id')
-                    ->where('club_members.student_id', $id)
+                    ->join('students', 'club_members.user_id', '=', 'students.user_id')
+                    ->where('students.id', $id)
+                    ->where('clubs.institution_id', $institutionId)
                     ->select('clubs.name as club')
                     ->get()
                 : collect([]);
@@ -1088,9 +1097,11 @@ Route::middleware(['auth:sanctum', 'institution.context', $staffRoles])->group(f
                 'clubs' => $clubMemberships,
             ]);
         } catch (Exception $e) {
+            report($e);
+
             return response()->json(['success' => false, 'error' => 'Une erreur interne est survenue.'], 500);
         }
-    });
+    })->middleware('role:admin|super-admin|institution-admin|director');
 
     // ──────────────────────────────────────────────────────────────────────────────
     // Correction Automatique de Compte-Rendus (Professeurs) & Analyse de Cours (Étudiants)

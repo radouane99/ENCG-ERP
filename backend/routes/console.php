@@ -20,9 +20,18 @@ use Illuminate\Support\Facades\Schedule;
 
 // Automated Daily Backups (Pilier 3 - ENCG ERP Native & Spatie)
 Schedule::command('db:backup-daily')->dailyAt('02:00')->withoutOverlapping()->description('Sauvegarde privée PostgreSQL avec empreinte');
-Schedule::command('documents:remind-followups')->hourly()->withoutOverlapping();
 Schedule::command('backup:clean')->dailyAt('02:30');
-Schedule::command('backup:run --only-db')->dailyAt('03:00');
+Schedule::command('backup:run'.(config('observability.operations_only_scheduler') ? ' --disable-notifications' : ''))->dailyAt('03:00')->withoutOverlapping()->description('Sauvegarde base et documents sur les disques configurés');
+Schedule::command('backup:verify-files')->dailyAt('03:45')->withoutOverlapping()->description('Lecture et intégrité des fichiers de la dernière archive locale');
+Schedule::call(fn () => Cache::store(config('observability.cache_store'))->put('encg_scheduler_heartbeat', time(), 600))
+    ->everyMinute()->name('operations-heartbeat')->withoutOverlapping();
+
+// Local operations runner must never activate business reminders or academic mutations.
+if (config('observability.operations_only_scheduler')) {
+    return;
+}
+
+Schedule::command('documents:remind-followups')->hourly()->withoutOverlapping();
 
 // Automated Weekly PostgreSQL Optimization & Statistics Update (Pilier 2)
 // VACUUM cannot run as a prepared statement or inside a transaction.
@@ -54,6 +63,7 @@ use App\Models\GradeEntryPeriod;
 use App\Models\Institution;
 use App\Models\User;
 use Database\Seeders\PfeAndSoutenanceSeeder;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 

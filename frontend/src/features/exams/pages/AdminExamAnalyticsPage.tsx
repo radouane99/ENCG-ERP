@@ -17,7 +17,7 @@ export default function AdminExamAnalyticsPage() {
     queryKey: ['exam-analytics', academicYear, semesterFilter],
     queryFn: async () => {
       try {
-        const res = await api.get('/admin/exam-analytics', { params: { year: academicYear, semester: semesterFilter } })
+        const res = await api.get('/exam-analytics', { params: { year: academicYear, semester: semesterFilter } })
         return res.data?.data || res.data || {
           overview: { total_exams: 0, total_students_convoked: 0, average_presence_rate: 0, total_absences: 0, total_incidents: 0 },
           by_filiere: [],

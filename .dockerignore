@@ -15,3 +15,8 @@ backups
 certbot
 docs/audits
 **/node_modules
+.env.staging
+.env.database-maintenance
+.env.staging.database-maintenance
+.env.monitoring
+.monitoring-secrets

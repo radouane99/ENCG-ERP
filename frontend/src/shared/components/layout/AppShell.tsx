@@ -32,7 +32,7 @@ export default function AppShell() {
   }, [])
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
+    <div className="flex h-dvh overflow-hidden bg-[var(--background)] text-[var(--foreground)]">
       {/* ── Mobile Sidebar Overlay ── */}
       {sidebarOpen && (
         <div 
@@ -42,7 +42,7 @@ export default function AppShell() {
       )}
 
       {/* ── Sidebar ── */}
-      <div className={`fixed inset-y-0 start-0 z-50 transform transition-transform duration-300 lg:relative lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+      <div className={`fixed inset-y-0 start-0 z-50 transform transition-transform duration-300 lg:relative lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full lg:translate-x-0 lg:rtl:translate-x-0'}`}>
         <Sidebar onClose={() => setSidebarOpen(false)} />
       </div>
 
@@ -56,7 +56,7 @@ export default function AppShell() {
         {/* Search Modal */}
         <GlobalSearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
         
-        <main data-design-system="encg" className="erp-workspace flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 pb-24 lg:pb-8 scroll-smooth">
+        <main data-design-system="encg" className="erp-workspace min-h-0 flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:pb-8 scroll-smooth">
           <div className={cn("mx-auto animate-fade-in", isFullWidthPage ? "max-w-none w-full px-0" : "max-w-7xl")}>
             <ErrorBoundary>
               <Outlet />

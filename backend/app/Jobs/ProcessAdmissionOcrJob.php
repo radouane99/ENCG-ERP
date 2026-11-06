@@ -29,7 +29,7 @@ class ProcessAdmissionOcrJob implements ShouldQueue
     public function handle(AdmissionOcrService $ocr): void
     {
         $run = DB::table('admission_ocr_runs')->find($this->runId);
-        if (! $run || in_array($run->status, ['needs_review', 'succeeded', 'cancelled'])) {
+        if (! $run || $run->status !== 'queued') {
             return;
         }
         $doc = StudentDocument::findOrFail($run->document_id);

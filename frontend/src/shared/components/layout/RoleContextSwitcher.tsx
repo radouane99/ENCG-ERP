@@ -95,7 +95,7 @@ export default function RoleContextSwitcher() {
       </button>
 
       {isOpen && (
-        <div className="absolute start-0 md:start-auto end-0 top-[calc(100%+0.5rem)] w-60 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-50 py-2 animate-in fade-in zoom-in-95 origin-top-right overflow-hidden">
+        <div className="fixed inset-x-2 top-16 max-h-[calc(100dvh-5rem)] sm:absolute sm:start-auto sm:end-0 sm:top-[calc(100%+0.5rem)] sm:w-60 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl z-50 py-2 animate-in fade-in zoom-in-95 origin-top-right overflow-y-auto">
           <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
             <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
               BASCULER DE CASQUETTE ACADÉMIQUE

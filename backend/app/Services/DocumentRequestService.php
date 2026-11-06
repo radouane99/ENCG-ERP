@@ -87,6 +87,7 @@ class DocumentRequestService
 
             // Notification admins
             User::role(['super-admin', 'institution-admin', 'director', 'admin'])
+                ->where('institution_id', $student->institution_id)
                 ->get()
                 ->each(fn ($admin) => $admin->notify(new NewDocumentRequestAdminNotification($docRequest, $studentUser)));
         } catch (\Throwable $e) {

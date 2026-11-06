@@ -41,7 +41,7 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
         <button 
           onClick={onOpenSidebar}
           className="lg:hidden p-2 -ms-1 rounded-xl text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-slate-800 transition-all active:scale-95 cursor-pointer shrink-0"
-          aria-label="Ouvrir le menu"
+          aria-label={t('navigation.open_menu')}
         >
           <Menu className="w-5 h-5" />
         </button>
@@ -58,7 +58,7 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
         <button
           onClick={onOpenCommand}
           className="sm:hidden p-2 rounded-xl text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-slate-800 transition-all cursor-pointer shrink-0"
-          aria-label="Recherche"
+          aria-label={t('navigation.search')}
         >
           <Search className="w-5 h-5" />
         </button>
@@ -95,10 +95,11 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
         <button
           onClick={onOpenCommand}
           className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 lg:px-3 rounded-xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 hover:from-indigo-500/20 hover:via-purple-500/20 hover:to-pink-500/20 border border-indigo-500/20 dark:border-indigo-500/30 text-primary dark:text-indigo-300 text-xs font-bold transition-all shadow-xs hover:scale-[1.02] active:scale-95 cursor-pointer shrink-0"
-          title="Ouvrir la recherche globale et IA"
+          aria-label={t('navigation.open_assistant')}
+          title={t('navigation.open_assistant')}
         >
           <Sparkles className="w-3.5 h-3.5 text-primary dark:text-indigo-400 animate-pulse shrink-0" />
-          <span className="hidden lg:inline">Assistant IA</span>
+          <span className="hidden lg:inline">{t('navigation.assistant')}</span>
         </button>
 
         {/* PWA Prompt */}
@@ -116,6 +117,8 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
         <div className="relative ms-0.5 md:ms-1">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
+            aria-label={t('navigation.account')}
+            aria-expanded={showUserMenu}
             className="flex items-center gap-2 p-1 pe-1.5 lg:px-2.5 lg:py-1.5 rounded-full lg:rounded-xl bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/80 dark:hover:bg-slate-700/80 border border-slate-200/60 dark:border-slate-700/60 transition-all cursor-pointer group"
           >
             <div className="w-8 h-8 rounded-full overflow-hidden bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold shadow-inner shrink-0">
@@ -135,21 +138,7 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
                 {user?.name}
               </span>
               <span className="text-[10px] text-primary dark:text-indigo-400 font-bold uppercase tracking-wider truncate max-w-[90px] xl:max-w-[130px]">
-                {(() => {
-                  const role = user?.roles?.[0];
-                  if (!role) return 'Utilisateur';
-                  switch (role) {
-                    case 'super-admin': return 'Super Admin';
-                    case 'institution-admin': return 'Admin ENCG';
-                    case 'director': return 'Directeur ENCG';
-                    case 'department-head': return 'Chef de Dép.';
-                    case 'filiere-head': return 'Chef Filière';
-                    case 'professor': return 'Professeur';
-                    case 'vacataire': return 'Vacataire';
-                    case 'student': return 'Étudiant';
-                    default: return role.replace('-', ' ');
-                  }
-                })()}
+                {t(`roles.${user?.roles?.[0] ?? 'user'}`, { defaultValue: t('roles.user') })}
               </span>
             </div>
 

@@ -14,6 +14,8 @@ export function LanguageSwitcher() {
       <button
         type="button"
         onClick={() => setOpen(!open)}
+        aria-label={t('language')}
+        aria-expanded={open}
         className="flex items-center gap-2 p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
         title={t('language', { defaultValue: 'Change language' })}
       >
@@ -26,6 +28,9 @@ export function LanguageSwitcher() {
             <button
               key={code}
               type="button"
+              lang={code}
+              dir={LOCALE_META[code].dir}
+              aria-pressed={current === code}
               onClick={() => {
                 void changeAppLanguage(code)
                 setOpen(false)

@@ -1,26 +1,32 @@
-import { Gift,Target,Flame,CheckCircle2,Lock,Zap } from 'lucide-react';
+import { Coffee, Gift, Target, Flame, CheckCircle2, Lock, Printer, Shirt, Ticket, Zap } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
+import { useTranslation } from 'react-i18next';
 
 export default function StudentGamification() {
+  const { t } = useTranslation('students', { keyPrefix: 'rewards' });
   const { user } = useAuthStore();
 
   const rewards = [
-    { title: 'Café gratuit (Cafétéria)', cost: 50, icon: 'â˜•', available: true },
-    { title: 'Sweat Ã  capuche ENCG', cost: 500, icon: 'ðŸ‘•', available: false },
-    { title: 'Place VIP Gala Annuel', cost: 1000, icon: 'ðŸŽ­', available: false },
-    { title: 'Impression 100 pages', cost: 100, icon: 'ðŸ–¨ï¸', available: true },
+    { title: t('coffee'), cost: 50, Icon: Coffee, available: true },
+    { title: t('shirt'), cost: 500, Icon: Shirt, available: false },
+    { title: t('ticket'), cost: 1000, Icon: Ticket, available: false },
+    { title: t('print'), cost: 100, Icon: Printer, available: true },
   ];
 
   const quests = [
-    { title: 'Zéro Absence', desc: 'Aucune absence ce mois-ci', points: 100, progress: 80, completed: false },
-    { title: 'Rat de Bibliothèque', desc: 'Emprunter 5 livres', points: 50, progress: 100, completed: true },
-    { title: 'Esprit d\'Équipe', desc: 'Rejoindre 2 clubs', points: 75, progress: 100, completed: true },
-    { title: 'Excellence', desc: 'Valider un module > 16/20', points: 200, progress: 0, completed: false },
+    { title: t('absence'), desc: t('absence_desc'), points: 100, progress: 80, completed: false },
+    { title: t('library'), desc: t('library_desc'), points: 50, progress: 100, completed: true },
+    { title: t('team'), desc: t('team_desc'), points: 75, progress: 100, completed: true },
+    { title: t('excellence'), desc: t('excellence_desc'), points: 200, progress: 0, completed: false },
   ];
 
   return (
-    <div className="max-w-[1200px] mx-auto p-4 md:p-8 space-y-8 font-sans animate-in fade-in zoom-in duration-500 pb-24">
+    <div className="mx-auto max-w-[1200px] space-y-6 md:p-8">
+      <header className="space-y-2">
+        <h1 className="erp-page-title">{t('heading')}</h1>
+        <p className="text-sm text-muted-foreground">{t('demo')}</p>
+      </header>
       
       {/* Header & Digital Card */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -37,49 +43,47 @@ export default function StudentGamification() {
 
             <div className="flex justify-between items-start relative z-10">
               <div>
-                <img src="/logo-encg.png" alt="ENCG" className="h-8 object-contain mb-2 brightness-0 invert" />
-                <div className="text-[8px] font-bold uppercase tracking-widest text-blue-200">CARTE PRIVILÈGE</div>
+                <img src="/logo-encg.png" alt="ENCG" className="mb-2 h-8 rounded bg-white px-1.5 py-0.5 object-contain" />
+                <div className="text-[8px] font-bold uppercase tracking-widest text-blue-200">{t('card')}</div>
               </div>
               <Zap className="w-6 h-6 text-yellow-400 fill-yellow-400" />
             </div>
 
             <div className="relative z-10">
-              <div className="text-sm font-bold text-blue-200 mb-1">Solde Actuel</div>
-              <div className="text-4xl font-bold flex items-baseline gap-2">
-                250 <span className="text-xl font-bold text-yellow-400">ENCG Coins</span>
-              </div>
+              <div className="mb-1 text-sm font-bold text-blue-200">{t('balance')}</div>
+              <div className="text-2xl font-bold text-yellow-400">{t('coins', { count: 250 })}</div>
             </div>
 
             <div className="flex justify-between items-end relative z-10">
-              <div className="text-sm font-bold uppercase tracking-wider">{user?.name || 'ÉTUDIANT ENCG'}</div>
+              <div className="text-sm font-bold uppercase tracking-wider"><bdi>{user?.name || t('student')}</bdi></div>
               <div className="text-[10px] font-bold text-blue-200 bg-white/20 px-2 py-1 rounded backdrop-blur-sm">
-                NIVEAU 4
+                {t('level', { level: 4 })}
               </div>
             </div>
           </div>
         </div>
 
         {/* Level Progress */}
-        <div className="md:col-span-2 bg-card rounded-2xl p-8 shadow-sm border border-white/5 flex flex-col justify-center">
-          <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col justify-center rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-8 md:col-span-2">
+          <div className="mb-6 flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-2xl font-bold text-white mb-1 flex items-center gap-2">
-                Niveau 4 <Flame className="w-6 h-6 text-rose-500 fill-rose-500" />
+              <h2 className="mb-1 flex items-center gap-2 text-2xl font-bold text-card-foreground">
+                {t('level', { level: 4 })} <Flame className="w-6 h-6 text-rose-500 fill-rose-500" />
               </h2>
-              <p className="text-white/50 text-sm font-medium">Encore 50 Coins pour atteindre le Niveau 5 !</p>
+              <p className="text-sm font-medium text-muted-foreground">{t('progress')}</p>
             </div>
-            <div className="text-right">
-              <div className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-1">RANG</div>
-              <div className="text-xl font-bold text-[#003a8c]">Top 15%</div>
+            <div className="shrink-0 text-end">
+              <div className="mb-1 text-sm font-bold uppercase tracking-widest text-muted-foreground">{t('rank')}</div>
+              <div className="text-xl font-bold text-primary">{t('ranking')}</div>
             </div>
           </div>
 
           <div className="relative pt-4">
-            <div className="flex justify-between text-xs font-bold text-gray-400 mb-2">
-              <span>Niveau 4</span>
-              <span>Niveau 5</span>
+            <div className="mb-2 flex justify-between text-xs font-bold text-muted-foreground">
+              <span>{t('level', { level: 4 })}</span>
+              <span>{t('level', { level: 5 })}</span>
             </div>
-            <div className="w-full bg-white/[0.05] rounded-full h-4 overflow-hidden shadow-inner">
+            <div className="h-4 w-full overflow-hidden rounded-full bg-muted shadow-inner">
               <div className="bg-gradient-to-r from-rose-400 to-rose-600 h-full rounded-full w-[83%] relative">
                 <div className="absolute inset-0 bg-white/20" style={{ backgroundImage: 'linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent)', backgroundSize: '1rem 1rem' }}></div>
               </div>
@@ -94,23 +98,23 @@ export default function StudentGamification() {
         {/* Quests / Missions */}
         <div className="space-y-6">
           <div className="flex items-center gap-3 mb-2">
-            <Target className="w-6 h-6 text-[#003a8c]" />
-            <h3 className="text-xl font-bold text-white">Missions Actuelles</h3>
+            <Target className="size-6 text-primary" />
+            <h2 className="text-xl font-bold text-foreground">{t('quests')}</h2>
           </div>
           
           <div className="space-y-4">
             {quests.map((quest, idx) => (
-              <div key={idx} className={cn("bg-card rounded-2xl p-6 border transition-all", quest.completed ? "border-emerald-200 shadow-sm" : "border-white/5 shadow-sm")}>
+              <div key={idx} className={cn("rounded-2xl border bg-card p-4 shadow-sm sm:p-6", quest.completed ? "border-success/40" : "border-border")}>
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
                     {quest.completed ? (
                       <CheckCircle2 className="w-6 h-6 text-emerald-500" />
                     ) : (
-                      <div className="w-6 h-6 rounded-full border-2 border-white/10"></div>
+                      <div className="size-6 shrink-0 rounded-full border-2 border-border"></div>
                     )}
                     <div>
-                      <h4 className={cn("font-bold", quest.completed ? "text-emerald-700" : "text-white")}>{quest.title}</h4>
-                      <p className="text-xs text-white/50 font-medium">{quest.desc}</p>
+                      <h3 className="font-bold text-card-foreground">{quest.title}</h3>
+                      <p className="text-xs font-medium text-muted-foreground">{quest.desc}</p>
                     </div>
                   </div>
                   <div className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-lg text-xs font-bold flex items-center gap-1 border border-yellow-200">
@@ -119,8 +123,8 @@ export default function StudentGamification() {
                 </div>
 
                 {!quest.completed && (
-                  <div className="w-full bg-white/[0.05] rounded-full h-1.5 overflow-hidden">
-                    <div className="bg-[#003a8c] h-full rounded-full" style={{ width: `${quest.progress}%` }}></div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-primary" style={{ width: `${quest.progress}%` }}></div>
                   </div>
                 )}
               </div>
@@ -133,27 +137,26 @@ export default function StudentGamification() {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-3">
               <Gift className="w-6 h-6 text-[#e6007e]" />
-              <h3 className="text-xl font-bold text-white">Boutique ENCG</h3>
+              <h2 className="text-xl font-bold text-foreground">{t('shop')}</h2>
             </div>
-            <button className="text-[#003a8c] text-sm font-bold hover:underline">Voir tout</button>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             {rewards.map((reward, idx) => (
               <div key={idx} className={cn(
-                "rounded-2xl p-6 border flex flex-col items-center justify-center text-center transition-all",
-                reward.available ? "bg-card border-primary/20 hover:shadow-md hover:border-primary/20 cursor-pointer" : "bg-white/[0.02] border-white/5 opacity-70 grayscale"
+                "flex flex-col items-center justify-center rounded-2xl border p-3 text-center sm:p-6",
+                reward.available ? "border-primary/20 bg-card" : "border-border bg-muted/40"
               )}>
-                <div className="text-4xl mb-4">{reward.icon}</div>
-                <h4 className="font-bold text-white text-sm mb-2">{reward.title}</h4>
+                <reward.Icon aria-hidden="true" className="mb-4 size-8 text-primary" />
+                <h3 className="mb-2 text-sm font-bold text-foreground">{reward.title}</h3>
                 <div className="mt-auto">
                   {reward.available ? (
                     <span className="bg-yellow-100 text-yellow-700 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 border border-yellow-200">
-                      {reward.cost} Coins
+                      {t('coins', { count: reward.cost })}
                     </span>
                   ) : (
-                    <span className="bg-gray-200 text-white/50 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1">
-                      <Lock className="w-3 h-3" /> {reward.cost} Coins
+                    <span className="flex items-center justify-center gap-1 rounded-lg bg-muted px-3 py-1.5 text-xs font-bold text-muted-foreground">
+                      <Lock className="w-3 h-3" /> {t('coins', { count: reward.cost })}
                     </span>
                   )}
                 </div>

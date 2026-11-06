@@ -2,7 +2,8 @@ import { defineConfig, devices } from '@playwright/test'
 import fs from 'node:fs'
 
 const port = 4173
-const baseURL = `http://127.0.0.1:${port}`
+const staging = process.env.E2E_STAGING === '1'
+const baseURL = staging ? 'http://127.0.0.1:8088' : `http://127.0.0.1:${port}`
 
 const chromiumPath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
   || (process.platform === 'linux' && fs.existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined)
@@ -41,7 +42,7 @@ export default defineConfig({
       use: { ...devices['Pixel 5'] },
     },
   ],
-  webServer: {
+  webServer: staging ? undefined : {
     command: process.env.E2E_PRODUCTION
       ? `npx vite preview --host 127.0.0.1 --port ${port} --strictPort`
       : `npx vite --host 127.0.0.1 --port ${port} --strictPort`,

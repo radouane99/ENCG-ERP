@@ -137,7 +137,7 @@ export default function HolidayManager() {
   const fetchHolidays = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/admin/holidays');
+      const res = await api.get('/holidays');
       setHolidays(res.data.data || res.data || []);
     } catch {
       toast.error('Erreur lors du chargement des jours fériés.');
@@ -169,10 +169,10 @@ export default function HolidayManager() {
     }
     try {
       if (editingId) {
-        await api.put(`/admin/holidays/${editingId}`, form);
+        await api.put(`/holidays/${editingId}`, form);
         toast.success('Période modifiée avec succès !');
       } else {
-        await api.post('/admin/holidays', form);
+        await api.post('/holidays', form);
         toast.success('Période ajoutée avec succès !');
       }
       setShowModal(false);
@@ -185,7 +185,7 @@ export default function HolidayManager() {
   const handleDelete = async (id: number) => {
     if (!confirm('Voulez-vous vraiment supprimer cette période ?')) return;
     try {
-      await api.delete(`/admin/holidays/${id}`);
+      await api.delete(`/holidays/${id}`);
       toast.success('Période supprimée.');
       fetchHolidays();
     } catch {

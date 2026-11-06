@@ -17,12 +17,12 @@ export default function VacatairesManager() {
   // Fetch real data from the backend
   const { data: vacataires, isLoading } = useQuery({
     queryKey: ['vacataires'],
-    queryFn: () => api.get('/admin/hr/vacataires').then(res => res.data.data),
+    queryFn: () => api.get('/hr/vacataires').then(res => res.data.data),
   });
 
   const generatePaymentMutation = useMutation({
     mutationFn: (contractId: number) => {
-      return api.post(`/admin/hr/vacataires/contracts/${contractId}/payments`, {
+      return api.post(`/hr/vacataires/contracts/${contractId}/payments`, {
         hours_declared: 40 // simple test value
       });
     },

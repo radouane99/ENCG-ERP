@@ -1,6 +1,34 @@
 groups:
   - name: encg-erp
     rules:
+      - alert: ErpBackupOverdue
+        expr: time() - encg_backup_last_success_timestamp_seconds > 93600
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ERP : aucune sauvegarde PostgreSQL récente (26 heures)"
+      - alert: ErpRestoreUnverified
+        expr: encg_backup_restore_verified == 0
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ERP : la dernière sauvegarde nécessite un test de restauration"
+      - alert: ErpSchedulerStopped
+        expr: time() - encg_scheduler_last_heartbeat_timestamp_seconds > 300
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ERP : ordonnanceur sans signal depuis cinq minutes"
+      - alert: ErpJobsFailed
+        expr: encg_failed_jobs_24h > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "ERP : des tâches ont échoué durant les dernières 24 heures"
       - alert: ErpMetricsUnavailable
         expr: up{job="encg-application"} == 0
         for: 2m

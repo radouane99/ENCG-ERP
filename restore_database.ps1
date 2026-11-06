@@ -40,7 +40,7 @@ Remove-Item $TmpRestore -ErrorAction SilentlyContinue
 
 # 3. Reinitialiser le schema et restaurer le dump
 Write-Host "4. Nettoyage du schema public et restauration..." -ForegroundColor Yellow
-$resetSql = "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'encg_erp' AND pid != pg_backend_pid(); DROP SCHEMA public CASCADE; CREATE SCHEMA public; GRANT ALL ON SCHEMA public TO encg; GRANT ALL ON SCHEMA public TO public; CREATE EXTENSION IF NOT EXISTS ""uuid-ossp""; CREATE EXTENSION IF NOT EXISTS ""pg_trgm""; CREATE EXTENSION IF NOT EXISTS ""unaccent"";"
+$resetSql = "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'encg_erp' AND pid != pg_backend_pid(); DROP SCHEMA public CASCADE; CREATE SCHEMA public; CREATE EXTENSION IF NOT EXISTS ""uuid-ossp""; CREATE EXTENSION IF NOT EXISTS ""pg_trgm""; CREATE EXTENSION IF NOT EXISTS ""unaccent"";"
 docker exec encg_postgres psql -U encg -d encg_erp -c $resetSql
 docker exec encg_postgres sh -c "(echo 'SET session_replication_role = replica;' && cat /tmp/restore.sql && echo 'SET session_replication_role = origin;') | psql -U encg -d encg_erp"
 
@@ -58,7 +58,10 @@ if (Test-Path $EncodingFile) {
 
 # 6. Executer les migrations recentes
 Write-Host "7. Synchronisation des Migrations Laravel..." -ForegroundColor Yellow
-docker exec encg_backend php artisan migrate --force
+docker compose --project-directory "$Workspace" run --rm --no-deps --env-from-file "$Workspace/.env.database-maintenance" backend php artisan migrate --force
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+python "$Workspace/scripts/configure_local_database_roles.py" local
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 # 6. Nettoyer les caches Laravel et redemarrer la Queue
 Write-Host "7. Nettoyage des caches et redemarrage Queue..." -ForegroundColor Yellow

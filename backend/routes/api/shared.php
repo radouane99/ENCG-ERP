@@ -191,10 +191,12 @@ Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
 
     // Anti-Fraud Documents & PDFs
     Route::prefix('documents')->group(function () {
-        Route::post('/generate-attestation', [DocumentController::class, 'generateAttestation']);
+        Route::post('/generate-attestation', [DocumentController::class, 'generateAttestation'])
+            ->middleware('role:admin|super-admin|super_admin|institution-admin|institution_admin|director|scolarite');
         Route::get('/verify/{trackingCode}', [DocumentController::class, 'verifyDocument']);
 
-        Route::post('/generate', [DocumentController::class, 'generate']);
+        Route::post('/generate', [DocumentController::class, 'generate'])
+            ->middleware('role:admin|super-admin|super_admin|institution-admin|institution_admin|director|scolarite');
         Route::get('/verify-internal/{token}', [DocumentController::class, 'verify']);
 
         // Securely serve private student/candidate documents

@@ -38,7 +38,11 @@ jobs:
           terraform validate
           terraform test
       - name: Verify secret setup without real credentials
-        run: python3 -m unittest discover -s scripts/tests -p 'test_monitoring_setup.py'
+        run: python3 -m unittest discover -s scripts/tests
+      - name: Validate isolated staging configuration
+        run: |
+          python3 scripts/setup_staging.py
+          docker compose --env-file .env.staging -f docker-compose.staging.yml config --quiet
       - name: Validate Prometheus configuration and alert expressions
         run: |
           printf '%s' 'synthetic-token-used-only-for-config-validation' > "$RUNNER_TEMP/metrics-token"

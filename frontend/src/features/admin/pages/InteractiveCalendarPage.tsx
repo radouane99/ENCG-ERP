@@ -250,7 +250,7 @@ const [filieres, setFilieres] = useState<any[]>([]);
       setFilieres(list)
     }).catch(console.error)
 
-    api.get('/professors').then(r => setProfessors(r.data.data || r.data)).catch(console.error)
+    api.get('/hr/professors').then(r => setProfessors(r.data.data || r.data)).catch(console.error)
 
     if (!isAdmin) {
       setLoading(true)

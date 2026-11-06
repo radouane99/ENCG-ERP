@@ -6,6 +6,8 @@ use App\Jobs\ProcessAdmissionOcrJob;
 use App\Jobs\SendAdmissionNotificationJob;
 use App\Models\AdmissionCampaign;
 use App\Models\Application;
+use App\Models\DocumentRequest;
+use App\Models\DocumentType;
 use App\Models\Student;
 use App\Models\StudentDocument;
 use App\Models\StudentRegistration;
@@ -206,6 +208,9 @@ class AdmissionWorkflowTest extends TestCase
         });
         $response = $this->get(self::BASE.'/receipt?application_id='.$a->id)->assertOk()->assertHeader('Content-Type', 'application/pdf');
         $this->assertStringStartsWith('%PDF-', $response->getContent());
+        if (getenv('ADMISSION_PDF_PREVIEW')) {
+            file_put_contents(storage_path('app/preregistration-synthetic-preview.pdf'), $response->getContent());
+        }
         $this->assertSame(1, preg_match_all('~/Type\s*/Page\b~', $response->getContent()));
         $html = view('pdf.admission-preregistration', $data)->render();
         $this->assertStringContainsString('data:image/png;base64,', $html);
@@ -217,9 +222,6 @@ class AdmissionWorkflowTest extends TestCase
             'campaign_id' => $a->admission_campaign_id, 'application_id' => $a->id, 'cne' => $a->cne,
         ]);
         $this->assertSame('data:image/svg+xml;base64,'.base64_encode(QrCode::format('svg')->size(180)->margin(2)->generate($expectedUrl)), $data['qrData']);
-        if (getenv('ADMISSION_PDF_PREVIEW')) {
-            file_put_contents(storage_path('app/preregistration-synthetic-preview.pdf'), $response->getContent());
-        }
         $this->login($this->candidate('Z999999999', 'CD999999'));
         $this->get(self::BASE.'/receipt?application_id='.$a->id)->assertNotFound();
     }
@@ -231,11 +233,14 @@ class AdmissionWorkflowTest extends TestCase
         Sanctum::actingAs($u);
     }
 
-    private function documents(Application $a): void
+    private function documents(Application $a, ?string $bacPdf = null): void
     {
         Storage::fake('private');
         foreach (['bac', 'cnie', 'releve_notes', 'photo'] as $type) {
             $file = $type === 'photo' ? UploadedFile::fake()->image('photo.jpg', 300, 400) : UploadedFile::fake()->create('scan.pdf', 2, 'application/pdf');
+            if ($type === 'bac' && $bacPdf !== null) {
+                $file = UploadedFile::fake()->createWithContent('bac.pdf', $bacPdf);
+            }
             $this->post(self::BASE.'/documents', ['application_id' => $a->id, 'version' => $a->fresh()->version,
                 'type' => $type, 'file' => $file], ['Accept' => 'application/json'])->assertOk();
         }
@@ -357,13 +362,33 @@ class AdmissionWorkflowTest extends TestCase
         $this->assertEmpty($this->getJson(self::BASE.'/dossier')->assertOk()->json('candidate.documents'));
     }
 
-    public function test_real_submission_review_and_approval_create_one_registration_without_fabricated_number(): void
+    public function test_full_admission_workflow_from_document_upload_to_official_certificate(): void
     {
         Mail::fake();
+        Queue::fake();
+        Http::preventStrayRequests();
+        config(['services.gemini.key' => '', 'services.groq.key' => '', 'services.groq.api_key' => '']);
         $a = $this->candidate();
         $this->login($a);
-        $this->documents($a);
+        $this->postJson(self::BASE.'/submit', ['application_id' => $a->id, 'version' => $a->fresh()->version])
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Ajoutez toutes les pièces requises pour ce concours avant de soumettre.');
+        $this->assertSame('draft', $a->fresh()->dossier_status);
+        $this->assertDatabaseCount('student_registrations', 0);
+
+        $pdf = app('dompdf.wrapper')->loadHTML('<html><body><p>CNE N123456789</p><p>CIN AB123456</p></body></html>')->output();
+        $this->documents($a, $pdf);
+        $bac = StudentDocument::where('application_id', $a->id)->where('type', 'bac')->firstOrFail();
+        $run = DB::table('admission_ocr_runs')->where('document_id', $bac->id)->firstOrFail();
+        Queue::assertPushed(ProcessAdmissionOcrJob::class, fn ($job) => $job->runId === $run->id);
+        $this->assertSame('local', $run->mode);
+        (new ProcessAdmissionOcrJob($run->id))->handle(app(AdmissionOcrService::class));
+        $this->getJson(self::BASE.'/ocr/'.$run->id)->assertOk()
+            ->assertJsonPath('status', 'needs_review')->assertJsonPath('fields.cne.value', $a->cne);
+        Http::assertNothingSent();
+
         $this->postJson(self::BASE.'/submit', ['application_id' => $a->id, 'version' => $a->fresh()->version])->assertOk()->assertJsonPath('candidate.dossier_status', 'submitted');
+        $this->get(self::BASE.'/receipt?application_id='.$a->id)->assertOk()->assertHeader('Content-Type', 'application/pdf');
         $this->staff('professor');
         $this->postJson(self::BASE.'/decide', ['application_id' => $a->id])->assertForbidden();
         $this->postJson('/api/admin/tafem/verify-physical-dossier', ['student_id' => 1])->assertForbidden();
@@ -380,7 +405,18 @@ class AdmissionWorkflowTest extends TestCase
         $this->postJson(self::BASE.'/decide', $payload)->assertOk();
         $this->assertDatabaseCount('student_registrations', 1);
         $this->assertDatabaseHas('students', ['cne' => $a->cne, 'student_number' => $payload['official_number'], 'status' => 'active']);
+        $type = DocumentType::create(['code' => 'ATT_SCOL', 'name' => 'Attestation de scolarité', 'view_name' => 'pdf.attestation_scolarite', 'is_active' => true]);
+        $pending = DocumentRequest::create(['student_id' => $a->fresh()->student_id, 'document_type_id' => $type->id, 'status' => 'pending', 'requested_at' => now()]);
+        $documentPath = '/api/student-portal/document-requests/'.$pending->id;
         $this->login($a);
+        $this->getJson($documentPath.'/preview')->assertForbidden();
+        $this->getJson($documentPath.'/download')->assertForbidden();
+        $this->assertDatabaseMissing('generated_documents', ['document_request_id' => $pending->id]);
+        $this->staff('institution-admin');
+        $issued = $this->postJson('/api/documents/generate', ['document_request_id' => $pending->id])->assertCreated();
+        $this->assertNotEmpty($issued->json('data.verification_token'));
+        $this->login($a);
+        $this->get($documentPath.'/download')->assertOk()->assertDownload();
         $this->postJson(self::BASE.'/dossier', ['application_id' => $a->id, 'version' => $a->fresh()->version, 'first_name' => 'Late change'])->assertForbidden();
     }
 
@@ -489,6 +525,12 @@ class AdmissionWorkflowTest extends TestCase
         $notes = StudentDocument::where('application_id', $a->id)->where('type', 'releve_notes')->firstOrFail();
         $this->postJson(self::BASE.'/documents/'.$notes->id.'/review', ['application_id' => $a->id, 'version' => $a->fresh()->version, 'decision' => 'rejected', 'reason' => 'Image illisible'])->assertOk()->assertJsonPath('candidate.dossier_status', 'needs_correction');
         $this->login($a);
+        $this->getJson(self::BASE.'/dossier?application_id='.$a->id)->assertOk()
+            ->assertJsonPath('candidate.dossier_status', 'needs_correction')
+            ->assertJsonPath('candidate.reviews.0.document_type', 'releve_notes')
+            ->assertJsonPath('candidate.reviews.0.reason', 'Image illisible')
+            ->assertJsonPath('candidate.reviews.1.document_type', 'cnie')
+            ->assertJsonPath('candidate.reviews.1.reason', 'Verso manquant, merci de remplacer la pièce.');
         $this->deleteJson(self::BASE.'/documents', ['application_id' => $a->id, 'version' => $a->fresh()->version, 'type' => 'bac'])->assertUnprocessable();
         $this->post(self::BASE.'/documents', ['application_id' => $a->id, 'version' => $a->fresh()->version, 'type' => 'bac', 'file' => UploadedFile::fake()->createWithContent('new.pdf', '%PDF-1.4 SYNTHETIC REPLACEMENT')], ['Accept' => 'application/json'])->assertUnprocessable();
         $this->assertTrue($bac->fresh()->is_current);
@@ -512,6 +554,12 @@ class AdmissionWorkflowTest extends TestCase
         $r = $this->postJson(self::BASE.'/ocr', ['application_id' => $a->id, 'document_id' => $doc->id, 'mode' => 'local', 'consent' => true, 'consent_version' => 'admissions-v1'])->assertAccepted();
         (new ProcessAdmissionOcrJob($r->json('id')))->handle(app(AdmissionOcrService::class));
         $this->getJson(self::BASE.'/ocr/'.$r->json('id'))->assertOk()->assertJsonPath('status', 'needs_review')->assertJsonPath('fields.cne.value', 'N123456789');
+        $this->get(self::BASE.'/documents/'.$doc->id.'/file')->assertOk();
+
+        Sanctum::actingAs(User::factory()->create(['institution_id' => 1]));
+        $this->getJson(self::BASE.'/ocr/'.$r->json('id'))->assertNotFound();
+        $this->deleteJson(self::BASE.'/ocr/'.$r->json('id'))->assertNotFound();
+        $this->getJson(self::BASE.'/documents/'.$doc->id.'/file')->assertNotFound();
     }
 
     public function test_unlinked_document_requires_manual_identity_confirmation(): void

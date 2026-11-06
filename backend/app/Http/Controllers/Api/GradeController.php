@@ -826,26 +826,30 @@ class GradeController extends Controller
         $groupId = $request->input('group_id', $request->query('group_id'));
         $session = $request->input('session', $request->query('session', 'normale'));
 
-        $filiere = Filiere::find($filiereId);
-        $modules = Module::where('filiere_id', $filiereId)
+        $institutionId = $user->institution_id;
+        $filiere = Filiere::where('institution_id', $institutionId)->findOrFail($filiereId);
+        $modules = Module::where('institution_id', $institutionId)->where('filiere_id', $filiereId)
             ->where('semester_number', $semester)
             ->with('assessments')
             ->orderBy('id')
             ->get();
 
         if ($modules->isEmpty()) {
-            $modules = Module::where('filiere_id', $filiereId)->take(7)->get();
+            $modules = Module::where('institution_id', $institutionId)->where('filiere_id', $filiereId)->take(7)->get();
         }
 
         $academicYearId = $request->input('academic_year_id', $request->query('academic_year_id'));
+        $years = AcademicYear::where('institution_id', $institutionId);
         if ($academicYearId) {
-            $academicYear = AcademicYear::find($academicYearId) ?? AcademicYear::where('is_current', true)->first() ?? AcademicYear::first();
+            $academicYear = $years->findOrFail($academicYearId);
         } else {
-            $academicYear = AcademicYear::where('is_current', true)->first() ?? AcademicYear::first();
+            $academicYear = $years->orderByDesc('is_current')->orderByDesc('start_date')->firstOrFail();
         }
 
         $regQuery = StudentRegistration::where('filiere_id', $filiereId)
-            ->where('academic_year_id', $academicYear?->id ?? 1);
+            ->where('academic_year_id', $academicYear->id)
+            ->where('semester_number', $semester)
+            ->whereHas('student', fn ($query) => $query->where('institution_id', $institutionId));
 
         if ($groupId && ! in_array($groupId, ['all', 'null', 'undefined', ''], true)) {
             $regQuery->where('group_id', intval($groupId));

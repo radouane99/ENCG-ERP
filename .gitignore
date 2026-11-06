@@ -63,3 +63,6 @@ Thumbs.db
 /ENCG-ERP
 
 
+.env.staging
+.env.database-maintenance
+.env.staging.database-maintenance

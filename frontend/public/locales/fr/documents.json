@@ -1,1 +1,22 @@
-{"title":"Documents"}
+{
+  "title": "Documents",
+  "center": {
+    "title": "Centre de Documents Sécurisés",
+    "description": "Génération centralisée de documents officiels avec signature cryptographique et QR Code anti-fraude.",
+    "generate_heading": "Générer un document",
+    "type": "Type de document",
+    "types_unavailable": "Types de documents indisponibles",
+    "choose_type": "Choisir un type de document",
+    "student_id": "ID Étudiant",
+    "student_placeholder": "ID de l’étudiant (ex. 1)",
+    "generate": "Générer avec QR Cryptographique",
+    "ready": "Document Sécurisé Prêt",
+    "official_document": "Document officiel",
+    "token": "Code de vérification",
+    "download": "Télécharger PDF",
+    "preview_help": "Le QR code du document permet de vérifier son authenticité dans le registre de l’université.",
+    "generated": "Document généré.",
+    "generation_failed": "Erreur lors de la génération.",
+    "download_failed": "Le téléchargement du PDF a échoué."
+  }
+}

@@ -16,7 +16,7 @@ class QueryTokenAuth
     public function handle(Request $request, Closure $next): Response
     {
         if (! $request->headers->has('Authorization')) {
-            $token = AuthCookie::decode($request->cookies->get(AuthCookie::NAME));
+            $token = AuthCookie::decode($request->cookies->get(AuthCookie::name()));
             if (is_string($token) && $token !== '') {
                 $request->headers->set('Authorization', 'Bearer '.$token);
             }

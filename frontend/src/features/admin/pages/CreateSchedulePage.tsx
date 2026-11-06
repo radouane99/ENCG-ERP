@@ -30,7 +30,7 @@ export default function CreateSchedulePage() {
 
   const { data: professors } = useQuery({
     queryKey: ['professors'],
-    queryFn: () => api.get('/professors').then(res => res.data.data || res.data)
+    queryFn: () => api.get('/hr/professors').then(res => res.data.data || res.data)
   })
 
   const { data: rooms } = useQuery({

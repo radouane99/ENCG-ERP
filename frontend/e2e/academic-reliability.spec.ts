@@ -28,7 +28,7 @@ test.describe('Fiabilité académique', () => {
   })
   test('orientation en échec ne montre aucun profil de démonstration', async ({ page }) => {
     await mockApi(page); await seedSession(page, 'student')
-    await page.route(url => url.pathname === '/api/student/orientation/profile', route => route.fulfill({ ...json({ message: 'Profil non lié' }), status: 404 }))
+    await page.route(url => url.pathname === '/api/student-portal/orientation/profile', route => route.fulfill({ ...json({ message: 'Profil non lié' }), status: 404 }))
     await page.goto('/student/orientation'); await expect(page.getByRole('alert').filter({ hasText: 'Impossible de charger votre orientation' })).toBeVisible()
     await expect(page.getByText('GFC', { exact: true })).toHaveCount(0)
   })

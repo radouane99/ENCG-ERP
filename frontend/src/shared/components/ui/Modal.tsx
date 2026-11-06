@@ -183,7 +183,7 @@ const Modal: React.FC<ModalProps> = ({
           // Entrance animation
           'motion-safe:animate-scale-in',
           // Max height with scroll
-          'max-h-[calc(100vh-2rem)] flex flex-col',
+          'max-h-[calc(100dvh-2rem)] flex flex-col',
           className
         )}
       >
@@ -230,7 +230,7 @@ const Modal: React.FC<ModalProps> = ({
         )}
 
         {/* ── Body — scrollable ── */}
-        <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className="min-h-0 min-w-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
           {children}
         </div>
 

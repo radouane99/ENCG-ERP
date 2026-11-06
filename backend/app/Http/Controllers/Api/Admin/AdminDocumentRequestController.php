@@ -37,7 +37,10 @@ class AdminDocumentRequestController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = DocumentRequest::with(['student.user', 'documentType']);
+        $actor = $request->user();
+        $workspace = app(OperationalWorkspaceService::class);
+        abort_unless($workspace->isStaff($actor) || $actor->hasRole('hr-officer'), 403);
+        $query = $workspace->requests($actor)->with(['student.user', 'documentType']);
 
         if ($request->filled('status')) {
             $query->where('status', $request->string('status'));
@@ -67,7 +70,8 @@ class AdminDocumentRequestController extends Controller
 
         // Also fetch Professor Document Requests if table exists
         if (Schema::hasTable('professor_document_requests')) {
-            $profQuery = ProfessorDocumentRequest::with(['user', 'professor']);
+            $profQuery = ProfessorDocumentRequest::with(['user', 'professor'])
+                ->whereHas('user', fn ($query) => $query->where('institution_id', $actor->institution_id));
             if ($request->filled('status')) {
                 $profQuery->where('status', $request->string('status'));
             }
@@ -133,12 +137,14 @@ class AdminDocumentRequestController extends Controller
      */
     public function correctDates(Request $request, int $id): JsonResponse
     {
+        $actor = $request->user();
+        abort_unless(app(OperationalWorkspaceService::class)->isStaff($actor) || $actor->hasRole('hr-officer'), 403);
         $validated = $request->validate([
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
         ]);
 
-        $pDoc = ProfessorDocumentRequest::findOrFail($id);
+        $pDoc = ProfessorDocumentRequest::whereHas('user', fn ($query) => $query->where('institution_id', $actor->institution_id))->findOrFail($id);
         $pDoc->update([
             'start_date' => $validated['start_date'],
             'end_date' => $validated['end_date'],
@@ -156,6 +162,9 @@ class AdminDocumentRequestController extends Controller
      */
     public function updateStatus(UpdateDocumentRequestStatus $request, DocumentRequest $documentRequest): JsonResponse
     {
+        $workspace = app(OperationalWorkspaceService::class);
+        abort_unless($workspace->isStaff($request->user()), 403);
+        $documentRequest = $workspace->requests($request->user())->findOrFail($documentRequest->id);
         $adminNotes = $request->validated('admin_notes') ?? [];
         $rejectionReason = $request->input('rejection_reason') ?? $request->input('reason');
         if (! empty($rejectionReason)) {
@@ -189,12 +198,15 @@ class AdminDocumentRequestController extends Controller
      */
     public function updateProfessorStatus(Request $request, int $id): JsonResponse
     {
+        $actor = $request->user();
+        abort_unless(app(OperationalWorkspaceService::class)->isStaff($actor) || $actor->hasRole('hr-officer'), 403);
         $validated = $request->validate([
             'status' => 'required|in:approved,ready,rejected,pending,processing,collected',
             'rejection_reason' => 'nullable|string',
         ]);
 
-        $pDoc = ProfessorDocumentRequest::with('user')->findOrFail($id);
+        $pDoc = ProfessorDocumentRequest::with('user')
+            ->whereHas('user', fn ($query) => $query->where('institution_id', $actor->institution_id))->findOrFail($id);
         $newStatus = in_array($validated['status'], ['approved', 'ready']) ? 'ready' : $validated['status'];
 
         $pDoc->update([
@@ -313,6 +325,9 @@ class AdminDocumentRequestController extends Controller
      */
     public function generate(Request $request, DocumentRequest $documentRequest): JsonResponse
     {
+        $workspace = app(OperationalWorkspaceService::class);
+        abort_unless($workspace->isStaff($request->user()), 403);
+        $documentRequest = $workspace->requests($request->user())->findOrFail($documentRequest->id);
         $adminNotes = $documentRequest->admin_notes ?? [];
 
         if ($request->filled('signatory_title')) {
@@ -343,7 +358,7 @@ class AdminDocumentRequestController extends Controller
             return response()->json(['success' => false, 'message' => 'Identifiant invalide.'], 400);
         }
 
-        $documentRequest = DocumentRequest::find($id);
+        $documentRequest = app(OperationalWorkspaceService::class)->requests(auth()->user())->find($id);
         if (! $documentRequest) {
             $pDoc = ProfessorDocumentRequest::find($id);
             if ($pDoc) {
@@ -392,7 +407,7 @@ class AdminDocumentRequestController extends Controller
             return response()->json(['success' => false, 'message' => 'Identifiant invalide.'], 400);
         }
 
-        $documentRequest = DocumentRequest::find($id);
+        $documentRequest = app(OperationalWorkspaceService::class)->requests(auth()->user())->find($id);
         if (! $documentRequest) {
             $pDoc = ProfessorDocumentRequest::find($id);
             if ($pDoc) {
@@ -402,6 +417,7 @@ class AdminDocumentRequestController extends Controller
             return response()->json(['success' => false, 'message' => 'Aperçu indisponible.'], 404);
         }
 
+        $this->authorize('view', $documentRequest);
         try {
             // Always rebuild so template/layout fixes (ANNÉE, UTF-8) are visible immediately.
             $generatedDocument = $this->documentRequestService->generateDocumentPdf($documentRequest);
@@ -526,10 +542,13 @@ class AdminDocumentRequestController extends Controller
         $input = trim($request->string('cne_or_name')->toString());
         $docTypeName = trim($request->string('document_type')->toString());
         $targetType = $request->string('target_type')->toString() ?: (str_contains(strtolower($docTypeName), 'mission') || str_contains(strtolower($docTypeName), 'travail') || str_contains(strtolower($docTypeName), 'salaire') ? 'professor' : 'student');
+        $actor = $request->user();
+        abort_unless($actor->hasAnyRole(['admin', 'super-admin', 'institution-admin', 'director', $targetType === 'professor' ? 'hr-officer' : 'scolarite']), 403);
 
         // ── 1. Traitement Cas Enseignant ──
         if ($targetType === 'professor') {
-            $profUser = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['professor', 'vacataire', 'department-head']))
+            $profUser = User::where('institution_id', $actor->institution_id)
+                ->whereHas('roles', fn ($q) => $q->whereIn('name', ['professor', 'vacataire', 'department-head']))
                 ->where(function ($q) use ($input) {
                     $q->where('name', 'like', "%{$input}%")
                         ->orWhere('first_name', 'like', "%{$input}%")
@@ -540,11 +559,7 @@ class AdminDocumentRequestController extends Controller
                 ->first();
 
             if (! $profUser) {
-                $profUser = User::whereHas('roles', fn ($q) => $q->whereIn('name', ['professor', 'vacataire', 'department-head']))->first();
-            }
-
-            if (! $profUser) {
-                $profUser = $request->user();
+                return response()->json(['success' => false, 'message' => 'Enseignant introuvable.'], 404);
             }
 
             $docTypeKey = match (true) {
@@ -580,14 +595,11 @@ class AdminDocumentRequestController extends Controller
         }
 
         // ── 2. Traitement Cas Étudiant ──
-        $student = Student::where('cne', $input)
-            ->orWhere('student_number', $input)
-            ->orWhereHas('user', fn ($q) => $q->where('name', 'like', "%{$input}%")->orWhere('cin', $input))
+        $student = Student::where('institution_id', $actor->institution_id)
+            ->where(fn ($query) => $query->where('cne', $input)
+                ->orWhere('student_number', $input)
+                ->orWhereHas('user', fn ($q) => $q->where('name', 'like', "%{$input}%")->orWhere('cin', $input)))
             ->first();
-
-        if (! $student) {
-            $student = Student::first();
-        }
 
         if (! $student) {
             return response()->json(['success' => false, 'message' => 'Étudiant introuvable.'], 404);
@@ -675,21 +687,23 @@ class AdminDocumentRequestController extends Controller
      */
     public function bulkExportZip(Request $request)
     {
-        $filiereId = $request->query('filiere_id');
-        $docTypeCode = strtoupper($request->query('document_type', 'REL_NOTES'));
+        $actor = $request->user();
+        abort_unless(app(OperationalWorkspaceService::class)->isStaff($actor), 403);
+        $filters = $request->validate([
+            'filiere_id' => 'nullable|integer',
+            'document_type' => ['nullable', 'string', 'regex:/\A[A-Za-z0-9_-]{1,64}\z/'],
+        ]);
+        $filiereId = $filters['filiere_id'] ?? null;
+        $docTypeCode = strtoupper($filters['document_type'] ?? 'REL_NOTES');
         $onlyPassed = filter_var($request->query('only_passed', false), FILTER_VALIDATE_BOOLEAN);
 
-        $query = Student::with(['user', 'pathways.filiere']);
+        $query = Student::with(['user', 'pathways.filiere'])->where('institution_id', $actor->institution_id);
 
         if (! empty($filiereId)) {
             $query->whereHas('pathways', fn ($q) => $q->where('filiere_id', $filiereId));
         }
 
         $students = $query->get();
-
-        if ($students->isEmpty()) {
-            $students = Student::with(['user', 'pathways.filiere'])->take(15)->get();
-        }
 
         if ($students->isEmpty()) {
             return response()->json(['success' => false, 'message' => 'Aucun étudiant trouvé pour l\'exportation.'], 404);
@@ -714,7 +728,7 @@ class AdminDocumentRequestController extends Controller
         if (! file_exists($tempDir)) {
             mkdir($tempDir, 0755, true);
         }
-        $zipPath = $tempDir.'/'.$zipFileName;
+        $zipPath = $tempDir.'/'.Str::uuid().'.zip';
 
         $zip = new \ZipArchive;
         if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
@@ -759,7 +773,7 @@ class AdminDocumentRequestController extends Controller
 
                 if (file_exists($filePath)) {
                     $stdName = Str::slug($student->user?->name ?? ($student->last_name.'_'.$student->first_name));
-                    $cleanPdfName = sprintf('%s_%s_%s.pdf', $docTypeCode, $student->cne ?? $student->id, $stdName);
+                    $cleanPdfName = sprintf('%s_%s_%s.pdf', $docTypeCode, Str::slug($student->cne ?? (string) $student->id), $stdName);
                     $zip->addFile($filePath, $cleanPdfName);
                     $count++;
                 }

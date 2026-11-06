@@ -1,1 +1,22 @@
-{"title":"Documents"}
+{
+  "title": "Documents",
+  "center": {
+    "title": "Secure Document Center",
+    "description": "Issue official documents with a digital signature and a QR code for verification.",
+    "generate_heading": "Generate a document",
+    "type": "Document type",
+    "types_unavailable": "Document types unavailable",
+    "choose_type": "Choose a document type",
+    "student_id": "Student ID",
+    "student_placeholder": "Student ID (e.g. 1)",
+    "generate": "Generate with a secure QR code",
+    "ready": "Secure document ready",
+    "official_document": "Official document",
+    "token": "Verification code",
+    "download": "Download PDF",
+    "preview_help": "Use the document’s QR code to verify its authenticity in the university registry.",
+    "generated": "Document generated.",
+    "generation_failed": "Document generation failed.",
+    "download_failed": "PDF download failed."
+  }
+}

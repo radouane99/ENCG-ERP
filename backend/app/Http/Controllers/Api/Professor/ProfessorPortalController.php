@@ -979,9 +979,10 @@ class ProfessorPortalController extends Controller
     public function downloadDocumentPdf(Request $request, int $id)
     {
         // Retrieve real DB record with user and department
-        $doc = ProfessorDocumentRequest::with(['user.professor.department'])->findOrFail($id);
-
         $currentUser = $request->user();
+        $doc = ProfessorDocumentRequest::with(['user.professor.department'])
+            ->whereHas('user', fn ($query) => $query->where('institution_id', $currentUser->institution_id))
+            ->findOrFail($id);
         $isStaff = $currentUser->hasAnyRole(['admin', 'super-admin', 'director', 'institution-admin', 'hr-officer', 'secretaire-general']);
         if (! $isStaff && (int) $doc->user_id !== (int) $currentUser->id) {
             abort(403, 'Accès non autorisé à ce document.');
@@ -2072,30 +2073,18 @@ class ProfessorPortalController extends Controller
     {
         $groupId = (int) $request->input('group_id');
         $moduleId = (int) $request->input('module_id');
-        $subGroup = trim((string) $request->input('sub_group', ''));
 
-        if (! $groupId) {
-            return response()->json(['success' => false, 'message' => 'Groupe obligatoire.'], 422);
+        if (! $groupId || ! $moduleId) {
+            return response()->json(['success' => false, 'message' => 'Groupe et Module obligatoires.'], 422);
         }
 
-        // 🔐 SECURITY — Row-Level Access Control
-        $policy = new ProfessorCoursePolicy;
-        if (! $policy->manageGroupAttendance($request->user(), $groupId)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Accès refusé : vous n\'êtes pas affecté à ce groupe.',
-                'code' => 'NOT_YOUR_GROUP',
-            ], 403);
-        }
-
-        $query = AttendanceSession::with(['attendances'])
-            ->where('group_id', $groupId);
-
-        if ($moduleId) {
-            $query->where('module_id', $moduleId);
-        }
-
-        $sessions = $query->orderBy('session_date', 'asc')->get();
+        $user = $request->user();
+        $module = Module::where('institution_id', $user->institution_id)->findOrFail($moduleId);
+        abort_unless(app(ProfessorCoursePolicy::class)->manageModuleAttendance($user, $module, Group::findOrFail($groupId)), 403);
+        $sessions = AttendanceSession::with(['attendances' => fn ($query) => $query->whereHas('student', fn ($students) => $students->where('institution_id', $user->institution_id))])
+            ->where('group_id', $groupId)
+            ->where('module_id', $moduleId)
+            ->orderBy('session_date', 'asc')->get();
 
         $seancesMap = [];
         foreach ($sessions as $s) {
@@ -2166,15 +2155,11 @@ class ProfessorPortalController extends Controller
             return response()->json(['success' => false, 'message' => 'Groupe et Module obligatoires.'], 422);
         }
 
-        // 🔐 SECURITY — Row-Level Access Control: professor must be assigned to this group
-        $policy = new ProfessorCoursePolicy;
-        if (! $policy->manageGroupAttendance($request->user(), $groupId)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Accès refusé : vous n\'êtes pas affecté à ce groupe.',
-                'code' => 'NOT_YOUR_GROUP',
-            ], 403);
-        }
+        $user = $request->user();
+        $module = Module::where('institution_id', $user->institution_id)->findOrFail($moduleId);
+        $group = Group::with('academicYear')->findOrFail($groupId);
+        abort_unless(app(ProfessorCoursePolicy::class)->manageModuleAttendance($user, $module, $group), 403);
+        abort_if($group->academicYear?->is_locked, 409, 'Année académique verrouillée.');
 
         // Règle Académique ENCG Fès : Suspension du pointage d'assiduité ordinaire durant la semaine d'examens
         // Les cours magistraux et séances de TD sont suspendus durant les sessions d'examens.
@@ -2205,16 +2190,10 @@ class ProfessorPortalController extends Controller
             }
         }
 
-        $user = $request->user();
-        if (! $user) {
-            return response()->json(['success' => false, 'message' => 'Non authentifié.'], 401);
-        }
-
         $prof = $user->professor;
         $profId = $prof?->id ?: $user->id;
         $profType = ($prof?->contract_type === 'vacataire') ? 'vacataire' : 'permanent';
 
-        $group = Group::with('academicYear')->findOrFail($groupId);
         $academicYearId = $group->academic_year_id ?: (AcademicYear::where('is_current', true)->value('id') ?: 1);
         $sessionType = ! empty($subGroup) ? 'td' : 'cm';
 
@@ -2248,7 +2227,7 @@ class ProfessorPortalController extends Controller
             $session->save();
 
             // Récupérer uniquement les étudiants inscrits dans ce groupe / sous-groupe (isolation stricte)
-            $students = Student::whereHas('pathways', function ($p) use ($groupId, $subGroup) {
+            $students = Student::where('institution_id', $user->institution_id)->whereHas('pathways', function ($p) use ($groupId, $subGroup) {
                 $p->where('group_id', $groupId)->where('is_current', true);
                 if (! empty($subGroup)) {
                     $p->where('sub_group', $subGroup);

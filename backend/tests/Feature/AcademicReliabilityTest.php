@@ -11,6 +11,7 @@ use App\Models\DeliberationDecision;
 use App\Models\DeliberationJury;
 use App\Models\Grade;
 use App\Models\Group;
+use App\Models\Institution;
 use App\Models\Module;
 use App\Models\ModuleProfessor;
 use App\Models\ModulePvSignature;
@@ -63,6 +64,40 @@ class AcademicReliabilityTest extends TestCase
         $a = Assessment::create(['module_id' => $c['module']->id, 'academic_year_id' => $c['year']->id, 'type' => 'exam', 'weight' => 100]);
         Grade::create(['assessment_id' => $a->id, 'student_id' => $c['student']->id, 'value' => 0, 'absent' => false]);
         $this->getJson('/api/student-portal/orientation/profile')->assertOk()->assertJsonPath('data.current_semester_modules.0.grade', 0);
+    }
+
+    public function test_legacy_attendance_requires_the_exact_module_assignment(): void
+    {
+        $c = $this->context();
+        $teacher = $this->makeTestProfessor();
+        $teacher->user->assignRole(Role::findOrCreate('professor', 'sanctum'));
+        Sanctum::actingAs($teacher->user);
+        ModuleProfessor::create(['module_id' => $c['module']->id, 'group_id' => $c['group']->id, 'professor_id' => $teacher->id, 'professor_type' => Professor::class, 'academic_year_id' => $c['year']->id, 'session_type' => 'cm', 'assigned_hours' => 36]);
+        $otherModule = $this->makeTestModule($c['filiere']->id, ['code' => 'OTHER-MODULE']);
+        $url = '/api/professor-portal/student-lists/attendance';
+        $group = ['group_id' => $c['group']->id];
+        $valid = $group + ['module_id' => $c['module']->id];
+        $invalid = $group + ['module_id' => $otherModule->id];
+
+        $this->getJson($url.'?'.http_build_query($valid))->assertOk();
+        $this->getJson($url.'?'.http_build_query($invalid))->assertForbidden();
+        $this->postJson($url, $invalid)->assertForbidden();
+        $this->assertDatabaseMissing('attendance_sessions', ['group_id' => $c['group']->id, 'module_id' => $otherModule->id]);
+    }
+
+    public function test_semester_pv_rejects_filiere_and_year_from_another_institution(): void
+    {
+        $c = $this->context();
+        $this->actor();
+        $other = Institution::create(['name' => 'Other campus', 'code' => 'OTHER', 'slug' => 'other']);
+        $foreignFiliere = $this->makeTestFiliere(['institution_id' => $other->id]);
+        $foreignYear = $this->makeTestAcademicYear(['institution_id' => $other->id]);
+        $url = '/api/grades/pv/semester?';
+        $query = ['filiere_id' => $c['filiere']->id, 'academic_year_id' => $c['year']->id];
+
+        $this->getJson($url.http_build_query($query))->assertOk();
+        $this->getJson($url.http_build_query(array_replace($query, ['filiere_id' => $foreignFiliere->id])))->assertNotFound();
+        $this->getJson($url.http_build_query(array_replace($query, ['academic_year_id' => $foreignYear->id])))->assertNotFound();
     }
 
     public function test_registration_only_student_is_in_the_roster_and_closed_calls_cannot_be_changed(): void

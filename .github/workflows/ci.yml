@@ -94,6 +94,7 @@ jobs:
 
       - name: 🧪 Execute Pest / PHPUnit Test Suite
         run: |
+          set -euo pipefail
           cp phpunit.postgres.xml phpunit.xml
           ./vendor/bin/pest --compact 2>&1 | tee pest_output.log
         env:
@@ -301,8 +302,7 @@ jobs:
         run: composer audit --locked --no-dev --abandoned=report
 
   backup-restore-drill:
-    name: 🗄️ Postgres restore drill (manual)
-    if: github.event_name == 'workflow_dispatch'
+    name: 🗄️ Postgres restore drill
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

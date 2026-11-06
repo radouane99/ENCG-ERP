@@ -15,7 +15,7 @@ CREATE EXTENSION IF NOT EXISTS "unaccent";  -- For accent-insensitive search (us
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'encg_readonly') THEN
-        CREATE ROLE encg_readonly WITH LOGIN PASSWORD 'readonly_secret';
+        CREATE ROLE encg_readonly NOLOGIN;
         GRANT CONNECT ON DATABASE encg_erp TO encg_readonly;
         GRANT USAGE ON SCHEMA public TO encg_readonly;
     END IF;

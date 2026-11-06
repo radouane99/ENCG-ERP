@@ -65,7 +65,7 @@ class AdmissionPreregistrationService
         ]);
 
         $qrData = 'data:image/svg+xml;base64,'.base64_encode(
-            (string) QrCode::format('svg')->size(160)->margin(0)->generate($dossierUrl)
+            (string) QrCode::format('svg')->size(180)->margin(2)->generate($dossierUrl)
         );
 
         return Pdf::loadView('pdf.admission-preregistration', compact('app', 'photoData', 'qrData', 'logoBase64'))

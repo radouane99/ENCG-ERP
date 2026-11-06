@@ -9,7 +9,7 @@ if [ -f composer.json ]; then
   elif [ ! -d vendor/sentry/sentry-laravel ] && command -v composer >/dev/null 2>&1; then
     composer install --no-interaction --prefer-dist --no-scripts
   fi
-  if [ "${APP_ENV:-local}" != "production" ]; then
+  if [ "${APP_ENV:-local}" != "production" ] && [ "$(id -u)" = 0 ]; then
     chown -R www:www vendor storage bootstrap/cache 2>/dev/null || true
   fi
 fi

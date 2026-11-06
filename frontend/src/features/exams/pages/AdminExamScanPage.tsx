@@ -205,13 +205,14 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
       let realRoom = currentAmphiFilter || '—';
       let realSeatNum = '—';
       let realRowLetter = '';
-      let attendanceStatus = 'present';
+      let attendanceStatus = 'pending';
+      let verifiedQr = false;
       let realModuleName = '—';
       let realStartTime = '—';
 
       try {
-        const dbRes = await api.get('/admin/students', { params: { search: cleanToken } });
-        const found = dbRes.data?.data?.[0];
+        const dbRes = await api.get('/students', { params: { search: cleanToken } });
+        const found = dbRes.data?.data?.find((student: { cne?: string }) => student.cne?.toUpperCase() === cleanToken.toUpperCase());
         if (found) {
           realStudentName = `${found.first_name || found.user?.first_name || ''} ${found.last_name || found.user?.last_name || ''}`.trim();
           realCne = found.cne || cleanToken;
@@ -223,16 +224,18 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
       if (!realStudentName) {
         // Fallback API convocation call
         try {
-          const res = await api.post('/convocations/verify-qr', { token: cleanToken });
+          const res = await api.get(`/convocations/scan-verify/${encodeURIComponent(cleanToken)}`);
           const data = res.data?.data || res.data || res;
           if (data?.student_name) {
             realStudentName = data.student_name;
+            verifiedQr = data.seating_id != null;
+            attendanceStatus = data.status || attendanceStatus;
             realCne = data.cne || realCne;
             realCin = data.cin || realCin;
             realFiliere = data.filiere_name || realFiliere;
             realRoom = data.room_name || realRoom;
             realModuleName = data.module_name || realModuleName;
-            realStartTime = data.start_time || realStartTime;
+            realStartTime = data.exam_time || realStartTime;
             if (data.seat_number) {
               realSeatNum = String(data.seat_number);
             }
@@ -249,7 +252,7 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
       const isWrongRoom = currentAmphiFilter && realRoom && realRoom !== '—' && !realRoom.toLowerCase().includes(currentAmphiFilter.toLowerCase().split(' ')[0]);
 
       const updatedStudent = {
-        qr_token: cleanToken,
+        qr_token: verifiedQr ? cleanToken : null,
         student_name: realStudentName,
         cne: realCne,
         cin: realCin,
@@ -270,10 +273,12 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
       if (isWrongRoom) {
         setErrorMsg(`⚠️ ALERTE MAUVAIS AMPHI : L'étudiant doit composer dans : ${updatedStudent.room_name}`);
         playAudioFeedback('error');
-      } else {
+      } else if (verifiedQr) {
         setActionSuccess(`✓ Convocation Valide : ${updatedStudent.student_name} (${updatedStudent.seat_number})`);
         playAudioFeedback('success');
         speakWelcomeMessage(updatedStudent.student_name, updatedStudent.seat_number, updatedStudent.row_letter);
+      } else {
+        setErrorMsg('Étudiant trouvé. Scannez le QR de la convocation pour enregistrer sa présence.');
       }
 
 
@@ -287,8 +292,8 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
     }
   };
 
-  const handleUpdateStatus = async (status: 'present' | 'absent' | 'fraud') => {
-    if (!studentData) return;
+  const handleUpdateStatus = async (status: 'present' | 'absent') => {
+    if (!studentData?.qr_token || loading) return;
 
     setLoading(true);
     try {
@@ -305,13 +310,13 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
         return;
       }
 
-      await (examsApi as any).updateExamAttendance(studentData.qr_token, status as any);
-      const statusLabels = { present: 'Présent(e)', absent: 'Absent(e)', fraud: 'PV de Fraude Déclaré' };
+      await examsApi.updateExamAttendance(studentData.qr_token, status);
+      const statusLabels = { present: 'Présent(e)', absent: 'Absent(e)' };
 
 
       setStudentData({ ...studentData, status });
       setActionSuccess(`Émargement enregistré avec succès : ${statusLabels[status]}`);
-      playAudioFeedback(status === 'absent' ? 'warning' : status === 'fraud' ? 'error' : 'success');
+      playAudioFeedback(status === 'absent' ? 'warning' : 'success');
     } catch {
       setErrorMsg('Erreur lors de la mise à jour de l\'émargement.');
       playAudioFeedback('error');
@@ -612,9 +617,10 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
                 {/* Tactile Action Buttons: PRESENT / ABSENT / FRAUD */}
                 <div className="space-y-3 pt-2">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Valider l'Émargement Tactile en 1-Clic</span>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <button
                       onClick={() => handleUpdateStatus('present')}
+                      disabled={loading || !studentData.qr_token}
                       className={cn(
                         "py-3.5 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md",
                         studentData.status === 'present' ? "bg-emerald-600 text-white ring-4 ring-emerald-200" : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 hover:bg-emerald-100"
@@ -625,6 +631,7 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
 
                     <button
                       onClick={() => handleUpdateStatus('absent')}
+                      disabled={loading || !studentData.qr_token}
                       className={cn(
                         "py-3.5 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md",
                         studentData.status === 'absent' ? "bg-amber-600 text-white ring-4 ring-amber-200" : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 hover:bg-amber-100"
@@ -634,7 +641,7 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
                     </button>
 
                     <button
-                      onClick={() => handleUpdateStatus('fraud')}
+                      onClick={() => navigate('/discipline')}
                       className={cn(
                         "py-3.5 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md",
                         studentData.status === 'fraud' ? "bg-rose-600 text-white ring-4 ring-rose-200" : "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 hover:bg-rose-100"

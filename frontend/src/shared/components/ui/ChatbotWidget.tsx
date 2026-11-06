@@ -126,7 +126,7 @@ export default function ChatbotWidget() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          'fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer',
+          'fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] end-4 lg:bottom-6 lg:end-6 z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer',
           isOpen
             ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-600/50'
             : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 shadow-[0_0_30px_rgba(99,102,241,0.6)] animate-bounce-subtle'
@@ -147,8 +147,7 @@ export default function ChatbotWidget() {
       {/* Chat Floating Window */}
       {isOpen && (
         <div
-          className="fixed bottom-24 right-6 z-50 w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-indigo-500/30 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300"
-          style={{ height: '580px' }}
+          className="fixed bottom-[calc(8rem+env(safe-area-inset-bottom))] end-4 lg:bottom-24 lg:end-6 z-50 h-[580px] max-h-[calc(100dvh-9rem-env(safe-area-inset-bottom))] lg:max-h-[calc(100dvh-7rem)] w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-indigo-500/30 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 duration-300"
         >
           {/* Header Banner */}
           <div className="bg-gradient-to-r from-indigo-950 via-slate-900 to-purple-950 p-4 flex items-center justify-between border-b border-indigo-800/40 shrink-0">
@@ -178,7 +177,7 @@ export default function ChatbotWidget() {
           </div>
 
           {/* Messages Body */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-slate-50/50 dark:bg-slate-950/40">
+          <div className="min-h-0 flex-1 overflow-y-auto p-4 space-y-3.5 bg-slate-50/50 dark:bg-slate-950/40">
             {messages.map(msg => (
               <div key={msg.id} className={cn('flex gap-2 items-end group', msg.role === 'user' ? 'flex-row-reverse' : 'flex-row')}>
                 <div className={cn(

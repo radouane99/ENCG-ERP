@@ -2,6 +2,7 @@ import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import HttpBackend from 'i18next-http-backend'
+import { applyDocumentLocale } from '@shared/lib/locale'
 
 i18n
   .use(HttpBackend)
@@ -41,7 +42,7 @@ i18n
       loadPath: '/locales/{{lng}}/{{ns}}.json',
     },
     detection: {
-      order: ['localStorage', 'navigator'],
+      order: ['localStorage'],
       caches: ['localStorage'],
       lookupLocalStorage: 'encg_lang',
     },
@@ -53,14 +54,13 @@ i18n
     },
   })
 
-import { applyDocumentLocale } from '@shared/lib/locale'
-
 i18n.on('languageChanged', (lng) => {
   applyDocumentLocale(lng)
 })
 
 if (typeof document !== 'undefined') {
-  applyDocumentLocale(i18n.language || 'fr')
+  const savedLocale = localStorage.getItem('encg_lang')
+  if (savedLocale) applyDocumentLocale(savedLocale)
 }
 
 export default i18n

@@ -255,15 +255,15 @@ export default function AdmissionAdminWorkbench() {
   const app = dossier.data
   const requiredDocuments = app?.required_documents ?? documentTypes
   const selectedCampaign = campaigns.data?.find((c) => c.id === campaign)
-  const document = app?.documents[documentType]
-  const extracted = app?.ocr_runs?.find((r) => r.document_id === document?.id)
+  const selectedDocument = app?.documents[documentType]
+  const extracted = app?.ocr_runs?.find((r) => r.document_id === selectedDocument?.id)
 
   useEffect(() => setCorrections({}), [selected, documentType])
 
   const review = (decision: 'verified' | 'rejected') => {
-    if (!app || !document) return
+    if (!app || !selectedDocument) return
     void perform(async () => {
-      const r = await api.post(`${workflowBase}/documents/${document.id}/review`, {
+      const r = await api.post(`${workflowBase}/documents/${selectedDocument.id}/review`, {
         application_id: app.id,
         version: app.version,
         decision,
@@ -388,15 +388,15 @@ export default function AdmissionAdminWorkbench() {
           </div>
 
           {/* Active Campaign Selector Pill */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-white/10 p-3 sm:p-4 rounded-xl backdrop-blur-md border border-white/15">
-            <div className="space-y-1">
+          <div className="flex w-full min-w-0 max-w-full flex-col gap-3 rounded-xl border border-white/15 bg-white/10 p-3 backdrop-blur-md sm:w-auto sm:flex-row sm:items-center sm:p-4">
+            <div className="min-w-0 space-y-1">
               <label htmlFor="workbench-campaign-select" className="text-xs font-semibold uppercase tracking-wider text-blue-200">
                 Campagne active
               </label>
               <div className="flex items-center gap-2">
                 <select
                   id="workbench-campaign-select"
-                  className="min-h-10 rounded-lg border border-white/20 bg-slate-900/90 px-3 py-1.5 text-sm font-semibold text-white shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
+                  className="min-h-11 min-w-0 flex-1 truncate rounded-lg border border-white/20 bg-slate-900/90 px-3 py-1.5 text-sm font-semibold text-white shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer"
                   value={campaign ?? ''}
                   onChange={(e) => setCampaign(Number(e.target.value))}
                 >
@@ -414,7 +414,7 @@ export default function AdmissionAdminWorkbench() {
                   type="button"
                   aria-label="Actualiser les données"
                   title="Actualiser les données"
-                  className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600/80 hover:bg-blue-600 active:scale-95 text-white transition-all shadow-md disabled:opacity-50 cursor-pointer"
+                  className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-blue-600/80 hover:bg-blue-600 active:scale-95 text-white transition-all shadow-md disabled:opacity-50 cursor-pointer"
                   disabled={busy}
                   onClick={() => void refresh()}
                 >
@@ -654,11 +654,11 @@ export default function AdmissionAdminWorkbench() {
                       {p.step}
                     </span>
 
-                    {p.badge && (
+                    {'badge' in p && p.badge ? (
                       <span className="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-xs">
                         {p.badge} à revoir
                       </span>
-                    )}
+                    ) : null}
                   </div>
 
                   <div className="mt-3">
@@ -1006,7 +1006,7 @@ export default function AdmissionAdminWorkbench() {
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="flex flex-wrap items-center justify-between gap-3">
               {/* Search input with clear button */}
-              <div className="relative flex-1 min-w-[280px]">
+              <div className="relative w-full min-w-0 sm:w-auto sm:flex-1">
                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   aria-label="Recherche candidat par CNE, CIN, nom ou prénom"
@@ -1375,9 +1375,9 @@ export default function AdmissionAdminWorkbench() {
                             <FileText size={14} className="text-blue-400" />
                             {documentLabels[documentType]}
                           </span>
-                          {document?.signed_url && (
+                          {selectedDocument?.signed_url && (
                             <a
-                              href={document.signed_url}
+                              href={selectedDocument.signed_url}
                               target="_blank"
                               rel="noreferrer"
                               className="inline-flex items-center gap-1 text-blue-300 hover:text-white"
@@ -1389,17 +1389,17 @@ export default function AdmissionAdminWorkbench() {
                         </div>
 
                         <div className="flex-1 flex items-center justify-center p-2">
-                          {document ? (
-                            document.mime_type.startsWith('image/') ? (
+                          {selectedDocument ? (
+                            selectedDocument.mime_type.startsWith('image/') ? (
                               <img
-                                src={document.signed_url}
+                                src={selectedDocument.signed_url}
                                 alt={documentLabels[documentType]}
                                 className="max-h-[460px] w-full object-contain rounded-lg"
                               />
                             ) : (
                               <iframe
                                 title={`Aperçu ${documentLabels[documentType]}`}
-                                src={document.signed_url}
+                                src={selectedDocument.signed_url}
                                 className="h-[460px] w-full rounded-lg bg-white"
                               />
                             )
@@ -1521,7 +1521,7 @@ export default function AdmissionAdminWorkbench() {
                       <div className="flex flex-wrap items-center gap-2">
                         <button
                           type="button"
-                          disabled={busy || !document || !['submitted', 'under_review'].includes(app.dossier_status)}
+                          disabled={busy || !selectedDocument || !['submitted', 'under_review'].includes(app.dossier_status)}
                           className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 disabled:opacity-50 cursor-pointer"
                           onClick={() => review('verified')}
                         >
@@ -1531,7 +1531,7 @@ export default function AdmissionAdminWorkbench() {
 
                         <button
                           type="button"
-                          disabled={busy || !document || !reason || !['submitted', 'under_review'].includes(app.dossier_status)}
+                          disabled={busy || !selectedDocument || !reason || !['submitted', 'under_review'].includes(app.dossier_status)}
                           className="inline-flex items-center gap-1.5 rounded-xl border border-rose-300 bg-rose-50 px-4 py-2 text-xs font-bold text-rose-800 hover:bg-rose-100 disabled:opacity-50 cursor-pointer dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300"
                           onClick={() => review('rejected')}
                         >
