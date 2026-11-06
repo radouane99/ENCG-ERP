@@ -126,7 +126,10 @@ class GradeService
      */
     public function isExamLocked(Assessment $assessment): ?string
     {
-        $institution = Institution::find($assessment->module?->institution_id);
+        $module = $assessment->relationLoaded('module')
+            ? $assessment->module
+            : ($assessment->module_id ? Module::find($assessment->module_id) : null);
+        $institution = Institution::find($module?->institution_id);
         if (! $institution) {
             return null;
         }

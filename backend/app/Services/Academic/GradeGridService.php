@@ -27,7 +27,7 @@ class GradeGridService
         }
         $students = Student::with('user')->whereHas('registrations', fn ($q) => $q->where('group_id', $groupId)->where('academic_year_id', $group->academic_year_id))->get()
             ->sortBy(fn ($s) => ($s->last_name ?? '').' '.($s->first_name ?? ''))->values();
-        $assessments = Assessment::where('module_id', $moduleId)->get();
+        $assessments = Assessment::with('module')->where('module_id', $moduleId)->get();
         $cc = $assessments->first(fn ($a) => strtolower($a->type) === 'cc');
         $exam = $assessments->first(fn ($a) => strtolower($a->type) === 'exam');
         abort_unless($cc && $exam && $assessments->count() === 2, 422, 'Configurez CC et Exam ou utilisez la saisie par évaluation.');

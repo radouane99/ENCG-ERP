@@ -358,7 +358,7 @@ class AdminDocumentRequestController extends Controller
             return response()->json(['success' => false, 'message' => 'Identifiant invalide.'], 400);
         }
 
-        $documentRequest = app(OperationalWorkspaceService::class)->requests(auth()->user())->find($id);
+        $documentRequest = app(OperationalWorkspaceService::class)->requests(auth()->user())->with(['student.user', 'documentType'])->find($id);
         if (! $documentRequest) {
             $pDoc = ProfessorDocumentRequest::find($id);
             if ($pDoc) {
@@ -407,7 +407,7 @@ class AdminDocumentRequestController extends Controller
             return response()->json(['success' => false, 'message' => 'Identifiant invalide.'], 400);
         }
 
-        $documentRequest = app(OperationalWorkspaceService::class)->requests(auth()->user())->find($id);
+        $documentRequest = app(OperationalWorkspaceService::class)->requests(auth()->user())->with(['student.user', 'documentType'])->find($id);
         if (! $documentRequest) {
             $pDoc = ProfessorDocumentRequest::find($id);
             if ($pDoc) {
