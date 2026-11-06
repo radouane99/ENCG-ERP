@@ -46,7 +46,7 @@ export default function StudentExams() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border text-center flex flex-col justify-center items-center">
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-border text-center flex flex-col justify-center items-center">
           <div className="text-3xl font-bold text-foreground dark:text-white">{exams.length}</div>
           <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">TOTAL EXAMENS</div>
         </div>
@@ -67,7 +67,7 @@ export default function StudentExams() {
       {/* Exams List */}
       <div className="space-y-4">
         {exams.length === 0 ? (
-          <div className="bg-card dark:bg-card rounded-2xl p-10 text-center border border-border dark:border-border text-slate-400 text-sm font-bold">
+          <div className="bg-card rounded-2xl p-10 text-center border border-border text-slate-400 text-sm font-bold">
             Aucun examen programmé pour le moment.
           </div>
         ) : exams.map((exam: { name: string; type: string; date?: string; time?: string; duration?: string; status?: string; action?: string }, idx: number) => (

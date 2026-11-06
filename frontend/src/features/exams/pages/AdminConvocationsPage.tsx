@@ -497,7 +497,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
   const activeSessionObj = sessions?.find((s: any) => s.id === selectedSessionId)
 
   return (
-    <div className="min-h-screen bg-slate-50/60 dark:bg-background font-sans text-foreground dark:text-foreground pb-20">
+    <div className="min-h-screen bg-slate-50/60 dark:bg-background font-sans text-foreground pb-20">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-card p-4">
           <p className="text-sm text-muted-foreground">Diffusez les convocations sur le portail après validation du placement. L’envoi des emails reste une action distincte.</p>
@@ -574,7 +574,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
         {/* 🧭 2. CENTRE DE CONTRÔLE DE SESSION & STATUTS */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
           {/* Left 8 cols: Session Switcher Cards */}
-          <div className="lg:col-span-8 bg-card dark:bg-card rounded-2xl border border-slate-200/80 dark:border-border p-6 shadow-sm flex flex-col justify-between space-y-4">
+          <div className="lg:col-span-8 bg-card rounded-2xl border border-slate-200/80 dark:border-border p-6 shadow-sm flex flex-col justify-between space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-primary/5 dark:bg-blue-950 text-[#0f2863] dark:text-blue-400 flex items-center justify-center font-bold">
@@ -614,12 +614,12 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                         'p-3.5 rounded-2xl border-2 text-left transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between',
                         isSelected
                           ? 'border-[#0f2863] bg-blue-50/50 dark:bg-blue-950/40 shadow-sm ring-2 ring-blue-500/20'
-                          : "border-border dark:border-border hover:border-slate-300 bg-card dark:bg-card"
+                          : "border-border hover:border-slate-300 bg-card"
                       )}
                     >
                       <div className="flex items-start justify-between gap-1 mb-2">
                         <div>
-                          <p className={cn("font-bold text-xs truncate max-w-[130px]", isSelected ? 'text-[#0f2863] dark:text-blue-400' : "text-foreground dark:text-foreground")}>
+                          <p className={cn("font-bold text-xs truncate max-w-[130px]", isSelected ? 'text-[#0f2863] dark:text-blue-400' : "text-foreground")}>
                             {session.name}
                           </p>
                           <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-muted dark:bg-card text-muted-foreground dark:text-foreground">
@@ -670,9 +670,9 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
 
         {/* 📊 3. CENTRE INTÉGRÉ DE DISPATCHING & MÉTRIQUES CLÉS */}
         {selectedSessionId && (
-          <div className="bg-card dark:bg-card rounded-2xl border border-slate-200/90 dark:border-border p-6 md:p-8 shadow-sm space-y-6">
+          <div className="bg-card rounded-2xl border border-slate-200/90 dark:border-border p-6 md:p-8 shadow-sm space-y-6">
             {/* Top Stat Counters Ribbon */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pb-6 border-b border-border dark:border-border">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pb-6 border-b border-border">
               {[
                 {
                   label: 'Étudiants Inscrits',
@@ -709,7 +709,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                   color: 'text-amber-600 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-950/60',
                 },
               ].map(({ label, value, badge, sub, icon: Icon, color }) => (
-                <div key={label} className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-border dark:border-border flex flex-col justify-between space-y-2">
+                <div key={label} className="p-4 rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 border border-border flex flex-col justify-between space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{label}</span>
                     <div className={cn('w-7 h-7 rounded-xl flex items-center justify-center', color)}>
@@ -748,7 +748,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Step 1 */}
-                <div className="p-5 rounded-2xl border-2 border-border dark:border-border bg-card dark:bg-card hover:border-primary/20 dark:hover:border-primary transition-all flex flex-col justify-between space-y-4 shadow-sm group">
+                <div className="p-5 rounded-2xl border-2 border-border bg-card hover:border-primary/20 dark:hover:border-primary transition-all flex flex-col justify-between space-y-4 shadow-sm group">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-primary dark:text-blue-400 bg-primary/5 dark:bg-blue-950 px-2.5 py-0.5 rounded-full">
@@ -772,7 +772,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                 </div>
 
                 {/* Step 2 */}
-                <div className="p-5 rounded-2xl border-2 border-border dark:border-border bg-card dark:bg-card hover:border-amber-200 dark:hover:border-amber-800 transition-all flex flex-col justify-between space-y-4 shadow-sm group">
+                <div className="p-5 rounded-2xl border-2 border-border bg-card hover:border-amber-200 dark:hover:border-amber-800 transition-all flex flex-col justify-between space-y-4 shadow-sm group">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950 px-2.5 py-0.5 rounded-full">
@@ -797,7 +797,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                     <button
                       onClick={() => setIsManualAssignModalOpen(true)}
                       type="button"
-                      className="w-full bg-card dark:bg-card border-2 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-amber-800 dark:text-amber-300 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs hover:scale-[1.01] active:scale-[0.99]"
+                      className="w-full bg-card border-2 border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-amber-800 dark:text-amber-300 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs hover:scale-[1.01] active:scale-[0.99]"
                     >
                       <span>Affectation Sur-Mesure ✍️</span>
                     </button>
@@ -805,7 +805,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                 </div>
 
                 {/* Step 3 */}
-                <div className="p-5 rounded-2xl border-2 border-border dark:border-border bg-card dark:bg-card hover:border-emerald-200 dark:hover:border-emerald-800 transition-all flex flex-col justify-between space-y-4 shadow-sm group">
+                <div className="p-5 rounded-2xl border-2 border-border bg-card hover:border-emerald-200 dark:hover:border-emerald-800 transition-all flex flex-col justify-between space-y-4 shadow-sm group">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2.5 py-0.5 rounded-full">
@@ -834,9 +834,9 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
 
         {/* 📑 5. DATA HUB: TABS, FILTERS & MAIN TABLE / CARDS */}
         {selectedSessionId && (
-          <div className="bg-card dark:bg-card rounded-2xl border border-slate-200/80 dark:border-border shadow-sm overflow-hidden space-y-0">
+          <div className="bg-card rounded-2xl border border-slate-200/80 dark:border-border shadow-sm overflow-hidden space-y-0">
             {/* Tab Header Toolbar */}
-            <div className="p-5 border-b border-border dark:border-border flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 bg-slate-50/50 dark:bg-slate-900/80">
+            <div className="p-5 border-b border-border flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 bg-slate-50/50 dark:bg-slate-900/80">
               <div className="flex items-center gap-2 p-1.5 bg-slate-200/60 dark:bg-card rounded-2xl shrink-0">
                 {[
                   { key: 'students', label: 'Étudiants & Salles', icon: Users, count: groupedStudents.length },
@@ -852,7 +852,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                         "px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer",
                         isActive
                           ? 'bg-[#0f2863] text-white shadow-md'
-                          : "text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-white"
+                          : "text-muted-foreground hover:text-foreground dark:hover:text-white"
                       )}
                     >
                       <Icon className="w-3.5 h-3.5" />
@@ -879,7 +879,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                       <select
                         value={selectedFiliere}
                         onChange={(e) => setSelectedFiliere(e.target.value)}
-                        className="h-10 px-3.5 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold text-foreground dark:text-foreground outline-none rounded-[var(--control-radius)]"
+                        className="h-10 px-3.5 border border-border bg-card text-xs font-bold text-foreground outline-none rounded-[var(--control-radius)]"
                       >
                         <option value="all">Toutes les Filières</option>
                         {filieres.map((f) => (
@@ -894,7 +894,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value as any)}
-                      className="h-10 px-3.5 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold text-foreground dark:text-foreground outline-none rounded-[var(--control-radius)]"
+                      className="h-10 px-3.5 border border-border bg-card text-xs font-bold text-foreground outline-none rounded-[var(--control-radius)]"
                     >
                       <option value="all">Tous les Statuts</option>
                       <option value="sent">Emails Envoyés</option>
@@ -905,14 +905,14 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                     <div className="flex items-center p-1 bg-slate-200/60 dark:bg-card rounded-xl">
                       <button
                         onClick={() => setViewMode('table')}
-                        className={cn('p-2 rounded-lg transition-all cursor-pointer', viewMode === 'table' ? "bg-card dark:bg-card text-[#0f2863] dark:text-white shadow-sm" : "text-muted-foreground")}
+                        className={cn('p-2 rounded-lg transition-all cursor-pointer', viewMode === 'table' ? "bg-card text-[#0f2863] dark:text-white shadow-sm" : "text-muted-foreground")}
                         title="Vue Tableau"
                       >
                         <ListFilter className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => setViewMode('cards')}
-                        className={cn('p-2 rounded-lg transition-all cursor-pointer', viewMode === 'cards' ? "bg-card dark:bg-card text-[#0f2863] dark:text-white shadow-sm" : "text-muted-foreground")}
+                        className={cn('p-2 rounded-lg transition-all cursor-pointer', viewMode === 'cards' ? "bg-card text-[#0f2863] dark:text-white shadow-sm" : "text-muted-foreground")}
                         title="Vue Cartes"
                       >
                         <LayoutGrid className="w-4 h-4" />
@@ -926,7 +926,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                     <button
                       onClick={() => setIsManualAssignModalOpen(true)}
                       type="button"
-                      className="h-10 px-4 bg-card dark:bg-card border-2 border-amber-400 dark:border-amber-600 text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-xs cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
+                      className="h-10 px-4 bg-card border-2 border-amber-400 dark:border-amber-600 text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-xs cursor-pointer hover:scale-[1.01] active:scale-[0.99]"
                     >
                       <Shield className="w-3.5 h-3.5 text-amber-600" />
                       <span>Affectation Sur-Mesure ✍️</span>
@@ -975,12 +975,12 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                 ) : (
                   <>
                     {/* Live Search bar */}
-                    <div className="p-4 bg-slate-50/50 dark:bg-slate-900/40 border-b border-border dark:border-border flex items-center justify-between gap-4">
+                    <div className="p-4 bg-slate-50/50 dark:bg-slate-900/40 border-b border-border flex items-center justify-between gap-4">
                       <div className="relative w-full max-w-md">
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <input
                           type="text"
-                          className="w-full pl-10 pr-4 py-2.5 bg-card dark:bg-card border border-border dark:border-border text-xs font-bold placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
+                          className="w-full pl-10 pr-4 py-2.5 bg-card border border-border text-xs font-bold placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
                           placeholder="Rechercher par Nom, CNE, CIN ou Filière..."
                           value={searchStudent}
                           onChange={(e) => setSearchStudent(e.target.value)}
@@ -1030,7 +1030,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                       <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                           <thead>
-                            <tr className="bg-gradient-to-r from-slate-50 to-slate-100/80 dark:from-slate-800/60 dark:to-slate-800/40 border-b border-border dark:border-border">
+                            <tr className="bg-gradient-to-r from-slate-50 to-slate-100/80 dark:from-slate-800/60 dark:to-slate-800/40 border-b border-border">
                               <th className="px-5 py-3.5 text-left w-10">
                                 <input
                                   type="checkbox"
@@ -1081,7 +1081,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                                         {initials}
                                       </div>
                                       <div>
-                                        <p className="font-bold text-[13px] text-foreground dark:text-foreground leading-tight">{s.student_name}</p>
+                                        <p className="font-bold text-[13px] text-foreground leading-tight">{s.student_name}</p>
                                         <div className="flex items-center gap-1.5 mt-0.5">
                                           <span className="font-mono text-[10px] font-bold text-muted-foreground bg-muted dark:bg-card px-1.5 py-0.5 rounded">
                                             {s.cne || '—'}
@@ -1107,7 +1107,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                                           </span>
                                         )}
                                       </div>
-                                      <div className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground dark:text-muted-foreground">
+                                      <div className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
                                         <MapPin className="w-3 h-3 text-indigo-400 shrink-0" />
                                         <span>{s.exams?.[0]?.room_name ? `${s.exams[0].room_name} · Place ${s.exams[0].seat_number ? `N° ${s.exams[0].seat_number}` : '—'}` : (s.room_name || '—')}</span>
                                       </div>
@@ -1192,7 +1192,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                         {filteredStudents.map((s: any) => (
                           <div
                             key={s.student_id || s.cne}
-                            className="p-5 rounded-2xl border border-border dark:border-border bg-card dark:bg-card shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4"
+                            className="p-5 rounded-2xl border border-border bg-card shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-4"
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="flex items-center gap-3">
@@ -1212,13 +1212,13 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                             </div>
 
                             <div className="p-3 bg-muted/50 dark:bg-slate-800/60 rounded-2xl space-y-1.5 text-xs">
-                              <div className="flex items-center justify-between text-muted-foreground dark:text-muted-foreground">
+                              <div className="flex items-center justify-between text-muted-foreground">
                                 <span className="flex items-center gap-1 font-medium">
                                   <MapPin className="w-3.5 h-3.5 text-primary" /> Salle assignée :
                                 </span>
                                 <span className="font-bold text-foreground dark:text-white">{s.exams?.[0]?.room_name || s.room_name || '—'}</span>
                               </div>
-                              <div className="flex items-center justify-between text-muted-foreground dark:text-muted-foreground">
+                              <div className="flex items-center justify-between text-muted-foreground">
                                 <span>Table attribuée :</span>
                                 <span className="font-mono font-bold text-[#0f2863] dark:text-blue-400">
                                   {s.exams?.[0]?.seat_number ? `N° ${s.exams[0].seat_number}` : '—'}
@@ -1226,7 +1226,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                               </div>
                             </div>
 
-                            <div className="flex items-center justify-between pt-2 border-t border-border dark:border-border">
+                            <div className="flex items-center justify-between pt-2 border-t border-border">
                               <button
                                 onClick={() => setSelectedStudentDetail(s)}
                                 className="text-xs font-bold text-[#0f2863] dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
@@ -1286,7 +1286,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                       <button
                         onClick={() => setIsManualAssignModalOpen(true)}
                         type="button"
-                        className="px-5 py-2.5 bg-card dark:bg-card border-2 border-amber-400 dark:border-amber-600 text-amber-800 dark:text-amber-300 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
+                        className="px-5 py-2.5 bg-card border-2 border-amber-400 dark:border-amber-600 text-amber-800 dark:text-amber-300 rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
                       >
                         <span>Affectation Sur-Mesure ✍️</span>
                       </button>
@@ -1324,7 +1324,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                     )}
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
-                        <thead className="text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-muted/50 dark:bg-slate-800/60 border-b border-border dark:border-border">
+                        <thead className="text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-muted/50 dark:bg-slate-800/60 border-b border-border">
                           <tr>
                             <th className="px-5 py-4 text-left w-10">
                               <input
@@ -1363,7 +1363,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                                     {(s.professor_name || 'P').charAt(0).toUpperCase()}
                                   </div>
                                   <div>
-                                    <p className="font-bold text-foreground dark:text-foreground">{s.professor_name}</p>
+                                    <p className="font-bold text-foreground">{s.professor_name}</p>
                                     <p className="text-[11px] text-muted-foreground font-medium">{s.professor_email || "Corps Professoral ENCG"}</p>
                                   </div>
                                 </div>
@@ -1463,7 +1463,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                       return (
                         <div
                           key={exam.id}
-                          className="flex items-center justify-between p-4 rounded-2xl border border-border dark:border-border hover:border-primary/20 dark:hover:border-primary hover:bg-blue-50/20 transition-all"
+                          className="flex items-center justify-between p-4 rounded-2xl border border-border hover:border-primary/20 dark:hover:border-primary hover:bg-blue-50/20 transition-all"
                         >
                           <div className="flex items-center gap-4">
                             <div className="w-14 h-14 rounded-2xl bg-[#0f2863] text-white flex flex-col items-center justify-center shrink-0 shadow-md">
@@ -1490,7 +1490,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                           <div className="flex items-center gap-4">
                             <div className="text-right">
                               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Convocations</p>
-                              <p className="text-sm font-bold text-foreground dark:text-foreground">
+                              <p className="text-sm font-bold text-foreground">
                                 {seatings} générées · {sent} envoyées
                               </p>
                             </div>
@@ -1517,7 +1517,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
         {/* 📋 MODAL: STUDENT DETAILED EXAM SCHEDULE */}
         {selectedStudentDetail && createPortal(
           <div className="fixed inset-0 z-[99998] bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 animate-in fade-in duration-200">
-            <div className="bg-card dark:bg-card rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-sm overflow-hidden border border-slate-200/80 dark:border-slate-700/60">
+            <div className="bg-card rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-sm overflow-hidden border border-slate-200/80 dark:border-slate-700/60">
               {/* Modal Header */}
               <div className="relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-r from-[#0f2863] to-blue-700" />
@@ -1557,10 +1557,10 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
               </div>
 
               {/* Student Metadata Card */}
-              <div className="p-4 bg-muted/50 dark:bg-slate-800/60 border-b border-border dark:border-border grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div className="p-4 bg-muted/50 dark:bg-slate-800/60 border-b border-border grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                 <div>
                   <span className="text-slate-400 font-medium block text-[10px] uppercase">Filière</span>
-                  <span className="font-bold text-foreground dark:text-foreground">{selectedStudentDetail.filiere_name || selectedStudentDetail.filiere || '—'}</span>
+                  <span className="font-bold text-foreground">{selectedStudentDetail.filiere_name || selectedStudentDetail.filiere || '—'}</span>
                 </div>
                 <div>
                   <span className="text-slate-400 font-medium block text-[10px] uppercase">Affectation Amphi</span>
@@ -1604,13 +1604,13 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                           <td className="px-4 py-3">
                             <span className="w-6 h-6 rounded-full bg-muted dark:bg-card text-muted-foreground font-bold flex items-center justify-center text-[10px]">{idx + 1}</span>
                           </td>
-                          <td className="px-4 py-3 font-bold text-[12px] text-foreground dark:text-foreground max-w-[200px]">
+                          <td className="px-4 py-3 font-bold text-[12px] text-foreground max-w-[200px]">
                             {ex.exam_name}
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center gap-1.5">
                               <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
-                              <span className="font-medium text-muted-foreground dark:text-muted-foreground">
+                              <span className="font-medium text-muted-foreground">
                                 {ex.exam_date ? new Date(ex.exam_date).toLocaleDateString('fr-FR') : '—'}
                               </span>
                               {ex.start_time && (
@@ -1650,7 +1650,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
               </div>
 
               {/* Footer */}
-              <div className="p-4 px-5 border-t border-border dark:border-border bg-slate-50/60 dark:bg-slate-800/40 flex items-center justify-between gap-3">
+              <div className="p-4 px-5 border-t border-border bg-slate-50/60 dark:bg-slate-800/40 flex items-center justify-between gap-3">
                 <button
                   type="button"
                   onClick={() => {
@@ -1659,7 +1659,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                       handlePreviewStudentPdf(seatingId, selectedStudentDetail.student_name)
                     }
                   }}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-card dark:bg-card border border-border dark:border-border text-slate-700 dark:text-foreground hover:border-blue-400 hover:text-primary rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-card border border-border text-slate-700 dark:text-foreground hover:border-blue-400 hover:text-primary rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
                 >
                   <Eye className="w-3.5 h-3.5" /> Aperçu PDF
                 </button>
@@ -1688,7 +1688,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
         {/* 🚨 MODAL: FLASH ALERT SALLE */}
         {flashAlertModalOpen && createPortal(
           <div className="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-[99998] flex items-center justify-center p-4 animate-in fade-in duration-200">
-            <div className="bg-card dark:bg-card rounded-2xl max-w-md w-full overflow-hidden shadow-sm border border-border dark:border-border">
+            <div className="bg-card rounded-2xl max-w-md w-full overflow-hidden shadow-sm border border-border">
               <div className="p-5 bg-gradient-to-r from-amber-500 to-amber-600 text-white flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
@@ -1715,7 +1715,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                   <select
                     value={flashRoomName}
                     onChange={(e) => setFlashRoomName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold text-foreground dark:text-foreground outline-none rounded-[var(--control-radius)]"
+                    className="w-full px-3.5 py-2.5 border border-border bg-card text-xs font-bold text-foreground outline-none rounded-[var(--control-radius)]"
                   >
                     <option value="Amphithéâtre A">Amphithéâtre A</option>
                     <option value="Amphithéâtre B">Amphithéâtre B</option>
@@ -1735,12 +1735,12 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
                     value={flashMessage}
                     onChange={(e) => setFlashMessage(e.target.value)}
                     placeholder="Ex: URGENT ENCG - L'examen de Comptabilité prévu en Salle 4 est transféré en Amphi B à 09h30 !"
-                    className="w-full px-3.5 py-2.5 border border-border dark:border-border bg-card dark:bg-card text-xs text-foreground dark:text-foreground placeholder-slate-400 outline-none rounded-[var(--control-radius)]"
+                    className="w-full px-3.5 py-2.5 border border-border bg-card text-xs text-foreground placeholder-slate-400 outline-none rounded-[var(--control-radius)]"
                   />
                 </div>
               </div>
 
-              <div className="p-4 px-6 border-t border-border dark:border-border bg-muted/50 dark:bg-slate-800/40 flex items-center justify-end gap-3">
+              <div className="p-4 px-6 border-t border-border bg-muted/50 dark:bg-slate-800/40 flex items-center justify-end gap-3">
                 <button
                   onClick={() => setFlashAlertModalOpen(false)}
                   className="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-foreground rounded-xl text-xs font-bold transition-colors cursor-pointer"
@@ -1844,7 +1844,7 @@ const { data: exams, isLoading: isLoadingExams } = useQuery({
 
               {/* PDF Viewer Body */}
               <div className="relative flex min-h-0 flex-1 flex-col bg-muted dark:bg-card p-2 sm:p-4">
-                <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl border border-border dark:border-border bg-slate-200 shadow-inner flex flex-col">
+                <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl border border-border bg-slate-200 shadow-inner flex flex-col">
                   {previewLoading && (
                     <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-white/95 backdrop-blur-sm">
                       <Loader2 className="h-9 w-9 animate-spin text-[#0f2863]" />

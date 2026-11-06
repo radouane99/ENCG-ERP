@@ -225,8 +225,8 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
 
       {/* KPI Section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border p-5 rounded-2xl shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-primary/5 dark:bg-blue-950/60 text-[#0f2863] dark:text-blue-300 flex items-center justify-center font-bold text-lg">
+        <div className="bg-card border border-slate-200/80 dark:border-border p-5 rounded-2xl shadow-sm flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-primary/5 dark:bg-blue-950/60 text-[#1a3673] dark:text-blue-300 flex items-center justify-center font-bold text-lg">
             <Users className="w-6 h-6" />
           </div>
           <div>
@@ -235,7 +235,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
           </div>
         </div>
 
-        <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border p-5 rounded-2xl shadow-sm flex items-center gap-4">
+        <div className="bg-card border border-slate-200/80 dark:border-border p-5 rounded-2xl shadow-sm flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-400 flex items-center justify-center font-bold text-lg">
             <UserCheck className="w-6 h-6" />
           </div>
@@ -245,7 +245,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
           </div>
         </div>
 
-        <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border p-5 rounded-2xl shadow-sm flex items-center gap-4">
+        <div className="bg-card border border-slate-200/80 dark:border-border p-5 rounded-2xl shadow-sm flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold text-lg">
             <Award className="w-6 h-6" />
           </div>
@@ -255,7 +255,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
           </div>
         </div>
 
-        <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border p-5 rounded-2xl shadow-sm flex items-center gap-4">
+        <div className="bg-card border border-slate-200/80 dark:border-border p-5 rounded-2xl shadow-sm flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold text-lg">
             <Printer className="w-6 h-6" />
           </div>
@@ -267,7 +267,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
       </div>
 
       {/* Global Search & Filters */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-6 space-y-4">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-6 space-y-4">
         <div className="relative">
           <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
           <input 
@@ -278,7 +278,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
               setSearch(e.target.value)
               setPage(1)
             }}
-            className="w-full pl-12 pr-10 py-3.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-sm font-semibold text-foreground dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
+            className="w-full pl-12 pr-10 py-3.5 bg-muted/50 dark:bg-card border border-border text-sm font-semibold text-foreground dark:text-white placeholder-slate-400 outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
           />
           {search && (
             <button 
@@ -392,10 +392,10 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
       </div>
 
       {/* Table List */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-border dark:border-border bg-slate-50/50 dark:bg-slate-800/50">
+            <thead className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-border bg-slate-50/50 dark:bg-slate-800/50">
               <tr>
                 <th className="px-8 py-5">Identité de l'Étudiant</th>
                 <th className="px-8 py-5">CIN & CNE / Massar</th>
@@ -407,7 +407,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
               {loading ? (
                 <tr>
                   <td colSpan={4} className="text-center py-16 text-slate-400">
-                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#0f2863] mb-4" />
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#1a3673] mb-4" />
                     Chargement du registre général des étudiants...
                   </td>
                 </tr>
@@ -421,7 +421,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
                 <tr key={s.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-2xl bg-primary/10 dark:bg-blue-950 text-[#0f2863] dark:text-blue-300 flex items-center justify-center font-bold text-xs shrink-0 border border-primary/20 dark:border-primary">
+                      <div className="w-10 h-10 rounded-2xl bg-primary/10 dark:bg-blue-950 text-[#1a3673] dark:text-blue-300 flex items-center justify-center font-bold text-xs shrink-0 border border-primary/20 dark:border-primary">
                         {getInitials(s.first_name, s.last_name)}
                       </div>
                       <div>
@@ -542,7 +542,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
         </div>
 
         {/* Pagination */}
-        <div className="p-6 border-t border-border dark:border-border flex items-center justify-between">
+        <div className="p-6 border-t border-border flex items-center justify-between">
           <p className="text-xs font-bold text-slate-400">
             Page {page} sur {totalPages} ({total} étudiants enregistrés)
           </p>
@@ -550,17 +550,17 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
             <button 
               disabled={page === 1} 
               onClick={() => setPage(p => p - 1)} 
-              className="px-3 py-1.5 border border-border dark:border-border rounded-xl text-muted-foreground dark:text-foreground hover:bg-muted/50 text-xs font-bold disabled:opacity-50 cursor-pointer"
+              className="px-3 py-1.5 border border-border rounded-xl text-muted-foreground dark:text-foreground hover:bg-muted/50 text-xs font-bold disabled:opacity-50 cursor-pointer"
             >
               Précédent
             </button>
-            <button className="px-4 py-1.5 bg-[#0f2863] text-white rounded-xl shadow-md text-xs font-bold">
+            <button className="px-4 py-1.5 bg-[#1a3673] text-white rounded-xl shadow-md text-xs font-bold">
               {page}
             </button>
             <button 
               disabled={page === totalPages || totalPages === 0} 
               onClick={() => setPage(p => p + 1)} 
-              className="px-3 py-1.5 border border-border dark:border-border rounded-xl text-muted-foreground dark:text-foreground hover:bg-muted/50 text-xs font-bold disabled:opacity-50 cursor-pointer"
+              className="px-3 py-1.5 border border-border rounded-xl text-muted-foreground dark:text-foreground hover:bg-muted/50 text-xs font-bold disabled:opacity-50 cursor-pointer"
             >
               Suivant
             </button>
@@ -588,8 +588,8 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
       {/* Student Profile Drawer */}
       {selectedStudentForModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] text-white flex items-center justify-between">
+          <div className="bg-card border border-border rounded-2xl shadow-sm w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 bg-gradient-to-r from-[#1a3673] via-[#1a387e] to-[#09193d] text-white flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center font-bold text-amber-300 shadow-lg">
                   <Users className="w-5 h-5 text-amber-400" />
@@ -605,7 +605,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
             </div>
 
             <div className="p-6 space-y-4 text-xs">
-              <div className="bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border dark:border-border space-y-2">
+              <div className="bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border space-y-2">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Matricule Apogée :</span>
                   <span className="font-mono font-bold text-foreground dark:text-white">{selectedStudentForModal.student_number || '20240043'}</span>
@@ -622,7 +622,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
                   <span className="text-muted-foreground">Email Académique :</span>
                   <span className="font-mono font-bold text-primary dark:text-indigo-400">{selectedStudentForModal.email}</span>
                 </div>
-                <div className="flex justify-between border-t border-border dark:border-border pt-2">
+                <div className="flex justify-between border-t border-border pt-2">
                   <span className="text-muted-foreground">Filière & Semestre :</span>
                   <span className="font-bold text-foreground dark:text-white">
                     {selectedStudentForModal.current_filiere || 'TC'} — Semestre {selectedStudentForModal.current_semester || 1}
@@ -660,7 +660,7 @@ const [editingStudent, setEditingStudent] = useState<Student | null>(null);
                 </button>
                 <button
                   onClick={() => handleExportTranscriptPdf(selectedStudentForModal)}
-                  className="px-4 py-2 bg-[#0f2863] text-white rounded-xl font-bold flex items-center gap-1.5 shadow-md"
+                  className="px-4 py-2 bg-[#1a3673] text-white rounded-xl font-bold flex items-center gap-1.5 shadow-md"
                 >
                   <Printer className="w-4 h-4 text-amber-400" /> Relevé de Notes A4
                 </button>

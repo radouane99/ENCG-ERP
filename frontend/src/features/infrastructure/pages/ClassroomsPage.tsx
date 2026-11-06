@@ -598,7 +598,7 @@ const [reservations, setReservations] = useState<any[]>([]);
           className={cn(
             "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'inventory'
-              ? "bg-[#0f2863] text-white shadow-md"
+              ? "bg-[#1a3673] text-white shadow-md"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
         >
@@ -611,7 +611,7 @@ const [reservations, setReservations] = useState<any[]>([]);
           className={cn(
             "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'availability'
-              ? "bg-[#0f2863] text-white shadow-md"
+              ? "bg-[#1a3673] text-white shadow-md"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
         >
@@ -624,7 +624,7 @@ const [reservations, setReservations] = useState<any[]>([]);
           className={cn(
             "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'reservations'
-              ? "bg-[#0f2863] text-white shadow-md"
+              ? "bg-[#1a3673] text-white shadow-md"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
         >
@@ -780,7 +780,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                     className={cn(
                       "px-3.5 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 border shadow-2xs",
                       typeFilter === opt.value
-                        ? "bg-[#0f2863] text-white border-[#0f2863] shadow-md shadow-indigo-950/20"
+                        ? "bg-[#1a3673] text-white border-[#1a3673] shadow-md shadow-indigo-950/20"
                         : "bg-muted/60 hover:bg-muted text-muted-foreground border-transparent hover:text-foreground"
                     )}
                   >
@@ -909,7 +909,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                 {/* Batch Print Door Signs Button */}
                 <button
                   onClick={handlePrintAllDoorSigns}
-                  className="px-3.5 py-1.5 bg-[#001A4B] hover:bg-[#0A2558] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md hover:shadow-indigo-500/20 transition-all active:scale-95"
+                  className="px-3.5 py-1.5 bg-[#1a3673] hover:bg-[#0A2558] text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-md hover:shadow-indigo-500/20 transition-all active:scale-95"
                   title="Imprimer en continu toutes les affiches de porte filtrées"
                 >
                   <Printer className="w-3.5 h-3.5 text-amber-300" />
@@ -1109,7 +1109,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                           <button
                             onClick={() => handlePrintDoorNotice(r)}
                             title="Imprimer l'Affiche de Porte Officielle A4"
-                            className="flex-1 py-2.5 px-3 bg-gradient-to-r from-[#001A4B] via-[#0A2558] to-[#113A7A] hover:opacity-95 text-white rounded-xl text-xs font-bold tracking-wide cursor-pointer transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-indigo-500/20 active:scale-[0.98]"
+                            className="flex-1 py-2.5 px-3 bg-gradient-to-r from-[#1a3673] via-[#0A2558] to-[#113A7A] hover:opacity-95 text-white rounded-xl text-xs font-bold tracking-wide cursor-pointer transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-indigo-500/20 active:scale-[0.98]"
                           >
                             <Printer className="w-4 h-4 text-amber-300" />
                             <span>Affiche A4</span>
@@ -1245,7 +1245,7 @@ const [reservations, setReservations] = useState<any[]>([]);
                             <div className="flex items-center justify-end gap-1.5">
                               <button
                                 onClick={() => handlePrintDoorNotice(r)}
-                                className="px-2.5 py-1.5 bg-[#001A4B] hover:bg-[#0A2558] text-white rounded-xl text-xs font-bold inline-flex items-center gap-1 cursor-pointer shadow-xs"
+                                className="px-2.5 py-1.5 bg-[#1a3673] hover:bg-[#0A2558] text-white rounded-xl text-xs font-bold inline-flex items-center gap-1 cursor-pointer shadow-xs"
                                 title="Imprimer Affiche de Porte A4"
                               >
                                 <Printer className="w-3.5 h-3.5 text-amber-300" />

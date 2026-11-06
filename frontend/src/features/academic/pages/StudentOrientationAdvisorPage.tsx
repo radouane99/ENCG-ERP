@@ -213,10 +213,10 @@ const [simulatedModules, setSimulatedModules] = useState<ModuleSimItem[]>([]);
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             {/* Left: Competency Spider / Radar Chart */}
-            <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-slate-200/80 dark:border-border space-y-4">
+            <div className="bg-card rounded-2xl p-6 shadow-sm border border-slate-200/80 dark:border-border space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-base font-bold text-foreground dark:text-foreground flex items-center gap-2">
+                  <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                     <BarChart2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                     <span>Radar de Compétences</span>
                   </h3>
@@ -249,7 +249,7 @@ const [simulatedModules, setSimulatedModules] = useState<ModuleSimItem[]>([]);
             {/* Right: Master Specialization Cards List */}
             <div className="lg:col-span-2 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-bold text-foreground dark:text-foreground flex items-center gap-2">
+                <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                   <GraduationCap className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                   <span>Classement des Spécialisations Master</span>
                 </h3>
@@ -262,7 +262,7 @@ const [simulatedModules, setSimulatedModules] = useState<ModuleSimItem[]>([]);
                     <div
                       key={rec.code}
                       className={cn(
-                        "bg-card dark:bg-card rounded-2xl p-5 border shadow-sm space-y-3 relative overflow-hidden transition-all hover:shadow-md",
+                        "bg-card rounded-2xl p-5 border shadow-sm space-y-3 relative overflow-hidden transition-all hover:shadow-md",
                         idx === 0 ? "border-purple-400 dark:border-purple-600 ring-2 ring-purple-500/20" : "border-slate-200/80 dark:border-border"
                       )}
                     >
@@ -275,7 +275,7 @@ const [simulatedModules, setSimulatedModules] = useState<ModuleSimItem[]>([]);
                             #{idx + 1}
                           </div>
                           <div>
-                            <h4 className="text-xs font-bold text-foreground dark:text-foreground">
+                            <h4 className="text-xs font-bold text-foreground">
                               {rec.code} — {rec.name}
                             </h4>
                           </div>
@@ -302,12 +302,12 @@ const [simulatedModules, setSimulatedModules] = useState<ModuleSimItem[]>([]);
                         />
                       </div>
 
-                      <p className="text-[11px] text-muted-foreground dark:text-muted-foreground leading-relaxed line-clamp-2">
+                      <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
                         {rec.description}
                       </p>
 
                       {/* Career Prospects */}
-                      <div className="space-y-1 pt-1 border-t border-border dark:border-border text-[10px]">
+                      <div className="space-y-1 pt-1 border-t border-border text-[10px]">
                         <span className="font-bold text-slate-700 dark:text-foreground flex items-center gap-1">
                           <Briefcase className="w-3 h-3 text-purple-500" /> Débouchés professionnels :
                         </span>
@@ -361,9 +361,9 @@ const [simulatedModules, setSimulatedModules] = useState<ModuleSimItem[]>([]);
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             
             {/* Left: Interactive Modules Sliders Form */}
-            <div className="lg:col-span-2 bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-slate-200/80 dark:border-border space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-border dark:border-border">
-                <h3 className="text-base font-bold text-foreground dark:text-foreground flex items-center gap-2">
+            <div className="lg:col-span-2 bg-card rounded-2xl p-6 shadow-sm border border-slate-200/80 dark:border-border space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-border">
+                <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-purple-600" />
                   <span>Modules du Semestre {selectedSemester}</span>
                 </h3>
@@ -379,7 +379,7 @@ const [simulatedModules, setSimulatedModules] = useState<ModuleSimItem[]>([]);
                     <div key={idx} className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 space-y-2">
                       <div className="flex items-center justify-between text-xs">
                         <div className="space-y-0.5">
-                          <span className="font-bold text-foreground dark:text-foreground block">
+                          <span className="font-bold text-foreground block">
                             {m.name}
                           </span>
                           <span className="text-[10px] text-slate-400 font-medium">Coefficient : {m.coefficient}</span>
@@ -394,7 +394,7 @@ const [simulatedModules, setSimulatedModules] = useState<ModuleSimItem[]>([]);
                           )}>
                             {isVal ? 'Validé' : isElim ? 'Éliminatoire (<06)' : 'Compensable'}
                           </span>
-                          <span className="font-mono font-bold text-sm text-foreground dark:text-foreground min-w-[50px] text-right">
+                          <span className="font-mono font-bold text-sm text-foreground min-w-[50px] text-right">
                             {(m.grade === null ? 'À renseigner' : m.grade.toFixed(2))}/20
                           </span>
                         </div>
@@ -416,9 +416,9 @@ const [simulatedModules, setSimulatedModules] = useState<ModuleSimItem[]>([]);
               </div>
 
               {/* Target GPA Selector */}
-              <div className="pt-3 border-t border-border dark:border-border flex items-center justify-between">
+              <div className="pt-3 border-t border-border flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <label className="text-xs font-bold text-foreground dark:text-foreground">Moyenne Générale Cible Souhaitée :</label>
+                  <label className="text-xs font-bold text-foreground">Moyenne Générale Cible Souhaitée :</label>
                   <p className="text-[10px] text-slate-400">Calcule l'effort nécessaire pour décrocher une mention</p>
                 </div>
                 <div className="flex items-center gap-2">

@@ -2,13 +2,9 @@
 
 namespace App\Providers;
 
-use App\Events\DocumentProcessed;
 use App\Events\GradeDeadlineWarning;
-use App\Events\OcrProcessingComplete;
-use App\Listeners\HandleOcrComplete;
 use App\Listeners\LogFailedLogin;
 use App\Listeners\LogSuccessfulLogin;
-use App\Listeners\NotifyDocumentProcessed;
 use App\Models\AbsenceJustification;
 use App\Models\Complaint;
 use App\Models\Deliberation;
@@ -425,22 +421,6 @@ class AppServiceProvider extends ServiceProvider
                     ->notifyProfessorsGradeDeadline($event->endDate, $event->sessionLabel);
             }
         );
-
-        // Listeners pour les événements OCR (si implémentés)
-        if (class_exists(OcrProcessingComplete::class)) {
-            Event::listen(
-                OcrProcessingComplete::class,
-                HandleOcrComplete::class
-            );
-        }
-
-        // Listeners pour les événements de modèle
-        if (class_exists(DocumentProcessed::class)) {
-            Event::listen(
-                DocumentProcessed::class,
-                NotifyDocumentProcessed::class
-            );
-        }
     }
 
     /**

@@ -9,11 +9,11 @@ export default function ManageStudentCreditPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-card border border-border flex items-center justify-center text-[#0f2863] shrink-0 shadow-sm">
+          <div className="w-12 h-12 rounded-xl bg-card border border-border flex items-center justify-center text-[#1a3673] shrink-0 shadow-sm">
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-[#0f2863] italic erp-page-title">Dossier Crédits & Dérogation Exceptionnelle</h1>
+            <h1 className="text-[#1a3673] italic erp-page-title">Dossier Crédits & Dérogation Exceptionnelle</h1>
             <p className="text-muted-foreground mt-1 text-[10px] font-bold uppercase tracking-wider">Fiche d'aménagement et réinscription spéciale de ANISS EL ALAOUI</p>
           </div>
         </div>

@@ -34,14 +34,14 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
   const pageTitle = t(`pages:routes.${location.pathname.replace(/\/+$/, '') || '/'}`, { defaultValue: '' })
 
   return (
-    <header className="h-16 border-b border-slate-200/80 dark:border-border bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl flex items-center px-3 sm:px-4 md:px-6 justify-between gap-2 md:gap-4 shrink-0 sticky top-0 z-40 transition-colors duration-300 shadow-xs">
+    <header className="h-16 border-b border-border bg-card/85 backdrop-blur-md flex items-center px-3 sm:px-4 md:px-6 justify-between gap-2 md:gap-4 shrink-0 sticky top-0 z-40 transition-colors duration-300 shadow-xs">
       
       {/* Left side: Hamburger + Breadcrumb/Page Title + Search */}
       <div className="flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 min-w-0">
         {/* Mobile Hamburger Menu Toggle */}
         <button 
           onClick={onOpenSidebar}
-          className="lg:hidden p-2 -ms-1 rounded-xl text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-slate-800 transition-all active:scale-95 cursor-pointer shrink-0"
+          className="lg:hidden p-2 -ms-1 rounded-xl text-muted-foreground hover:bg-muted transition-all active:scale-95 cursor-pointer shrink-0"
           aria-label={t('navigation.open_menu')}
         >
           <Menu className="w-5 h-5" />
@@ -49,8 +49,8 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
 
         {/* Current Active Page Title (Visible on extra-large screens) */}
         {pageTitle && (
-          <div className="hidden 2xl:flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-foreground bg-muted dark:bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60 shrink-0">
-            <span className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_#6366f1]" />
+          <div className="hidden 2xl:flex items-center gap-2 text-xs font-bold text-foreground bg-muted px-3 py-1.5 rounded-xl border border-border shrink-0">
+            <span className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
             <span>{pageTitle}</span>
           </div>
         )}
@@ -58,7 +58,7 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
         {/* Mobile Search Icon Button */}
         <button
           onClick={onOpenCommand}
-          className="sm:hidden p-2 rounded-xl text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-slate-800 transition-all cursor-pointer shrink-0"
+          className="sm:hidden p-2 rounded-xl text-muted-foreground hover:bg-muted transition-all cursor-pointer shrink-0"
           aria-label={t('navigation.search')}
         >
           <Search className="w-5 h-5" />
@@ -71,16 +71,16 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
               onClick={onOpenCommand}
               className={cn(
                 'w-full flex items-center justify-between ps-9 pe-3 py-2 text-xs sm:text-sm rounded-xl',
-                "bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 text-muted-foreground dark:text-muted-foreground",
-                "hover:bg-card dark:hover:bg-slate-800 hover:border-indigo-500/50 hover:shadow-md dark:hover:shadow-indigo-500/10",
+                "bg-muted/80 border border-border text-muted-foreground",
+                "hover:bg-card hover:border-primary/40 hover:shadow-md",
                 'transition-all duration-200 text-start cursor-pointer group'
               )}
             >
-              <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-primary dark:group-hover:text-indigo-400 transition-colors" />
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
               <span className="truncate min-w-0">
                 {t('search', { defaultValue: 'Search...' })}
               </span>
-              <kbd className="hidden xl:inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-bold uppercase bg-card dark:bg-slate-700 rounded-lg border border-border dark:border-border text-muted-foreground dark:text-foreground shadow-xs ms-2 shrink-0">
+              <kbd className="hidden xl:inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-bold uppercase bg-card rounded-lg border border-border text-muted-foreground shadow-xs ms-2 shrink-0">
                 <Command className="w-3 h-3" />
                 <span>K</span>
               </kbd>
@@ -95,11 +95,11 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
         {/* Quick AI Assistant Trigger */}
         <button
           onClick={onOpenCommand}
-          className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 lg:px-3 rounded-xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 hover:from-indigo-500/20 hover:via-purple-500/20 hover:to-pink-500/20 border border-indigo-500/20 dark:border-indigo-500/30 text-primary dark:text-indigo-300 text-xs font-bold transition-all shadow-xs hover:scale-[1.02] active:scale-95 cursor-pointer shrink-0"
+          className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 lg:px-3 rounded-xl bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15 text-xs font-bold transition-all shadow-xs hover:scale-[1.02] active:scale-95 cursor-pointer shrink-0"
           aria-label={t('navigation.open_assistant')}
           title={t('navigation.open_assistant')}
         >
-          <Sparkles className="w-3.5 h-3.5 text-primary dark:text-indigo-400 animate-pulse shrink-0" />
+          <Sparkles className="w-3.5 h-3.5 text-primary animate-pulse shrink-0" />
           <span className="hidden lg:inline">{t('navigation.assistant')}</span>
         </button>
 
@@ -135,7 +135,7 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
             </div>
             
             <div className="hidden lg:flex flex-col text-start min-w-0">
-              <span className="text-xs font-bold text-foreground dark:text-foreground max-w-[90px] xl:max-w-[130px] truncate leading-tight group-hover:text-primary dark:group-hover:text-indigo-400 transition-colors">
+              <span className="text-xs font-bold text-foreground max-w-[90px] xl:max-w-[130px] truncate leading-tight group-hover:text-primary dark:group-hover:text-indigo-400 transition-colors">
                 {user?.name}
               </span>
               <span className="text-[10px] text-primary dark:text-indigo-400 font-bold uppercase tracking-wider truncate max-w-[90px] xl:max-w-[130px]">
@@ -152,14 +152,14 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
               {/* Backdrop */}
               <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
               
-              <div className="absolute end-0 top-[calc(100%+0.5rem)] w-64 bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm z-50 py-2 motion-safe:animate-scale-in origin-top-right overflow-hidden">
+              <div className="absolute end-0 top-[calc(100%+0.5rem)] w-64 bg-card border border-border rounded-2xl shadow-sm z-50 py-2 motion-safe:animate-scale-in origin-top-right overflow-hidden">
                 {/* User Header Info */}
-                <div className="px-4 py-3 bg-gradient-to-b from-slate-50 to-transparent dark:from-slate-800/50 dark:to-transparent border-b border-border dark:border-border">
+                <div className="px-4 py-3 bg-gradient-to-b from-slate-50 to-transparent dark:from-slate-800/50 dark:to-transparent border-b border-border">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
-                    <p className="text-xs font-bold text-foreground dark:text-foreground truncate">{user?.name}</p>
+                    <p className="text-xs font-bold text-foreground truncate">{user?.name}</p>
                   </div>
-                  <p className="text-[11px] text-muted-foreground dark:text-muted-foreground truncate">{user?.email}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">{user?.email}</p>
                   {user?.institution_name && (
                     <p className="text-[10px] text-primary dark:text-indigo-400 font-semibold mt-1 truncate">
                       {user.institution_name}
@@ -188,7 +188,7 @@ export default function Header({ onOpenCommand, onOpenSidebar }: HeaderProps) {
                   )}
                 </div>
 
-                <div className="border-t border-border dark:border-border my-1 mx-2" />
+                <div className="border-t border-border my-1 mx-2" />
 
                 <div className="px-1 pb-1">
                   <button

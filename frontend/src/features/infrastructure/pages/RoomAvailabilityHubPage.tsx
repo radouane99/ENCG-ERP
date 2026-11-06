@@ -603,7 +603,7 @@ const [bookings, setBookings] = useState<any[]>([]);
               className={cn(
                 "group relative p-3.5 rounded-2xl text-left transition-all duration-200 cursor-pointer border select-none flex flex-col justify-between gap-3 overflow-hidden",
                 isActive
-                  ? cn("bg-card dark:bg-card shadow-md ring-2", tab.activeBorder, tab.activeRing)
+                  ? cn("bg-card shadow-md ring-2", tab.activeBorder, tab.activeRing)
                   : "bg-white/70 dark:bg-slate-900/60 hover:bg-card dark:hover:bg-slate-900 border-slate-200/80 dark:border-border hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs hover:shadow-xs"
               )}
             >
@@ -624,7 +624,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                   "text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0",
                   isActive
                     ? "bg-slate-900 text-slate-100 dark:bg-card dark:text-foreground"
-                    : "bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground"
+                    : "bg-muted dark:bg-card text-muted-foreground"
                 )}>
                   {tab.badge}
                 </span>
@@ -651,16 +651,16 @@ const [bookings, setBookings] = useState<any[]>([]);
           TAB 1 (PRIMARY): MASTER WEEKLY ROOM ALLOCATION MATRIX
       ══════════════════════════════════════════════════════ */}
       {activeTab === 'master_matrix' && (
-        <div className="rounded-2xl border border-slate-200/90 dark:border-border bg-card dark:bg-card p-5 md:p-6 space-y-4.5 shadow-sm">
+        <div className="rounded-2xl border border-slate-200/90 dark:border-border bg-card p-5 md:p-6 space-y-4.5 shadow-sm">
           
           {/* Top Controls & Filters */}
-          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-border dark:border-border pb-4.5">
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-border pb-4.5">
             <div>
               <div className="flex items-center gap-2.5 flex-wrap">
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary/5 dark:bg-indigo-950/80 text-primary dark:text-indigo-300 border border-primary/20 dark:border-indigo-800/80 shadow-2xs">
                   Vue Synthétique ENCG Fès
                 </span>
-                <h2 className="text-base md:text-lg font-bold text-foreground dark:text-foreground tracking-tight">
+                <h2 className="text-base md:text-lg font-bold text-foreground tracking-tight">
                   Capacité, Répartition & Disponibilité des Salles (Semaine)
                 </h2>
               </div>
@@ -729,7 +729,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                 type="button"
                 onClick={loadMasterMatrix}
                 disabled={masterLoading}
-                className="h-10 w-10 flex items-center justify-center rounded-xl border border-border dark:border-border bg-card dark:bg-card hover:bg-muted/50 dark:hover:bg-slate-800 text-muted-foreground dark:text-foreground transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
+                className="h-10 w-10 flex items-center justify-center rounded-xl border border-border bg-card hover:bg-muted/50 dark:hover:bg-slate-800 text-muted-foreground dark:text-foreground transition-colors shadow-2xs cursor-pointer disabled:opacity-50"
                 title="Actualiser la matrice"
               >
                 <RefreshCw size={14} className={cn(masterLoading && "animate-spin text-primary")} />
@@ -833,7 +833,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                             {isFirstSlot && (
                               <td
                                 rowSpan={room.slots.length}
-                                className="py-3.5 px-3.5 bg-slate-50/70 dark:bg-slate-900/60 font-bold text-foreground dark:text-foreground text-left align-middle border-r border-border dark:border-border shadow-2xs"
+                                className="py-3.5 px-3.5 bg-slate-50/70 dark:bg-slate-900/60 font-bold text-foreground text-left align-middle border-r border-border shadow-2xs"
                               >
                                 <div className="space-y-1.5">
                                   <div className="flex items-center gap-1.5">
@@ -863,10 +863,10 @@ const [bookings, setBookings] = useState<any[]>([]);
                             {isFirstSlot && (
                               <td
                                 rowSpan={room.slots.length}
-                                className="py-3 px-2 bg-slate-50/50 dark:bg-slate-900/40 text-center align-middle border-r border-border dark:border-border"
+                                className="py-3 px-2 bg-slate-50/50 dark:bg-slate-900/40 text-center align-middle border-r border-border"
                               >
                                 <div className="flex flex-col items-center justify-center">
-                                  <span className="text-base font-bold text-foreground dark:text-foreground leading-none">
+                                  <span className="text-base font-bold text-foreground leading-none">
                                     {getDisplayCapacity(room)}
                                   </span>
                                   <span className="text-[9px] uppercase font-bold text-slate-400 mt-0.5">Places</span>
@@ -880,8 +880,8 @@ const [bookings, setBookings] = useState<any[]>([]);
                             )}
 
                             {/* Time Slot Label */}
-                            <td className="py-2.5 px-2 bg-slate-100/40 dark:bg-slate-800/30 text-center border-r border-border dark:border-border">
-                              <span className="font-mono text-[10px] font-bold text-slate-700 dark:text-foreground bg-card dark:bg-card px-2 py-1 rounded-md border border-slate-200/80 dark:border-border shadow-2xs inline-block">
+                            <td className="py-2.5 px-2 bg-slate-100/40 dark:bg-slate-800/30 text-center border-r border-border">
+                              <span className="font-mono text-[10px] font-bold text-slate-700 dark:text-foreground bg-card px-2 py-1 rounded-md border border-slate-200/80 dark:border-border shadow-2xs inline-block">
                                 {slot.time_label}
                               </span>
                             </td>
@@ -963,8 +963,8 @@ const [bookings, setBookings] = useState<any[]>([]);
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           
           {/* Left Form: Search Parameters */}
-          <div className="lg:col-span-5 rounded-2xl border border-border dark:border-border bg-card dark:bg-card p-5 space-y-4 shadow-xs">
-            <div className="flex items-center justify-between border-b border-border dark:border-border pb-3">
+          <div className="lg:col-span-5 rounded-2xl border border-border bg-card p-5 space-y-4 shadow-xs">
+            <div className="flex items-center justify-between border-b border-border pb-3">
               <h2 className="text-xs font-bold uppercase tracking-widest text-slate-700 dark:text-foreground flex items-center gap-2">
                 <Filter className="w-3.5 h-3.5 text-primary" />
                 Paramètres de la Séance
@@ -1000,8 +1000,8 @@ const [bookings, setBookings] = useState<any[]>([]);
                       className={cn(
                         "py-2 px-2.5 rounded-xl text-xs font-bold border transition-all text-center cursor-pointer",
                         selectedSlotIndex === idx
-                          ? "bg-[#001A4B] text-white border-[#001A4B] shadow-xs"
-                          : "bg-muted/50 dark:bg-card text-muted-foreground dark:text-muted-foreground border-border dark:border-border hover:border-primary/20"
+                          ? "bg-[#1a3673] text-white border-[#1a3673] shadow-xs"
+                          : "bg-muted/50 dark:bg-card text-muted-foreground border-border hover:border-primary/20"
                       )}
                     >
                       {block.start} – {block.end}
@@ -1083,7 +1083,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                             "px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer",
                             isChecked
                               ? "bg-primary text-primary-foreground border-primary"
-                              : "bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground border-border dark:border-border"
+                              : "bg-muted dark:bg-card text-muted-foreground border-border"
                           )}
                         >
                           {g.name}
@@ -1122,7 +1122,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                 onClick={handleRunSmartFind}
                 disabled={searching}
                 className="w-full flex items-center justify-center gap-2 h-11 px-5 text-white font-bold rounded-xl text-xs uppercase tracking-wide transition-all active:scale-95 disabled:opacity-60 cursor-pointer shadow-md mt-2"
-                style={{ background: 'linear-gradient(135deg, #001A4B, #003087)' }}
+                style={{ background: 'linear-gradient(135deg, #1a3673, #003087)' }}
               >
                 {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-amber-400" />}
                 Vérifier Disponibilité & Trouver une Salle
@@ -1160,7 +1160,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-base text-foreground dark:text-foreground">
+                            <h3 className="font-bold text-base text-foreground">
                               {finderResult.preferred_room.room_name}
                             </h3>
                             <span className={cn(
@@ -1170,7 +1170,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                               {finderResult.preferred_room.is_available ? 'Salle Libre' : 'Salle Occupée'}
                             </span>
                           </div>
-                          <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5">
+                          <p className="text-xs text-muted-foreground mt-0.5">
                             {finderResult.preferred_room.is_available
                               ? `Disponible pour le créneau ${finderResult.query.start_time}–${finderResult.query.end_time} (${finderResult.preferred_room.capacity} places).`
                               : finderResult.preferred_room.conflict_reason}
@@ -1206,7 +1206,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                                 if (idx >= 0) setSelectedSlotIndex(idx)
                                 toast.info(`Créneau basculé sur ${altSlot.label}`)
                               }}
-                              className="px-3 py-1.5 bg-card dark:bg-card border border-amber-300 dark:border-amber-700 rounded-xl text-xs font-bold text-foreground dark:text-foreground hover:bg-amber-100 transition-all cursor-pointer flex items-center gap-1"
+                              className="px-3 py-1.5 bg-card border border-amber-300 dark:border-amber-700 rounded-xl text-xs font-bold text-foreground hover:bg-amber-100 transition-all cursor-pointer flex items-center gap-1"
                             >
                               <Clock size={12} className="text-amber-600" />
                               {altSlot.label}
@@ -1219,8 +1219,8 @@ const [bookings, setBookings] = useState<any[]>([]);
                 )}
 
                 {/* 2. Available Alternative Rooms List */}
-                <div className="rounded-2xl border border-border dark:border-border bg-card dark:bg-card p-5 space-y-3 shadow-xs">
-                  <div className="flex items-center justify-between border-b border-border dark:border-border pb-3">
+                <div className="rounded-2xl border border-border bg-card p-5 space-y-3 shadow-xs">
+                  <div className="flex items-center justify-between border-b border-border pb-3">
                     <h3 className="text-xs font-bold uppercase tracking-widest text-slate-700 dark:text-foreground flex items-center gap-2">
                       <DoorOpen className="w-3.5 h-3.5 text-primary" />
                       Salles Libres Disponibles ({finderResult.available_rooms_count})
@@ -1242,13 +1242,13 @@ const [bookings, setBookings] = useState<any[]>([]);
                           className={cn(
                             "rounded-xl p-4 border transition-all hover:border-primary/20 dark:hover:border-primary space-y-2.5",
                             room.is_perfect_fit
-                              ? "bg-slate-50/70 dark:bg-slate-800/50 border-border dark:border-border"
-                              : "bg-card dark:bg-card border-border dark:border-border"
+                              ? "bg-slate-50/70 dark:bg-slate-800/50 border-border"
+                              : "bg-card border-border"
                           )}
                         >
                           <div className="flex items-center justify-between gap-2">
                             <div>
-                              <p className="text-sm font-bold text-foreground dark:text-foreground">{room.name}</p>
+                              <p className="text-sm font-bold text-foreground">{room.name}</p>
                               <p className="text-[10px] text-slate-400 font-bold uppercase">{room.type === 'amphitheater' ? 'Amphithéâtre' : 'Salle TD'}</p>
                             </div>
                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
@@ -1262,12 +1262,12 @@ const [bookings, setBookings] = useState<any[]>([]);
                             <span className="flex items-center gap-1"><MapPin size={11} /> {room.building}</span>
                           </div>
 
-                          <div className="pt-2 border-t border-border dark:border-border flex justify-end">
+                          <div className="pt-2 border-t border-border flex justify-end">
                             <button
                               type="button"
                               onClick={() => handleOpenBooking(room)}
                               className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all active:scale-95 cursor-pointer"
-                              style={{ background: 'linear-gradient(135deg, #001A4B, #003087)' }}
+                              style={{ background: 'linear-gradient(135deg, #1a3673, #003087)' }}
                             >
                               <PlusCircle size={12} /> Réserver
                             </button>
@@ -1287,10 +1287,10 @@ const [bookings, setBookings] = useState<any[]>([]);
           TAB 3: DAILY MATRIX (HEATMAP)
       ══════════════════════════════════════════════════════ */}
       {activeTab === 'matrix' && (
-        <div className="rounded-2xl border border-border dark:border-border bg-card dark:bg-card p-5 space-y-4 shadow-xs">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border dark:border-border pb-3">
+        <div className="rounded-2xl border border-border bg-card p-5 space-y-4 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
             <div>
-              <h2 className="text-sm font-bold text-foreground dark:text-foreground flex items-center gap-2">
+              <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
                 <Layers className="w-4 h-4 text-primary" />
                 Matrice Journalière d'Occupation des Salles
               </h2>
@@ -1331,9 +1331,9 @@ const [bookings, setBookings] = useState<any[]>([]);
           {/* Stats pills */}
           {matrixData?.stats && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3 rounded-xl bg-muted/50 dark:bg-card border border-border dark:border-border">
+              <div className="p-3 rounded-xl bg-muted/50 dark:bg-card border border-border">
                 <p className="text-[10px] font-bold uppercase text-slate-400">Total Créneaux</p>
-                <p className="text-lg font-bold text-foreground dark:text-foreground">{matrixData.stats.total_slots}</p>
+                <p className="text-lg font-bold text-foreground">{matrixData.stats.total_slots}</p>
               </div>
               <div className="p-3 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900">
                 <p className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400">Créneaux Libres</p>
@@ -1357,10 +1357,10 @@ const [bookings, setBookings] = useState<any[]>([]);
               <span className="text-sm font-medium">Chargement de la matrice…</span>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-border dark:border-border">
+            <div className="overflow-x-auto rounded-xl border border-border">
               <table className="w-full min-w-[800px] text-xs">
                 <thead>
-                  <tr className="bg-muted/50 dark:bg-slate-800/80 border-b border-border dark:border-border text-muted-foreground font-bold">
+                  <tr className="bg-muted/50 dark:bg-slate-800/80 border-b border-border text-muted-foreground font-bold">
                     <th className="px-4 py-3 text-left w-52">Salle</th>
                     {TIME_BLOCKS.map(block => (
                       <th key={block.start} className="px-3 py-3 text-center">
@@ -1373,7 +1373,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                   {matrixData?.rooms?.map((r: any) => (
                     <tr key={r.room_id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                       <td className="px-4 py-3">
-                        <p className="font-bold text-foreground dark:text-foreground">{r.name}</p>
+                        <p className="font-bold text-foreground">{r.name}</p>
                         <p className="text-[10px] text-slate-400 font-medium">
                           {r.type === 'amphitheater' ? 'Amphi' : 'Salle TD'} · {getDisplayCapacity(r)} pl. {isExamMode ? '(exam)' : ''}
                         </p>
@@ -1425,7 +1425,7 @@ const [bookings, setBookings] = useState<any[]>([]);
         <div className="space-y-5">
           {/* 1. Selected Room Showcase Banner */}
           <div className="rounded-2xl border border-slate-200/90 dark:border-border bg-card dark:bg-slate-900/95 p-6 shadow-xs backdrop-blur-sm space-y-5">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-border dark:border-border">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-border">
               {/* Room Identity */}
               <div className="flex items-start gap-4">
                 <div className="w-14 h-14 rounded-2xl bg-primary/5 dark:bg-indigo-950/80 border border-primary/20 dark:border-primary flex items-center justify-center text-primary dark:text-indigo-400 shrink-0 shadow-2xs">
@@ -1439,7 +1439,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                 </div>
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <h2 className="text-xl font-bold text-foreground dark:text-foreground tracking-tight">
+                    <h2 className="text-xl font-bold text-foreground tracking-tight">
                       {currentScheduleRoom?.name || 'Sélectionner une salle'}
                     </h2>
                     {currentScheduleRoom && (
@@ -1447,7 +1447,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary/10 dark:bg-indigo-950 text-primary dark:text-indigo-300 border border-primary/20 dark:border-primary">
                           {currentScheduleRoom.type === 'amphitheater' ? 'Amphithéâtre' : currentScheduleRoom.type === 'lab' ? 'Laboratoire TP' : 'Salle TD'}
                         </span>
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground border border-border dark:border-border">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-muted dark:bg-card text-muted-foreground border border-border">
                           Code: {currentScheduleRoom.code}
                         </span>
                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
@@ -1457,7 +1457,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                       </>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1 flex items-center gap-2">
+                  <p className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
                     <span>Emploi du temps officiel par salle</span>
                     <span>•</span>
                     <span>Affichage de porte A4 avec QR Code dynamique</span>
@@ -1500,7 +1500,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                   type="button"
                   onClick={handleExportIcs}
                   disabled={!selectedScheduleRoomId}
-                  className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-muted dark:bg-card hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-foreground text-xs font-bold transition-all active:scale-95 cursor-pointer border border-border dark:border-border disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-muted dark:bg-card hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-foreground text-xs font-bold transition-all active:scale-95 cursor-pointer border border-border disabled:opacity-50"
                   title="Exporter au format .ics pour Google Calendar, Outlook, Apple Calendar"
                 >
                   <CalendarPlus size={14} className="text-primary dark:text-indigo-400" />
@@ -1531,7 +1531,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                   </div>
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Capacité Cours</p>
-                    <p className="text-sm font-bold text-foreground dark:text-foreground">{currentScheduleRoom.capacity} places</p>
+                    <p className="text-sm font-bold text-foreground">{currentScheduleRoom.capacity} places</p>
                   </div>
                 </div>
 
@@ -1553,7 +1553,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                   </div>
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Vidéoprojecteur</p>
-                    <p className="text-sm font-bold text-foreground dark:text-foreground">
+                    <p className="text-sm font-bold text-foreground">
                       {currentScheduleRoom.has_projector ? '✅ Installé & Connecté' : '❌ Non équipé'}
                     </p>
                   </div>
@@ -1565,7 +1565,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                   </div>
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Climatisation</p>
-                    <p className="text-sm font-bold text-foreground dark:text-foreground">
+                    <p className="text-sm font-bold text-foreground">
                       {currentScheduleRoom.has_ac ? '✅ Équipée (Réversible)' : '❌ Non équipée'}
                     </p>
                   </div>
@@ -1577,7 +1577,7 @@ const [bookings, setBookings] = useState<any[]>([]);
           {/* 2. Mode Switcher & Filters Toolbar */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 p-2 rounded-2xl bg-muted dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80">
             {/* View Mode Buttons */}
-            <div className="flex items-center gap-1.5 bg-card dark:bg-card p-1 rounded-xl border border-slate-200/80 dark:border-border shadow-2xs">
+            <div className="flex items-center gap-1.5 bg-card p-1 rounded-xl border border-slate-200/80 dark:border-border shadow-2xs">
               <button
                 type="button"
                 onClick={() => setScheduleViewMode('timeline')}
@@ -1585,7 +1585,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                   'flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
                   scheduleViewMode === 'timeline'
                     ? "bg-primary text-primary-foreground shadow-xs"
-                    : "text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-slate-200"
+                    : "text-muted-foreground hover:text-foreground dark:hover:text-slate-200"
                 )}
               >
                 <LayoutList size={13} />
@@ -1599,7 +1599,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                   'flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
                   scheduleViewMode === 'preview_a4'
                     ? "bg-primary text-primary-foreground shadow-xs"
-                    : "text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-slate-200"
+                    : "text-muted-foreground hover:text-foreground dark:hover:text-slate-200"
                 )}
               >
                 <Eye size={13} />
@@ -1613,7 +1613,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                   'flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
                   scheduleViewMode === 'matrix'
                     ? "bg-primary text-primary-foreground shadow-xs"
-                    : "text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-slate-200"
+                    : "text-muted-foreground hover:text-foreground dark:hover:text-slate-200"
                 )}
               >
                 <Table size={13} />
@@ -1631,7 +1631,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                     'px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5',
                     selectedScheduleDay === 0
                       ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-2xs'
-                      : "bg-card dark:bg-card text-muted-foreground dark:text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-800"
+                      : "bg-card text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-800"
                   )}
                 >
                   <span>Tous</span>
@@ -1649,7 +1649,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                       'px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 flex items-center gap-1.5',
                       selectedScheduleDay === d.index
                         ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-2xs'
-                        : "bg-card dark:bg-card text-muted-foreground dark:text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-800"
+                        : "bg-card text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-800"
                     )}
                   >
                     <span>{d.label}</span>
@@ -1674,7 +1674,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                 value={scheduleSearchQuery}
                 onChange={(e) => setScheduleSearchQuery(e.target.value)}
                 placeholder="Filtrer prof, module, grp…"
-                className="w-full sm:w-56 pl-8 pr-3 py-1.5 text-xs bg-card dark:bg-card border border-border dark:border-border text-foreground dark:text-foreground placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
+                className="w-full sm:w-56 pl-8 pr-3 py-1.5 text-xs bg-card border border-border text-foreground placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
               />
               {scheduleSearchQuery && (
                 <button
@@ -1690,7 +1690,7 @@ const [bookings, setBookings] = useState<any[]>([]);
 
           {/* 3. Main Views Content */}
           {roomScheduleLoading ? (
-            <div className="py-24 flex flex-col items-center justify-center gap-3 text-slate-400 bg-card dark:bg-card rounded-2xl border border-border dark:border-border">
+            <div className="py-24 flex flex-col items-center justify-center gap-3 text-slate-400 bg-card rounded-2xl border border-border">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
               <span className="text-sm font-semibold">Chargement des séances de la salle…</span>
             </div>
@@ -1715,13 +1715,13 @@ const [bookings, setBookings] = useState<any[]>([]);
                           className="rounded-2xl border border-slate-200/90 dark:border-border bg-card dark:bg-slate-900/90 p-5 shadow-xs space-y-4"
                         >
                           {/* Day Header */}
-                          <div className="flex items-center justify-between border-b border-border dark:border-border pb-3">
+                          <div className="flex items-center justify-between border-b border-border pb-3">
                             <div className="flex items-center gap-2.5">
                               <span className="w-8 h-8 rounded-xl bg-primary/5 dark:bg-indigo-950/80 text-primary dark:text-indigo-400 font-bold text-xs flex items-center justify-center border border-indigo-200/60 dark:border-indigo-800/60">
                                 {dayItem.short}
                               </span>
                               <div>
-                                <h3 className="text-sm font-bold text-foreground dark:text-foreground">
+                                <h3 className="text-sm font-bold text-foreground">
                                   {dayItem.label}
                                 </h3>
                                 <p className="text-[11px] text-slate-400 font-medium">
@@ -1765,12 +1765,12 @@ const [bookings, setBookings] = useState<any[]>([]);
                                     'p-4 rounded-2xl border transition-all flex flex-col justify-between min-h-[140px]',
                                     isOccupied
                                       ? "bg-indigo-50/40 dark:bg-indigo-950/20 border-primary/20 dark:border-indigo-800/80 shadow-2xs"
-                                      : "bg-slate-50/60 dark:bg-slate-800/30 border-dashed border-border dark:border-border hover:border-slate-300 dark:hover:border-slate-700"
+                                      : "bg-slate-50/60 dark:bg-slate-800/30 border-dashed border-border hover:border-slate-300 dark:hover:border-slate-700"
                                   )}
                                 >
                                   {/* Slot Header */}
                                   <div className="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-border">
-                                    <span className="text-[10px] font-mono font-bold text-muted-foreground dark:text-muted-foreground flex items-center gap-1">
+                                    <span className="text-[10px] font-mono font-bold text-muted-foreground flex items-center gap-1">
                                       <Clock size={11} className={isOccupied ? "text-primary dark:text-indigo-400" : 'text-slate-400'} />
                                       {slot.start} – {slot.end}
                                     </span>
@@ -1799,10 +1799,10 @@ const [bookings, setBookings] = useState<any[]>([]);
                                               </span>
                                             )}
                                           </div>
-                                          <p className="text-xs font-bold text-foreground dark:text-foreground line-clamp-2 leading-tight">
+                                          <p className="text-xs font-bold text-foreground line-clamp-2 leading-tight">
                                             {evt.title}
                                           </p>
-                                          <p className="text-[11px] text-muted-foreground dark:text-muted-foreground font-medium truncate flex items-center gap-1">
+                                          <p className="text-[11px] text-muted-foreground font-medium truncate flex items-center gap-1">
                                             <span>👤</span>
                                             <span>{evt.extendedProps?.professor || 'Enseignant'}</span>
                                           </p>
@@ -1873,13 +1873,13 @@ const [bookings, setBookings] = useState<any[]>([]);
                   </div>
 
                   {/* A4 Sheet Container */}
-                  <div className="max-w-4xl mx-auto bg-card dark:bg-background text-foreground dark:text-foreground p-8 sm:p-12 rounded-2xl border border-slate-300 dark:border-border shadow-sm space-y-6 font-sans">
+                  <div className="max-w-4xl mx-auto bg-card dark:bg-background text-foreground p-8 sm:p-12 rounded-2xl border border-slate-300 dark:border-border shadow-sm space-y-6 font-sans">
                     {/* Official Institutional Header */}
-                    <div className="text-center pb-4 border-b-2 border-[#001A4B] space-y-1">
+                    <div className="text-center pb-4 border-b-2 border-[#1a3673] space-y-1">
                       <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">
                         Royaume du Maroc • Université Sidi Mohamed Ben Abdellah
                       </p>
-                      <h1 className="text-[#001A4B] dark:text-blue-400 erp-page-title">
+                      <h1 className="text-[#1a3673] dark:text-blue-400 erp-page-title">
                         École Nationale de Commerce et de Gestion — ENCG Fès
                       </h1>
                       <p className="text-[10px] text-muted-foreground font-semibold">
@@ -1888,7 +1888,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                     </div>
 
                     {/* Room Hero Navy Box */}
-                    <div className="bg-[#001A4B] text-white p-6 rounded-2xl text-center space-y-1 shadow-md">
+                    <div className="bg-[#1a3673] text-white p-6 rounded-2xl text-center space-y-1 shadow-md">
                       <h2 className="text-2xl sm:text-3xl font-bold uppercase tracking-wider">
                         {currentScheduleRoom?.name || 'SALLE DE COURS'}
                       </h2>
@@ -1904,25 +1904,25 @@ const [bookings, setBookings] = useState<any[]>([]);
 
                     {/* Metrics Grid */}
                     <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                      <div className="p-2.5 rounded-xl bg-muted/50 dark:bg-card border border-border dark:border-border">
+                      <div className="p-2.5 rounded-xl bg-muted/50 dark:bg-card border border-border">
                         <p className="text-[9px] font-bold text-slate-400 uppercase">Capacité Cours</p>
-                        <p className="text-sm font-bold text-foreground dark:text-foreground">{currentScheduleRoom?.capacity || 40} places</p>
+                        <p className="text-sm font-bold text-foreground">{currentScheduleRoom?.capacity || 40} places</p>
                       </div>
-                      <div className="p-2.5 rounded-xl bg-muted/50 dark:bg-card border border-border dark:border-border">
+                      <div className="p-2.5 rounded-xl bg-muted/50 dark:bg-card border border-border">
                         <p className="text-[9px] font-bold text-slate-400 uppercase">Capacité Examen</p>
                         <p className="text-sm font-bold text-rose-600 dark:text-rose-400">
                           {currentScheduleRoom?.exam_capacity ?? Math.floor((currentScheduleRoom?.capacity || 40) / 2)} places
                         </p>
                       </div>
-                      <div className="p-2.5 rounded-xl bg-muted/50 dark:bg-card border border-border dark:border-border">
+                      <div className="p-2.5 rounded-xl bg-muted/50 dark:bg-card border border-border">
                         <p className="text-[9px] font-bold text-slate-400 uppercase">Vidéoprojecteur</p>
-                        <p className="text-xs font-bold text-foreground dark:text-foreground mt-0.5">
+                        <p className="text-xs font-bold text-foreground mt-0.5">
                           {currentScheduleRoom?.has_projector ? '✅ Installé' : '❌ Non'}
                         </p>
                       </div>
-                      <div className="p-2.5 rounded-xl bg-muted/50 dark:bg-card border border-border dark:border-border">
+                      <div className="p-2.5 rounded-xl bg-muted/50 dark:bg-card border border-border">
                         <p className="text-[9px] font-bold text-slate-400 uppercase">Climatisation</p>
-                        <p className="text-xs font-bold text-foreground dark:text-foreground mt-0.5">
+                        <p className="text-xs font-bold text-foreground mt-0.5">
                           {currentScheduleRoom?.has_ac ? '✅ Équipée' : '❌ Non'}
                         </p>
                       </div>
@@ -1932,7 +1932,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                     <div className="overflow-x-auto rounded-xl border border-slate-300 dark:border-border">
                       <table className="w-full text-left text-xs border-collapse">
                         <thead>
-                          <tr className="bg-[#001A4B] text-white text-[10px] font-bold uppercase tracking-wider">
+                          <tr className="bg-[#1a3673] text-white text-[10px] font-bold uppercase tracking-wider">
                             <th className="p-2.5 border-r border-primary w-24 text-center">Jour</th>
                             <th className="p-2.5 border-r border-primary text-center">08:30 – 10:30</th>
                             <th className="p-2.5 border-r border-primary text-center">10:45 – 12:45</th>
@@ -1949,7 +1949,7 @@ const [bookings, setBookings] = useState<any[]>([]);
 
                             return (
                               <tr key={dayItem.index} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50">
-                                <td className="p-2.5 font-bold text-foreground dark:text-foreground bg-slate-100/70 dark:bg-slate-900/70 text-center border-r border-border dark:border-border">
+                                <td className="p-2.5 font-bold text-foreground bg-slate-100/70 dark:bg-slate-900/70 text-center border-r border-border">
                                   {dayItem.label}
                                 </td>
                                 {TIME_BLOCKS.map((slot, slotIdx) => {
@@ -1967,7 +1967,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                                     <td
                                       key={slotIdx}
                                       className={cn(
-                                        "p-2 border-r last:border-r-0 border-border dark:border-border align-top",
+                                        "p-2 border-r last:border-r-0 border-border align-top",
                                         matching.length > 0 ? 'bg-blue-50/30 dark:bg-blue-950/20' : ''
                                       )}
                                     >
@@ -2004,9 +2004,9 @@ const [bookings, setBookings] = useState<any[]>([]);
                     </div>
 
                     {/* Official Sign Footer with Live QR Preview */}
-                    <div className="pt-4 border-t border-border dark:border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="pt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
                       <div className="space-y-1 text-center sm:text-left">
-                        <p className="text-[11px] font-bold text-foreground dark:text-foreground">
+                        <p className="text-[11px] font-bold text-foreground">
                           Direction des Études & de la Planification • ENCG Fès
                         </p>
                         <p className="text-[9px] text-slate-400">
@@ -2015,7 +2015,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                       </div>
 
                       {/* Live QR Box */}
-                      <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-muted/50 dark:bg-card border border-border dark:border-border shrink-0">
+                      <div className="flex items-center gap-3 p-2.5 rounded-2xl bg-muted/50 dark:bg-card border border-border shrink-0">
                         <div className="w-14 h-14 bg-card p-1 rounded-xl border border-border flex items-center justify-center shadow-2xs">
                           <QrCode size={46} className="text-foreground" />
                         </div>
@@ -2032,9 +2032,9 @@ const [bookings, setBookings] = useState<any[]>([]);
 
               {/* VIEW 3: COMPACT WEEKLY MATRIX */}
               {scheduleViewMode === 'matrix' && (
-                <div className="rounded-2xl border border-border dark:border-border bg-card dark:bg-card p-5 shadow-xs space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-border dark:border-border">
-                    <h3 className="text-sm font-bold text-foreground dark:text-foreground flex items-center gap-2">
+                <div className="rounded-2xl border border-border bg-card p-5 shadow-xs space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-border">
+                    <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
                       <Table size={15} className="text-primary" />
                       <span>Matrice Hebdomadaire Synthétique — {currentScheduleRoom?.name}</span>
                     </h3>
@@ -2047,9 +2047,9 @@ const [bookings, setBookings] = useState<any[]>([]);
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
                         <tr className="bg-muted dark:bg-slate-800/80 text-slate-700 dark:text-foreground font-bold uppercase text-[10px] tracking-wider">
-                          <th className="p-3 w-32 border-b border-border dark:border-border">Jour</th>
+                          <th className="p-3 w-32 border-b border-border">Jour</th>
                           {TIME_BLOCKS.map((tb, idx) => (
-                            <th key={idx} className="p-3 border-b border-border dark:border-border text-center">
+                            <th key={idx} className="p-3 border-b border-border text-center">
                               {tb.start} – {tb.end}
                             </th>
                           ))}
@@ -2064,7 +2064,7 @@ const [bookings, setBookings] = useState<any[]>([]);
 
                           return (
                             <tr key={dayItem.index} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
-                              <td className="p-3 font-bold text-foreground dark:text-foreground bg-slate-50/50 dark:bg-slate-800/30">
+                              <td className="p-3 font-bold text-foreground bg-slate-50/50 dark:bg-slate-800/30">
                                 {dayItem.label}
                               </td>
                               {TIME_BLOCKS.map((slot, slotIdx) => {
@@ -2119,10 +2119,10 @@ const [bookings, setBookings] = useState<any[]>([]);
           TAB 5: BOOKINGS LEDGER
       ══════════════════════════════════════════════════════ */}
       {activeTab === 'bookings' && (
-        <div className="rounded-2xl border border-border dark:border-border bg-card dark:bg-card p-5 space-y-4 shadow-xs">
-          <div className="flex items-center justify-between border-b border-border dark:border-border pb-3">
+        <div className="rounded-2xl border border-border bg-card p-5 space-y-4 shadow-xs">
+          <div className="flex items-center justify-between border-b border-border pb-3">
             <div>
-              <h2 className="text-sm font-bold text-foreground dark:text-foreground flex items-center gap-2">
+              <h2 className="text-sm font-bold text-foreground flex items-center gap-2">
                 <FileText className="w-4 h-4 text-primary" />
                 Registre des Réservations & Rattrapages
               </h2>
@@ -2142,10 +2142,10 @@ const [bookings, setBookings] = useState<any[]>([]);
               Aucune réservation enregistrée.
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-border dark:border-border">
+            <div className="overflow-x-auto rounded-xl border border-border">
               <table className="w-full min-w-[700px] text-xs">
                 <thead>
-                  <tr className="bg-muted/50 dark:bg-slate-800/80 border-b border-border dark:border-border text-muted-foreground font-bold">
+                  <tr className="bg-muted/50 dark:bg-slate-800/80 border-b border-border text-muted-foreground font-bold">
                     <th className="px-4 py-3 text-left">Salle</th>
                     <th className="px-4 py-3 text-left">Date & Heure</th>
                     <th className="px-4 py-3 text-left">Motif</th>
@@ -2157,10 +2157,10 @@ const [bookings, setBookings] = useState<any[]>([]);
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {bookings.map((b: any) => (
                     <tr key={b.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                      <td className="px-4 py-3 font-bold text-foreground dark:text-foreground">
+                      <td className="px-4 py-3 font-bold text-foreground">
                         {b.room?.name || b.room_name}
                       </td>
-                      <td className="px-4 py-3 font-mono text-muted-foreground dark:text-muted-foreground">
+                      <td className="px-4 py-3 font-mono text-muted-foreground">
                         {b.start_time ? format(new Date(b.start_time), 'dd/MM/yyyy HH:mm') : '-'}
                       </td>
                       <td className="px-4 py-3 font-medium text-slate-700 dark:text-foreground">
@@ -2222,9 +2222,9 @@ const [bookings, setBookings] = useState<any[]>([]);
       ══════════════════════════════════════════════════════ */}
       {bookingModalOpen && bookingRoom && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-card dark:bg-card rounded-2xl shadow-sm w-full max-w-lg overflow-hidden border border-border dark:border-border animate-in zoom-in-95 space-y-5">
+          <div className="bg-card rounded-2xl shadow-sm w-full max-w-lg overflow-hidden border border-border animate-in zoom-in-95 space-y-5">
             
-            <div className="p-6 text-white relative" style={{ background: 'linear-gradient(135deg, #001A4B 0%, #003087 50%, #001A4B 100%)' }}>
+            <div className="p-6 text-white relative" style={{ background: 'linear-gradient(135deg, #1a3673 0%, #003087 50%, #1a3673 100%)' }}>
               <button
                 onClick={() => setBookingModalOpen(false)}
                 className="absolute top-5 right-5 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-1.5 transition-colors cursor-pointer"
@@ -2254,7 +2254,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                 />
               </div>
 
-              <div className="p-3 rounded-xl bg-muted/50 dark:bg-card border border-border dark:border-border text-xs text-muted-foreground dark:text-muted-foreground space-y-1">
+              <div className="p-3 rounded-xl bg-muted/50 dark:bg-card border border-border text-xs text-muted-foreground space-y-1">
                 <p><strong>Salle :</strong> {bookingRoom.name} ({getDisplayCapacity(bookingRoom)} places {isExamMode ? 'exam' : ''})</p>
                 <p><strong>Effectif prévu :</strong> {calculatedHeadcount} étudiants</p>
                 <p><strong>Date & Heure :</strong> {targetDate ? format(parseISO(targetDate), 'dd/MM/yyyy') : ''} ({TIME_BLOCKS[selectedSlotIndex]?.label})</p>
@@ -2270,18 +2270,18 @@ const [bookings, setBookings] = useState<any[]>([]);
                     className="w-4 h-4 text-primary rounded"
                   />
                   <div className="text-xs">
-                    <span className="font-bold text-foreground dark:text-foreground flex items-center gap-1">
+                    <span className="font-bold text-foreground flex items-center gap-1">
                       <BellRing size={13} className="text-primary" />
                       Notifier automatiquement les étudiants
                     </span>
-                    <p className="text-[10px] text-muted-foreground dark:text-muted-foreground">
+                    <p className="text-[10px] text-muted-foreground">
                       Envoie une notification Push in-app + Email officiel aux étudiants des groupes sélectionnés.
                     </p>
                   </div>
                 </label>
               )}
 
-              <div className="pt-2 flex justify-end gap-2.5 border-t border-border dark:border-border">
+              <div className="pt-2 flex justify-end gap-2.5 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setBookingModalOpen(false)}
@@ -2294,7 +2294,7 @@ const [bookings, setBookings] = useState<any[]>([]);
                   onClick={handleConfirmBooking}
                   disabled={submittingBooking}
                   className="flex items-center gap-2 px-5 py-2.5 text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer disabled:opacity-60"
-                  style={{ background: 'linear-gradient(135deg, #001A4B, #003087)' }}
+                  style={{ background: 'linear-gradient(135deg, #1a3673, #003087)' }}
                 >
                   {submittingBooking ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                   Confirmer la Réservation

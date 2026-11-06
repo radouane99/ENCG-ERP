@@ -56,11 +56,11 @@ export default function AdminMinistryReportPage() {
 
   const StatCard = ({ icon: Icon, label, value, sub, color = 'indigo' }: any) => (
     <div className={cn(
-      "bg-card dark:bg-card rounded-2xl p-6 border shadow-sm",
+      "bg-card rounded-2xl p-6 border shadow-sm",
       color === 'emerald' ? 'border-emerald-200 dark:border-emerald-900/50' :
         color === 'rose' ? 'border-rose-200 dark:border-rose-900/50' :
           color === 'amber' ? 'border-amber-200 dark:border-amber-900/50' :
-            "border-border dark:border-border"
+            "border-border"
     )}>
       <div className={cn(
         'w-12 h-12 rounded-2xl flex items-center justify-center mb-4',
@@ -77,7 +77,7 @@ export default function AdminMinistryReportPage() {
         )} />
       </div>
       <div className="text-2xl font-bold text-foreground dark:text-white font-mono">{value ?? '—'}</div>
-      <div className="font-bold text-xs uppercase tracking-wider text-muted-foreground dark:text-muted-foreground mt-1">{label}</div>
+      <div className="font-bold text-xs uppercase tracking-wider text-muted-foreground mt-1">{label}</div>
       {sub && <div className="text-[10px] text-slate-400 mt-0.5 font-medium">{sub}</div>}
     </div>
   )
@@ -139,7 +139,7 @@ export default function AdminMinistryReportPage() {
       {isLoading ? (
         <div className="flex justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
       ) : !data?.success ? (
-        <div className="p-12 text-center text-muted-foreground bg-muted/50 dark:bg-card rounded-2xl border border-border dark:border-border">
+        <div className="p-12 text-center text-muted-foreground bg-muted/50 dark:bg-card rounded-2xl border border-border">
           <AlertTriangle className="w-10 h-10 mx-auto mb-3 text-amber-500" />
           <p className="font-bold">Impossible de charger les données du rapport.</p>
         </div>
@@ -159,8 +159,8 @@ export default function AdminMinistryReportPage() {
             </div>
 
             {data.effectifs?.par_filiere?.length > 0 && (
-              <div className="mt-4 bg-card dark:bg-card rounded-2xl border border-border dark:border-border overflow-hidden">
-                <div className="p-4 border-b border-border dark:border-border">
+              <div className="mt-4 bg-card rounded-2xl border border-border overflow-hidden">
+                <div className="p-4 border-b border-border">
                   <h3 className="font-bold text-sm text-foreground dark:text-white">Répartition par Filière</h3>
                 </div>
                 <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -215,7 +215,7 @@ export default function AdminMinistryReportPage() {
               <h2 className="flex items-center gap-3 font-bold text-lg text-foreground dark:text-white mb-4">
                 <Globe className="w-5 h-5 text-sky-600" /> 4. Mobilité Internationale
               </h2>
-              <div className="bg-card dark:bg-card rounded-2xl border border-sky-200 dark:border-sky-900/40 p-6 text-center">
+              <div className="bg-card rounded-2xl border border-sky-200 dark:border-sky-900/40 p-6 text-center">
                 <PlaneTakeoff className="w-10 h-10 text-sky-500 mx-auto mb-2" />
                 <div className="text-4xl font-bold text-sky-600 dark:text-sky-400 font-mono">{data.mobilite_internationale?.etudiants_sortants}</div>
                 <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground mt-1">Étudiants Sortants Approuvés</div>
@@ -236,7 +236,7 @@ export default function AdminMinistryReportPage() {
           </div>
 
           {/* Mention officielle */}
-          <div className="p-6 bg-muted/50 dark:bg-card border border-border dark:border-border rounded-2xl text-center text-xs text-muted-foreground font-medium">
+          <div className="p-6 bg-muted/50 dark:bg-card border border-border rounded-2xl text-center text-xs text-muted-foreground font-medium">
             📋 Rapport officiel ENCG Fès — {data.institution?.name} — {data.institution?.tutelle}
             <br />
             Généré automatiquement depuis la base de données ERP le {new Date(data?.generated_at).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}

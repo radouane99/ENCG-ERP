@@ -86,10 +86,10 @@ export default function MassImportView({
   return (
     <div className="space-y-8 animate-in p-6 max-w-5xl mx-auto">
       <div className="text-center mb-10">
-        <h1 className="text-3xl font-bold text-[#0f2863] italic">{title}</h1>
+        <h1 className="text-3xl font-bold text-[#1a3673] italic">{title}</h1>
       </div>
 
-      <div className="bg-[#0f2863] rounded-2xl p-8 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-[#1a3673] rounded-2xl p-8 text-white shadow-lg relative overflow-hidden">
         <div className="relative z-10">
           <h2 className="text-2xl font-bold mb-2 italic">{bannerTitle}</h2>
           <p className="text-blue-100">{bannerSubtitle}</p>
@@ -175,7 +175,7 @@ export default function MassImportView({
           <button 
             onClick={handleImport}
             disabled={!file || isImporting}
-            className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-[#0f2863] text-white font-bold rounded-xl hover:bg-[#1a387e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md text-sm uppercase tracking-wider"
+            className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-[#1a3673] text-white font-bold rounded-xl hover:bg-[#1a387e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md text-sm uppercase tracking-wider"
           >
             {isImporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
             {isImporting ? "Importation en cours..." : `Lancer l'importation de ${modelName}`}

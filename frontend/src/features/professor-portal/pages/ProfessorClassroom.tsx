@@ -311,7 +311,7 @@ export default function ProfessorClassroom() {
                             href={`${(import.meta.env.VITE_API_URL || '').replace(/\/api\/?$/, '')}/storage/${mat.file_path}`} 
                             target="_blank" 
                             rel="noreferrer"
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-muted/50 text-[#0f2863] text-xs font-bold rounded-lg border border-border hover:bg-muted transition-colors"
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-muted/50 text-[#1a3673] text-xs font-bold rounded-lg border border-border hover:bg-muted transition-colors"
                           >
                             <Paperclip className="w-4 h-4" /> Télécharger la pièce jointe
                           </a>

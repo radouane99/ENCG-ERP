@@ -43,7 +43,7 @@ export function PvFilterSelect({
 
   return (
     <div ref={ref} className={cn('relative space-y-1.5 w-full', open ? 'z-[100]' : 'z-10')}>
-      <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase text-muted-foreground dark:text-muted-foreground tracking-wider">
+      <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase text-muted-foreground tracking-wider">
         <Icon className="w-3.5 h-3.5 text-primary" />
         {label}
       </label>
@@ -55,7 +55,7 @@ export function PvFilterSelect({
           "w-full px-4 py-3 bg-card dark:bg-slate-800/90 border rounded-2xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer shadow-xs text-left",
           open
             ? "border-primary ring-4 ring-indigo-500/15 text-primary dark:text-indigo-200"
-            : "border-border dark:border-slate-700/80 hover:border-indigo-400 dark:hover:border-primary text-foreground dark:text-foreground",
+            : "border-border dark:border-slate-700/80 hover:border-indigo-400 dark:hover:border-primary text-foreground",
           disabled && 'opacity-40 cursor-not-allowed',
         )}
       >
@@ -65,7 +65,7 @@ export function PvFilterSelect({
         <ChevronDown className={cn('w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0 ml-2', open && "rotate-180 text-primary")} />
       </button>
       {open && !disabled && (
-        <div className="absolute z-[9999] top-full left-0 mt-2 w-full bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm py-2 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150 backdrop-blur-2xl">
+        <div className="absolute z-[9999] top-full left-0 mt-2 w-full bg-card border border-border rounded-2xl shadow-sm py-2 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150 backdrop-blur-2xl">
           <div
             onClick={() => {
               onChange('')

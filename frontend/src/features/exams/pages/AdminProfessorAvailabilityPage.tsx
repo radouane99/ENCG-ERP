@@ -46,7 +46,7 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, placeholder
           "w-full px-4 py-2.5 bg-muted/50 dark:bg-card border rounded-2xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer shadow-xs text-left",
           open 
             ? "border-primary ring-4 ring-indigo-500/15 text-primary dark:text-indigo-200"
-            : "border-border dark:border-slate-700/80 hover:border-indigo-400 dark:hover:border-primary text-foreground dark:text-foreground"
+            : "border-border dark:border-slate-700/80 hover:border-indigo-400 dark:hover:border-primary text-foreground"
         )}
       >
         <span className={cn("truncate font-bold", !selectedOption && "text-slate-400 font-medium")}>
@@ -56,7 +56,7 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, placeholder
       </button>
 
       {open && (
-        <div className="absolute z-[9999] top-full left-0 mt-2 w-full bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm py-2 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150 backdrop-blur-2xl">
+        <div className="absolute z-[9999] top-full left-0 mt-2 w-full bg-card border border-border rounded-2xl shadow-sm py-2 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150 backdrop-blur-2xl">
           {options.map((opt) => {
             const isSelected = String(opt.value) === String(value)
             return (
@@ -282,8 +282,8 @@ export default function AdminProfessorAvailabilityPage() {
       </div>
 
       {/* Heatmap Card (Dynamic Real DB Matrice de Chaleur) */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-6 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border dark:border-border pb-4">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
           <div>
             <div className="inline-flex items-center gap-2 text-primary dark:text-indigo-400 text-xs font-bold uppercase tracking-wider">
               <Grid className="w-4 h-4" /> Matrice de Chaleur Hebdomadaire (Heatmap ENCG)
@@ -323,7 +323,7 @@ export default function AdminProfessorAvailabilityPage() {
       </div>
 
       {/* Filter Bar Card */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-6">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-6">
         <div className="w-full md:w-72">
           <CustomSelect
             label="ANNÉE UNIVERSITAIRE"
@@ -346,8 +346,8 @@ export default function AdminProfessorAvailabilityPage() {
       </div>
 
       {/* Table Card (Binding Real Eloquent DB Records) */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm overflow-hidden p-6 space-y-4">
-        <div className="p-4 border-b border-border dark:border-border flex items-center justify-between bg-muted/50 dark:bg-slate-800/60 rounded-2xl">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm overflow-hidden p-6 space-y-4">
+        <div className="p-4 border-b border-border flex items-center justify-between bg-muted/50 dark:bg-slate-800/60 rounded-2xl">
           <label className="flex items-center gap-3 cursor-pointer text-xs font-bold text-slate-700 dark:text-foreground">
             <input 
               type="checkbox" 
@@ -371,9 +371,9 @@ export default function AdminProfessorAvailabilityPage() {
           </button>
         </div>
 
-        <div className="overflow-x-auto min-h-[300px] border border-border dark:border-border rounded-2xl">
+        <div className="overflow-x-auto min-h-[300px] border border-border rounded-2xl">
           <table className="w-full text-sm text-left">
-            <thead className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-muted/50 dark:bg-slate-800/80 border-b border-border dark:border-border">
+            <thead className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-muted/50 dark:bg-slate-800/80 border-b border-border">
               <tr>
                 <th className="px-6 py-4 w-12"></th>
                 <th className="px-6 py-4">PROFESSEUR</th>
@@ -410,7 +410,7 @@ export default function AdminProfessorAvailabilityPage() {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0f2863] to-blue-600 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-md">
+                      <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#1a3673] to-blue-600 flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-md">
                         {getInitials(prof.nom)}
                       </div>
                       <div>
@@ -432,7 +432,7 @@ export default function AdminProfessorAvailabilityPage() {
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4 text-center text-foreground dark:text-foreground font-bold text-xs">{prof.creneaux}</td>
+                  <td className="px-6 py-4 text-center text-foreground font-bold text-xs">{prof.creneaux}</td>
                   <td className="px-6 py-4 text-xs font-bold text-slate-400">{prof.date}</td>
                   <td className="px-6 py-4 text-end">
                     <div className="flex items-center justify-end gap-2">
@@ -461,8 +461,8 @@ export default function AdminProfessorAvailabilityPage() {
       {/* Details Modal */}
       {selectedProfDetails && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-xl shadow-sm overflow-hidden">
-            <div className="p-6 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white flex items-center justify-between">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-xl shadow-sm overflow-hidden">
+            <div className="p-6 bg-gradient-to-r from-[#1a3673] to-blue-900 text-white flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200">Grille Hebdomadaire</span>
                 <h2 className="text-lg font-bold">{selectedProfDetails.nom}</h2>
@@ -490,9 +490,9 @@ export default function AdminProfessorAvailabilityPage() {
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
                   <Clock className="w-3.5 h-3.5 text-primary" /> Créneaux Déclarés & Indisponibilités
                 </h3>
-                <div className="p-4 bg-muted/50 dark:bg-slate-800/80 rounded-2xl border border-border dark:border-border text-xs font-bold text-foreground dark:text-foreground space-y-2">
+                <div className="p-4 bg-muted/50 dark:bg-slate-800/80 rounded-2xl border border-border text-xs font-bold text-foreground space-y-2">
                   <p className="text-primary dark:text-indigo-400">{selectedProfDetails.creneaux}</p>
-                  <div className="grid grid-cols-5 gap-1.5 pt-3 border-t border-border dark:border-border text-[10px] font-bold text-center">
+                  <div className="grid grid-cols-5 gap-1.5 pt-3 border-t border-border text-[10px] font-bold text-center">
                     <div className="p-2 rounded-xl bg-emerald-100 text-emerald-800">LUN (8h-12h)</div>
                     <div className="p-2 rounded-xl bg-emerald-100 text-emerald-800">MAR (14h-18h)</div>
                     <div className="p-2 rounded-xl bg-emerald-100 text-emerald-800">MER (8h-12h)</div>
@@ -502,7 +502,7 @@ export default function AdminProfessorAvailabilityPage() {
                 </div>
               </div>
             </div>
-            <div className="p-4 border-t border-border dark:border-border bg-muted/50 dark:bg-card flex justify-between items-center">
+            <div className="p-4 border-t border-border bg-muted/50 dark:bg-card flex justify-between items-center">
               <button 
                 onClick={() => handleExportIcal(selectedProfDetails)}
                 className="px-5 py-2.5 bg-primary text-primary-foreground font-bold rounded-xl text-xs hover:bg-primary transition-colors cursor-pointer flex items-center gap-2"

@@ -143,7 +143,7 @@ export default function StudentInternshipsPage() {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <Loader2 className="w-8 h-8 text-[#001A4B] animate-spin" />
+        <Loader2 className="w-8 h-8 text-[#1a3673] animate-spin" />
         <p className="text-sm font-bold text-muted-foreground">Chargement de vos stages...</p>
       </div>
     );
@@ -213,7 +213,7 @@ export default function StudentInternshipsPage() {
         <div className="lg:col-span-2 space-y-5">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-foreground dark:text-white flex items-center gap-2">
-              <Briefcase className="w-4 h-4 text-[#001A4B] dark:text-blue-400" />
+              <Briefcase className="w-4 h-4 text-[#1a3673] dark:text-blue-400" />
               Mes Conventions de Stage & PFE
             </h2>
             <span className="text-[11px] font-bold text-slate-400">{list.length} convention(s)</span>
@@ -221,7 +221,7 @@ export default function StudentInternshipsPage() {
 
           {list.length === 0 ? (
             /* ── Empty state ── */
-            <div className="flex flex-col items-center justify-center py-20 bg-card dark:bg-card rounded-2xl border-2 border-dashed border-border dark:border-border space-y-4 text-center">
+            <div className="flex flex-col items-center justify-center py-20 bg-card rounded-2xl border-2 border-dashed border-border space-y-4 text-center">
               <div className="w-16 h-16 rounded-2xl bg-muted dark:bg-card flex items-center justify-center">
                 <Briefcase className="w-8 h-8 text-slate-400" />
               </div>
@@ -231,7 +231,7 @@ export default function StudentInternshipsPage() {
               </div>
               <button
                 onClick={() => setShowRequestModal(true)}
-                className="px-5 py-2.5 bg-[#001A4B] text-white font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer hover:bg-secondary transition-colors"
+                className="px-5 py-2.5 bg-[#1a3673] text-white font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer hover:bg-secondary transition-colors"
               >
                 <Plus className="w-3.5 h-3.5" /> Déposer une Demande
               </button>
@@ -259,12 +259,12 @@ export default function StudentInternshipsPage() {
               }
 
               return (
-                <div key={internship.id} className="bg-card dark:bg-card rounded-2xl border border-slate-200/80 dark:border-border shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+                <div key={internship.id} className="bg-card rounded-2xl border border-slate-200/80 dark:border-border shadow-sm hover:shadow-md transition-shadow overflow-hidden">
 
                   {/* Card header */}
                   <div className="p-6 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                     <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-md ${isPfe ? 'bg-gradient-to-br from-purple-600 to-indigo-700' : 'bg-gradient-to-br from-[#001A4B] to-blue-700'}`}>
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-md ${isPfe ? 'bg-gradient-to-br from-purple-600 to-indigo-700' : 'bg-gradient-to-br from-[#1a3673] to-blue-700'}`}>
                         {isPfe
                           ? <GraduationCap className="w-6 h-6 text-white" />
                           : <Building2 className="w-6 h-6 text-amber-300" />
@@ -307,18 +307,18 @@ export default function StudentInternshipsPage() {
                           <React.Fragment key={step}>
                             <div className="flex flex-col items-center gap-1 flex-1">
                               <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-[10px] font-black transition-all ${
-                                done    ? 'bg-[#001A4B] border-[#001A4B] text-white' :
+                                done    ? 'bg-[#1a3673] border-[#1a3673] text-white' :
                                 current ? 'bg-amber-500 border-amber-500 text-white' :
                                           "bg-muted dark:bg-card border-slate-300 dark:border-border text-slate-400"
                               }`}>
                                 {done ? <CheckCircle2 className="w-3.5 h-3.5" /> : <span>{idx + 1}</span>}
                               </div>
-                              <span className={`text-[9px] font-bold text-center leading-tight ${done || current ? 'text-[#001A4B] dark:text-blue-400' : 'text-slate-400'}`}>
+                              <span className={`text-[9px] font-bold text-center leading-tight ${done || current ? 'text-[#1a3673] dark:text-blue-400' : 'text-slate-400'}`}>
                                 {step}
                               </span>
                             </div>
                             {idx < PIPELINE.length - 1 && (
-                              <div className={`flex-1 h-0.5 mt-3.5 rounded-full ${idx < stepIdx - 1 ? "bg-[#001A4B] dark:bg-primary" : 'bg-slate-200 dark:bg-slate-700'}`} />
+                              <div className={`flex-1 h-0.5 mt-3.5 rounded-full ${idx < stepIdx - 1 ? "bg-[#1a3673] dark:bg-primary" : 'bg-slate-200 dark:bg-slate-700'}`} />
                             )}
                           </React.Fragment>
                         );
@@ -330,7 +330,7 @@ export default function StudentInternshipsPage() {
                   {isPfe && (
                     <div className="mx-6 mb-4 p-4 bg-muted/50 dark:bg-slate-800/60 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-3">
                       <div className="flex items-center justify-between flex-wrap gap-2">
-                        <span className="text-xs font-bold text-foreground dark:text-foreground flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
                           <BookOpen className="w-3.5 h-3.5 text-primary" /> Avancement Mémoire PFE
                           {(internship.supervisor?.user?.name || internship.supervisor_name) && (
                             <span className="text-muted-foreground font-medium text-[11px]">avec {internship.supervisor?.user?.name || internship.supervisor_name}</span>
@@ -342,7 +342,7 @@ export default function StudentInternshipsPage() {
                               🔍 Plagiat : {internship.plagiarism_rate}% ({Number(internship.plagiarism_rate) < 15 ? 'Conforme' : 'Non conforme'})
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 bg-muted dark:bg-card text-muted-foreground border border-border dark:border-border rounded-full text-[10px] font-medium">
+                            <span className="px-2 py-0.5 bg-muted dark:bg-card text-muted-foreground border border-border rounded-full text-[10px] font-medium">
                               🔍 Turnitin : {hasFinalReport ? 'Analyse en cours' : 'En attente de dépôt'}
                             </span>
                           )}
@@ -419,12 +419,12 @@ export default function StudentInternshipsPage() {
         {/* RIGHT — Soutenance + Quick Links */}
         <div className="space-y-5">
           <h2 className="text-base font-bold text-foreground dark:text-white flex items-center gap-2">
-            <GraduationCap className="w-4 h-4 text-[#001A4B] dark:text-blue-400" />
+            <GraduationCap className="w-4 h-4 text-[#1a3673] dark:text-blue-400" />
             Ma Soutenance PFE
           </h2>
 
           {!pfeList.length ? (
-            <div className="p-6 bg-card dark:bg-card rounded-2xl border-2 border-dashed border-border dark:border-border text-center space-y-3">
+            <div className="p-6 bg-card rounded-2xl border-2 border-dashed border-border text-center space-y-3">
               <Calendar className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto" />
               <p className="text-xs font-bold text-muted-foreground">Aucun stage PFE actif</p>
               <p className="text-[11px] text-slate-400 leading-relaxed">
@@ -433,7 +433,7 @@ export default function StudentInternshipsPage() {
             </div>
           ) : pfeList[0]?.soutenance ? (
             /* Real scheduled defense from DB */
-            <div className="bg-gradient-to-br from-[#001A4B] to-[#0a2f77] text-white p-6 rounded-2xl shadow-sm space-y-5 border border-blue-800/40">
+            <div className="bg-gradient-to-br from-[#1a3673] to-[#0a2f77] text-white p-6 rounded-2xl shadow-sm space-y-5 border border-blue-800/40">
               <div className="inline-flex items-center gap-2 bg-emerald-500/20 text-emerald-300 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider border border-emerald-500/30">
                 <CheckCircle2 className="w-3.5 h-3.5" /> Créneau Officiel Attribué
               </div>
@@ -479,14 +479,14 @@ export default function StudentInternshipsPage() {
             </div>
           ) : (
             /* Real pending defense state — NO FAKE DATES OR JURY NAMES */
-            <div className="bg-card dark:bg-card border border-border dark:border-border p-6 rounded-2xl shadow-sm space-y-5">
+            <div className="bg-card border border-border p-6 rounded-2xl shadow-sm space-y-5">
               <div className="inline-flex items-center gap-2 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider border border-amber-200 dark:border-amber-800/40">
                 <Clock className="w-3.5 h-3.5" /> En attente de programmation
               </div>
 
               <div>
                 <h3 className="text-sm font-bold text-foreground dark:text-white">Créneau & Jury PFE</h3>
-                <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1 leading-relaxed">
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                   Votre date de passage, la salle et les membres du jury seront programmés par la commission dès que votre mémoire sera validé par votre encadrant académique.
                 </p>
               </div>
@@ -520,7 +520,7 @@ export default function StudentInternshipsPage() {
           )}
 
           {/* Quick links panel */}
-          <div className="bg-card dark:bg-card rounded-2xl border border-border dark:border-border overflow-hidden shadow-sm divide-y divide-slate-100 dark:divide-slate-800">
+          <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm divide-y divide-slate-100 dark:divide-slate-800">
             {[
               { id: 'guide' as const,    icon: FileText,    label: 'Guide de Rédaction Mémoire PFE',  sub: 'Normes ENCG Fès 2026',  color: 'text-indigo-600' },
               { id: 'reglement' as const, icon: BookOpen,    label: 'Règlement de Soutenance',          sub: 'Jury & Modalités',       color: 'text-blue-600'   },
@@ -534,7 +534,7 @@ export default function StudentInternshipsPage() {
                 <div className="flex items-center gap-3">
                   <Icon className={`w-4 h-4 ${color} shrink-0`} />
                   <div>
-                    <p className="text-xs font-bold text-foreground dark:text-foreground">{label}</p>
+                    <p className="text-xs font-bold text-foreground">{label}</p>
                     <p className="text-[10px] text-slate-400">{sub}</p>
                   </div>
                 </div>
@@ -548,8 +548,8 @@ export default function StudentInternshipsPage() {
       {/* ══ MODAL — Guides & Règlements ════════════════════════════════════ */}
       {activeGuideModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-lg shadow-sm overflow-hidden flex flex-col max-h-[85vh]">
-            <div className="p-5 bg-gradient-to-r from-[#001A4B] to-[#0a2f77] text-white flex items-center justify-between shrink-0">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-lg shadow-sm overflow-hidden flex flex-col max-h-[85vh]">
+            <div className="p-5 bg-gradient-to-r from-[#1a3673] to-[#0a2f77] text-white flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2.5">
                 <BookOpen className="w-5 h-5 text-amber-400" />
                 <h3 className="text-sm font-bold">
@@ -613,7 +613,7 @@ export default function StudentInternshipsPage() {
 
               {activeGuideModal === 'recours' && (
                 <>
-                  <div className="p-3 bg-muted dark:bg-card rounded-xl border border-border dark:border-border text-foreground dark:text-foreground font-bold">
+                  <div className="p-3 bg-muted dark:bg-card rounded-xl border border-border text-foreground font-bold">
                     Guichet officiel des requêtes et recours académiques — Commission des PFE.
                   </div>
                   <p>Pour tout signalement relatif à l'attribution d'un encadrant, à un litige en entreprise d'accueil ou à la programmation de la soutenance :</p>
@@ -624,10 +624,10 @@ export default function StudentInternshipsPage() {
               )}
             </div>
 
-            <div className="p-4 bg-muted/50 dark:bg-slate-800/80 border-t border-border dark:border-border flex justify-end">
+            <div className="p-4 bg-muted/50 dark:bg-slate-800/80 border-t border-border flex justify-end">
               <button
                 onClick={() => setActiveGuideModal(null)}
-                className="px-5 py-2 bg-[#001A4B] text-white font-bold text-xs rounded-xl hover:bg-secondary transition-colors cursor-pointer"
+                className="px-5 py-2 bg-[#1a3673] text-white font-bold text-xs rounded-xl hover:bg-secondary transition-colors cursor-pointer"
               >
                 Fermer
               </button>
@@ -639,8 +639,8 @@ export default function StudentInternshipsPage() {
       {/* ══ MODAL — Suivi Encadrant ════════════════════════════════════════ */}
       {showSuiviModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-lg shadow-sm flex flex-col max-h-[90vh]">
-            <div className="p-5 bg-gradient-to-r from-[#001A4B] to-[#0a2f77] text-white flex items-center justify-between shrink-0 rounded-t-3xl">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-lg shadow-sm flex flex-col max-h-[90vh]">
+            <div className="p-5 bg-gradient-to-r from-[#1a3673] to-[#0a2f77] text-white flex items-center justify-between shrink-0 rounded-t-3xl">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-blue-300">Espace Collaboratif PFE</span>
                 <h2 className="text-sm font-bold mt-0.5">Suivi d'Avancement Mémoire</h2>
@@ -652,7 +652,7 @@ export default function StudentInternshipsPage() {
 
             <div className="p-5 space-y-4 overflow-y-auto flex-1">
               {/* Milestones */}
-              <div className="p-4 bg-muted/50 dark:bg-card rounded-2xl border border-border dark:border-border space-y-2">
+              <div className="p-4 bg-muted/50 dark:bg-card rounded-2xl border border-border space-y-2">
                 <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground dark:text-foreground">Jalons de Validation :</h4>
                 {MILESTONES.map((m, i) => {
                   const done = (showSuiviModal.progress ?? 75) >= (i + 1) * 25;
@@ -671,13 +671,13 @@ export default function StudentInternshipsPage() {
               <div className="space-y-2">
                 <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground dark:text-foreground">Journal des Échanges :</h4>
                 {commentsList.length === 0 ? (
-                  <div className="p-4 text-center bg-muted/50 dark:bg-slate-800/60 rounded-2xl border border-dashed border-border dark:border-border">
+                  <div className="p-4 text-center bg-muted/50 dark:bg-slate-800/60 rounded-2xl border border-dashed border-border">
                     <p className="text-xs text-slate-400 font-medium">Aucun échange ou remarque enregistré pour le moment.</p>
                     <p className="text-[10px] text-slate-400 mt-1">Vous pouvez poser une question ou transmettre un point d'étape à votre encadrant ci-dessous.</p>
                   </div>
                 ) : (
                   commentsList.map((c, idx) => (
-                    <div key={idx} className={`p-3.5 rounded-2xl space-y-1 ${c.isProf ? "bg-primary/5 dark:bg-indigo-950/40 border border-primary/20 dark:border-primary" : "bg-muted/50 dark:bg-card border border-border dark:border-border ml-5"}`}>
+                    <div key={idx} className={`p-3.5 rounded-2xl space-y-1 ${c.isProf ? "bg-primary/5 dark:bg-indigo-950/40 border border-primary/20 dark:border-primary" : "bg-muted/50 dark:bg-card border border-border ml-5"}`}>
                       <div className="flex items-center justify-between">
                         <span className={`text-[11px] font-black ${c.isProf ? "text-primary dark:text-indigo-300" : "text-slate-700 dark:text-foreground"}`}>{c.author}</span>
                         <span className="text-[10px] text-slate-400">{c.date}</span>
@@ -695,7 +695,7 @@ export default function StudentInternshipsPage() {
                   placeholder="Posez une question à votre encadrant..."
                   className={inputCls + ' flex-1'}
                 />
-                <button type="submit" className="px-4 py-2.5 bg-[#001A4B] text-white font-bold text-xs rounded-2xl cursor-pointer flex items-center gap-1.5 hover:bg-secondary transition-colors shrink-0">
+                <button type="submit" className="px-4 py-2.5 bg-[#1a3673] text-white font-bold text-xs rounded-2xl cursor-pointer flex items-center gap-1.5 hover:bg-secondary transition-colors shrink-0">
                   <Send className="w-3.5 h-3.5" /> Envoyer
                 </button>
               </form>
@@ -707,8 +707,8 @@ export default function StudentInternshipsPage() {
       {/* ══ MODAL — Nouvelle Convention ═══════════════════════════════════ */}
       {showRequestModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-lg shadow-sm flex flex-col max-h-[90vh]">
-            <div className="p-5 bg-gradient-to-r from-[#001A4B] to-[#0a2f77] text-white flex items-center justify-between shrink-0 rounded-t-3xl">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-lg shadow-sm flex flex-col max-h-[90vh]">
+            <div className="p-5 bg-gradient-to-r from-[#1a3673] to-[#0a2f77] text-white flex items-center justify-between shrink-0 rounded-t-3xl">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-blue-300">Guichet PFE — ENCG Fès</span>
                 <h2 className="text-sm font-bold mt-0.5">Nouvelle Demande de Convention</h2>
@@ -771,11 +771,11 @@ export default function StudentInternshipsPage() {
                   <input required type="date" value={form.end_date} onChange={e => setForm(p => ({ ...p, end_date: e.target.value }))} className={inputCls} />
                 </div>
               </div>
-              <div className="flex justify-end gap-3 pt-2 border-t border-border dark:border-border">
+              <div className="flex justify-end gap-3 pt-2 border-t border-border">
                 <button type="button" onClick={() => setShowRequestModal(false)} className="px-5 py-2.5 text-xs font-bold text-muted-foreground hover:bg-muted dark:hover:bg-slate-800 rounded-xl cursor-pointer transition-colors">
                   Annuler
                 </button>
-                <button type="submit" disabled={submitting} className="px-6 py-2.5 text-xs font-bold bg-[#001A4B] text-white hover:bg-secondary disabled:opacity-50 rounded-xl shadow-md cursor-pointer flex items-center gap-1.5 transition-colors">
+                <button type="submit" disabled={submitting} className="px-6 py-2.5 text-xs font-bold bg-[#1a3673] text-white hover:bg-secondary disabled:opacity-50 rounded-xl shadow-md cursor-pointer flex items-center gap-1.5 transition-colors">
                   {submitting
                     ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> En cours...</>
                     : <><ArrowUpRight className="w-3.5 h-3.5" /> Soumettre Convention</>

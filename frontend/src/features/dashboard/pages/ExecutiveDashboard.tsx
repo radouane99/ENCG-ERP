@@ -49,13 +49,13 @@ export default function ExecutiveDashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-br from-primary to-[#7D0809] rounded-2xl p-6 text-foreground shadow-sm shadow-primary/20">
+        <div className="bg-gradient-to-br from-primary to-[#7D0809] rounded-2xl p-6 text-white shadow-sm shadow-primary/20">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-foreground/60 text-xs font-bold uppercase tracking-widest mb-1">Total Étudiants</p>
-              <h3 className="text-4xl font-bold">{kpis.total_students || 0}</h3>
+              <p className="text-white/75 text-xs font-bold uppercase tracking-widest mb-1">Total Étudiants</p>
+              <h3 className="text-4xl font-bold text-white">{kpis.total_students || 0}</h3>
             </div>
-            <Users className="w-8 h-8 text-foreground/20" />
+            <Users className="w-8 h-8 text-white/25" />
           </div>
         </div>
 

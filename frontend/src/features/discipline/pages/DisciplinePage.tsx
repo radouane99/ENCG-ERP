@@ -565,7 +565,7 @@ export default function DisciplinePage(): React.ReactElement {
       </div>
 
       {/* Search, Filter Tabs & Severity Selector */}
-      <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-4 shadow-sm space-y-3">
+      <div className="bg-card border border-border rounded-2xl p-4 shadow-sm space-y-3">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           
           {/* Search Input */}
@@ -576,7 +576,7 @@ export default function DisciplinePage(): React.ReactElement {
               placeholder="Rechercher par étudiant, nom arabe, CNE, module..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-10 pr-8 py-2 bg-muted/50 dark:bg-slate-800/80 border border-border dark:border-border text-xs font-medium text-foreground dark:text-white outline-none focus:ring-2 focus:ring-rose-700 transition-all rounded-[var(--control-radius)]"
+              className="w-full pl-10 pr-8 py-2 bg-muted/50 dark:bg-slate-800/80 border border-border text-xs font-medium text-foreground dark:text-white outline-none focus:ring-2 focus:ring-rose-700 transition-all rounded-[var(--control-radius)]"
             />
             {search && (
               <button
@@ -595,7 +595,7 @@ export default function DisciplinePage(): React.ReactElement {
             <select
               value={severityFilter}
               onChange={e => setSeverityFilter(e.target.value)}
-              className="px-3 py-1.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-semibold text-slate-700 dark:text-foreground outline-none rounded-[var(--control-radius)]"
+              className="px-3 py-1.5 bg-muted/50 dark:bg-card border border-border text-xs font-semibold text-slate-700 dark:text-foreground outline-none rounded-[var(--control-radius)]"
             >
               <option value="all">Toutes les sévérités</option>
               <option value="high">🚨 Majeure (Fraude flagrante)</option>
@@ -606,7 +606,7 @@ export default function DisciplinePage(): React.ReactElement {
         </div>
 
         {/* Status Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pt-2 border-t border-border dark:border-border">
+        <div className="flex items-center gap-2 overflow-x-auto pt-2 border-t border-border">
           {[
             { id: 'all', label: 'Tous les dossiers', count: stats.total },
             { id: 'pending', label: '🚨 À Convoquer', count: stats.pending },
@@ -622,7 +622,7 @@ export default function DisciplinePage(): React.ReactElement {
                 "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 cursor-pointer",
                 statusFilter === tab.id
                   ? "bg-[#4a1010] text-white shadow-md font-bold"
-                  : "bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground hover:text-foreground hover:bg-slate-200 dark:hover:bg-slate-700"
+                  : "bg-muted dark:bg-card text-muted-foreground hover:text-foreground hover:bg-slate-200 dark:hover:bg-slate-700"
               )}
             >
               <span>{tab.label}</span>
@@ -638,7 +638,7 @@ export default function DisciplinePage(): React.ReactElement {
       </div>
 
       {/* Main Table of Disciplinary Cases */}
-      <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
         {isLoading ? (
           <div className="py-24 text-center text-slate-400 text-xs font-bold space-y-3">
             <Spinner className="w-7 h-7 mx-auto text-rose-700" />
@@ -682,7 +682,7 @@ export default function DisciplinePage(): React.ReactElement {
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50/80 dark:bg-slate-800/60 border-b border-border dark:border-border text-muted-foreground dark:text-muted-foreground uppercase tracking-wider font-bold text-[10px]">
+                <tr className="bg-slate-50/80 dark:bg-slate-800/60 border-b border-border text-muted-foreground uppercase tracking-wider font-bold text-[10px]">
                   <th className="p-4">Étudiant Poursuivi</th>
                   <th className="p-4">Épreuve & Contexte</th>
                   <th className="p-4">Infraction & Faits Signalés</th>
@@ -728,7 +728,7 @@ export default function DisciplinePage(): React.ReactElement {
 
                     {/* Épreuve & Contexte Cell */}
                     <td className="p-4 font-medium">
-                      <div className="font-bold text-foreground dark:text-foreground flex items-center gap-1.5">
+                      <div className="font-bold text-foreground flex items-center gap-1.5">
                         <BookOpen className="w-3.5 h-3.5 text-rose-700 dark:text-rose-400" />
                         <span>{item.module_name || 'Épreuve Semestrielle'}</span>
                       </div>
@@ -770,7 +770,7 @@ export default function DisciplinePage(): React.ReactElement {
                         </div>
                       )}
                       {item.decision && (
-                        <div className="text-[9.5px] text-muted-foreground dark:text-muted-foreground font-medium max-w-[170px] truncate mx-auto" title={item.decision}>
+                        <div className="text-[9.5px] text-muted-foreground font-medium max-w-[170px] truncate mx-auto" title={item.decision}>
                           {item.decision}
                         </div>
                       )}
@@ -868,8 +868,8 @@ export default function DisciplinePage(): React.ReactElement {
       {/* ------------------------------------------------------------- */}
       {showCreateModal && (
         <div className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in overflow-y-auto">
-          <div className="bg-card dark:bg-card border border-amber-200 dark:border-amber-900/50 rounded-2xl p-6 md:p-7 max-w-xl w-full shadow-sm space-y-5 my-8">
-            <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
+          <div className="bg-card border border-amber-200 dark:border-amber-900/50 rounded-2xl p-6 md:p-7 max-w-xl w-full shadow-sm space-y-5 my-8">
+            <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-rose-700 text-white flex items-center justify-center font-bold shadow-md">
                   <Plus className="w-5 h-5" />
@@ -902,14 +902,14 @@ export default function DisciplinePage(): React.ReactElement {
                     placeholder="Tapez pour filtrer les étudiants (ex: Berrada, N13000...)"
                     value={studentSearchInModal}
                     onChange={e => setStudentSearchInModal(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-medium outline-none rounded-[var(--control-radius)]"
+                    className="w-full pl-9 pr-3 py-2 bg-muted/50 dark:bg-card border border-border text-xs font-medium outline-none rounded-[var(--control-radius)]"
                   />
                 </div>
 
                 <select
                   value={selectedStudentId}
                   onChange={e => setSelectedStudentId(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border font-bold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
+                  className="w-full px-3 py-2.5 bg-muted/50 dark:bg-card border border-border font-bold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
                 >
                   <option value="">-- Sélectionner l'étudiant concerné ({modalStudents.length} affichés) --</option>
                   {modalStudents.map((s: any) => (
@@ -926,7 +926,7 @@ export default function DisciplinePage(): React.ReactElement {
                 <select
                   value={selectedExamId}
                   onChange={e => setSelectedExamId(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
+                  className="w-full px-3 py-2.5 bg-muted/50 dark:bg-card border border-border font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
                 >
                   <option value="">-- Sélectionner l'examen / module (optionnel) --</option>
                   {(creationData?.exams || []).map((e: any) => (
@@ -944,7 +944,7 @@ export default function DisciplinePage(): React.ReactElement {
                   <select
                     value={createInfractionType}
                     onChange={e => setCreateInfractionType(e.target.value)}
-                    className="w-full px-3 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border font-bold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
+                    className="w-full px-3 py-2.5 bg-muted/50 dark:bg-card border border-border font-bold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
                   >
                     <option value="fraude_antiseche">📝 Fraude Antisèche / Documents</option>
                     <option value="fraude_smartphone">📱 Usage Smartphone / IA / ChatGPT</option>
@@ -972,7 +972,7 @@ export default function DisciplinePage(): React.ReactElement {
                           "py-2 rounded-xl text-[11px] font-bold border transition-all cursor-pointer text-center",
                           createSeverity === s.id
                             ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs"
-                            : "bg-muted/50 dark:bg-card text-muted-foreground border-border dark:border-border"
+                            : "bg-muted/50 dark:bg-card text-muted-foreground border-border"
                         )}
                       >
                         {s.label}
@@ -990,7 +990,7 @@ export default function DisciplinePage(): React.ReactElement {
                   placeholder="Ex: 3 fiches cartonnées manuscrites, iPhone 13 noir, brouillon annoté..."
                   value={createConfiscated}
                   onChange={e => setCreateConfiscated(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border font-medium outline-none rounded-[var(--control-radius)]"
+                  className="w-full px-3 py-2.5 bg-muted/50 dark:bg-card border border-border font-medium outline-none rounded-[var(--control-radius)]"
                 />
               </div>
 
@@ -1002,12 +1002,12 @@ export default function DisciplinePage(): React.ReactElement {
                   placeholder="Circonstances précises du constat, attitude du candidat, heure de l'incident et mesures immédiates prises en salle..."
                   value={createDescription}
                   onChange={e => setCreateDescription(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border font-medium text-foreground dark:text-white outline-none resize-none rounded-[var(--control-radius)]"
+                  className="w-full px-3 py-2.5 bg-muted/50 dark:bg-card border border-border font-medium text-foreground dark:text-white outline-none resize-none rounded-[var(--control-radius)]"
                 />
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 border-t border-border dark:border-border pt-4">
+            <div className="flex justify-end gap-3 border-t border-border pt-4">
               <Button
                 variant="outline"
                 onClick={() => setShowCreateModal(false)}
@@ -1050,8 +1050,8 @@ export default function DisciplinePage(): React.ReactElement {
       {/* ------------------------------------------------------------- */}
       {showConvocationModal && selectedCase && (
         <div className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-amber-200 dark:border-amber-900/50 rounded-2xl p-6 md:p-7 max-w-lg w-full shadow-sm space-y-5">
-            <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
+          <div className="bg-card border border-amber-200 dark:border-amber-900/50 rounded-2xl p-6 md:p-7 max-w-lg w-full shadow-sm space-y-5">
+            <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold shadow-md">
                   <Mail className="w-5 h-5" />
@@ -1080,7 +1080,7 @@ export default function DisciplinePage(): React.ReactElement {
                     type="date"
                     value={convocationDate}
                     onChange={e => setConvocationDate(e.target.value)}
-                    className="w-full px-3 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border font-bold outline-none rounded-[var(--control-radius)]"
+                    className="w-full px-3 py-2 bg-muted/50 dark:bg-card border border-border font-bold outline-none rounded-[var(--control-radius)]"
                   />
                 </div>
                 <div className="space-y-1">
@@ -1089,7 +1089,7 @@ export default function DisciplinePage(): React.ReactElement {
                     type="time"
                     value={convocationTime}
                     onChange={e => setConvocationTime(e.target.value)}
-                    className="w-full px-3 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border font-bold outline-none rounded-[var(--control-radius)]"
+                    className="w-full px-3 py-2 bg-muted/50 dark:bg-card border border-border font-bold outline-none rounded-[var(--control-radius)]"
                   />
                 </div>
               </div>
@@ -1100,7 +1100,7 @@ export default function DisciplinePage(): React.ReactElement {
                   type="text"
                   value={convocationRoom}
                   onChange={e => setConvocationRoom(e.target.value)}
-                  className="w-full px-3 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border font-bold outline-none rounded-[var(--control-radius)]"
+                  className="w-full px-3 py-2 bg-muted/50 dark:bg-card border border-border font-bold outline-none rounded-[var(--control-radius)]"
                 />
                 <div className="flex gap-2 pt-1">
                   {['Salle des Actes', 'Salle du Conseil', 'Bureau Direction'].map(r => (
@@ -1132,7 +1132,7 @@ export default function DisciplinePage(): React.ReactElement {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 border-t border-border dark:border-border pt-4">
+            <div className="flex justify-end gap-3 border-t border-border pt-4">
               <Button
                 variant="outline"
                 onClick={() => setShowConvocationModal(false)}
@@ -1163,8 +1163,8 @@ export default function DisciplinePage(): React.ReactElement {
       {/* ------------------------------------------------------------- */}
       {showHearingModal && selectedCase && (
         <div className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in overflow-y-auto">
-          <div className="bg-card dark:bg-card border border-rose-200 dark:border-rose-900/50 rounded-2xl p-6 md:p-7 max-w-xl w-full shadow-sm space-y-5 my-8">
-            <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
+          <div className="bg-card border border-rose-200 dark:border-rose-900/50 rounded-2xl p-6 md:p-7 max-w-xl w-full shadow-sm space-y-5 my-8">
+            <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-700 to-red-900 text-white flex items-center justify-center font-bold shadow-md">
                   <Gavel className="w-5 h-5" />
@@ -1191,7 +1191,7 @@ export default function DisciplinePage(): React.ReactElement {
                 <select
                   value={finalSanction}
                   onChange={e => setFinalSanction(e.target.value as any)}
-                  className="w-full px-3 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border font-bold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
+                  className="w-full px-3 py-2.5 bg-muted/50 dark:bg-card border border-border font-bold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
                 >
                   <option value="module">📘 Note 0.00 / 20 au Module concerné (Sanction standard fraude)</option>
                   <option value="semestre">📚 Annulation du Semestre S1/S2 (Note 0.00 à tous les modules)</option>
@@ -1209,11 +1209,11 @@ export default function DisciplinePage(): React.ReactElement {
                   onChange={e => setHearingObservations(e.target.value)}
                   placeholder="Synthèse de l'audition contradictoire du candidat, explications fournies, délibérations des membres du Conseil et circonstances retenues..."
                   rows={4}
-                  className="w-full px-3 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border font-medium text-foreground dark:text-white outline-none resize-none rounded-[var(--control-radius)]"
+                  className="w-full px-3 py-2.5 bg-muted/50 dark:bg-card border border-border font-medium text-foreground dark:text-white outline-none resize-none rounded-[var(--control-radius)]"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3 p-3.5 bg-muted/50 dark:bg-slate-800/50 rounded-2xl border border-border dark:border-border">
+              <div className="grid grid-cols-2 gap-3 p-3.5 bg-muted/50 dark:bg-slate-800/50 rounded-2xl border border-border">
                 <div className="space-y-1">
                   <label className="font-bold text-emerald-700 dark:text-emerald-400">Votes Pour la Sanction :</label>
                   <input
@@ -1221,7 +1221,7 @@ export default function DisciplinePage(): React.ReactElement {
                     min={0}
                     value={votesFor}
                     onChange={e => setVotesFor(e.target.value === '' ? '' : Number(e.target.value))}
-                    className="w-full px-3 py-1.5 bg-card dark:bg-card border border-slate-300 dark:border-border font-bold text-center rounded-[var(--control-radius)]"
+                    className="w-full px-3 py-1.5 bg-card border border-slate-300 dark:border-border font-bold text-center rounded-[var(--control-radius)]"
                   />
                 </div>
                 <div className="space-y-1">
@@ -1231,13 +1231,13 @@ export default function DisciplinePage(): React.ReactElement {
                     min={0}
                     value={votesAgainst}
                     onChange={e => setVotesAgainst(e.target.value === '' ? '' : Number(e.target.value))}
-                    className="w-full px-3 py-1.5 bg-card dark:bg-card border border-slate-300 dark:border-border font-bold text-center rounded-[var(--control-radius)]"
+                    className="w-full px-3 py-1.5 bg-card border border-slate-300 dark:border-border font-bold text-center rounded-[var(--control-radius)]"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 border-t border-border dark:border-border pt-4">
+            <div className="flex justify-end gap-3 border-t border-border pt-4">
               <Button
                 variant="outline"
                 onClick={() => setShowHearingModal(false)}
@@ -1269,10 +1269,10 @@ export default function DisciplinePage(): React.ReactElement {
       {/* ------------------------------------------------------------- */}
       {showPrintModal && selectedCase && (
         <div className="fixed inset-0 z-[9999] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 md:p-6 animate-in fade-in overflow-y-auto">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-5 md:p-7 max-w-4xl w-full shadow-sm space-y-4 my-6">
+          <div className="bg-card border border-border rounded-2xl p-5 md:p-7 max-w-4xl w-full shadow-sm space-y-4 my-6">
             
             {/* Modal Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border dark:border-border pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
               <div>
                 <h3 className="text-base md:text-lg font-bold text-foreground dark:text-white flex items-center gap-2">
                   <Gavel className="w-5 h-5 text-rose-700" />
@@ -1300,7 +1300,7 @@ export default function DisciplinePage(): React.ReactElement {
                   "flex-1 py-2 rounded-lg font-bold transition-all cursor-pointer text-center",
                   printDocumentType === 'convocation'
                     ? "bg-[#4a1010] text-white shadow-sm font-bold"
-                    : "text-muted-foreground dark:text-muted-foreground hover:text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 ✉️ Convocation Officielle d'Audience (PDF)
@@ -1312,7 +1312,7 @@ export default function DisciplinePage(): React.ReactElement {
                   "flex-1 py-2 rounded-lg font-bold transition-all cursor-pointer text-center",
                   printDocumentType === 'pv_decision'
                     ? "bg-[#881337] text-white shadow-sm font-bold"
-                    : "text-muted-foreground dark:text-muted-foreground hover:text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 📜 Procès-Verbal de Délibération & Décision (PDF)
@@ -1320,7 +1320,7 @@ export default function DisciplinePage(): React.ReactElement {
             </div>
 
             {/* Live High-Definition PDF Stream Iframe */}
-            <div className="relative rounded-2xl overflow-hidden border border-border dark:border-border bg-slate-950/5 min-h-[580px] flex items-center justify-center">
+            <div className="relative rounded-2xl overflow-hidden border border-border bg-slate-950/5 min-h-[580px] flex items-center justify-center">
               {isPdfLoading ? (
                 <div className="text-center py-24 space-y-3">
                   <Spinner className="w-8 h-8 mx-auto text-rose-700" />
@@ -1346,7 +1346,7 @@ export default function DisciplinePage(): React.ReactElement {
             </div>
 
             {/* Modal Bottom Actions */}
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border dark:border-border">
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border">
               <div className="flex items-center gap-2">
                 <Button
                   onClick={() => handleDownloadPdf(printDocumentType === 'convocation' ? 'convocation' : 'decision', selectedCase.id, selectedCase.student?.last_name)}
@@ -1400,7 +1400,7 @@ export default function DisciplinePage(): React.ReactElement {
       {/* ------------------------------------------------------------- */}
       {showDeleteConfirm && caseToDelete && (
         <div className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 max-w-md w-full shadow-sm space-y-4">
+          <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full shadow-sm space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-red-100 text-red-700 flex items-center justify-center font-bold">
                 <Trash2 className="w-5 h-5" />
@@ -1415,7 +1415,7 @@ export default function DisciplinePage(): React.ReactElement {
               Êtes-vous sûr de vouloir supprimer définitivement le dossier disciplinaire de <strong>{caseToDelete.student?.last_name} {caseToDelete.student?.first_name}</strong> ? Cette action est irréversible.
             </p>
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-border dark:border-border">
+            <div className="flex justify-end gap-2 pt-3 border-t border-border">
               <Button
                 variant="outline"
                 onClick={() => setShowDeleteConfirm(false)}

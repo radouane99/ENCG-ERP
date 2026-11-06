@@ -261,7 +261,7 @@ export default function AdminLibraryPage() {
     <div className="max-w-[1500px] mx-auto space-y-8 font-sans pb-24 text-foreground dark:text-white">
       
       {/* ── 1. Header & Actions ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border dark:border-border pb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-6">
         <div className="space-y-1">
           <div className="inline-flex items-center gap-2 bg-primary/5 dark:bg-blue-950/60 text-primary dark:text-blue-300 px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border border-primary/20 dark:border-primary">
             <BookOpen className="w-3.5 h-3.5" /> Administration du Fonds Documentaire
@@ -269,7 +269,7 @@ export default function AdminLibraryPage() {
           <h1 className="text-foreground dark:text-white erp-page-title">
             Bibliothèque Universitaire & Prêts
           </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             Catalogue général de l'ENCG, gestion des cotes de rangement, inventaire physique et régulation des retards.
           </p>
         </div>
@@ -277,14 +277,14 @@ export default function AdminLibraryPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setNewBorrowingModalOpen(true)}
-            className="bg-card dark:bg-card hover:bg-muted/50 border border-slate-300 dark:border-border text-foreground dark:text-foreground px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm flex items-center gap-2 transition-all cursor-pointer"
+            className="bg-card hover:bg-muted/50 border border-slate-300 dark:border-border text-foreground px-4 py-2.5 rounded-xl font-bold text-xs shadow-sm flex items-center gap-2 transition-all cursor-pointer"
           >
             <BookmarkCheck className="w-4 h-4 text-primary" /> Nouvel Emprunt Guichet
           </button>
 
           <button
             onClick={openCreateBookModal}
-            className="bg-[#001A4B] hover:bg-[#082663] text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center gap-2 transition-all cursor-pointer active:scale-95"
+            className="bg-[#1a3673] hover:bg-[#082663] text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center gap-2 transition-all cursor-pointer active:scale-95"
           >
             <Plus className="w-4 h-4" /> Ajouter un Ouvrage
           </button>
@@ -293,7 +293,7 @@ export default function AdminLibraryPage() {
 
       {/* ── 2. KPI Summary Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <div className="bg-card dark:bg-card p-5 rounded-2xl border border-border dark:border-border shadow-sm space-y-2">
+        <div className="bg-card p-5 rounded-2xl border border-border shadow-sm space-y-2">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-bold uppercase tracking-wider">Total Titres</span>
             <div className="p-2 rounded-xl bg-primary/5 dark:bg-blue-950 text-primary">
@@ -306,7 +306,7 @@ export default function AdminLibraryPage() {
           <p className="text-[11px] text-slate-400 font-medium">Ouvrages uniques répertoriés</p>
         </div>
 
-        <div className="bg-card dark:bg-card p-5 rounded-2xl border border-border dark:border-border shadow-sm space-y-2">
+        <div className="bg-card p-5 rounded-2xl border border-border shadow-sm space-y-2">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-bold uppercase tracking-wider">Exemplaires Physiques</span>
             <div className="p-2 rounded-xl bg-teal-50 dark:bg-teal-950 text-teal-600">
@@ -321,7 +321,7 @@ export default function AdminLibraryPage() {
           </p>
         </div>
 
-        <div className="bg-card dark:bg-card p-5 rounded-2xl border border-border dark:border-border shadow-sm space-y-2">
+        <div className="bg-card p-5 rounded-2xl border border-border shadow-sm space-y-2">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-bold uppercase tracking-wider">Prêts Actifs</span>
             <div className="p-2 rounded-xl bg-primary/5 dark:bg-indigo-950 text-primary">
@@ -334,7 +334,7 @@ export default function AdminLibraryPage() {
           <p className="text-[11px] text-slate-400 font-medium">Livres actuellement empruntés</p>
         </div>
 
-        <div className="bg-card dark:bg-card p-5 rounded-2xl border border-border dark:border-border shadow-sm space-y-2">
+        <div className="bg-card p-5 rounded-2xl border border-border shadow-sm space-y-2">
           <div className="flex items-center justify-between text-muted-foreground">
             <span className="text-xs font-bold uppercase tracking-wider">Retards Critiques</span>
             <div className="p-2 rounded-xl bg-rose-50 dark:bg-rose-950 text-rose-600">
@@ -349,14 +349,14 @@ export default function AdminLibraryPage() {
       </div>
 
       {/* ── 3. Tabs Navigation ── */}
-      <div className="flex items-center gap-2 border-b border-border dark:border-border pb-2">
+      <div className="flex items-center gap-2 border-b border-border pb-2">
         <button
           onClick={() => setActiveTab('CATALOG')}
           className={cn(
             "px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2",
             activeTab === 'CATALOG'
-              ? "bg-[#001A4B] text-white dark:bg-primary shadow"
-              : "text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-slate-800"
+              ? "bg-[#1a3673] text-white dark:bg-primary shadow"
+              : "text-muted-foreground hover:bg-muted dark:hover:bg-slate-800"
           )}
         >
           <Book className="w-4 h-4" /> Catalogue Général ({books.length})
@@ -367,8 +367,8 @@ export default function AdminLibraryPage() {
           className={cn(
             "px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2",
             activeTab === 'BORROWINGS'
-              ? "bg-[#001A4B] text-white dark:bg-primary shadow"
-              : "text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-slate-800"
+              ? "bg-[#1a3673] text-white dark:bg-primary shadow"
+              : "text-muted-foreground hover:bg-muted dark:hover:bg-slate-800"
           )}
         >
           <ArrowRightLeft className="w-4 h-4" /> Suivi des Prêts & Retours ({borrowings.length})
@@ -379,7 +379,7 @@ export default function AdminLibraryPage() {
       {activeTab === 'CATALOG' && (
         <div className="space-y-4">
           {/* Filters Bar */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-card dark:bg-card p-4 rounded-2xl border border-border dark:border-border shadow-sm">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-card p-4 rounded-2xl border border-border shadow-sm">
             <div className="relative w-full sm:max-w-md">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
@@ -387,7 +387,7 @@ export default function AdminLibraryPage() {
                 value={searchCatalog}
                 onChange={(e) => setSearchCatalog(e.target.value)}
                 placeholder="Rechercher par titre, auteur, ISBN ou cote..."
-                className="w-full bg-muted/50 dark:bg-card border border-border dark:border-border py-2 pl-10 pr-4 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#001A4B] rounded-[var(--control-radius)]"
+                className="w-full bg-muted/50 dark:bg-card border border-border py-2 pl-10 pr-4 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#1a3673] rounded-[var(--control-radius)]"
               />
             </div>
 
@@ -396,7 +396,7 @@ export default function AdminLibraryPage() {
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="bg-muted/50 dark:bg-card border border-border dark:border-border px-3 py-2 text-xs font-bold rounded-[var(--control-radius)]"
+                className="bg-muted/50 dark:bg-card border border-border px-3 py-2 text-xs font-bold rounded-[var(--control-radius)]"
               >
                 <option value="all">Toutes les disciplines</option>
                 {categories.map((c) => (
@@ -407,10 +407,10 @@ export default function AdminLibraryPage() {
           </div>
 
           {/* Books Table */}
-          <div className="overflow-x-auto rounded-2xl border border-border dark:border-border bg-card dark:bg-card shadow-sm">
+          <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-muted/50 dark:bg-slate-800/60 text-[10px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border dark:border-border">
+                <tr className="bg-muted/50 dark:bg-slate-800/60 text-[10px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border">
                   <th className="py-3.5 pl-4 pr-3">Ouvrage & Auteur</th>
                   <th className="py-3.5 px-3">ISBN</th>
                   <th className="py-3.5 px-3">Catégorie</th>
@@ -423,7 +423,7 @@ export default function AdminLibraryPage() {
                 {catalogLoading ? (
                   <tr>
                     <td colSpan={6} className="py-12 text-center text-slate-400">
-                      <Spinner className="w-6 h-6 mx-auto mb-2 text-[#001A4B]" />
+                      <Spinner className="w-6 h-6 mx-auto mb-2 text-[#1a3673]" />
                       Chargement du catalogue...
                     </td>
                   </tr>
@@ -510,7 +510,7 @@ export default function AdminLibraryPage() {
       {activeTab === 'BORROWINGS' && (
         <div className="space-y-4">
           {/* Borrowing Filters */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-card dark:bg-card p-4 rounded-2xl border border-border dark:border-border shadow-sm">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-card p-4 rounded-2xl border border-border shadow-sm">
             <div className="relative w-full sm:max-w-md">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
@@ -518,7 +518,7 @@ export default function AdminLibraryPage() {
                 value={searchBorrowings}
                 onChange={(e) => setSearchBorrowings(e.target.value)}
                 placeholder="Rechercher par étudiant, CNE, livre ou code-barres..."
-                className="w-full bg-muted/50 dark:bg-card border border-border dark:border-border py-2 pl-10 pr-4 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#001A4B] rounded-[var(--control-radius)]"
+                className="w-full bg-muted/50 dark:bg-card border border-border py-2 pl-10 pr-4 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#1a3673] rounded-[var(--control-radius)]"
               />
             </div>
 
@@ -527,7 +527,7 @@ export default function AdminLibraryPage() {
               <select
                 value={statusBorrowings}
                 onChange={(e) => setStatusBorrowings(e.target.value)}
-                className="bg-muted/50 dark:bg-card border border-border dark:border-border px-3 py-2 text-xs font-bold rounded-[var(--control-radius)]"
+                className="bg-muted/50 dark:bg-card border border-border px-3 py-2 text-xs font-bold rounded-[var(--control-radius)]"
               >
                 <option value="all">Tous les statuts</option>
                 <option value="borrowed">En cours</option>
@@ -538,10 +538,10 @@ export default function AdminLibraryPage() {
           </div>
 
           {/* Borrowings Table */}
-          <div className="overflow-x-auto rounded-2xl border border-border dark:border-border bg-card dark:bg-card shadow-sm">
+          <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-muted/50 dark:bg-slate-800/60 text-[10px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border dark:border-border">
+                <tr className="bg-muted/50 dark:bg-slate-800/60 text-[10px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border">
                   <th className="py-3.5 pl-4 pr-3">Étudiant & Matricule</th>
                   <th className="py-3.5 px-3">Livre Emprunté</th>
                   <th className="py-3.5 px-3">Date de prêt</th>
@@ -554,7 +554,7 @@ export default function AdminLibraryPage() {
                 {borrowingsLoading ? (
                   <tr>
                     <td colSpan={6} className="py-12 text-center text-slate-400">
-                      <Spinner className="w-6 h-6 mx-auto mb-2 text-[#001A4B]" />
+                      <Spinner className="w-6 h-6 mx-auto mb-2 text-[#1a3673]" />
                       Chargement des emprunts...
                     </td>
                   </tr>
@@ -580,7 +580,7 @@ export default function AdminLibraryPage() {
                         </td>
 
                         <td className="py-3.5 px-3">
-                          <div className="font-bold text-foreground dark:text-foreground">
+                          <div className="font-bold text-foreground">
                             {b.book_copy?.book?.title || 'Ouvrage ENCG'}
                           </div>
                           <div className="text-[10px] font-mono text-slate-400">
@@ -588,11 +588,11 @@ export default function AdminLibraryPage() {
                           </div>
                         </td>
 
-                        <td className="py-3.5 px-3 text-muted-foreground dark:text-muted-foreground font-medium">
+                        <td className="py-3.5 px-3 text-muted-foreground font-medium">
                           {b.borrow_date}
                         </td>
 
-                        <td className="py-3.5 px-3 font-bold text-foreground dark:text-foreground">
+                        <td className="py-3.5 px-3 font-bold text-foreground">
                           {b.due_date}
                         </td>
 
@@ -637,7 +637,7 @@ export default function AdminLibraryPage() {
       {/* ── 6. Modal: Ajouter / Modifier un Livre ── */}
       {bookModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-card dark:bg-card rounded-2xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-sm border border-border dark:border-border relative max-h-[90vh] overflow-y-auto">
+          <div className="bg-card rounded-2xl max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-sm border border-border relative max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setBookModalOpen(false)}
               className="absolute top-5 right-5 p-2 rounded-full hover:bg-muted dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 cursor-pointer"
@@ -670,7 +670,7 @@ export default function AdminLibraryPage() {
                   required
                   value={bookForm.title}
                   onChange={(e) => setBookForm({ ...bookForm, title: e.target.value })}
-                  className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold rounded-[var(--control-radius)]"
+                  className="w-full px-3 py-2 border border-border bg-card text-xs font-bold rounded-[var(--control-radius)]"
                   placeholder="ex: Finance d'Entreprise"
                 />
               </div>
@@ -685,7 +685,7 @@ export default function AdminLibraryPage() {
                     required
                     value={bookForm.author}
                     onChange={(e) => setBookForm({ ...bookForm, author: e.target.value })}
-                    className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold rounded-[var(--control-radius)]"
+                    className="w-full px-3 py-2 border border-border bg-card text-xs font-bold rounded-[var(--control-radius)]"
                     placeholder="ex: Pierre Vernimmen"
                   />
                 </div>
@@ -698,7 +698,7 @@ export default function AdminLibraryPage() {
                     type="text"
                     value={bookForm.isbn}
                     onChange={(e) => setBookForm({ ...bookForm, isbn: e.target.value })}
-                    className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold rounded-[var(--control-radius)]"
+                    className="w-full px-3 py-2 border border-border bg-card text-xs font-bold rounded-[var(--control-radius)]"
                     placeholder="978-..."
                   />
                 </div>
@@ -712,7 +712,7 @@ export default function AdminLibraryPage() {
                   <select
                     value={bookForm.category}
                     onChange={(e) => setBookForm({ ...bookForm, category: e.target.value })}
-                    className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold rounded-[var(--control-radius)]"
+                    className="w-full px-3 py-2 border border-border bg-card text-xs font-bold rounded-[var(--control-radius)]"
                   >
                     <option value="Finance">Finance</option>
                     <option value="Comptabilité & Audit">Comptabilité & Audit</option>
@@ -733,7 +733,7 @@ export default function AdminLibraryPage() {
                     type="text"
                     value={bookForm.location_code}
                     onChange={(e) => setBookForm({ ...bookForm, location_code: e.target.value })}
-                    className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold font-mono rounded-[var(--control-radius)]"
+                    className="w-full px-3 py-2 border border-border bg-card text-xs font-bold font-mono rounded-[var(--control-radius)]"
                     placeholder="ex: RAYON-FIN-01"
                   />
                 </div>
@@ -749,14 +749,14 @@ export default function AdminLibraryPage() {
                       type="text"
                       value={bookForm.publisher}
                       onChange={(e) => setBookForm({ ...bookForm, publisher: e.target.value })}
-                      className="w-2/3 px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold rounded-[var(--control-radius)]"
+                      className="w-2/3 px-3 py-2 border border-border bg-card text-xs font-bold rounded-[var(--control-radius)]"
                       placeholder="Dunod, Dalloz"
                     />
                     <input
                       type="number"
                       value={bookForm.publication_year}
                       onChange={(e) => setBookForm({ ...bookForm, publication_year: Number(e.target.value) })}
-                      className="w-1/3 px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold rounded-[var(--control-radius)]"
+                      className="w-1/3 px-3 py-2 border border-border bg-card text-xs font-bold rounded-[var(--control-radius)]"
                     />
                   </div>
                 </div>
@@ -772,23 +772,23 @@ export default function AdminLibraryPage() {
                     required
                     value={bookForm.total_copies}
                     onChange={(e) => setBookForm({ ...bookForm, total_copies: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold font-mono rounded-[var(--control-radius)]"
+                    className="w-full px-3 py-2 border border-border bg-card text-xs font-bold font-mono rounded-[var(--control-radius)]"
                   />
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-border dark:border-border flex items-center justify-end gap-3">
+              <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setBookModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-border dark:border-border text-xs font-bold text-muted-foreground hover:bg-muted/50 cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted/50 cursor-pointer"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
                   disabled={saveBookMutation.isPending}
-                  className="bg-[#001A4B] hover:bg-[#082663] text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="bg-[#1a3673] hover:bg-[#082663] text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {saveBookMutation.isPending ? <Spinner className="w-4 h-4 text-white" /> : (editingBook ? 'Enregistrer les Modifications' : 'Créer l\'Ouvrage')}
                 </button>
@@ -801,7 +801,7 @@ export default function AdminLibraryPage() {
       {/* ── 7. Modal: Nouvel Emprunt Express (Guichet) ── */}
       {newBorrowingModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-card dark:bg-card rounded-2xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-sm border border-border dark:border-border relative">
+          <div className="bg-card rounded-2xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-sm border border-border relative">
             <button
               onClick={() => setNewBorrowingModalOpen(false)}
               className="absolute top-5 right-5 p-2 rounded-full hover:bg-muted dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 cursor-pointer"
@@ -840,7 +840,7 @@ export default function AdminLibraryPage() {
                   required
                   value={selectedBookId}
                   onChange={(e) => setSelectedBookId(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold rounded-[var(--control-radius)]"
+                  className="w-full px-3 py-2 border border-border bg-card text-xs font-bold rounded-[var(--control-radius)]"
                 >
                   <option value="">Sélectionner un livre en rayon...</option>
                   {books.filter(b => b.available_copies > 0).map((b) => (
@@ -860,7 +860,7 @@ export default function AdminLibraryPage() {
                   required
                   value={borrowingStudentEmail}
                   onChange={(e) => setBorrowingStudentEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold rounded-[var(--control-radius)]"
+                  className="w-full px-3 py-2 border border-border bg-card text-xs font-bold rounded-[var(--control-radius)]"
                   placeholder="student@encg-fes.ma"
                 />
               </div>
@@ -874,11 +874,11 @@ export default function AdminLibraryPage() {
                   required
                   value={borrowingDueDate}
                   onChange={(e) => setBorrowingDueDate(e.target.value)}
-                  className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-xs font-bold rounded-[var(--control-radius)]"
+                  className="w-full px-3 py-2 border border-border bg-card text-xs font-bold rounded-[var(--control-radius)]"
                 />
               </div>
 
-              <div className="pt-3 border-t border-border dark:border-border flex items-center justify-end gap-3">
+              <div className="pt-3 border-t border-border flex items-center justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setNewBorrowingModalOpen(false)}
@@ -889,7 +889,7 @@ export default function AdminLibraryPage() {
                 <button
                   type="submit"
                   disabled={createBorrowingMutation.isPending}
-                  className="bg-[#001A4B] hover:bg-[#082663] text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="bg-[#1a3673] hover:bg-[#082663] text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   {createBorrowingMutation.isPending ? <Spinner className="w-4 h-4 text-white" /> : "Valider l'Emprunt"}
                 </button>

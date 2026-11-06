@@ -63,7 +63,7 @@ export default function PublicDocumentVerification() {
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center py-12 font-sans">
-      <div className="w-full max-w-lg bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm overflow-hidden animate-in fade-in">
+      <div className="w-full max-w-lg bg-card border border-border rounded-2xl shadow-sm overflow-hidden animate-in fade-in">
         
         {/* Header */}
         <div className="p-8 text-center text-white relative erp-page-banner">
@@ -103,15 +103,15 @@ export default function PublicDocumentVerification() {
               </div>
 
               {/* Verified Details Card */}
-              <div className="bg-muted/50 dark:bg-slate-800/60 rounded-2xl p-5 border border-border dark:border-border space-y-3.5 text-xs">
-                <div className="flex justify-between items-center pb-2.5 border-b border-border dark:border-border">
+              <div className="bg-muted/50 dark:bg-slate-800/60 rounded-2xl p-5 border border-border space-y-3.5 text-xs">
+                <div className="flex justify-between items-center pb-2.5 border-b border-border">
                   <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Type d'Acte</span>
-                  <span className="font-bold text-[#001A4B] dark:text-blue-300 text-right">
+                  <span className="font-bold text-[#1a3673] dark:text-blue-300 text-right">
                     {result.document_type || 'Acte Officiel Homologué'}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center pb-2.5 border-b border-border dark:border-border">
+                <div className="flex justify-between items-center pb-2.5 border-b border-border">
                   <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
                     {isRoom ? "Espace Pédagogique" : "Titulaire / Bénéficiaire"}
                   </span>
@@ -120,17 +120,17 @@ export default function PublicDocumentVerification() {
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center pb-2.5 border-b border-border dark:border-border">
+                <div className="flex justify-between items-center pb-2.5 border-b border-border">
                   <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
                     {isRoom ? "Code Repère / Salle" : "Numéro d'Enregistrement"}
                   </span>
-                  <span className="font-mono font-bold text-foreground dark:text-foreground">
+                  <span className="font-mono font-bold text-foreground">
                     {result.student_number || result.cne || result.tracking_code}
                   </span>
                 </div>
 
                 {(result.filiere || result.category) && (
-                  <div className="flex justify-between items-center pb-2.5 border-b border-border dark:border-border">
+                  <div className="flex justify-between items-center pb-2.5 border-b border-border">
                     <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
                       {isRoom ? "Capacités d'Accueil" : "Pôle / Domaine"}
                     </span>
@@ -141,7 +141,7 @@ export default function PublicDocumentVerification() {
                 )}
 
                 {isRoom && result.category && (
-                  <div className="flex justify-between items-center pb-2.5 border-b border-border dark:border-border">
+                  <div className="flex justify-between items-center pb-2.5 border-b border-border">
                     <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
                       Équipements &amp; Réseau
                     </span>
@@ -151,16 +151,16 @@ export default function PublicDocumentVerification() {
                   </div>
                 )}
 
-                <div className="flex justify-between items-center pb-2.5 border-b border-border dark:border-border">
+                <div className="flex justify-between items-center pb-2.5 border-b border-border">
                   <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
                     {isRoom ? "Date de Certification" : "Date d'Émission / Octroi"}
                   </span>
-                  <span className="font-bold text-foreground dark:text-foreground">
+                  <span className="font-bold text-foreground">
                     {result.issued_at}
                   </span>
                 </div>
 
-                <div className="flex justify-between items-center pb-2.5 border-b border-border dark:border-border">
+                <div className="flex justify-between items-center pb-2.5 border-b border-border">
                   <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">
                     {isRoom ? "Homologation Sécurité" : "Statut Juridique"}
                   </span>
@@ -173,7 +173,7 @@ export default function PublicDocumentVerification() {
                   <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1 flex items-center gap-1">
                     <Lock className="w-3 h-3 text-primary" /> Empreinte Numérique (SHA-256)
                   </div>
-                  <div className="font-mono text-[10px] bg-card dark:bg-card p-2 rounded-lg border border-border dark:border-border text-primary dark:text-indigo-300 break-all select-all font-bold">
+                  <div className="font-mono text-[10px] bg-card p-2 rounded-lg border border-border text-primary dark:text-indigo-300 break-all select-all font-bold">
                     {result.hash || result.security_hash || `SHA256-${token || '8F9A2B4C1E0D3F7A'}`}
                   </div>
                 </div>
@@ -204,7 +204,7 @@ export default function PublicDocumentVerification() {
           )}
         </div>
 
-        <div className="p-4 bg-muted/50 dark:bg-slate-800/60 border-t border-border dark:border-border text-center">
+        <div className="p-4 bg-muted/50 dark:bg-slate-800/60 border-t border-border text-center">
           <p className="text-[10px] text-slate-400 font-medium">
             Direction de l'Établissement &amp; Systèmes d'Information • ENCG Fès © 2026
           </p>

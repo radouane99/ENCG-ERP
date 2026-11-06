@@ -94,7 +94,7 @@ function TactileSignatureModal({ isOpen, onClose, onSave, onClearSaved, currentS
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const isDrawing = useRef(false);
   const [hasDrawn, setHasDrawn] = useState(false);
-  const [inkColor, setInkColor] = useState('#001A4B'); // Royal Navy ENCG
+  const [inkColor, setInkColor] = useState('#1a3673'); // Royal Navy ENCG
  // Royal Navy ENCG
   const [penThickness, setPenThickness] = useState(2.5);
 
@@ -219,7 +219,7 @@ function TactileSignatureModal({ isOpen, onClose, onSave, onClearSaved, currentS
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#000E29] via-[#001A4B] to-[#0A2558] p-4 sm:p-5 text-white flex items-center justify-between">
+        <div className="bg-gradient-to-r from-[#000E29] via-[#1a3673] to-[#0A2558] p-4 sm:p-5 text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-amber-400/20 border border-amber-400/30 flex items-center justify-center text-amber-300">
               <PenTool className="w-5 h-5" />
@@ -249,7 +249,7 @@ function TactileSignatureModal({ isOpen, onClose, onSave, onClearSaved, currentS
             <div className="flex items-center gap-1.5">
               <span className="text-[10px] font-bold text-muted-foreground uppercase">Encre :</span>
               {[
-                { color: '#001A4B', label: 'Bleu Royal ENCG' },
+                { color: '#1a3673', label: 'Bleu Royal ENCG' },
                 { color: '#0f172a', label: 'Noir Administratif' },
                 { color: '#1e40af', label: 'Bleu Nuit' },
               ].map(c => (
@@ -361,7 +361,7 @@ function TactileSignatureModal({ isOpen, onClose, onSave, onClearSaved, currentS
           <button
             onClick={handleConfirm}
             disabled={!hasDrawn}
-            className="px-5 py-2.5 bg-gradient-to-r from-[#001A4B] to-[#0A2558] hover:opacity-95 disabled:opacity-40 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+            className="px-5 py-2.5 bg-gradient-to-r from-[#1a3673] to-[#0A2558] hover:opacity-95 disabled:opacity-40 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
           >
             <Check className="w-4 h-4 text-amber-300" />
             <span>Valider &amp; Mémoriser l'Émargement</span>
@@ -867,7 +867,7 @@ const { data: textbookData } = useQuery({
 
           /* Outer Double Border Frame */
           .doc-border-frame {
-            border: 2px solid #001A4B;
+            border: 2px solid #1a3673;
             padding: 2px;
             border-radius: 4px;
           }
@@ -881,7 +881,7 @@ const { data: textbookData } = useQuery({
           .header-table {
             width: 100%;
             border-collapse: collapse;
-            border-bottom: 2px solid #001A4B;
+            border-bottom: 2px solid #1a3673;
             padding-bottom: 6px;
             margin-bottom: 8px;
           }
@@ -904,7 +904,7 @@ const { data: textbookData } = useQuery({
           .univ-ar {
             font-size: 8.5pt;
             font-weight: bold;
-            color: #001A4B;
+            color: #1a3673;
             direction: rtl;
             font-family: 'Times New Roman', serif;
             line-height: 1.2;
@@ -928,7 +928,7 @@ const { data: textbookData } = useQuery({
 
           /* Document Title Ribbon */
           .title-banner {
-            background: linear-gradient(135deg, #001A4B 0%, #0A2558 100%);
+            background: linear-gradient(135deg, #1a3673 0%, #0A2558 100%);
             color: #ffffff;
             padding: 6px 12px;
             border-radius: 6px;
@@ -974,7 +974,7 @@ const { data: textbookData } = useQuery({
             letter-spacing: 0.3px;
           }
           .c-val {
-            color: #001A4B;
+            color: #1a3673;
             font-weight: 800;
           }
 
@@ -997,7 +997,7 @@ const { data: textbookData } = useQuery({
           .section-title {
             font-size: 6.8pt;
             font-weight: 900;
-            color: #001A4B;
+            color: #1a3673;
             text-transform: uppercase;
             letter-spacing: 0.5px;
           }
@@ -1041,7 +1041,7 @@ const { data: textbookData } = useQuery({
           .sig-title {
             font-size: 6.6pt;
             font-weight: 900;
-            color: #001A4B;
+            color: #1a3673;
             text-transform: uppercase;
             border-bottom: 1px solid #e2e8f0;
             padding-bottom: 2px;
@@ -1084,7 +1084,7 @@ const { data: textbookData } = useQuery({
                     style="max-height: 48px; width: auto; object-fit: contain;" 
                     onerror="this.style.display='none'"
                   />
-                  <div style="font-size: 6.5pt; font-weight: 900; color: #001A4B; margin-top: 2px;">
+                  <div style="font-size: 6.5pt; font-weight: 900; color: #1a3673; margin-top: 2px;">
                     ÉCOLE NATIONALE DE COMMERCE ET DE GESTION
                   </div>
                   <div style="font-size: 5.8pt; color: #64748b; font-weight: bold;">
@@ -1100,7 +1100,7 @@ const { data: textbookData } = useQuery({
 
                 <td class="header-right">
                   <div style="display: inline-block; text-align: right;">
-                    <div style="font-size: 6.2pt; font-weight: bold; color: #001A4B;">
+                    <div style="font-size: 6.2pt; font-weight: bold; color: #1a3673;">
                       ANNÉE UNIVERSITAIRE 2025/2026
                     </div>
                     <div style="font-size: 6.8pt; font-family: monospace; font-weight: 900; color: #059669; margin-top: 1px;">
@@ -1137,7 +1137,7 @@ const { data: textbookData } = useQuery({
               <tr>
                 <td>
                   <span class="c-label">Enseignant Chercheur :</span><br>
-                  <span class="c-val" style="color: #001A4B;">${safeProfName}</span> &nbsp;
+                  <span class="c-val" style="color: #1a3673;">${safeProfName}</span> &nbsp;
                   <span style="font-size: 6.5pt; color: #64748b;">(Corps Professoral Permanent / Vacataire)</span>
                 </td>
                 <td>
@@ -1150,13 +1150,13 @@ const { data: textbookData } = useQuery({
                 <td>
                   <span class="c-label">Date &amp; Volume Horaire Certifié :</span><br>
                   <span class="c-val">${safeSessionDate}</span> &nbsp;•&nbsp; 
-                  <span style="color: #001A4B; font-weight: 900;">${safeSessionDuration} Heures Pédagogiques</span> 
+                  <span style="color: #1a3673; font-weight: 900;">${safeSessionDuration} Heures Pédagogiques</span> 
                   <span style="font-size: 6.5pt; color: #64748b;">(Norme : 36h / module)</span>
                 </td>
                 <td>
                   <span class="c-label">Validation &amp; Décompte Service Fait :</span><br>
                   <span style="color: #059669; font-weight: 900;">+${safeProgress}% du Syllabus</span> &nbsp;•&nbsp; 
-                  <span style="color: #001A4B; font-weight: bold;">Transmis pour Décompte &amp; Émargement</span>
+                  <span style="color: #1a3673; font-weight: bold;">Transmis pour Décompte &amp; Émargement</span>
                 </td>
               </tr>
             </table>
@@ -1214,7 +1214,7 @@ const { data: textbookData } = useQuery({
                 <td class="sig-card">
                   <div class="sig-title">L'Enseignant Responsable</div>
                   <div class="sig-caption">« Déclare sur l'honneur le déroulement effectif »</div>
-                  <div style="font-size: 7.2pt; font-weight: 900; color: #001A4B; text-align: center; margin-top: 2px;">
+                  <div style="font-size: 7.2pt; font-weight: 900; color: #1a3673; text-align: center; margin-top: 2px;">
                     ${safeProfName}
                   </div>
                   
@@ -1234,7 +1234,7 @@ const { data: textbookData } = useQuery({
                     <!-- Calligraphic Fallback Signature -->
                     <div style="text-align: center; margin: 3px 0 1px 0; height: 32px;">
                       <svg width="95" height="30" viewBox="0 0 120 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M10,24 C18,10 26,4 34,4 C40,4 36,24 42,26 C48,28 54,14 60,10 C66,4 72,20 78,18 C84,16 98,8 108,14" stroke="#001A4B" stroke-width="2.2" stroke-linecap="round"/>
+                        <path d="M10,24 C18,10 26,4 34,4 C40,4 36,24 42,26 C48,28 54,14 60,10 C66,4 72,20 78,18 C84,16 98,8 108,14" stroke="#1a3673" stroke-width="2.2" stroke-linecap="round"/>
                       </svg>
                     </div>
                     <div style="font-size: 5.2pt; color: #94a3b8; text-align: center;">Émargé électroniquement le ${safeSessionDate}</div>
@@ -1262,21 +1262,21 @@ const { data: textbookData } = useQuery({
                   <!-- Authentic Circular Stamp SVG -->
                   <div style="margin: 2px auto 0 auto; width: 62px; height: 62px;">
                     <svg width="62" height="62" viewBox="0 0 100 100" style="transform: rotate(-8deg);">
-                      <circle cx="50" cy="50" r="46" fill="none" stroke="#001A4B" stroke-width="2.5" stroke-dasharray="3 1.5"/>
-                      <circle cx="50" cy="50" r="41" fill="none" stroke="#001A4B" stroke-width="1.2"/>
+                      <circle cx="50" cy="50" r="46" fill="none" stroke="#1a3673" stroke-width="2.5" stroke-dasharray="3 1.5"/>
+                      <circle cx="50" cy="50" r="41" fill="none" stroke="#1a3673" stroke-width="1.2"/>
                       <path id="circlePathPrint" d="M 50, 50 m -34, 0 a 34,34 0 1,1 68,0 a 34,34 0 1,1 -68,0" fill="none"/>
-                      <text font-size="6.5" font-weight="900" fill="#001A4B" letter-spacing="0.8">
+                      <text font-size="6.5" font-weight="900" fill="#1a3673" letter-spacing="0.8">
                         <textPath href="#circlePathPrint" startOffset="50%" text-anchor="middle">
                           * ENCG FÈS * AFFAIRES PÉDAGOGIQUES *
                         </textPath>
                       </text>
-                      <circle cx="50" cy="50" r="22" fill="#001A4B" opacity="0.06"/>
+                      <circle cx="50" cy="50" r="22" fill="#1a3673" opacity="0.06"/>
                       <polygon points="50,33 53.5,43 64,43 55.5,49.5 59,60 50,53.5 41,60 44.5,49.5 36,43 46.5,43" fill="#C5A059" opacity="0.95"/>
-                      <text x="50" y="71" font-size="5" font-weight="900" fill="#001A4B" text-anchor="middle">SERVICE FAIT</text>
-                      <text x="50" y="77" font-size="4.2" font-weight="bold" fill="#001A4B" text-anchor="middle">2025 - 2026</text>
+                      <text x="50" y="71" font-size="5" font-weight="900" fill="#1a3673" text-anchor="middle">SERVICE FAIT</text>
+                      <text x="50" y="77" font-size="4.2" font-weight="bold" fill="#1a3673" text-anchor="middle">2025 - 2026</text>
                     </svg>
                   </div>
-                  <div style="font-size: 5.5pt; font-weight: bold; color: #001A4B; margin-top: 1px;">CACHET OFFICIEL ENCG FÈS</div>
+                  <div style="font-size: 5.5pt; font-weight: bold; color: #1a3673; margin-top: 1px;">CACHET OFFICIEL ENCG FÈS</div>
                 </td>
               </tr>
             </table>
@@ -1287,20 +1287,20 @@ const { data: textbookData } = useQuery({
                 <!-- QR Code SVG -->
                 <div style="width: 32px; height: 32px; border: 1px solid #cbd5e1; padding: 1.5px; border-radius: 2px; background: #fff; flex-shrink: 0;">
                   <svg viewBox="0 0 29 29" width="100%" height="100%" shape-rendering="crispEdges">
-                    <path fill="#001A4B" d="M0,0 h7 v7 h-7 z M1,1 v5 h5 v-5 z M2,2 h3 v3 h-3 z M22,0 h7 v7 h-7 z M23,1 v5 h5 v-5 z M24,2 h3 v3 h-3 z M0,22 h7 v7 h-7 z M1,23 v5 h5 v-5 z M2,24 h3 v3 h-3 z M9,2 h2 v2 h-2 z M13,1 h2 v4 h-2 z M17,2 h2 v2 h-2 z M2,9 h2 v2 h-2 z M10,9 h3 v3 h-3 z M16,9 h4 v2 h-4 z M22,10 h2 v2 h-2 z M26,9 h2 v2 h-2 z M0,14 h4 v2 h-4 z M6,13 h2 v3 h-2 z M10,14 h2 v4 h-2 z M14,13 h4 v2 h-4 z M20,13 h2 v3 h-2 z M25,13 h4 v2 h-4 z M3,18 h2 v2 h-2 z M8,18 h4 v2 h-4 z M14,17 h2 v4 h-2 z M18,18 h2 v2 h-2 z M22,17 h4 v2 h-4 z M28,18 h1 v2 h-1 z M9,22 h2 v3 h-2 z M13,23 h3 v2 h-3 z M18,22 h2 v2 h-2 z M22,23 h2 v2 h-2 z M26,22 h3 v2 h-3 z M10,26 h2 v3 h-2 z M14,26 h4 v3 h-4 z M20,26 h2 v2 h-2 z M24,26 h2 v3 h-2 z M27,27 h2 v2 h-2 z"/>
+                    <path fill="#1a3673" d="M0,0 h7 v7 h-7 z M1,1 v5 h5 v-5 z M2,2 h3 v3 h-3 z M22,0 h7 v7 h-7 z M23,1 v5 h5 v-5 z M24,2 h3 v3 h-3 z M0,22 h7 v7 h-7 z M1,23 v5 h5 v-5 z M2,24 h3 v3 h-3 z M9,2 h2 v2 h-2 z M13,1 h2 v4 h-2 z M17,2 h2 v2 h-2 z M2,9 h2 v2 h-2 z M10,9 h3 v3 h-3 z M16,9 h4 v2 h-4 z M22,10 h2 v2 h-2 z M26,9 h2 v2 h-2 z M0,14 h4 v2 h-4 z M6,13 h2 v3 h-2 z M10,14 h2 v4 h-2 z M14,13 h4 v2 h-4 z M20,13 h2 v3 h-2 z M25,13 h4 v2 h-4 z M3,18 h2 v2 h-2 z M8,18 h4 v2 h-4 z M14,17 h2 v4 h-2 z M18,18 h2 v2 h-2 z M22,17 h4 v2 h-4 z M28,18 h1 v2 h-1 z M9,22 h2 v3 h-2 z M13,23 h3 v2 h-3 z M18,22 h2 v2 h-2 z M22,23 h2 v2 h-2 z M26,22 h3 v2 h-3 z M10,26 h2 v3 h-2 z M14,26 h4 v3 h-4 z M20,26 h2 v2 h-2 z M24,26 h2 v3 h-2 z M27,27 h2 v2 h-2 z"/>
                   </svg>
                 </div>
                 <div>
-                  <strong style="color: #001A4B; font-size: 6.2pt; text-transform: uppercase;">Sécurisation Numérique — Loi 53-05 (Royaume du Maroc)</strong><br>
+                  <strong style="color: #1a3673; font-size: 6.2pt; text-transform: uppercase;">Sécurisation Numérique — Loi 53-05 (Royaume du Maroc)</strong><br>
                   Document certifié émis par le Système d'Information de l'ENCG Fès.<br>
-                  Vérification d'authenticité : <em style="color: #001A4B;">${verifyUrl}</em>
+                  Vérification d'authenticité : <em style="color: #1a3673;">${verifyUrl}</em>
                 </div>
               </div>
 
               <div style="text-align: right; line-height: 1.25;">
                 <strong>École Nationale de Commerce et de Gestion de Fès</strong><br>
                 Université Sidi Mohamed Ben Abdellah • Route d'Imouzzer, B.P. 1255, Fès - Maroc<br>
-                <span style="font-weight: 900; color: #001A4B;">Page 1 / 1 (Document Officiel)</span>
+                <span style="font-weight: 900; color: #1a3673;">Page 1 / 1 (Document Officiel)</span>
               </div>
             </div>
 
@@ -1354,7 +1354,7 @@ const { data: textbookData } = useQuery({
   ];
 
   return (
-    <div className="max-w-[1720px] mx-auto space-y-4 font-sans animate-in fade-in duration-300 text-foreground dark:text-foreground pb-20">
+    <div className="max-w-[1720px] mx-auto space-y-4 font-sans animate-in fade-in duration-300 text-foreground pb-20">
       
       {/* ══════════════════════════════════════════════════════════════════════ */}
       {/* ── UNIFIED EXECUTIVE COCKPIT HEADER (~110px) ──────────────────────── */}
@@ -1420,7 +1420,7 @@ const { data: textbookData } = useQuery({
 
               <button
                 onClick={handleDownloadServiceFait}
-                className="px-4 py-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-[#001A4B] rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-amber-400/20 flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
+                className="px-4 py-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-[#1a3673] rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg shadow-amber-400/20 flex items-center gap-1.5 cursor-pointer transition-all active:scale-95"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Attestation Service Fait (PDF)</span>
@@ -2150,7 +2150,7 @@ const { data: textbookData } = useQuery({
             <button
               onClick={handleSaveToTextbook}
               disabled={!selectedModule || !structuredData || saveMutation.isPending}
-              className="flex-1 py-3 bg-gradient-to-r from-[#001A4B] via-[#0A2558] to-[#113A7A] hover:opacity-95 disabled:opacity-40 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+              className="flex-1 py-3 bg-gradient-to-r from-[#1a3673] via-[#0A2558] to-[#113A7A] hover:opacity-95 disabled:opacity-40 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
             >
               {saveMutation.isPending ? (
                 <Loader2 className="w-4 h-4 animate-spin text-amber-300" />

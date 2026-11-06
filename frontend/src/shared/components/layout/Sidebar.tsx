@@ -349,7 +349,7 @@ const [searchQuery, setSearchQuery] = useState('');
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={isRtl ? "ابحث عن أي مسار أو صفحة..." : "Rechercher une page (ex: notes)..."}
-            className="w-full bg-white/5 border border-white/10 rounded-xl ps-9 pe-8 py-2 text-xs text-white placeholder:text-sidebar-foreground/40 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-400/50 transition-all shadow-inner"
+            className="w-full bg-white/5 border border-white/10 rounded-xl ps-9 pe-8 py-2 text-xs text-white placeholder:text-sidebar-foreground/40 focus:outline-none focus:ring-2 focus:ring-amber-400/50 focus:border-amber-400/50 transition-all shadow-inner"
           />
           {searchQuery ? (
             <button
@@ -366,7 +366,7 @@ const [searchQuery, setSearchQuery] = useState('');
           )}
         </div>
         {searchQuery && (
-          <div className="flex items-center justify-between mt-2 px-1 text-[10px] text-indigo-300 font-medium">
+          <div className="flex items-center justify-between mt-2 px-1 text-[10px] text-amber-300 font-medium">
             <span>{isRtl ? `${totalMatchesCount} مسارات مطابقة` : `${totalMatchesCount} page(s) trouvée(s)`}</span>
             <button
               onClick={() => setSearchQuery('')}
@@ -383,8 +383,8 @@ const [searchQuery, setSearchQuery] = useState('');
         <div className="mx-4 mt-4 px-3.5 py-2.5 rounded-xl bg-gradient-to-br from-sidebar-accent to-sidebar-background border border-sidebar-border shadow-xs shrink-0">
           <p className="text-xs font-semibold text-sidebar-foreground truncate">{user.institution_name}</p>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shadow-[0_0_8px_#818cf8] animate-pulse" />
-            <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b] animate-pulse" />
+            <p className="text-[10px] text-amber-300 font-bold uppercase tracking-wider">
               {user.admission_pending ? (isRtl ? 'مرشح / قيد التسجيل' : 'CANDIDAT / PRÉINSCRIPTION') : user.roles[0]}
             </p>
           </div>
@@ -395,7 +395,7 @@ const [searchQuery, setSearchQuery] = useState('');
       <nav className="flex-1 overflow-y-auto px-3.5 py-4 space-y-1.5 custom-scrollbar">
         {filteredNavigation.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-3 shadow-inner">
+            <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center text-amber-400 mb-3 shadow-inner">
               <FilterX className="w-6 h-6" />
             </div>
             <p className="text-sm font-bold text-white">
@@ -409,7 +409,7 @@ const [searchQuery, setSearchQuery] = useState('');
             </p>
             <button
               onClick={() => setSearchQuery('')}
-              className="mt-4 px-3 py-1.5 text-xs font-semibold text-indigo-300 hover:text-white bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/30 rounded-lg transition-colors cursor-pointer"
+              className="mt-4 px-3 py-1.5 text-xs font-semibold text-amber-300 hover:text-white bg-white/10 hover:bg-white/15 border border-white/15 rounded-lg transition-colors cursor-pointer"
             >
               {isRtl ? 'مسح البحث' : 'Effacer la recherche'}
             </button>
@@ -454,7 +454,7 @@ const [searchQuery, setSearchQuery] = useState('');
                             cn(
                               'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 cursor-pointer select-none group relative',
                               isActive 
-                                ? 'bg-sidebar-accent text-sidebar-foreground font-semibold border-s-2 border-sidebar-primary'
+                                ? 'bg-sidebar-accent text-white font-semibold'
                                 : 'text-sidebar-foreground/80 hover:text-white hover:bg-white/10 hover:translate-x-0.5'
                             )
                           }
@@ -476,7 +476,7 @@ const [searchQuery, setSearchQuery] = useState('');
                                 {navLabel(item)}
                               </span>
                               {item.badge && (
-                                <span className="ms-auto px-1.5 py-0.5 text-[9px] font-black tracking-wider uppercase rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                                <span className="ms-auto px-1.5 py-0.5 text-[9px] font-black tracking-wider uppercase rounded bg-amber-400/15 text-amber-300 border border-amber-400/30">
                                   {item.badge}
                                 </span>
                               )}
@@ -498,7 +498,7 @@ const [searchQuery, setSearchQuery] = useState('');
                       cn(
                         'flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200 cursor-pointer select-none group relative',
                         isActive 
-                          ? 'bg-sidebar-accent text-sidebar-foreground font-semibold border-s-2 border-sidebar-primary'
+                          ? 'bg-sidebar-accent text-white font-semibold'
                           : 'text-sidebar-foreground/80 hover:text-white hover:bg-white/10 hover:translate-x-0.5'
                       )
                     }
@@ -545,7 +545,7 @@ const [searchQuery, setSearchQuery] = useState('');
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-white text-xs font-bold truncate group-hover:text-indigo-200 transition-colors">{user.name}</p>
+            <p className="text-white text-xs font-bold truncate group-hover:text-amber-200 transition-colors">{user.name}</p>
             <p className="text-sidebar-foreground/60 text-[11px] truncate">{user.email}</p>
           </div>
           <ChevronRight className="w-4 h-4 text-sidebar-foreground/50 group-hover:text-white transition-colors transform rtl:rotate-180 shrink-0" />

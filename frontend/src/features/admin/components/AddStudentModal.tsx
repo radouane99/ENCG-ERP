@@ -57,8 +57,8 @@ export default function AddStudentModal({
       <div className="bg-card rounded-2xl w-full max-w-lg overflow-hidden shadow-sm animate-in zoom-in-95">
         <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-slate-50/50">
           <div className="flex items-center gap-2">
-            <UserPlus className="w-5 h-5 text-[#0f2863]" />
-            <h3 className="font-bold text-[#0f2863]">Ajouter un nouvel étudiant</h3>
+            <UserPlus className="w-5 h-5 text-[#1a3673]" />
+            <h3 className="font-bold text-[#1a3673]">Ajouter un nouvel étudiant</h3>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-muted-foreground transition-colors">
             <X className="w-5 h-5" />
@@ -176,7 +176,7 @@ export default function AddStudentModal({
             <button 
               type="submit" 
               disabled={saving} 
-              className="px-5 py-2.5 bg-[#0f2863] text-white text-xs font-bold rounded-xl hover:bg-[#1a387e] transition-colors flex items-center gap-2 shadow-sm"
+              className="px-5 py-2.5 bg-[#1a3673] text-white text-xs font-bold rounded-xl hover:bg-[#1a387e] transition-colors flex items-center gap-2 shadow-sm"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
               Créer l'étudiant

@@ -40,7 +40,7 @@ export default function ForgotPasswordPage() {
           <h1 className="text-foreground dark:text-white erp-page-title">
             Mot de passe oublié
           </h1>
-          <p className="text-muted-foreground dark:text-muted-foreground mt-2">
+          <p className="text-muted-foreground mt-2">
             Entrez votre adresse email pour recevoir un lien de réinitialisation.
           </p>
         </div>
@@ -52,7 +52,7 @@ export default function ForgotPasswordPage() {
               <h2 className="text-xl font-semibold text-foreground dark:text-white mb-2">
                 Email envoyé !
               </h2>
-              <p className="text-muted-foreground dark:text-muted-foreground mb-8">
+              <p className="text-muted-foreground mb-8">
                 Si un compte correspond à <strong>{email}</strong>, un email avec les instructions a été envoyé.
               </p>
               <Link 

@@ -382,9 +382,9 @@ export default function StudentConvocationsPage() {
       {/* ── Modal Aperçu Convocation PDF ── */}
       {isPreviewModalOpen && previewPdfUrl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-2 sm:p-4 lg:p-6 animate-in fade-in duration-200">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl sm:rounded-3xl w-full max-w-5xl max-h-[96vh] flex flex-col shadow-sm overflow-hidden">
+          <div className="bg-card border border-border rounded-2xl sm:rounded-3xl w-full max-w-5xl max-h-[96vh] flex flex-col shadow-sm overflow-hidden">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-border dark:border-border bg-slate-50/80 dark:bg-slate-900/80">
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-border bg-slate-50/80 dark:bg-slate-900/80">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold shrink-0">
                   <ShieldCheck className="w-5 h-5" />
@@ -396,7 +396,7 @@ export default function StudentConvocationsPage() {
                       {activeSession === 'ORDINAIRE' ? 'Session Normale' : 'Session Rattrapage'}
                     </span>
                   </h3>
-                  <p className="text-[10px] sm:text-[11px] text-muted-foreground dark:text-muted-foreground font-medium truncate">
+                  <p className="text-[10px] sm:text-[11px] text-muted-foreground font-medium truncate">
                     {user?.name || 'Étudiant'} • {convocations.length} {isRtl ? 'اختبارات مبرمجة' : 'épreuves assignées'}
                   </p>
                 </div>
@@ -435,7 +435,7 @@ export default function StudentConvocationsPage() {
             <div className="flex-1 p-2 sm:p-4 bg-slate-100/50 dark:bg-slate-950/50 overflow-hidden flex flex-col items-center justify-center">
               <iframe
                 src={`${previewPdfUrl}#toolbar=0&navpanes=0`}
-                className="w-full h-[65vh] sm:h-[75vh] rounded-xl sm:rounded-2xl border border-border dark:border-border bg-card shadow-inner"
+                className="w-full h-[65vh] sm:h-[75vh] rounded-xl sm:rounded-2xl border border-border bg-card shadow-inner"
                 title="Aperçu Convocation PDF"
               />
             </div>

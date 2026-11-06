@@ -234,7 +234,7 @@ export default function TimetableAdminView() {
             onClick={() => generateMutation.mutate()}
             isLoading={generateMutation.isPending}
             variant="primary"
-            className="rounded-xl px-6 bg-[#0f2863] hover:bg-[#1a387e] text-white border-none shadow-lg shadow-blue-900/20"
+            className="rounded-xl px-6 bg-[#1a3673] hover:bg-[#1a387e] text-white border-none shadow-lg shadow-blue-900/20"
             icon={<Cpu size={18} />}
           >
             {isRtl ? 'توليد ذكي (IA)' : 'Génération IA (Brouillon)'}

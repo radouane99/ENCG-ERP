@@ -87,7 +87,7 @@ export default function TestimonialsSection({ lang = 'fr', isRTL = false }: Test
       <div className="rounded-[2rem] border border-slate-200/80 bg-white/90 p-8 shadow-xl shadow-slate-100 backdrop-blur-xl dark:border-white/10 dark:bg-[#0A1220]/90 dark:shadow-none md:p-10">
         <div className="mb-12 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#0f2863]/20 bg-[#0f2863]/10 dark:bg-amber-400/10 dark:border-amber-400/20 px-3 py-1 text-sm font-semibold text-[#0f2863] dark:text-amber-400">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#1a3673]/20 bg-[#1a3673]/10 dark:bg-amber-400/10 dark:border-amber-400/20 px-3 py-1 text-sm font-semibold text-[#1a3673] dark:text-amber-400">
               <MessageSquare className="h-4 w-4" />
               {copy.eyebrow}
             </div>
@@ -98,7 +98,7 @@ export default function TestimonialsSection({ lang = 'fr', isRTL = false }: Test
               {copy.subtitle}
             </p>
           </div>
-          <button className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#0f2863] via-[#162e74] to-[#1e3a8a] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#0f2863]/20 hover:shadow-[#0f2863]/40 transition-all cursor-pointer">
+          <button className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#1a3673] via-[#162e74] to-[#1e3a8a] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#1a3673]/20 hover:shadow-[#1a3673]/40 transition-all cursor-pointer">
             {copy.cta}
             <ArrowRight className={isRTL ? 'h-4 w-4 rotate-180' : 'h-4 w-4'} />
           </button>
@@ -108,7 +108,7 @@ export default function TestimonialsSection({ lang = 'fr', isRTL = false }: Test
           {copy.testimonials.map((item) => (
             <article key={item.name} className="rounded-[1.75rem] border border-slate-200 bg-slate-50 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-xl dark:border-white/10 dark:bg-white/5">
               <div className="mb-5 flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-[#0f2863]/10 text-amber-500 dark:bg-amber-400/15">
+                <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-[#1a3673]/10 text-amber-500 dark:bg-amber-400/15">
                   <Star className="h-6 w-6" />
                 </div>
                 <div>
@@ -117,7 +117,7 @@ export default function TestimonialsSection({ lang = 'fr', isRTL = false }: Test
                 </div>
               </div>
               <p className="text-sm leading-7 text-slate-600 dark:text-slate-300">“{item.quote}”</p>
-              <div className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-700 transition group-hover:text-[#0f2863] dark:text-slate-300 dark:group-hover:text-amber-400">
+              <div className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-slate-700 transition group-hover:text-[#1a3673] dark:text-slate-300 dark:group-hover:text-amber-400">
                 {lang === 'ar' ? 'اقرأ المزيد' : 'Read more'}
                 <ArrowRight className={isRTL ? 'h-4 w-4 rotate-180' : 'h-4 w-4'} />
               </div>

@@ -115,20 +115,20 @@ export default function ProfessorSchedulePage() {
   };
 
   return (
-    <div className="space-y-8 font-sans animate-in fade-in duration-500 text-foreground dark:text-foreground pb-16">
+    <div className="space-y-8 font-sans animate-in fade-in duration-500 text-foreground pb-16">
       
       {/* ── Executive Page Header ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border dark:border-slate-800/80 pb-6">
         <div>
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-2xl bg-[#001A4B] text-white flex items-center justify-center font-bold shadow-md">
+            <div className="w-11 h-11 rounded-2xl bg-[#1a3673] text-white flex items-center justify-center font-bold shadow-md">
               <CalendarDays className="w-6 h-6 text-amber-300" />
             </div>
             <div>
-              <h1 className="text-[#001A4B] dark:text-white erp-page-title">
+              <h1 className="text-[#1a3673] dark:text-white erp-page-title">
                 {t('heading')}
               </h1>
-              <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5 font-medium">
+              <p className="text-xs text-muted-foreground mt-0.5 font-medium">
                 {t('subtitle')}
               </p>
             </div>
@@ -139,7 +139,7 @@ export default function ProfessorSchedulePage() {
           <button
             onClick={handleRefetchAll}
             disabled={isMatrixFetching}
-            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-slate-700 dark:text-foreground shadow-xs hover:bg-muted/50 transition-all cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-card border border-border text-xs font-bold text-slate-700 dark:text-foreground shadow-xs hover:bg-muted/50 transition-all cursor-pointer"
           >
             <RefreshCcw className={cn("w-3.5 h-3.5 text-primary", isMatrixFetching && "animate-spin")} />
             {t('refresh')}
@@ -147,14 +147,14 @@ export default function ProfessorSchedulePage() {
 
           <button
             onClick={handleExportIcs}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card dark:bg-card border border-border dark:border-border text-xs font-bold uppercase tracking-wider text-foreground dark:text-foreground shadow-xs hover:bg-muted/50 transition-all cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card border border-border text-xs font-bold uppercase tracking-wider text-foreground shadow-xs hover:bg-muted/50 transition-all cursor-pointer"
           >
             <Calendar className="w-4 h-4 text-primary" /> {t('export')}
           </button>
 
           <button
             onClick={handleDownloadPdf}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#001A4B] hover:bg-[#082663] text-white text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#1a3673] hover:bg-[#082663] text-white text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer"
           >
             <Download className="w-4 h-4 text-amber-300" /> {t('download')}
           </button>
@@ -165,43 +165,43 @@ export default function ProfessorSchedulePage() {
       {scheduleError && <div role="alert" className="rounded-xl border border-red-200 p-4 text-red-700">{t('load_error')} <button onClick={() => refetchSchedule()} className="underline">{t('retry')}</button></div>}
       <TimetableChangePanel sessions={activeSessions} />
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-border dark:border-border">
+        <div className="bg-card rounded-2xl p-5 shadow-sm border border-border">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">{t('teacher')}</span>
-          <div className="text-base font-bold text-[#001A4B] dark:text-white truncate">{profFullName}</div>
+          <div className="text-base font-bold text-[#1a3673] dark:text-white truncate">{profFullName}</div>
           <div className="text-[10px] font-bold text-muted-foreground mt-1">{t('faculty')}</div>
         </div>
 
-        <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-border dark:border-border">
+        <div className="bg-card rounded-2xl p-5 shadow-sm border border-border">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">{t('scheduled')}</span>
-          <div className="text-2xl font-bold text-[#001A4B] dark:text-white">{t('weekly_short', { count: activeSessions.length })}</div>
+          <div className="text-2xl font-bold text-[#1a3673] dark:text-white">{t('weekly_short', { count: activeSessions.length })}</div>
           <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mt-1 flex items-center gap-1">
             <CheckCircle2 className="w-3 h-3" /> {t('synced')}
           </div>
         </div>
 
-        <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-border dark:border-border">
+        <div className="bg-card rounded-2xl p-5 shadow-sm border border-border">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">{t('weekly_hours')}</span>
           <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{Math.round(activeSessions.reduce((sum: number, item: any) => { const minutes = (time: string) => { const parts = time.split(":" ).map(Number); return parts[0] * 60 + parts[1] }; return sum + (minutes(item.end_time) - minutes(item.start_time)) / 60 }, 0) * 100) / 100} heures</div>
           <div className="text-[10px] font-bold text-muted-foreground mt-1">{t('teaching_slots')}</div>
         </div>
 
-        <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-border dark:border-border">
+        <div className="bg-card rounded-2xl p-5 shadow-sm border border-border">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">{t('term_and_year')}</span>
-          <div className="text-base font-bold text-[#001A4B] dark:text-white">{t('current_term')}</div>
+          <div className="text-base font-bold text-[#1a3673] dark:text-white">{t('current_term')}</div>
           <div className="text-[10px] font-bold text-primary mt-1">{t('year')}</div>
         </div>
       </div>
 
       {/* ── Exam Surveillance Alert (If assigned) ── */}
       {surveillances.length > 0 && (
-        <div className="bg-gradient-to-r from-[#001A4B] via-[#092868] to-[#001A4B] rounded-2xl p-6 text-white shadow-sm border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="bg-gradient-to-r from-[#1a3673] via-[#092868] to-[#1a3673] rounded-2xl p-6 text-white shadow-sm border border-blue-900/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 bg-amber-400/20 text-amber-300 rounded-2xl flex items-center justify-center font-bold shrink-0 border border-amber-400/30">
               <Shield className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 bg-amber-400 text-[#001A4B] rounded-full text-[10px] font-bold uppercase tracking-wider">
+                <span className="px-2.5 py-0.5 bg-amber-400 text-[#1a3673] rounded-full text-[10px] font-bold uppercase tracking-wider">
                   {t('proctoring')}
                 </span>
                 <span className="text-xs text-blue-200 font-bold">{t('sessions_count', { count: surveillances.length })}</span>
@@ -217,7 +217,7 @@ export default function ProfessorSchedulePage() {
 
           <Link
             to="/professor/proctoring"
-            className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-[#001A4B] rounded-xl text-xs font-bold uppercase tracking-wider shadow-md transition-all shrink-0 flex items-center gap-1.5"
+            className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-[#1a3673] rounded-xl text-xs font-bold uppercase tracking-wider shadow-md transition-all shrink-0 flex items-center gap-1.5"
           >
             <Eye className="w-4 h-4" /> {t('convocations')}
           </Link>
@@ -232,8 +232,8 @@ export default function ProfessorSchedulePage() {
             className={cn(
               "px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
               viewMode === 'matrix'
-                ? "bg-[#001A4B] text-white shadow-sm"
-                : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border border-border dark:border-border hover:bg-muted/50"
+                ? "bg-[#1a3673] text-white shadow-sm"
+                : "bg-card text-muted-foreground dark:text-foreground border border-border hover:bg-muted/50"
             )}
           >
             {t('grid')}
@@ -243,8 +243,8 @@ export default function ProfessorSchedulePage() {
             className={cn(
               "px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
               viewMode === 'official'
-                ? "bg-[#001A4B] text-white shadow-sm"
-                : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border border-border dark:border-border hover:bg-muted/50"
+                ? "bg-[#1a3673] text-white shadow-sm"
+                : "bg-card text-muted-foreground dark:text-foreground border border-border hover:bg-muted/50"
             )}
           >
             {t('official')}
@@ -254,25 +254,25 @@ export default function ProfessorSchedulePage() {
             className={cn(
               "px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
               viewMode === 'list'
-                ? "bg-[#001A4B] text-white shadow-sm"
-                : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border border-border dark:border-border hover:bg-muted/50"
+                ? "bg-[#1a3673] text-white shadow-sm"
+                : "bg-card text-muted-foreground dark:text-foreground border border-border hover:bg-muted/50"
             )}
           >
             {t('list')}
           </button>
         </div>
 
-        <span className="text-xs font-bold text-muted-foreground dark:text-muted-foreground">
+        <span className="text-xs font-bold text-muted-foreground">
           {t('weekly_count', { count: activeSessions.length })}
         </span>
       </div>
 
       {/* ── 1. WEEKLY MATRIX VIEW (GRID) ── */}
       {viewMode === 'matrix' && (
-        <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border overflow-x-auto">
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-border overflow-x-auto">
           <table className="w-full min-w-[900px] border-collapse">
             <thead>
-              <tr className="border-b border-border dark:border-border">
+              <tr className="border-b border-border">
                 <th className="p-3 text-start text-xs font-bold text-slate-400 uppercase tracking-widest w-36">
                   {t('slot')}
                 </th>
@@ -310,7 +310,7 @@ export default function ProfessorSchedulePage() {
                                 className="p-3.5 rounded-2xl bg-gradient-to-br from-blue-50/90 via-indigo-50/50 to-white dark:from-slate-800 dark:to-slate-800/60 border border-primary/20 dark:border-border shadow-2xs hover:shadow-md transition-all space-y-2 group"
                               >
                                 <div className="flex items-center justify-between">
-                                  <span className="font-mono text-[9px] font-bold uppercase bg-[#001A4B] text-white px-2 py-0.5 rounded">
+                                  <span className="font-mono text-[9px] font-bold uppercase bg-[#1a3673] text-white px-2 py-0.5 rounded">
                                     {session.code || 'CM'}
                                   </span>
                                   <span className="text-[10px] font-bold text-primary dark:text-blue-300 font-mono">
@@ -333,7 +333,7 @@ export default function ProfessorSchedulePage() {
 
                                 <button
                                   onClick={() => startCall.mutate(session)} disabled={startCall.isPending}
-                                  className="w-full mt-2 py-1.5 bg-[#001A4B] hover:bg-[#082663] text-white rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 shadow-xs cursor-pointer transition-colors"
+                                  className="w-full mt-2 py-1.5 bg-[#1a3673] hover:bg-[#082663] text-white rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 shadow-xs cursor-pointer transition-colors"
                                 >
                                   <QrCode className="w-3 h-3 text-amber-300" /> {t('take_attendance')}
                                 </button>
@@ -359,16 +359,16 @@ export default function ProfessorSchedulePage() {
       {viewMode === 'official' && (
         <div className="space-y-6">
           {profMatrixSections.length === 0 ? (
-            <div className="bg-card dark:bg-card rounded-2xl p-10 text-center border border-border dark:border-border text-slate-400 text-xs">
+            <div className="bg-card rounded-2xl p-10 text-center border border-border text-slate-400 text-xs">
               {t('unassigned')}
             </div>
           ) : (
             profMatrixSections.map((section: any, idx: number) => (
-              <div key={idx} className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border space-y-4">
-                <div className="flex items-center justify-between border-b border-border dark:border-border pb-3">
+              <div key={idx} className="bg-card rounded-2xl p-6 shadow-sm border border-border space-y-4">
+                <div className="flex items-center justify-between border-b border-border pb-3">
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-0.5 rounded-md bg-[#001A4B] text-white text-[10px] font-bold uppercase">
+                      <span className="px-2.5 py-0.5 rounded-md bg-[#1a3673] text-white text-[10px] font-bold uppercase">
                         {section.filiere_code || 'FILIÈRE'}
                       </span>
                       <h3 className="text-base font-bold text-foreground dark:text-white">{section.title}</h3>
@@ -377,31 +377,31 @@ export default function ProfessorSchedulePage() {
                   </div>
                 </div>
 
-                <div className="overflow-x-auto border border-border dark:border-border rounded-2xl bg-card dark:bg-card">
+                <div className="overflow-x-auto border border-border rounded-2xl bg-card">
                   <table className="w-full min-w-[850px] border-collapse text-xs">
                     <thead>
                       <tr className="bg-muted/50 dark:bg-slate-800/60 text-muted-foreground dark:text-foreground">
-                        <th className="border border-border dark:border-border p-2.5 font-bold text-start">{t('module')}</th>
-                        <th className="border border-border dark:border-border p-2.5 font-bold text-start">{t('lecturer')}</th>
-                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">{t('day_1')}</th>
-                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">{t('day_2')}</th>
-                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">{t('day_3')}</th>
-                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">{t('day_4')}</th>
-                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">{t('day_5')}</th>
-                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">{t('rooms')}</th>
+                        <th className="border border-border p-2.5 font-bold text-start">{t('module')}</th>
+                        <th className="border border-border p-2.5 font-bold text-start">{t('lecturer')}</th>
+                        <th className="border border-border p-2.5 font-bold text-center">{t('day_1')}</th>
+                        <th className="border border-border p-2.5 font-bold text-center">{t('day_2')}</th>
+                        <th className="border border-border p-2.5 font-bold text-center">{t('day_3')}</th>
+                        <th className="border border-border p-2.5 font-bold text-center">{t('day_4')}</th>
+                        <th className="border border-border p-2.5 font-bold text-center">{t('day_5')}</th>
+                        <th className="border border-border p-2.5 font-bold text-center">{t('rooms')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {section.rows.map((row: any, rIdx: number) => (
                         <tr key={rIdx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                          <td className="border border-border dark:border-border p-3 font-bold text-foreground dark:text-white">
+                          <td className="border border-border p-3 font-bold text-foreground dark:text-white">
                             {row.element_name || row.module_name}
                           </td>
-                          <td className="border border-border dark:border-border p-3 font-bold text-[#001A4B] dark:text-amber-300">
+                          <td className="border border-border p-3 font-bold text-[#1a3673] dark:text-amber-300">
                             {row.professor_name}
                           </td>
                           {[1, 2, 3, 4, 5].map((day) => (
-                            <td key={day} className="border border-border dark:border-border p-2 text-center align-middle">
+                            <td key={day} className="border border-border p-2 text-center align-middle">
                               {(row.days?.[day] || []).map((slot: string, sIdx: number) => (
                                 <span key={sIdx} className="inline-block font-bold text-[11px] text-primary dark:text-blue-300 bg-primary/5 dark:bg-blue-950/80 px-2 py-1 rounded-md border border-primary/20 dark:border-primary">
                                   {slot}
@@ -409,7 +409,7 @@ export default function ProfessorSchedulePage() {
                               ))}
                             </td>
                           ))}
-                          <td className="border border-border dark:border-border p-3 text-center font-bold text-rose-600 dark:text-rose-400">
+                          <td className="border border-border p-3 text-center font-bold text-rose-600 dark:text-rose-400">
                             {row.room_label}
                           </td>
                         </tr>
@@ -434,8 +434,8 @@ export default function ProfessorSchedulePage() {
                 className={cn(
                   "px-5 py-2.5 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
                   selectedDay === day.key
-                    ? "bg-[#001A4B] text-white shadow-md"
-                    : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border border-border dark:border-border hover:bg-muted/50"
+                    ? "bg-[#1a3673] text-white shadow-md"
+                    : "bg-card text-muted-foreground dark:text-foreground border border-border hover:bg-muted/50"
                 )}
               >
                 {t(`day_${day.key}`)}
@@ -443,8 +443,8 @@ export default function ProfessorSchedulePage() {
             ))}
           </div>
 
-          <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border dark:border-border space-y-4">
-            <h3 className="text-base font-bold text-[#001A4B] dark:text-white flex items-center gap-2">
+          <div className="bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border space-y-4">
+            <h3 className="text-base font-bold text-[#1a3673] dark:text-white flex items-center gap-2">
               <Calendar className="w-5 h-5 text-primary" />
               {t('day_sessions', { day: t(`day_${selectedDay}`) })}
             </h3>
@@ -458,7 +458,7 @@ export default function ProfessorSchedulePage() {
 
               if (dayClasses.length === 0) {
                 return (
-                  <div className="py-12 text-center rounded-2xl bg-muted/50 dark:bg-slate-800/30 border border-dashed border-border dark:border-border">
+                  <div className="py-12 text-center rounded-2xl bg-muted/50 dark:bg-slate-800/30 border border-dashed border-border">
                     <Clock className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
                     <p className="text-xs font-bold text-muted-foreground">{t('no_classes')}</p>
                     <p className="text-[11px] text-slate-400 mt-0.5">{t('free_day')}</p>
@@ -471,10 +471,10 @@ export default function ProfessorSchedulePage() {
                   {dayClasses.map((cls: any, idx: number) => (
                     <div
                       key={idx}
-                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-muted/50 dark:bg-slate-800/40 border border-border dark:border-border hover:border-primary/20 transition-all"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-muted/50 dark:bg-slate-800/40 border border-border hover:border-primary/20 transition-all"
                     >
                       <div className="flex items-start gap-4">
-                        <div className="w-16 h-16 rounded-2xl bg-[#001A4B] text-white flex flex-col items-center justify-center font-bold shrink-0 shadow-sm">
+                        <div className="w-16 h-16 rounded-2xl bg-[#1a3673] text-white flex flex-col items-center justify-center font-bold shrink-0 shadow-sm">
                           <span className="text-xs text-amber-300">{cls.time?.split(' - ')[0] || cls.time}</span>
                           <span className="text-[8px] uppercase tracking-wider text-slate-300 mt-0.5">{t('time')}</span>
                         </div>
@@ -501,7 +501,7 @@ export default function ProfessorSchedulePage() {
                       <div className="flex items-center gap-2 shrink-0">
                         <button
                           onClick={() => startCall.mutate(cls)} disabled={startCall.isPending}
-                          className="px-5 py-2.5 bg-[#001A4B] hover:bg-[#082663] text-white font-bold text-xs rounded-xl uppercase tracking-wider shadow-sm flex items-center gap-2 cursor-pointer transition-colors"
+                          className="px-5 py-2.5 bg-[#1a3673] hover:bg-[#082663] text-white font-bold text-xs rounded-xl uppercase tracking-wider shadow-sm flex items-center gap-2 cursor-pointer transition-colors"
                         >
                           <QrCode className="w-4 h-4 text-amber-300" /> {t('take_attendance')}
                         </button>

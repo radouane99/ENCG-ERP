@@ -29,9 +29,19 @@ class TimetableController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $schedules = $this->timetableService->getSchedules(
-            $request->only(['group_id', 'professor_id', 'room_id', 'academic_year_id'])
-        );
+        $filters = $request->only(['group_id', 'professor_id', 'room_id', 'filiere_id', 'academic_year_id']);
+
+        if ($request->route('filiereId') !== null) {
+            $filters['group_id'] = $filters['group_id'] ?? $request->route('filiereId');
+        } elseif ($request->route('type') !== null && $request->route('id') !== null) {
+            $type = (string) $request->route('type');
+            $targetId = $request->route('id');
+            if (in_array($type, ['group', 'professor', 'room', 'filiere'], true)) {
+                $filters["{$type}_id"] = $targetId;
+            }
+        }
+
+        $schedules = $this->timetableService->getSchedules($filters);
 
         return response()->json(['success' => true, 'data' => $schedules]);
     }

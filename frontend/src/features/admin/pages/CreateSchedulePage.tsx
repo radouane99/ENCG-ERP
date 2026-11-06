@@ -76,7 +76,7 @@ export default function CreateSchedulePage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-[#0f2863] italic erp-page-title">Planifier une Nouvelle Séance</h1>
+          <h1 className="text-[#1a3673] italic erp-page-title">Planifier une Nouvelle Séance</h1>
           <p className="text-muted-foreground mt-1 text-sm font-medium">Vérification des conflits en temps réel</p>
         </div>
         <Link to="/admin/timetable/calendar" className="px-5 py-2.5 bg-card border border-border text-slate-700 font-bold rounded-xl hover:bg-muted/50 transition-colors text-xs uppercase tracking-wide">
@@ -86,7 +86,7 @@ export default function CreateSchedulePage() {
 
       <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
         {/* Dark Blue Banner */}
-        <div className="bg-[#0f2863] p-10 text-white m-4 rounded-2xl shadow-md relative overflow-hidden">
+        <div className="bg-[#1a3673] p-10 text-white m-4 rounded-2xl shadow-md relative overflow-hidden">
           <div className="absolute -right-12 -top-12 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl"></div>
           <h2 className="text-3xl font-bold italic mb-2 relative z-10">Nouvelle Affectation</h2>
           <p className="text-blue-200 text-sm font-medium max-w-lg relative z-10">
@@ -95,7 +95,7 @@ export default function CreateSchedulePage() {
         </div>
 
         <form onSubmit={handleSubmit} className="p-10 space-y-8">
-          <h3 className="text-xl font-bold text-[#0f2863] italic mb-6">Détails de la Séance</h3>
+          <h3 className="text-xl font-bold text-[#1a3673] italic mb-6">Détails de la Séance</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -168,7 +168,7 @@ export default function CreateSchedulePage() {
             <button 
               type="submit" 
               disabled={createMutation.isPending}
-              className="w-full flex justify-center items-center gap-2 py-4 bg-[#0f2863] text-white font-bold rounded-2xl hover:bg-[#1a387e] transition-colors text-sm tracking-wide shadow-md disabled:opacity-70"
+              className="w-full flex justify-center items-center gap-2 py-4 bg-[#1a3673] text-white font-bold rounded-2xl hover:bg-[#1a387e] transition-colors text-sm tracking-wide shadow-md disabled:opacity-70"
             >
               {createMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : '✓'}
               Enregistrer la Séance

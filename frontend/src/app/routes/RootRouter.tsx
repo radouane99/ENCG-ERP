@@ -24,7 +24,7 @@ const VerifyPv = lazy(() => import('@features/documents/pages/VerifyPv'))
 const LandingPage = lazy(() => import('@features/public/pages/LandingPage'))
 const InscriptionPage = lazy(() => import('@features/public/pages/InscriptionPage'))
 const ModifierDossierPage = lazy(() => import('@features/public/pages/ModifierDossierPage'))
-const InfrastructurePage = lazy(() => import('@features/public/pages/LandingPage'))
+const InfrastructurePage = lazy(() => import('@features/infrastructure/pages/ClassroomsPage'))
 
 const StudentRouter = lazy(() => import('./StudentRouter'))
 const ProfessorRouter = lazy(() => import('./ProfessorRouter'))

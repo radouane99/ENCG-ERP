@@ -53,7 +53,7 @@ export default function MobileBottomNav({ onOpenSearch }: MobileBottomNavProps) 
           ]
 
   return (
-    <nav aria-label={t('navigation.mobile')} className="fixed bottom-0 inset-x-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-border dark:border-border px-1 pt-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))] flex items-center justify-around lg:hidden shadow-lg shadow-black/10 transition-colors">
+    <nav aria-label={t('navigation.mobile')} className="fixed bottom-0 inset-x-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-border px-1 pt-1.5 pb-[calc(0.375rem+env(safe-area-inset-bottom))] flex items-center justify-around lg:hidden shadow-lg shadow-black/10 transition-colors">
       {navItems.map((item) => {
         const Icon = item.icon
         const isActive =
@@ -69,7 +69,7 @@ export default function MobileBottomNav({ onOpenSearch }: MobileBottomNavProps) 
               'flex flex-col items-center justify-center min-w-0 flex-1 py-1 px-1 sm:px-3 rounded-xl text-[10px] font-semibold transition-all touch-target select-none min-h-11',
               isActive
                 ? 'text-primary dark:text-blue-300 bg-primary/10 dark:bg-blue-950/50 scale-105'
-                : "text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-slate-200"
+                : "text-muted-foreground hover:text-foreground dark:hover:text-slate-200"
             )}
           >
             <Icon className={cn('w-5 h-5 mb-0.5 transition-transform', isActive && 'scale-110')} />
@@ -81,7 +81,7 @@ export default function MobileBottomNav({ onOpenSearch }: MobileBottomNavProps) 
       <button
         type="button"
         onClick={onOpenSearch}
-        className="flex flex-col items-center justify-center min-w-0 flex-1 py-1 px-1 sm:px-3 rounded-xl text-[10px] font-semibold text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-slate-200 touch-target select-none min-h-11"
+        className="flex flex-col items-center justify-center min-w-0 flex-1 py-1 px-1 sm:px-3 rounded-xl text-[10px] font-semibold text-muted-foreground hover:text-foreground dark:hover:text-slate-200 touch-target select-none min-h-11"
         aria-label={t('navigation.quick_search')}
       >
         <Search className="w-5 h-5 mb-0.5 text-primary" />

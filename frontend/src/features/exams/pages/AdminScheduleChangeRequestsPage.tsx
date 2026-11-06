@@ -65,18 +65,18 @@ export default function AdminScheduleChangeRequestsPage() {
           <title>Registre Officiel des Changements d'Emploi du Temps - ENCG Fès</title>
           <style>
             body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #1e293b; max-width: 900px; margin: 0 auto; }
-            .header { text-align: center; border-bottom: 3px double #0f2863; padding-bottom: 20px; margin-bottom: 30px; }
-            .title { font-size: 18px; font-weight: 900; color: #0f2863; text-transform: uppercase; margin-top: 10px; }
+            .header { text-align: center; border-bottom: 3px double #1a3673; padding-bottom: 20px; margin-bottom: 30px; }
+            .title { font-size: 18px; font-weight: 900; color: #1a3673; text-transform: uppercase; margin-top: 10px; }
             .subtitle { font-size: 11px; color: #64748b; font-weight: 700; }
             table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
-            th { background: #0f2863; color: white; padding: 10px; text-align: left; font-size: 10px; text-transform: uppercase; }
+            th { background: #1a3673; color: white; padding: 10px; text-align: left; font-size: 10px; text-transform: uppercase; }
             td { padding: 10px; border-bottom: 1px solid #e2e8f0; }
             .footer { margin-top: 50px; display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; }
           </style>
         </head>
         <body>
           <div class="header">
-            <div style="font-size: 15px; font-weight: 900; color: #0f2863;">ROYAUME DU MAROC — ENCG FÈS</div>
+            <div style="font-size: 15px; font-weight: 900; color: #1a3673;">ROYAUME DU MAROC — ENCG FÈS</div>
             <div class="subtitle">DIRECTION DES ÉTUDES ET DU SUIVI DES EXAMENS</div>
             <div class="title">REGISTRE DES DEMANDES DE MODIFICATION D'EMPLOI DU TEMPS</div>
           </div>
@@ -186,14 +186,14 @@ export default function AdminScheduleChangeRequestsPage() {
       </div>
 
       {/* Main Card */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-6 space-y-6">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-6 space-y-6">
         {/* Filter Tabs Bar */}
         <div className="flex flex-wrap gap-2 p-1.5 bg-muted/50 dark:bg-card rounded-2xl border border-border dark:border-slate-700/80 w-fit">
           <button 
             onClick={() => setActiveFilter('all')}
             className={cn(
               "px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer",
-              activeFilter === 'all' ? "bg-card dark:bg-card text-primary dark:text-indigo-400 shadow-md" : "text-muted-foreground hover:text-foreground"
+              activeFilter === 'all' ? "bg-card text-primary dark:text-indigo-400 shadow-md" : "text-muted-foreground hover:text-foreground"
             )}
           >
             <List className="w-4 h-4" /> Toutes ({requests.length})
@@ -203,7 +203,7 @@ export default function AdminScheduleChangeRequestsPage() {
             onClick={() => setActiveFilter('pending')}
             className={cn(
               "px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer",
-              activeFilter === 'pending' ? "bg-card dark:bg-card text-amber-600 shadow-md" : "text-muted-foreground hover:text-foreground"
+              activeFilter === 'pending' ? "bg-card text-amber-600 shadow-md" : "text-muted-foreground hover:text-foreground"
             )}
           >
             <Hourglass className="w-4 h-4 text-amber-500" /> En Attente ({requests.filter(r => r.status === 'pending').length})
@@ -213,7 +213,7 @@ export default function AdminScheduleChangeRequestsPage() {
             onClick={() => setActiveFilter('approved')}
             className={cn(
               "px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer",
-              activeFilter === 'approved' ? "bg-card dark:bg-card text-emerald-600 shadow-md" : "text-muted-foreground hover:text-foreground"
+              activeFilter === 'approved' ? "bg-card text-emerald-600 shadow-md" : "text-muted-foreground hover:text-foreground"
             )}
           >
             <CheckSquare className="w-4 h-4 text-emerald-500" /> Approuvées ({requests.filter(r => r.status === 'approved').length})
@@ -223,7 +223,7 @@ export default function AdminScheduleChangeRequestsPage() {
             onClick={() => setActiveFilter('rejected')}
             className={cn(
               "px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all cursor-pointer",
-              activeFilter === 'rejected' ? "bg-card dark:bg-card text-rose-600 shadow-md" : "text-muted-foreground hover:text-foreground"
+              activeFilter === 'rejected' ? "bg-card text-rose-600 shadow-md" : "text-muted-foreground hover:text-foreground"
             )}
           >
             <XCircle className="w-4 h-4 text-rose-500" /> Rejetées ({requests.filter(r => r.status === 'rejected').length})
@@ -278,7 +278,7 @@ export default function AdminScheduleChangeRequestsPage() {
                       </span>
                     </div>
 
-                    <p className="text-xs font-bold text-muted-foreground dark:text-muted-foreground flex items-center gap-2">
+                    <p className="text-xs font-bold text-muted-foreground flex items-center gap-2">
                       <User className="w-3.5 h-3.5 text-primary" /> {req.professor_name}
                       <span className="text-slate-300">•</span>
                       <Building2 className="w-3.5 h-3.5 text-primary" /> Dép. {req.department}
@@ -304,7 +304,7 @@ export default function AdminScheduleChangeRequestsPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex flex-wrap items-center gap-2 shrink-0 border-t lg:border-t-0 pt-4 lg:pt-0 border-border dark:border-border">
+                <div className="flex flex-wrap items-center gap-2 shrink-0 border-t lg:border-t-0 pt-4 lg:pt-0 border-border">
                   {req.status === 'approved' && (
                     <button
                       onClick={(e) => { e.stopPropagation(); handleWhatsAppDelegateAlert(req) }}
@@ -348,8 +348,8 @@ export default function AdminScheduleChangeRequestsPage() {
       {/* Details Modal */}
       {selectedReqModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div role="dialog" aria-modal="true" aria-labelledby="schedule-request-title" className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-xl shadow-sm overflow-hidden">
-            <div className="p-6 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white flex items-center justify-between">
+          <div role="dialog" aria-modal="true" aria-labelledby="schedule-request-title" className="bg-card border border-border rounded-2xl w-full max-w-xl shadow-sm overflow-hidden">
+            <div className="p-6 bg-gradient-to-r from-[#1a3673] to-blue-900 text-white flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200">Détails de la Requête</span>
                 <h2 id="schedule-request-title" className="text-lg font-bold">{selectedReqModal.module_name}</h2>
@@ -374,7 +374,7 @@ export default function AdminScheduleChangeRequestsPage() {
                 </div>
               </div>
             </div>
-            <div className="p-4 border-t border-border dark:border-border bg-muted/50 dark:bg-card flex flex-col gap-4 items-stretch">
+            <div className="p-4 border-t border-border bg-muted/50 dark:bg-card flex flex-col gap-4 items-stretch">
               {selectedReqModal.request_type === 'timetable_change' && selectedReqModal.status === 'pending' && <label className="block space-y-2 text-sm font-medium">Motif de la décision<textarea aria-label="Motif de la décision" minLength={10} maxLength={2000} value={reviewNotes[selectedReqModal.id] || ''} onChange={event => setReviewNotes(notes => ({ ...notes, [selectedReqModal.id]: event.target.value }))} className="block w-full rounded-xl border border-input bg-card p-3" /><span className="text-xs text-muted-foreground">L’approbation contrôle le créneau et applique le changement seulement s’il reste possible. La durée et la salle sont conservées.</span></label>}
               {selectedReqModal.status === 'pending' ? (
                 <div className="flex items-center gap-2">

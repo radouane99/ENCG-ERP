@@ -18,7 +18,7 @@ export default function AdminExamLiveAttendanceReportPage() {
         </Link>
         <button 
           onClick={() => window.print()}
-          className="h-10 px-6 rounded-xl bg-[#0f2863] hover:bg-[#1a387e] text-white text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"
+          className="h-10 px-6 rounded-xl bg-[#1a3673] hover:bg-[#1a387e] text-white text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"
         >
           <Printer className="w-4 h-4" /> Imprimer / PDF
         </button>
@@ -47,15 +47,15 @@ export default function AdminExamLiveAttendanceReportPage() {
         <div className="border border-primary/20 rounded-lg overflow-hidden mb-6">
           <div className="border-b border-primary/20 p-3 bg-indigo-50/30">
             <p className="text-[9px] font-bold text-indigo-300 uppercase tracking-wider mb-1">MODULE</p>
-            <p className="text-sm font-bold text-[#0f2863]">Avancé - Génie Informatique</p>
+            <p className="text-sm font-bold text-[#1a3673]">Avancé - Génie Informatique</p>
           </div>
           <div className="border-b border-primary/20 p-3 bg-indigo-50/30">
             <p className="text-[9px] font-bold text-indigo-300 uppercase tracking-wider mb-1">GROUPE</p>
-            <p className="text-sm font-bold text-[#0f2863]">Génie Informatique - Groupe 2</p>
+            <p className="text-sm font-bold text-[#1a3673]">Génie Informatique - Groupe 2</p>
           </div>
           <div className="p-3 bg-indigo-50/30">
             <p className="text-[9px] font-bold text-indigo-300 uppercase tracking-wider mb-1">DATE & HORAIRE</p>
-            <p className="text-sm font-bold text-[#0f2863]">01/06/2026 à 11:00</p>
+            <p className="text-sm font-bold text-[#1a3673]">01/06/2026 à 11:00</p>
           </div>
         </div>
 

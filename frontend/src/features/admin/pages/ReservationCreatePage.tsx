@@ -125,16 +125,16 @@ export default function ReservationCreatePage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-[#0f2863] italic erp-page-title">Créer une Réservation de Salle</h1>
+          <h1 className="text-[#1a3673] italic erp-page-title">Créer une Réservation de Salle</h1>
         </div>
-        <Link to="/admin/reservations" className="px-5 py-2.5 bg-card border border-border text-[#0f2863] font-bold rounded-full hover:bg-muted/50 transition-colors text-xs uppercase tracking-wide shadow-sm">
+        <Link to="/admin/reservations" className="px-5 py-2.5 bg-card border border-border text-[#1a3673] font-bold rounded-full hover:bg-muted/50 transition-colors text-xs uppercase tracking-wide shadow-sm">
           Retour à la liste
         </Link>
       </div>
 
       <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col items-center">
         {/* Blue Banner */}
-        <div className="bg-[#0f2863] p-8 text-white m-4 rounded-2xl shadow-md relative overflow-hidden w-[calc(100%-2rem)] text-center">
+        <div className="bg-[#1a3673] p-8 text-white m-4 rounded-2xl shadow-md relative overflow-hidden w-[calc(100%-2rem)] text-center">
           <div className="absolute -right-12 -top-12 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl"></div>
           <h2 className="text-2xl font-bold italic mb-2 relative z-10">Réservation Administrative</h2>
           <p className="text-blue-200 text-xs font-medium relative z-10 mx-auto">
@@ -143,7 +143,7 @@ export default function ReservationCreatePage() {
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 w-full max-w-3xl space-y-8">
-          <h3 className="text-lg font-bold text-[#0f2863] italic mb-6">Détails de la Réservation</h3>
+          <h3 className="text-lg font-bold text-[#1a3673] italic mb-6">Détails de la Réservation</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -164,7 +164,7 @@ export default function ReservationCreatePage() {
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Salle Allouée</label>
               <select 
-                className="w-full border border-primary bg-card px-5 py-3.5 text-sm font-bold text-[#0f2863] shadow-sm focus:border-primary focus:ring-1 focus:ring-ring transition-all outline-none rounded-[var(--control-radius)]"
+                className="w-full border border-primary bg-card px-5 py-3.5 text-sm font-bold text-[#1a3673] shadow-sm focus:border-primary focus:ring-1 focus:ring-ring transition-all outline-none rounded-[var(--control-radius)]"
                 value={roomId}
                 onChange={(e) => setRoomId(e.target.value)}
                 required
@@ -245,7 +245,7 @@ export default function ReservationCreatePage() {
             <button 
               type="submit" 
               disabled={isSubmitting || hasConflict || checkingConflict}
-              className="w-full py-4 bg-[#0f2863] text-white font-bold rounded-xl hover:bg-[#1a387e] transition-colors text-sm tracking-wide shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-4 bg-[#1a3673] text-white font-bold rounded-xl hover:bg-[#1a387e] transition-colors text-sm tracking-wide shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -258,7 +258,7 @@ export default function ReservationCreatePage() {
         </form>
 
         <div className="w-full p-8 pt-0 max-w-3xl">
-          <h4 className="text-sm font-bold text-[#0f2863] flex items-center gap-2 mb-4">
+          <h4 className="text-sm font-bold text-[#1a3673] flex items-center gap-2 mb-4">
             <CalendarIcon className="w-4 h-4" /> Planning de la salle le {new Date(date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </h4>
           

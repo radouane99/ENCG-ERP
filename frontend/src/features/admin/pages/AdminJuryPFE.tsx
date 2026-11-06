@@ -58,14 +58,14 @@ export default function AdminJuryPFE() {
         <head>
           <title>Procès-Verbal de Soutenance PFE - ${s.student}</title>
           <style>
-            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #0f2863; max-width: 850px; margin: 0 auto; }
-            .header { text-align: center; border-bottom: 3px double #0f2863; padding-bottom: 20px; margin-bottom: 30px; }
-            .title { font-size: 20px; font-weight: 900; color: #0f2863; text-transform: uppercase; margin-top: 10px; }
+            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #1a3673; max-width: 850px; margin: 0 auto; }
+            .header { text-align: center; border-bottom: 3px double #1a3673; padding-bottom: 20px; margin-bottom: 30px; }
+            .title { font-size: 20px; font-weight: 900; color: #1a3673; text-transform: uppercase; margin-top: 10px; }
             .box { background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 20px; padding: 25px; margin: 20px 0; }
             .row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
             .lbl { font-weight: bold; color: #64748b; }
-            .val { font-weight: 900; color: #0f2863; }
-            .score-box { text-align: center; background: #0f2863; color: white; border-radius: 20px; padding: 25px; margin: 30px 0; }
+            .val { font-weight: 900; color: #1a3673; }
+            .score-box { text-align: center; background: #1a3673; color: white; border-radius: 20px; padding: 25px; margin: 30px 0; }
             .score-val { font-size: 40px; font-weight: 900; color: #fbbf24; }
             .mention-val { font-size: 16px; font-weight: 800; text-transform: uppercase; color: #60a5fa; margin-top: 5px; }
             .signatures { margin-top: 50px; display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; text-align: center; }
@@ -180,8 +180,8 @@ export default function AdminJuryPFE() {
       </div>
 
       {/* Main Content Card */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border dark:border-border pb-4">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
           <h2 className="text-lg font-bold text-foreground dark:text-white">Calendrier Officiel des Jurys</h2>
           <div className="relative w-72">
             <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
@@ -190,7 +190,7 @@ export default function AdminJuryPFE() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Rechercher étudiant ou professeur..." 
-              className="w-full pl-11 pr-4 py-2 bg-muted/50 dark:bg-card border border-border dark:border-slate-700/80 text-xs font-bold text-foreground dark:text-foreground focus:ring-4 focus:ring-indigo-500/15 outline-none transition-all rounded-[var(--control-radius)]"
+              className="w-full pl-11 pr-4 py-2 bg-muted/50 dark:bg-card border border-border dark:border-slate-700/80 text-xs font-bold text-foreground focus:ring-4 focus:ring-indigo-500/15 outline-none transition-all rounded-[var(--control-radius)]"
             />
           </div>
         </div>
@@ -216,7 +216,7 @@ export default function AdminJuryPFE() {
             >
               <div className="flex flex-col lg:flex-row gap-6">
                 {/* Time & Location */}
-                <div className="shrink-0 w-52 border-b lg:border-b-0 lg:border-r border-border dark:border-border pb-4 lg:pb-0 lg:pr-6 space-y-2">
+                <div className="shrink-0 w-52 border-b lg:border-b-0 lg:border-r border-border pb-4 lg:pb-0 lg:pr-6 space-y-2">
                   <div className="flex items-center gap-2 text-xs font-bold text-primary dark:text-indigo-200">
                     <Calendar className="w-4 h-4 text-primary" /> {s.date}
                   </div>
@@ -233,7 +233,7 @@ export default function AdminJuryPFE() {
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="font-bold text-base text-foreground dark:text-white mb-1">{s.student}</h3>
-                      <p className="text-xs font-bold text-muted-foreground dark:text-muted-foreground italic">"{s.topic}"</p>
+                      <p className="text-xs font-bold text-muted-foreground italic">"{s.topic}"</p>
                     </div>
                     
                     {s.status === 'CONFLICT' ? (
@@ -249,24 +249,24 @@ export default function AdminJuryPFE() {
 
                   {/* Jury Members Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="bg-card dark:bg-card p-3 rounded-2xl border border-border dark:border-border">
+                    <div className="bg-card p-3 rounded-2xl border border-border">
                       <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">PRÉSIDENT DU JURY</span>
                       <span className="text-xs font-bold text-primary dark:text-indigo-200 mt-0.5 block">{s.president}</span>
                     </div>
 
-                    <div className="bg-card dark:bg-card p-3 rounded-2xl border border-border dark:border-border">
+                    <div className="bg-card p-3 rounded-2xl border border-border">
                       <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">ENCADRANT PÉDAGOGIQUE</span>
-                      <span className="text-xs font-bold text-foreground dark:text-foreground mt-0.5 block">{s.encadrant}</span>
+                      <span className="text-xs font-bold text-foreground mt-0.5 block">{s.encadrant}</span>
                     </div>
 
-                    <div className="bg-card dark:bg-card p-3 rounded-2xl border border-border dark:border-border">
+                    <div className="bg-card p-3 rounded-2xl border border-border">
                       <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">RAPPORTEUR</span>
-                      <span className="text-xs font-bold text-foreground dark:text-foreground mt-0.5 block">{s.rapporteur}</span>
+                      <span className="text-xs font-bold text-foreground mt-0.5 block">{s.rapporteur}</span>
                     </div>
                   </div>
 
                   {/* Action Bar */}
-                  <div className="pt-3 border-t border-border dark:border-border flex items-center justify-between">
+                  <div className="pt-3 border-t border-border flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => { setSelectedPvModal(s); setPvScore(s.score || 17); }}
@@ -307,8 +307,8 @@ export default function AdminJuryPFE() {
       {/* Modal PV de Soutenance (Note & Mention) */}
       {selectedPvModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-lg shadow-sm overflow-hidden">
-            <div className="p-6 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white flex items-center justify-between">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-lg shadow-sm overflow-hidden">
+            <div className="p-6 bg-gradient-to-r from-[#1a3673] to-blue-900 text-white flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200">Procès-Verbal de Soutenance PFE</span>
                 <h2 className="text-lg font-bold">{selectedPvModal.student}</h2>
@@ -346,7 +346,7 @@ export default function AdminJuryPFE() {
               </div>
             </div>
 
-            <div className="p-4 border-t border-border dark:border-border bg-muted/50 dark:bg-card flex justify-between items-center">
+            <div className="p-4 border-t border-border bg-muted/50 dark:bg-card flex justify-between items-center">
               <button 
                 onClick={() => handlePrintPvSoutenance(selectedPvModal, pvScore)}
                 className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 text-white font-bold rounded-xl text-xs shadow-md transition-colors cursor-pointer flex items-center gap-2"

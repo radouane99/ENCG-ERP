@@ -503,7 +503,7 @@ const [filieres, setFilieres] = useState<any[]>([]);
     })
 
     return (
-      <div className="p-4 md:p-6 bg-card dark:bg-card">
+      <div className="p-4 md:p-6 bg-card">
         {mappedEvents.length === 0 ? (
           <div className="py-16 text-center text-slate-400 text-sm">
             <Calendar className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
@@ -512,22 +512,22 @@ const [filieres, setFilieres] = useState<any[]>([]);
         ) : (
           <div className="space-y-4">
             {sortedDates.map((date) => (
-              <div key={date} className="rounded-2xl border border-border dark:border-border overflow-hidden bg-slate-50/50 dark:bg-slate-900/50">
-                <div className="px-5 py-3 border-b border-border dark:border-border flex justify-between items-center bg-card dark:bg-card">
-                  <span className="font-bold text-foreground dark:text-foreground capitalize text-sm">{date.split(' ')[0]}</span>
+              <div key={date} className="rounded-2xl border border-border overflow-hidden bg-slate-50/50 dark:bg-slate-900/50">
+                <div className="px-5 py-3 border-b border-border flex justify-between items-center bg-card">
+                  <span className="font-bold text-foreground capitalize text-sm">{date.split(' ')[0]}</span>
                   <span className="text-xs font-bold text-slate-400">{date.split(' ').slice(1).join(' ')}</span>
                 </div>
                 <div className="divide-y divide-slate-100 dark:divide-slate-800">
                   {grouped[date].sort((a, b) => a.startTime.localeCompare(b.startTime)).map(event => {
                     const style = getFiliereStyle(event.title, event.extendedProps?.group)
                     return (
-                      <div key={event.id} className="px-5 py-3.5 flex items-center justify-between gap-4 bg-card dark:bg-card hover:bg-muted/50 dark:hover:bg-slate-800/50 transition-colors">
+                      <div key={event.id} className="px-5 py-3.5 flex items-center justify-between gap-4 bg-card hover:bg-muted/50 dark:hover:bg-slate-800/50 transition-colors">
                         <div className="flex items-center gap-3 min-w-0">
                           <span className="px-2.5 py-1 rounded-lg text-xs font-bold text-white shrink-0 shadow-xs" style={{ background: style.color }}>
                             {style.label}
                           </span>
                           <div className="min-w-0">
-                            <p className="font-bold text-sm text-foreground dark:text-foreground truncate">{event.title}</p>
+                            <p className="font-bold text-sm text-foreground truncate">{event.title}</p>
                             <p className="text-xs text-slate-400 font-medium mt-0.5 flex items-center gap-3">
                               {event.professor && <span className="flex items-center gap-1"><User size={11} />{event.professor}</span>}
                               {event.room && <span className="flex items-center gap-1"><MapPin size={11} />{event.room}</span>}
@@ -535,7 +535,7 @@ const [filieres, setFilieres] = useState<any[]>([]);
                           </div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="px-3 py-1 rounded-lg text-xs font-mono font-bold text-muted-foreground dark:text-foreground bg-muted dark:bg-card border border-border dark:border-border">
+                          <span className="px-3 py-1 rounded-lg text-xs font-mono font-bold text-muted-foreground dark:text-foreground bg-muted dark:bg-card border border-border">
                             {event.startTime} – {event.endTime}
                           </span>
                         </div>
@@ -566,7 +566,7 @@ const [filieres, setFilieres] = useState<any[]>([]);
 
     return (
       <div className="space-y-4">
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl flex overflow-x-auto relative shadow-xs">
+        <div className="bg-card border border-border rounded-2xl flex overflow-x-auto relative shadow-xs">
           {loading && (
             <div className="absolute inset-0 z-20 bg-white/70 dark:bg-slate-900/70 backdrop-blur-[2px] flex items-center justify-center">
               <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -574,10 +574,10 @@ const [filieres, setFilieres] = useState<any[]>([]);
           )}
 
           {/* Time column */}
-          <div className="w-18 shrink-0 border-r border-border dark:border-border pt-14 bg-slate-50/50 dark:bg-slate-900/50">
+          <div className="w-18 shrink-0 border-r border-border pt-14 bg-slate-50/50 dark:bg-slate-900/50">
             {hours.map(hour => (
-              <div key={hour} className="h-16 border-b border-border dark:border-slate-800/80 flex items-center justify-center text-[11px] font-bold text-muted-foreground dark:text-muted-foreground relative">
-                <span className="absolute -top-2.5 bg-muted dark:bg-card px-2 py-0.5 rounded-md border border-border dark:border-border shadow-2xs">{hour}</span>
+              <div key={hour} className="h-16 border-b border-border dark:border-slate-800/80 flex items-center justify-center text-[11px] font-bold text-muted-foreground relative">
+                <span className="absolute -top-2.5 bg-muted dark:bg-card px-2 py-0.5 rounded-md border border-border shadow-2xs">{hour}</span>
               </div>
             ))}
           </div>
@@ -622,10 +622,10 @@ const [filieres, setFilieres] = useState<any[]>([]);
               })
 
               return (
-                <div key={formatted} className="flex-1 border-r border-border dark:border-border relative last:border-r-0">
+                <div key={formatted} className="flex-1 border-r border-border relative last:border-r-0">
                   <div className={cn(
-                    "h-14 border-b border-border dark:border-border flex items-center justify-center font-bold text-xs md:text-sm capitalize transition-colors",
-                    isToday ? "bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-300 font-bold border-b-2 border-b-indigo-500" : "text-foreground dark:text-foreground"
+                    "h-14 border-b border-border flex items-center justify-center font-bold text-xs md:text-sm capitalize transition-colors",
+                    isToday ? "bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-300 font-bold border-b-2 border-b-indigo-500" : "text-foreground"
                   )}>
                     {isToday && <span className="w-2 h-2 rounded-full bg-primary dark:bg-indigo-400 mr-2 animate-pulse" />}
                     {formatted}
@@ -735,7 +735,7 @@ const [filieres, setFilieres] = useState<any[]>([]);
       {/* ══════════════════════════════════════════════════════
           HERO HEADER — Deep ENCG Navy Style
       ══════════════════════════════════════════════════════ */}
-      <div className="relative overflow-hidden rounded-2xl" style={{ background: 'linear-gradient(135deg, #001A4B 0%, #003087 50%, #001A4B 100%)' }}>
+      <div className="relative overflow-hidden rounded-2xl" style={{ background: 'linear-gradient(135deg, #1a3673 0%, #003087 50%, #1a3673 100%)' }}>
         <div className="absolute top-0 right-0 w-80 h-80 opacity-10 pointer-events-none" style={{ background: 'radial-gradient(circle, #6366f1 0%, transparent 70%)' }} />
         <div className="absolute bottom-0 left-1/4 w-48 h-48 opacity-8 pointer-events-none" style={{ background: 'radial-gradient(circle, #06b6d4 0%, transparent 70%)' }} />
 
@@ -795,16 +795,16 @@ const [filieres, setFilieres] = useState<any[]>([]);
                   <span className="bg-rose-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                     Scanner IA Actif
                   </span>
-                  <h3 className="font-bold text-base text-foreground dark:text-foreground">
+                  <h3 className="font-bold text-base text-foreground">
                     {totalConflictingEventsCount} Séances en Chevauchement Détectées ({conflictClusters.length} Créneaux Surchargés)
                   </h3>
                 </div>
-                <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">
+                <p className="text-xs text-muted-foreground font-medium">
                   CM : les 2 groupes ensemble. TD : par groupe. Un professeur ou une salle ne peut pas recevoir 2 créneaux qui se chevauchent.
                 </p>
                 <div className="flex flex-wrap items-center gap-1.5 pt-1">
                   {conflictClusters.map((c, idx) => (
-                    <span key={idx} className="px-2.5 py-1 bg-card dark:bg-card border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-300 rounded-lg text-xs font-bold">
+                    <span key={idx} className="px-2.5 py-1 bg-card border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-300 rounded-lg text-xs font-bold">
                       {c.day.toUpperCase()} ({c.time}) : <strong>{c.events.length} cours</strong>
                     </span>
                   ))}
@@ -816,7 +816,7 @@ const [filieres, setFilieres] = useState<any[]>([]);
             <div className="flex flex-wrap items-center gap-2.5 shrink-0">
               <button
                 onClick={() => setShowBatchModal(true)}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-card dark:bg-card border border-amber-300 dark:border-amber-700 hover:bg-amber-100 text-amber-950 dark:text-amber-200 text-xs font-bold transition-all cursor-pointer shadow-xs"
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-card border border-amber-300 dark:border-amber-700 hover:bg-amber-100 text-amber-950 dark:text-amber-200 text-xs font-bold transition-all cursor-pointer shadow-xs"
               >
                 <Send className="w-3.5 h-3.5 text-amber-600" />
                 Déclarer en 1-Clic
@@ -826,7 +826,7 @@ const [filieres, setFilieres] = useState<any[]>([]);
                 onClick={handleCspAutoResolve}
                 disabled={resolvingCsp}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-xs font-bold transition-all active:scale-95 cursor-pointer disabled:opacity-50"
-                style={{ background: 'linear-gradient(135deg, #001A4B, #003087)', boxShadow: '0 4px 15px rgba(0,26,75,0.3)' }}
+                style={{ background: 'linear-gradient(135deg, #1a3673, #003087)', boxShadow: '0 4px 15px rgba(0,26,75,0.3)' }}
               >
                 {resolvingCsp ? <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" /> : <Zap className="w-3.5 h-3.5 text-amber-400" />}
                 Stratégie performance (0 conflit)
@@ -847,9 +847,9 @@ const [filieres, setFilieres] = useState<any[]>([]);
                 <span className="bg-emerald-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
                   CSP Zero-Conflit
                 </span>
-                <h3 className="font-bold text-sm text-foreground dark:text-foreground">Stratégie performance : 0 conflit dur validé</h3>
+                <h3 className="font-bold text-sm text-foreground">Stratégie performance : 0 conflit dur validé</h3>
               </div>
-              <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium mt-0.5">
+              <p className="text-xs text-muted-foreground font-medium mt-0.5">
                 Un professeur, une salle, un groupe par créneau. Les groupes parallèles (G1 / G2) restent autorisés.
               </p>
             </div>
@@ -860,8 +860,8 @@ const [filieres, setFilieres] = useState<any[]>([]);
       {/* ══════════════════════════════════════════════════════
           FILTERS CARD
       ══════════════════════════════════════════════════════ */}
-      <div className="rounded-2xl border border-border dark:border-border bg-card dark:bg-card p-5 space-y-4 shadow-xs">
-        <div className="flex items-center justify-between border-b border-border dark:border-border pb-3">
+      <div className="rounded-2xl border border-border bg-card p-5 space-y-4 shadow-xs">
+        <div className="flex items-center justify-between border-b border-border pb-3">
           <h2 className="text-xs font-bold uppercase tracking-widest text-slate-700 dark:text-foreground flex items-center gap-2">
             <Filter className="w-3.5 h-3.5 text-primary" />
             {!isAdmin ? "Filtres & Vue Enseignant" : "Filtres Globaux de Recherche"}
@@ -893,7 +893,7 @@ const [filieres, setFilieres] = useState<any[]>([]);
           <div>
             <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Professeur</label>
             {!isAdmin ? (
-              <div className="px-4 py-2.5 rounded-2xl bg-muted dark:bg-slate-800/80 border border-border dark:border-border text-xs font-bold text-muted-foreground flex items-center gap-2">
+              <div className="px-4 py-2.5 rounded-2xl bg-muted dark:bg-slate-800/80 border border-border text-xs font-bold text-muted-foreground flex items-center gap-2">
                 <User className="w-3.5 h-3.5 text-primary" />
                 <span className="truncate">{currentProfName} (Compte Enseignant)</span>
               </div>
@@ -912,7 +912,7 @@ const [filieres, setFilieres] = useState<any[]>([]);
               onClick={fetchTimetable}
               disabled={loading}
               className="w-full flex items-center justify-center gap-2 h-10 px-5 text-white font-bold rounded-xl text-xs uppercase tracking-wide transition-all active:scale-95 disabled:opacity-60 cursor-pointer shadow-sm"
-              style={{ background: 'linear-gradient(135deg, #001A4B, #003087)' }}
+              style={{ background: 'linear-gradient(135deg, #1a3673, #003087)' }}
             >
               {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
               Appliquer le filtre
@@ -924,10 +924,10 @@ const [filieres, setFilieres] = useState<any[]>([]);
       {/* ══════════════════════════════════════════════════════
           CALENDAR CONTROLS & HEADER
       ══════════════════════════════════════════════════════ */}
-      <div className="rounded-2xl border border-border dark:border-border bg-card dark:bg-card shadow-xs overflow-hidden">
-        <div className="p-4 md:p-5 border-b border-border dark:border-border flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="rounded-2xl border border-border bg-card shadow-xs overflow-hidden">
+        <div className="p-4 md:p-5 border-b border-border flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="flex items-center bg-muted dark:bg-card rounded-xl p-1 border border-border dark:border-border">
+            <div className="flex items-center bg-muted dark:bg-card rounded-xl p-1 border border-border">
               <button
                 onClick={() => setCurrentDate(addWeeks(currentDate, -1))}
                 className="p-1.5 text-muted-foreground dark:text-foreground hover:text-primary dark:hover:text-indigo-400 transition-colors cursor-pointer rounded-lg hover:bg-card dark:hover:bg-slate-700"
@@ -945,13 +945,13 @@ const [filieres, setFilieres] = useState<any[]>([]);
             </div>
             <button
               onClick={() => setCurrentDate(new Date())}
-              className="px-3.5 py-1.5 bg-muted dark:bg-card hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-foreground text-xs font-bold rounded-xl transition-all cursor-pointer border border-border dark:border-border"
+              className="px-3.5 py-1.5 bg-muted dark:bg-card hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-foreground text-xs font-bold rounded-xl transition-all cursor-pointer border border-border"
             >
               Aujourd'hui
             </button>
           </div>
 
-          <h2 className="text-base md:text-lg font-bold text-foreground dark:text-foreground capitalize">{weekLabel}</h2>
+          <h2 className="text-base md:text-lg font-bold text-foreground capitalize">{weekLabel}</h2>
 
           <div className="flex items-center gap-2">
             <button
@@ -960,13 +960,13 @@ const [filieres, setFilieres] = useState<any[]>([]);
                 "px-3 py-1.5 rounded-xl text-xs font-bold transition-all border cursor-pointer",
                 showSaturday
                   ? "bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-300 border-primary/20 dark:border-primary"
-                  : "bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground border-border dark:border-border hover:bg-slate-200"
+                  : "bg-muted dark:bg-card text-muted-foreground border-border hover:bg-slate-200"
               )}
             >
               {showSaturday ? "📅 Lun–Sam (6J)" : "📅 Lun–Ven (5J)"}
             </button>
 
-            <div className="flex bg-muted dark:bg-card p-1 rounded-xl border border-border dark:border-border">
+            <div className="flex bg-muted dark:bg-card p-1 rounded-xl border border-border">
               {(['Semaine', 'Jour', 'Liste'] as const).map(mode => (
                 <button
                   key={mode}
@@ -993,9 +993,9 @@ const [filieres, setFilieres] = useState<any[]>([]);
       ══════════════════════════════════════════════════════ */}
       {showBatchModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-card dark:bg-card rounded-2xl shadow-sm w-full max-w-xl overflow-hidden border border-border dark:border-border animate-in zoom-in-95 space-y-6">
+          <div className="bg-card rounded-2xl shadow-sm w-full max-w-xl overflow-hidden border border-border animate-in zoom-in-95 space-y-6">
 
-            <div className="p-6 text-white relative" style={{ background: 'linear-gradient(135deg, #001A4B 0%, #003087 50%, #001A4B 100%)' }}>
+            <div className="p-6 text-white relative" style={{ background: 'linear-gradient(135deg, #1a3673 0%, #003087 50%, #1a3673 100%)' }}>
               <button
                 onClick={() => setShowBatchModal(false)}
                 className="absolute top-5 right-5 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-1.5 transition-colors cursor-pointer"
@@ -1018,7 +1018,7 @@ const [filieres, setFilieres] = useState<any[]>([]);
                 </span>
                 <div className="space-y-1.5 max-h-48 overflow-y-auto">
                   {conflictClusters.map((c, i) => (
-                    <div key={i} className="text-xs font-bold text-foreground dark:text-foreground bg-card dark:bg-card p-2.5 rounded-xl border border-amber-200 dark:border-amber-800">
+                    <div key={i} className="text-xs font-bold text-foreground bg-card p-2.5 rounded-xl border border-amber-200 dark:border-amber-800">
                       <strong>{c.day.toUpperCase()} ({c.time}) :</strong> {c.events.length} cours simultanés
                       <div className="text-[11px] text-slate-400 font-normal mt-0.5">
                         {c.events.map(e => e.title).join(' • ')}
@@ -1028,7 +1028,7 @@ const [filieres, setFilieres] = useState<any[]>([]);
                 </div>
               </div>
 
-              <div className="pt-2 flex justify-end gap-2.5 border-t border-border dark:border-border">
+              <div className="pt-2 flex justify-end gap-2.5 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setShowBatchModal(false)}

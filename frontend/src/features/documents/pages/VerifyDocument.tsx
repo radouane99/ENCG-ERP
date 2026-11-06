@@ -52,10 +52,10 @@ function LegacyVerifyDocument() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 flex flex-col items-center justify-center font-sans">
-      <div className="w-full max-w-lg bg-card dark:bg-card rounded-2xl shadow-sm border border-slate-200/80 dark:border-border overflow-hidden">
+      <div className="w-full max-w-lg bg-card rounded-2xl shadow-sm border border-slate-200/80 dark:border-border overflow-hidden">
         
         {/* Luxury Executive Academic Header */}
-        <div className="bg-gradient-to-r from-[#002e5b] via-[#0f2863] to-[#091838] p-6 text-center relative overflow-hidden">
+        <div className="bg-gradient-to-r from-[#002e5b] via-[#1a3673] to-[#091838] p-6 text-center relative overflow-hidden">
           <div className="absolute -right-8 -top-8 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
           <div className="absolute -left-8 -bottom-8 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
           
@@ -78,8 +78,8 @@ function LegacyVerifyDocument() {
         <div className="p-6 sm:p-8">
           {loading ? (
             <div className="py-12 text-center space-y-4">
-              <div className="w-14 h-14 border-4 border-primary/20 border-t-[#0f2863] rounded-full animate-spin mx-auto" />
-              <p className="text-muted-foreground dark:text-muted-foreground text-sm font-semibold animate-pulse">
+              <div className="w-14 h-14 border-4 border-primary/20 border-t-[#1a3673] rounded-full animate-spin mx-auto" />
+              <p className="text-muted-foreground text-sm font-semibold animate-pulse">
                 Interrogation cryptographique du registre sécurisé...
               </p>
             </div>
@@ -93,7 +93,7 @@ function LegacyVerifyDocument() {
                 <h2 className="text-xl font-bold text-foreground dark:text-white">
                   Document Officiel Authentique
                 </h2>
-                <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1 max-w-sm mx-auto">
+                <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
                   Ce document a été signé et scellé numériquement par l'École Nationale de Commerce et de Gestion de Fès.
                 </p>
               </div>
@@ -103,14 +103,14 @@ function LegacyVerifyDocument() {
                 
                 {/* Document Type */}
                 <div className="flex items-start gap-3">
-                  <div className="p-2 bg-primary/10 dark:bg-blue-950/80 text-[#0f2863] dark:text-blue-300 rounded-xl mt-0.5">
+                  <div className="p-2 bg-primary/10 dark:bg-blue-950/80 text-[#1a3673] dark:text-blue-300 rounded-xl mt-0.5">
                     <FileText className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500">
                       Nature du Document
                     </p>
-                    <p className="font-bold text-foreground dark:text-foreground text-sm leading-snug">
+                    <p className="font-bold text-foreground text-sm leading-snug">
                       {cleanUtf8Text(doc.document_type || 'Document Académique')}
                     </p>
                   </div>
@@ -126,7 +126,7 @@ function LegacyVerifyDocument() {
                       <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500">
                         Épreuve & Module
                       </p>
-                      <p className="font-bold text-foreground dark:text-foreground">
+                      <p className="font-bold text-foreground">
                         {cleanUtf8Text(doc.module)}
                       </p>
                     </div>
@@ -142,10 +142,10 @@ function LegacyVerifyDocument() {
                     <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400 dark:text-slate-500">
                       Titulaire / Cohorte
                     </p>
-                    <p className="font-semibold text-foreground dark:text-foreground">
+                    <p className="font-semibold text-foreground">
                       {cleanUtf8Text(doc.student_name || doc.beneficiary || 'Bénéficiaire')}
                     </p>
-                    <p className="text-muted-foreground dark:text-muted-foreground text-xs mt-0.5">
+                    <p className="text-muted-foreground text-xs mt-0.5">
                       {cleanUtf8Text(doc.filiere || 'Tronc Commun')} {doc.semester ? `• Semestre ${doc.semester}` : ''}
                     </p>
                   </div>
@@ -170,7 +170,7 @@ function LegacyVerifyDocument() {
                 )}
 
                 {/* Issued date */}
-                <div className="pt-2.5 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-xs text-muted-foreground dark:text-muted-foreground">
+                <div className="pt-2.5 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-xs text-muted-foreground">
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5" />
                     <span>Délivré le : <strong>{doc.issued_at || '—'}</strong></span>
@@ -202,7 +202,7 @@ function LegacyVerifyDocument() {
                         )}
                       </button>
                     </div>
-                    <p className="font-mono text-[10px] text-muted-foreground dark:text-muted-foreground bg-card dark:bg-card p-2 rounded-lg border border-border dark:border-border break-all select-all">
+                    <p className="font-mono text-[10px] text-muted-foreground bg-card p-2 rounded-lg border border-border break-all select-all">
                       {doc.security_hash}
                     </p>
                   </div>
@@ -223,7 +223,7 @@ function LegacyVerifyDocument() {
                 <h2 className="text-xl font-bold text-foreground dark:text-white">
                   Document Invalide ou Introuvable
                 </h2>
-                <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-2 max-w-sm mx-auto leading-relaxed">
+                <p className="text-xs text-muted-foreground mt-2 max-w-sm mx-auto leading-relaxed">
                   L'identifiant électronique fourni ne correspond à aucun document authentifié dans les registres officiels de l'ENCG Fès. Il se peut qu'il ait été altéré ou falsifié.
                 </p>
               </div>
@@ -232,10 +232,10 @@ function LegacyVerifyDocument() {
         </div>
 
         {/* Action Footer */}
-        <div className="p-4 bg-muted/50 dark:bg-slate-800/40 border-t border-border dark:border-border text-center">
+        <div className="p-4 bg-muted/50 dark:bg-slate-800/40 border-t border-border text-center">
           <Link 
             to="/login" 
-            className="inline-flex items-center gap-2 text-xs text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-white font-semibold transition-colors"
+            className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground dark:hover:text-white font-semibold transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Retour au Portail ENCG Fès
           </Link>

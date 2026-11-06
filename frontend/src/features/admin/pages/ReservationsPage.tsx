@@ -66,13 +66,13 @@ export default function ReservationsPage() {
         <head>
           <title>Attestation de Réservation - ${safeRoomName}</title>
           <style>
-            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #0f2863; max-width: 800px; margin: 0 auto; }
-            .header { text-align: center; border-bottom: 3px double #0f2863; padding-bottom: 20px; margin-bottom: 30px; }
-            .title { font-size: 20px; font-weight: 900; color: #0f2863; text-transform: uppercase; margin-top: 10px; }
+            body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #1a3673; max-width: 800px; margin: 0 auto; }
+            .header { text-align: center; border-bottom: 3px double #1a3673; padding-bottom: 20px; margin-bottom: 30px; }
+            .title { font-size: 20px; font-weight: 900; color: #1a3673; text-transform: uppercase; margin-top: 10px; }
             .box { background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 20px; padding: 25px; margin: 20px 0; }
             .row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px; }
             .lbl { font-weight: bold; color: #64748b; }
-            .val { font-weight: 900; color: #0f2863; }
+            .val { font-weight: 900; color: #1a3673; }
             .footer { margin-top: 50px; display: flex; justify-content: space-between; font-size: 12px; font-weight: bold; }
           </style>
         </head>
@@ -177,8 +177,8 @@ export default function ReservationsPage() {
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border dark:border-border pb-4">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
           <div className="flex items-center gap-3">
             <h3 className="text-base font-bold text-foreground dark:text-white">Demandes & Affectations Actives</h3>
             <span className="px-3 py-1 bg-emerald-50 text-emerald-600 border border-emerald-300 text-[10px] font-bold uppercase rounded-full">
@@ -193,7 +193,7 @@ export default function ReservationsPage() {
                 onClick={() => setStatusFilter(st)}
                 className={cn(
                   "px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer",
-                  statusFilter === st ? "bg-[#0f2863] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground hover:bg-slate-200"
+                  statusFilter === st ? "bg-[#1a3673] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground hover:bg-slate-200"
                 )}
               >
                 {st === 'all' ? 'Toutes' : st === 'approved' ? 'Approuvées' : st === 'pending' ? 'En Attente' : 'Rejetées'}
@@ -202,9 +202,9 @@ export default function ReservationsPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto min-h-[300px] border border-border dark:border-border rounded-2xl">
+        <div className="overflow-x-auto min-h-[300px] border border-border rounded-2xl">
           <table className="w-full text-sm text-left">
-            <thead className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-muted/50 dark:bg-slate-800/80 border-b border-border dark:border-border">
+            <thead className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-muted/50 dark:bg-slate-800/80 border-b border-border">
               <tr>
                 <th className="px-6 py-4">SALLE RÉSERVÉE</th>
                 <th className="px-6 py-4">DEMANDEUR</th>
@@ -236,7 +236,7 @@ export default function ReservationsPage() {
                   <tr key={res.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0f2863] to-blue-600 flex items-center justify-center text-amber-300 font-bold text-xs shrink-0 shadow-md">
+                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#1a3673] to-blue-600 flex items-center justify-center text-amber-300 font-bold text-xs shrink-0 shadow-md">
                           <Building2 className="w-5 h-5 text-amber-300" />
                         </div>
                         <div>
@@ -251,12 +251,12 @@ export default function ReservationsPage() {
                         <div className="w-8 h-8 rounded-full bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-400 flex items-center justify-center text-xs font-bold shrink-0">
                           {bookerName.charAt(0).toUpperCase()}
                         </div>
-                        <span className="font-bold text-foreground dark:text-foreground text-xs">{bookerName}</span>
+                        <span className="font-bold text-foreground text-xs">{bookerName}</span>
                       </div>
                     </td>
 
                     <td className="px-6 py-4">
-                      <div className="font-bold text-foreground dark:text-foreground text-xs capitalize">
+                      <div className="font-bold text-foreground text-xs capitalize">
                         {format(startDate, 'EEEE d MMM yyyy', { locale: fr })}
                       </div>
                       <div className="text-[10px] text-slate-400 font-bold flex items-center gap-1 mt-0.5">
@@ -334,8 +334,8 @@ export default function ReservationsPage() {
       {/* Modal Pass QR Clés */}
       {selectedPassModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-md shadow-sm overflow-hidden text-center">
-            <div className="p-6 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white flex items-center justify-between">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-md shadow-sm overflow-hidden text-center">
+            <div className="p-6 bg-gradient-to-r from-[#1a3673] to-blue-900 text-white flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200">Pass Numérique Securisé</span>
                 <h2 className="text-base font-bold">Remise des Clés de la Salle</h2>
@@ -363,7 +363,7 @@ export default function ReservationsPage() {
               <p className="text-[11px] text-muted-foreground font-medium">À présenter à l'agent de sécurité au poste central d'accueil pour récupérer le trousseau de clés du local.</p>
             </div>
 
-            <div className="p-4 border-t border-border dark:border-border bg-muted/50 dark:bg-card flex justify-end">
+            <div className="p-4 border-t border-border bg-muted/50 dark:bg-card flex justify-end">
               <button 
                 onClick={() => setSelectedPassModal(null)}
                 className="px-6 py-2.5 bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition-colors cursor-pointer"

@@ -187,7 +187,7 @@ function FollowupForm({ row, agents }: { row: FollowupRequest; agents: Agent[] }
         <button
           disabled={save.isPending || reason.trim().length < 10}
           className="inline-flex items-center gap-2 h-9 px-4 rounded-xl text-xs font-black text-white shadow-md shadow-blue-950/20 transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
-          style={{ background: 'linear-gradient(135deg, #0f2863 0%, #2563eb 100%)' }}
+          style={{ background: 'linear-gradient(135deg, #1a3673 0%, #2563eb 100%)' }}
         >
           {save.isPending ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
           <span>{save.isPending ? 'Enregistrement…' : 'Enregistrer le suivi'}</span>
@@ -262,7 +262,7 @@ export default function OperationalWorkspace() {
       {/* ── Top Header ─────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0f2863] to-blue-700 text-white shadow-md shadow-blue-950/20">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1a3673] to-blue-700 text-white shadow-md shadow-blue-950/20">
             <UserCheck className="w-5 h-5 text-amber-300" />
           </div>
           <div>

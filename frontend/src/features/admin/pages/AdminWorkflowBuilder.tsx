@@ -161,7 +161,7 @@ export default function AdminWorkflowBuilder() {
       
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-6 right-6 z-50 bg-[#0f2863] text-white px-5 py-3 rounded-2xl shadow-sm border border-blue-400/30 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+        <div className="fixed top-6 right-6 z-50 bg-[#1a3673] text-white px-5 py-3 rounded-2xl shadow-sm border border-blue-400/30 flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
           <Check className="w-5 h-5 text-emerald-400" />
           <span className="text-sm font-bold">{toastMessage}</span>
         </div>
@@ -170,12 +170,12 @@ export default function AdminWorkflowBuilder() {
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shrink-0 bg-card p-6 rounded-2xl border border-border shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 bg-[#0f2863]/10 text-[#0f2863] rounded-2xl flex items-center justify-center border border-[#0f2863]/20 shadow-sm">
+          <div className="w-14 h-14 bg-[#1a3673]/10 text-[#1a3673] rounded-2xl flex items-center justify-center border border-[#1a3673]/20 shadow-sm">
             <Network className="w-7 h-7" />
           </div>
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-[#0f2863] erp-page-title">{workflowName}</h1>
+              <h1 className="text-[#1a3673] erp-page-title">{workflowName}</h1>
               <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest border border-emerald-200">
                 ACTIF
               </span>
@@ -203,7 +203,7 @@ export default function AdminWorkflowBuilder() {
           
           <button 
             onClick={() => showToast('✓ Workflow sauvegardé et déployé avec succès!')}
-            className="flex items-center gap-2 bg-[#0f2863] text-white px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-widest hover:bg-[#091b44] transition-colors shadow-md"
+            className="flex items-center gap-2 bg-[#1a3673] text-white px-6 py-2.5 rounded-xl text-sm font-bold uppercase tracking-widest hover:bg-[#091b44] transition-colors shadow-md"
           >
             <Save className="w-4 h-4" /> ENREGISTRER
           </button>
@@ -444,7 +444,7 @@ export default function AdminWorkflowBuilder() {
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-card rounded-2xl p-6 md:p-8 max-w-lg w-full shadow-sm border border-border space-y-6 animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-border pb-4">
-              <h3 className="text-xl font-bold text-[#0f2863] flex items-center gap-2">
+              <h3 className="text-xl font-bold text-[#1a3673] flex items-center gap-2">
                 <Settings className="w-5 h-5 text-primary" /> Paramètres du Workflow
               </h3>
               <button onClick={() => setShowSettingsModal(false)} className="text-slate-400 hover:text-muted-foreground p-1 rounded-lg">
@@ -472,7 +472,7 @@ export default function AdminWorkflowBuilder() {
                   type="checkbox"
                   checked={autoExecute}
                   onChange={(e) => setAutoExecute(e.target.checked)}
-                  className="w-5 h-5 accent-[#0f2863] rounded cursor-pointer"
+                  className="w-5 h-5 accent-[#1a3673] rounded cursor-pointer"
                 />
               </div>
 
@@ -502,7 +502,7 @@ export default function AdminWorkflowBuilder() {
                   setShowSettingsModal(false);
                   showToast('Paramètres mis à jour avec succès');
                 }}
-                className="px-6 py-2.5 rounded-xl bg-[#0f2863] text-white font-bold text-sm hover:bg-[#091b44] transition-colors shadow-md"
+                className="px-6 py-2.5 rounded-xl bg-[#1a3673] text-white font-bold text-sm hover:bg-[#091b44] transition-colors shadow-md"
               >
                 Sauvegarder
               </button>

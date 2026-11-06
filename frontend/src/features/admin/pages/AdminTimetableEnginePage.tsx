@@ -336,7 +336,7 @@ export default function AdminTimetableEnginePage() {
       {/* ══════════════════════════════════════════════════════
           HERO HEADER
       ══════════════════════════════════════════════════════ */}
-      <div className="relative overflow-hidden rounded-2xl" style={{ background: 'linear-gradient(135deg, #001A4B 0%, #003087 50%, #001A4B 100%)' }}>
+      <div className="relative overflow-hidden rounded-2xl" style={{ background: 'linear-gradient(135deg, #1a3673 0%, #003087 50%, #1a3673 100%)' }}>
         <div className="absolute top-0 right-0 w-72 h-72 opacity-10 pointer-events-none" style={{ background: 'radial-gradient(circle, #6366f1 0%, transparent 70%)' }} />
         <div className="absolute bottom-0 left-1/3 w-48 h-48 opacity-8 pointer-events-none" style={{ background: 'radial-gradient(circle, #06b6d4 0%, transparent 70%)' }} />
 
@@ -388,7 +388,7 @@ export default function AdminTimetableEnginePage() {
       {/* Teaching Weeks Configuration Card */}
       <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/80 p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#0f2863] to-blue-700 text-white shadow-xs shrink-0">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#1a3673] to-blue-700 text-white shadow-xs shrink-0">
             <CalendarDays className="h-5 w-5 text-amber-300" />
           </div>
           <div>
@@ -412,7 +412,7 @@ export default function AdminTimetableEnginePage() {
                 className={cn(
                   "px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer",
                   teachingWeeks === w
-                    ? "bg-[#0f2863] text-white shadow-xs"
+                    ? "bg-[#1a3673] text-white shadow-xs"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300"
                 )}
               >
@@ -458,7 +458,7 @@ export default function AdminTimetableEnginePage() {
                 className={cn(
                   'relative flex flex-col items-center px-3 py-3 rounded-xl transition-all',
                   isActive
-                    ? 'bg-gradient-to-br from-[#0f2863] via-blue-900 to-indigo-900 text-white shadow-lg shadow-blue-950/20 ring-1 ring-white/20'
+                    ? 'bg-gradient-to-br from-[#1a3673] via-blue-900 to-indigo-900 text-white shadow-lg shadow-blue-950/20 ring-1 ring-white/20'
                     : isDone
                       ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40 text-slate-700 dark:text-slate-300'
                       : 'bg-slate-50/60 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 text-slate-400'
@@ -507,7 +507,7 @@ export default function AdminTimetableEnginePage() {
             className={cn(
               'flex items-center gap-2 flex-1 md:flex-none h-9 px-4 rounded-xl text-xs font-black transition-all cursor-pointer',
               workMode === tab.id
-                ? 'bg-gradient-to-r from-[#0f2863] to-blue-700 text-white shadow-md shadow-blue-950/20'
+                ? 'bg-gradient-to-r from-[#1a3673] to-blue-700 text-white shadow-md shadow-blue-950/20'
                 : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-700/50'
             )}
           >
@@ -571,7 +571,7 @@ export default function AdminTimetableEnginePage() {
         {/* Status pill filters */}
         <div className="flex flex-wrap gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
           {[
-            { key: 'ALL', label: `Toutes`, count: counts.total, color: 'bg-[#0f2863] text-white border-[#0f2863] shadow-xs', inactive: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200' },
+            { key: 'ALL', label: `Toutes`, count: counts.total, color: 'bg-[#1a3673] text-white border-[#1a3673] shadow-xs', inactive: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-200' },
             { key: 'EMPTY', label: 'À générer', count: counts.empty, color: 'bg-slate-700 text-white border-slate-700 shadow-xs', inactive: 'bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100' },
             { key: 'DRAFT', label: 'Brouillon', count: counts.draft, color: 'bg-amber-600 text-white border-amber-600 shadow-xs', inactive: 'bg-amber-50/70 dark:bg-amber-950/30 text-amber-800 dark:text-amber-400 border-amber-200/80 dark:border-amber-800 hover:bg-amber-100' },
             { key: 'PROPOSED', label: 'À publier', count: counts.proposed, color: 'bg-indigo-600 text-white border-indigo-600 shadow-xs', inactive: 'bg-indigo-50/70 dark:bg-indigo-950/30 text-indigo-800 dark:text-indigo-400 border-indigo-200/80 dark:border-indigo-800 hover:bg-indigo-100' },
@@ -602,7 +602,7 @@ export default function AdminTimetableEnginePage() {
         <section className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#0f2863] text-white text-xs font-black shadow-xs">
+              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-[#1a3673] text-white text-xs font-black shadow-xs">
                 {filteredCards.length}
               </span>
               <p className="text-xs text-slate-600 dark:text-slate-400 font-bold">
@@ -615,7 +615,7 @@ export default function AdminTimetableEnginePage() {
                 onClick={() => generateEmpty()}
                 disabled={!workspace?.campaign_open || draftMutation.isPending}
                 className="flex items-center gap-2 h-9 px-4 rounded-xl text-xs font-black text-white transition-all active:scale-95 disabled:opacity-40 cursor-pointer shadow-md shadow-indigo-950/20"
-                style={{ background: 'linear-gradient(135deg, #0f2863 0%, #4f46e5 100%)' }}
+                style={{ background: 'linear-gradient(135deg, #1a3673 0%, #4f46e5 100%)' }}
               >
                 {draftMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-300" /> : <Sparkles className="w-3.5 h-3.5 text-amber-300" />}
                 <span>Générer les filières vides</span>
@@ -662,7 +662,7 @@ export default function AdminTimetableEnginePage() {
                         : card.filiere_code?.toUpperCase().includes('MCM') ? 'from-purple-600 to-pink-700'
                         : card.filiere_code?.toUpperCase().includes('TC') ? 'from-emerald-600 to-teal-700'
                         : card.filiere_code?.toUpperCase().includes('GRH') ? 'from-amber-500 to-orange-600'
-                        : 'from-[#0f2863] to-blue-700'
+                        : 'from-[#1a3673] to-blue-700'
 
                       const total = card.confirmations?.total || 0
                       const sessions = card.confirmations?.sessions || 0
@@ -720,7 +720,7 @@ export default function AdminTimetableEnginePage() {
                                   onClick={() => draftMutation.mutate(card.filiere_id)}
                                   disabled={!workspace?.campaign_open || busy}
                                   className="flex items-center gap-1.5 h-8 px-3.5 rounded-xl text-xs font-black text-white transition-all active:scale-95 disabled:opacity-40 cursor-pointer shadow-xs hover:scale-102"
-                                  style={{ background: 'linear-gradient(135deg, #0f2863 0%, #4f46e5 100%)' }}
+                                  style={{ background: 'linear-gradient(135deg, #1a3673 0%, #4f46e5 100%)' }}
                                 >
                                   {busy ? <Loader2 className="w-3 h-3 animate-spin text-amber-300" /> : <Sparkles className="w-3 h-3 text-amber-300" />}
                                   <span>{card.status === 'EMPTY' ? 'Générer' : 'Régénérer'}</span>
@@ -758,7 +758,7 @@ export default function AdminTimetableEnginePage() {
                               <button
                                 type="button"
                                 onClick={() => { setSelectedFiliere(String(card.filiere_id)); setWorkMode('official') }}
-                                className="flex items-center gap-1 h-8 px-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-[#0f2863] dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                                className="flex items-center gap-1 h-8 px-2.5 rounded-xl text-xs font-bold text-slate-500 hover:text-[#1a3673] dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
                               >
                                 <span>Voir</span>
                                 <ChevronRight size={13} />
@@ -785,7 +785,7 @@ export default function AdminTimetableEnginePage() {
           </button>
 
           {showAdvanced && (
-            <div className="rounded-2xl border border-indigo-200/60 dark:border-indigo-800/60 bg-card dark:bg-card p-5 grid grid-cols-1 md:grid-cols-2 gap-6"
+            <div className="rounded-2xl border border-indigo-200/60 dark:border-indigo-800/60 bg-card p-5 grid grid-cols-1 md:grid-cols-2 gap-6"
               style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.02), rgba(139,92,246,0.02))' }}>
               <div className="space-y-2">
                 <div className="flex justify-between items-center text-xs font-bold">
@@ -810,10 +810,10 @@ export default function AdminTimetableEnginePage() {
           OFFICIAL TIMETABLE VIEW
       ══════════════════════════════════════════════════════ */}
       {workMode === 'official' && (
-        <section className="rounded-2xl border border-border dark:border-border bg-card dark:bg-card p-5 space-y-4">
+        <section className="rounded-2xl border border-border bg-card p-5 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-base font-bold text-foreground dark:text-foreground flex items-center gap-2">
+              <h2 className="text-base font-bold text-foreground flex items-center gap-2">
                 <FileText className="w-4 h-4 text-primary" />
                 Grille Officielle PDF · ENCG
               </h2>
@@ -822,7 +822,7 @@ export default function AdminTimetableEnginePage() {
             <button
               onClick={handleExportPdf}
               className="flex items-center gap-2 h-9 px-4 rounded-xl text-xs font-bold text-white transition-all active:scale-95 cursor-pointer"
-              style={{ background: 'linear-gradient(135deg, #001A4B, #003087)' }}
+              style={{ background: 'linear-gradient(135deg, #1a3673, #003087)' }}
             >
               <FileText className="w-3.5 h-3.5" /> Télécharger le PDF
             </button>
@@ -851,7 +851,7 @@ export default function AdminTimetableEnginePage() {
               { label: 'Score énergie', value: simResult ? `${simResult.energy_efficiency_score}%` : '—', sub: 'Clustering bâtiments', color: '#06b6d4', accent: 'rgba(6,182,212,0.08)' },
               { label: 'Temps calcul', value: simResult ? `${simResult.execution_time_ms} ms` : '—', sub: 'Heuristiques IA', color: '#f59e0b', accent: 'rgba(245,158,11,0.08)' },
             ].map(({ label, value, sub, color }) => (
-              <div key={label} className="relative overflow-hidden rounded-2xl p-4 border border-border dark:border-border bg-card dark:bg-card">
+              <div key={label} className="relative overflow-hidden rounded-2xl p-4 border border-border bg-card">
                 <div className="absolute top-0 left-0 right-0 h-0.5 rounded-t-2xl" style={{ background: `linear-gradient(90deg, ${color}80, ${color}00)` }} />
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
                 <p className="text-2xl font-bold mt-1" style={{ color }}>{value}</p>
@@ -861,15 +861,15 @@ export default function AdminTimetableEnginePage() {
           </div>
 
           {suggestedSlots.length > 0 && (
-            <div data-testid="suggested-slots" className="rounded-2xl border border-border dark:border-border bg-card dark:bg-card p-5 space-y-3">
-              <h2 className="text-sm font-bold text-foreground dark:text-foreground">Créneaux suggérés</h2>
+            <div data-testid="suggested-slots" className="rounded-2xl border border-border bg-card p-5 space-y-3">
+              <h2 className="text-sm font-bold text-foreground">Créneaux suggérés</h2>
               {suggestedSlots.map((slot, i) => (
-                <p key={i} className="text-sm text-muted-foreground dark:text-muted-foreground">Jour {slot.day} · {slot.start_time}–{slot.end_time} · {slot.room_name}</p>
+                <p key={i} className="text-sm text-muted-foreground">Jour {slot.day} · {slot.start_time}–{slot.end_time} · {slot.room_name}</p>
               ))}
             </div>
           )}
 
-          <div className="rounded-2xl border border-border dark:border-border bg-card dark:bg-card p-5 space-y-4">
+          <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
             <div className="flex gap-1 p-1 bg-muted dark:bg-card rounded-xl w-fit">
               {(['grid', 'energy', 'audit'] as const).map((tab) => (
                 <button
@@ -917,12 +917,12 @@ export default function AdminTimetableEnginePage() {
                         : session.filiere_code?.toUpperCase().includes('GRH') ? '#d97706'
                         : '#2563eb'
                       return (
-                        <div key={session.id} className="rounded-xl p-4 border-l-4 bg-card dark:bg-card border border-border dark:border-border space-y-2 hover:shadow-sm transition-all" style={{ borderLeftColor: color }}>
+                        <div key={session.id} className="rounded-xl p-4 border-l-4 bg-card border border-border space-y-2 hover:shadow-sm transition-all" style={{ borderLeftColor: color }}>
                           <div className="flex justify-between text-[10px] font-bold uppercase tracking-wide" style={{ color }}>
                             <span>{session.day_name} {session.start_time?.substring(0, 5)}–{session.end_time?.substring(0, 5)}</span>
                             <span className="px-1.5 py-0.5 rounded bg-muted dark:bg-card text-muted-foreground">{session.session_type?.toUpperCase()}</span>
                           </div>
-                          <p className="font-bold text-sm text-foreground dark:text-foreground line-clamp-2">{session.module_name}</p>
+                          <p className="font-bold text-sm text-foreground line-clamp-2">{session.module_name}</p>
                           <p className="text-[11px] text-slate-400 font-medium">{session.group_name} · {session.room_name} · {session.professor_name}</p>
                         </div>
                       )
@@ -937,7 +937,7 @@ export default function AdminTimetableEnginePage() {
                 {simResult?.building_clustering && Object.entries(simResult.building_clustering).map(([building, count]) => (
                   <div key={building} className="p-4 rounded-xl border border-teal-200 dark:border-teal-800" style={{ background: 'rgba(20,184,166,0.05)' }}>
                     <Building2 className="w-5 h-5 text-teal-600 dark:text-teal-400 mb-2" />
-                    <p className="text-sm font-bold text-foreground dark:text-foreground">{building}</p>
+                    <p className="text-sm font-bold text-foreground">{building}</p>
                     <p className="text-2xl font-bold text-teal-600 dark:text-teal-400">{Number(count)}</p>
                     <p className="text-[10px] text-slate-400 font-medium">séances groupées</p>
                   </div>

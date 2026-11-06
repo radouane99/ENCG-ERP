@@ -286,23 +286,23 @@ export default function StudentAbsencesPage() {
   if (isLoading) {
     return (
       <div className="flex flex-col h-[60vh] items-center justify-center gap-3">
-        <div className="w-10 h-10 border-4 border-[#001A4B]/20 border-t-[#001A4B] rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-[#1a3673]/20 border-t-[#1a3673] rounded-full animate-spin" />
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Chargement de votre relevé d'assiduité...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8 font-sans animate-in fade-in duration-500 text-foreground dark:text-foreground max-w-7xl mx-auto pb-12">
+    <div className="space-y-6 sm:space-y-8 font-sans animate-in fade-in duration-500 text-foreground max-w-7xl mx-auto pb-12">
       {/* ── Page Header ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-[#001A4B] dark:text-white flex items-center gap-2.5 erp-page-title">
+            <h1 className="text-[#1a3673] dark:text-white flex items-center gap-2.5 erp-page-title">
               <Calendar className="w-7 h-7 text-primary" /> Suivi d'Assiduité & Justificatifs
             </h1>
           </div>
-          <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground mt-1">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             Régime Pédagogique ENCG Fès • Présence obligatoire en CM & TD • Seuil d'exclusion fixé à 3 absences non justifiées
           </p>
         </div>
@@ -310,15 +310,15 @@ export default function StudentAbsencesPage() {
         {/* Regulations button */}
         <button
           onClick={() => setRegulationsModalOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border border-border dark:border-border bg-card dark:bg-card shadow-xs hover:bg-muted/50 dark:hover:bg-slate-800/60 text-xs font-bold text-slate-700 dark:text-foreground transition-all cursor-pointer self-start md:self-auto"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border border-border bg-card shadow-xs hover:bg-muted/50 dark:hover:bg-slate-800/60 text-xs font-bold text-slate-700 dark:text-foreground transition-all cursor-pointer self-start md:self-auto"
         >
           <Info className="w-4 h-4 text-primary" />
           <span>Règlement d'Assiduité (48h)</span>
         </button>
       </div>
 
-      {/* ── Executive Hero Banner (Royal Navy #001A4B) ── */}
-      <div className="bg-gradient-to-br from-[#001A4B] via-[#082663] to-[#04122d] rounded-2xl p-6 sm:p-9 text-white shadow-sm border border-white/10 relative overflow-hidden flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+      {/* ── Executive Hero Banner (Royal Navy #1a3673) ── */}
+      <div className="bg-gradient-to-br from-[#1a3673] via-[#082663] to-[#04122d] rounded-2xl p-6 sm:p-9 text-white shadow-sm border border-white/10 relative overflow-hidden flex flex-col lg:flex-row lg:items-center justify-between gap-8">
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/15 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16" />
         <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -361,9 +361,9 @@ export default function StudentAbsencesPage() {
                   toast.info('Toutes vos absences sont déjà justifiées ou vous n\'avez aucune absence à justifier.');
                 }
               }}
-              className="bg-amber-400 hover:bg-amber-300 text-[#001A4B] px-4 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center gap-2 transition-all cursor-pointer active:scale-95"
+              className="bg-amber-400 hover:bg-amber-300 text-[#1a3673] px-4 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center gap-2 transition-all cursor-pointer active:scale-95"
             >
-              <UploadCloud className="w-4 h-4 text-[#001A4B]" /> Déposer un Justificatif
+              <UploadCloud className="w-4 h-4 text-[#1a3673]" /> Déposer un Justificatif
             </button>
             <button
               onClick={() => setRegulationsModalOpen(true)}
@@ -424,7 +424,7 @@ export default function StudentAbsencesPage() {
       {/* ── 4 Executive KPI Metric Cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Taux d'Assiduité */}
-        <div className="bg-card dark:bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
+        <div className="bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Taux d'Assiduité</span>
             <div className="w-8 h-8 rounded-xl bg-primary/5 dark:bg-blue-950/50 text-primary flex items-center justify-center">
@@ -432,12 +432,12 @@ export default function StudentAbsencesPage() {
             </div>
           </div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl sm:text-3xl font-bold text-[#001A4B] dark:text-white">
+            <span className="text-2xl sm:text-3xl font-bold text-[#1a3673] dark:text-white">
               {stats.attendanceRate}%
             </span>
             <span className="text-xs font-bold text-slate-400">global</span>
           </div>
-          <div className="space-y-1 pt-1 border-t border-border dark:border-border">
+          <div className="space-y-1 pt-1 border-t border-border">
             <div className="w-full bg-muted dark:bg-card rounded-full h-1.5 overflow-hidden">
               <div 
                 className={cn(
@@ -455,7 +455,7 @@ export default function StudentAbsencesPage() {
         </div>
 
         {/* Card 2: Total Séances Enregistrées */}
-        <div className="bg-card dark:bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
+        <div className="bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Total Séances</span>
             <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 flex items-center justify-center">
@@ -468,7 +468,7 @@ export default function StudentAbsencesPage() {
             </span>
             <span className="text-xs font-bold text-slate-400">séances pointées</span>
           </div>
-          <div className="flex items-center justify-between text-xs pt-1 border-t border-border dark:border-border">
+          <div className="flex items-center justify-between text-xs pt-1 border-t border-border">
             <span className="text-muted-foreground font-bold">Retards constatés :</span>
             <span className={cn("font-bold px-2 py-0.5 rounded-full text-[10px]", stats.lateCount > 0 ? "bg-amber-100 text-amber-800" : "bg-muted text-muted-foreground")}>
               {stats.lateCount} retard(s)
@@ -477,7 +477,7 @@ export default function StudentAbsencesPage() {
         </div>
 
         {/* Card 3: Absences & Justificatifs */}
-        <div className="bg-card dark:bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
+        <div className="bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Statut Justifications</span>
             <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 flex items-center justify-center">
@@ -490,7 +490,7 @@ export default function StudentAbsencesPage() {
             </span>
             <span className="text-xs font-bold text-slate-400">absence(s) au total</span>
           </div>
-          <div className="flex items-center justify-between text-xs pt-1 border-t border-border dark:border-border">
+          <div className="flex items-center justify-between text-xs pt-1 border-t border-border">
             <span className="font-bold text-emerald-600">{stats.justifiedCount} Justifiée(s)</span>
             <span className="text-slate-300">•</span>
             <span className="font-bold text-amber-600">{stats.pendingCount} En attente</span>
@@ -500,7 +500,7 @@ export default function StudentAbsencesPage() {
         </div>
 
         {/* Card 4: Alerte Pédagogique (Règle des 3 absences) */}
-        <div className="bg-card dark:bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
+        <div className="bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Règle des 3 Absences</span>
             <div className={cn(
@@ -535,24 +535,24 @@ export default function StudentAbsencesPage() {
                   ? "Alerte : 2/3 Absences"
                   : "Situation Conforme"}
             </span>
-            <p className="text-[11px] text-muted-foreground dark:text-muted-foreground mt-1 line-clamp-1">
+            <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">
               {stats.highestRiskModule
                 ? `Max : ${stats.highestRiskModule.count}/3 dans ${stats.highestRiskModule.name}`
                 : "Aucun risque d'exclusion identifié"}
             </p>
           </div>
-          <div className="pt-1 border-t border-border dark:border-border text-[10px] font-bold text-slate-400">
+          <div className="pt-1 border-t border-border text-[10px] font-bold text-slate-400">
             Article 24 Règlement Pédagogique
           </div>
         </div>
       </div>
 
       {/* ── Main Absences & Sessions Container ── */}
-      <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 shadow-xs border border-slate-200/80 dark:border-border space-y-6">
+      <div className="bg-card rounded-2xl p-6 sm:p-8 shadow-xs border border-slate-200/80 dark:border-border space-y-6">
         {/* Controls: Title + Search & Filter */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-border dark:border-border">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-border">
           <div>
-            <h2 className="text-lg font-bold text-[#001A4B] dark:text-white flex items-center gap-2.5">
+            <h2 className="text-lg font-bold text-[#1a3673] dark:text-white flex items-center gap-2.5">
               <Calendar className="w-5 h-5 text-primary" /> Historique Détaillé des Séances & Feuilles de Présence
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -570,7 +570,7 @@ export default function StudentAbsencesPage() {
                 placeholder="Rechercher un module..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-xs font-bold border border-border dark:border-border bg-muted/50 dark:bg-card text-foreground dark:text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#001A4B] rounded-[var(--control-radius)]"
+                className="w-full pl-9 pr-3 py-2 text-xs font-bold border border-border bg-muted/50 dark:bg-card text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#1a3673] rounded-[var(--control-radius)]"
               />
               {searchQuery && (
                 <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-muted-foreground">
@@ -584,7 +584,7 @@ export default function StudentAbsencesPage() {
               <select
                 value={selectedModuleFilter}
                 onChange={(e) => setSelectedModuleFilter(e.target.value)}
-                className="px-3 py-2 text-xs font-bold border border-border dark:border-border bg-muted/50 dark:bg-card text-slate-700 dark:text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#001A4B] rounded-[var(--control-radius)]"
+                className="px-3 py-2 text-xs font-bold border border-border bg-muted/50 dark:bg-card text-slate-700 dark:text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#1a3673] rounded-[var(--control-radius)]"
               >
                 <option value="all">Tous les modules ({modulesList.length})</option>
                 {modulesList.map((m) => (
@@ -599,7 +599,7 @@ export default function StudentAbsencesPage() {
             <select
               value={justificationFilter}
               onChange={(e: any) => setJustificationFilter(e.target.value)}
-              className="px-3 py-2 text-xs font-bold border border-border dark:border-border bg-muted/50 dark:bg-card text-slate-700 dark:text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#001A4B] rounded-[var(--control-radius)]"
+              className="px-3 py-2 text-xs font-bold border border-border bg-muted/50 dark:bg-card text-slate-700 dark:text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#1a3673] rounded-[var(--control-radius)]"
             >
               <option value="all">Tous les justificatifs</option>
               <option value="unjustified">Non justifiées (action requise)</option>
@@ -617,8 +617,8 @@ export default function StudentAbsencesPage() {
             className={cn(
               "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
               statusFilter === 'all'
-                ? "bg-[#001A4B] text-white shadow-sm"
-                : "bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground hover:bg-slate-200"
+                ? "bg-[#1a3673] text-white shadow-sm"
+                : "bg-muted dark:bg-card text-muted-foreground hover:bg-slate-200"
             )}
           >
             Toutes les séances ({absencesList.length})
@@ -662,7 +662,7 @@ export default function StudentAbsencesPage() {
         <div className="overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-border">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="bg-slate-50/80 dark:bg-slate-800/50 text-[11px] font-bold uppercase text-muted-foreground dark:text-muted-foreground tracking-wider border-b border-slate-200/80 dark:border-border">
+              <tr className="bg-slate-50/80 dark:bg-slate-800/50 text-[11px] font-bold uppercase text-muted-foreground tracking-wider border-b border-slate-200/80 dark:border-border">
                 <th className="py-3.5 pl-4 pr-3">Séance & Module</th>
                 <th className="py-3.5 px-3">Date & Horaire</th>
                 <th className="py-3.5 px-3 text-center">Statut de Présence</th>
@@ -728,7 +728,7 @@ export default function StudentAbsencesPage() {
 
                       {/* Date & Time */}
                       <td className="py-3.5 px-3">
-                        <div className="font-bold text-foreground dark:text-foreground">
+                        <div className="font-bold text-foreground">
                           {dateFormatted}
                         </div>
                         {timeSchedule && (
@@ -850,8 +850,8 @@ export default function StudentAbsencesPage() {
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-            <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-sm border border-border dark:border-border space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b border-border dark:border-border">
+            <div className="bg-card rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-sm border border-border space-y-5">
+              <div className="flex items-center justify-between pb-3 border-b border-border">
                 <div className="flex items-center gap-2 text-primary">
                   <UploadCloud className="w-5 h-5" />
                   <h3 className="text-base font-bold text-foreground dark:text-white">Déposer un Justificatif d'Absence</h3>
@@ -891,7 +891,7 @@ export default function StudentAbsencesPage() {
                   <select
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold text-foreground dark:text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#001A4B] rounded-[var(--control-radius)]"
+                    className="w-full px-3 py-2.5 border border-border bg-muted/50 dark:bg-card text-xs font-bold text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#1a3673] rounded-[var(--control-radius)]"
                   >
                     <option value="medical">Certificat Médical / Raison de Santé</option>
                     <option value="family">Événement Familial Majeur (Cas de force majeure)</option>
@@ -908,14 +908,14 @@ export default function StudentAbsencesPage() {
                     onChange={(e) => setDescription(e.target.value)}
                     rows={2}
                     placeholder="Précisez la date de consultation, le nom du praticien ou les circonstances..."
-                    className="w-full px-3 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs text-foreground dark:text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#001A4B] rounded-[var(--control-radius)]"
+                    className="w-full px-3 py-2.5 border border-border bg-muted/50 dark:bg-card text-xs text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#1a3673] rounded-[var(--control-radius)]"
                   />
                 </div>
 
                 {/* File Upload Zone */}
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-700 dark:text-foreground">Pièce Justificative (PDF, JPG, PNG - Max 5Mo)</label>
-                  <div className="relative border-2 border-dashed border-border dark:border-border rounded-2xl p-4 text-center hover:bg-muted/50 dark:hover:bg-slate-800/50 transition-colors">
+                  <div className="relative border-2 border-dashed border-border rounded-2xl p-4 text-center hover:bg-muted/50 dark:hover:bg-slate-800/50 transition-colors">
                     <input
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png"
@@ -940,18 +940,18 @@ export default function StudentAbsencesPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-3 border-t border-border dark:border-border">
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
                   <button
                     type="button"
                     onClick={() => setSelectedRecord(null)}
-                    className="px-4 py-2.5 rounded-xl border border-border dark:border-border text-xs font-bold text-muted-foreground dark:text-foreground hover:bg-muted/50 cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl border border-border text-xs font-bold text-muted-foreground dark:text-foreground hover:bg-muted/50 cursor-pointer"
                   >
                     Annuler
                   </button>
                   <button
                     type="submit"
                     disabled={!file || isSubmittingJustification}
-                    className="px-5 py-2.5 rounded-xl bg-[#001A4B] hover:bg-[#082663] text-white text-xs font-bold shadow-md flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+                    className="px-5 py-2.5 rounded-xl bg-[#1a3673] hover:bg-[#082663] text-white text-xs font-bold shadow-md flex items-center gap-2 cursor-pointer transition-all disabled:opacity-50"
                   >
                     {isSubmittingJustification ? (
                       <>
@@ -975,9 +975,9 @@ export default function StudentAbsencesPage() {
       {/* ── Regulations & Attendance Charter Modal ── */}
       {regulationsModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 max-w-xl w-full shadow-sm border border-border dark:border-border space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-border dark:border-border">
-              <div className="flex items-center gap-2 text-[#001A4B] dark:text-white">
+          <div className="bg-card rounded-2xl p-6 sm:p-8 max-w-xl w-full shadow-sm border border-border space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <div className="flex items-center gap-2 text-[#1a3673] dark:text-white">
                 <FileText className="w-5 h-5 text-primary" />
                 <h3 className="text-base font-bold">Règlement Pédagogique Relatif à l'Assiduité</h3>
               </div>
@@ -990,7 +990,7 @@ export default function StudentAbsencesPage() {
             </div>
 
             <div className="space-y-3 text-xs leading-relaxed text-muted-foreground dark:text-foreground">
-              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border space-y-1.5">
+              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border space-y-1.5">
                 <h4 className="font-bold text-foreground dark:text-white flex items-center gap-1.5">
                   <ShieldAlert className="w-4 h-4 text-rose-500" /> Article 24 — Seuil d'Exclusion aux Examens
                 </h4>
@@ -999,7 +999,7 @@ export default function StudentAbsencesPage() {
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border space-y-1.5">
+              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border space-y-1.5">
                 <h4 className="font-bold text-foreground dark:text-white flex items-center gap-1.5">
                   <Clock className="w-4 h-4 text-amber-500" /> Article 25 — Procédure et Délais de Justification (48h)
                 </h4>
@@ -1008,7 +1008,7 @@ export default function StudentAbsencesPage() {
                 </p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border space-y-1.5">
+              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border space-y-1.5">
                 <h4 className="font-bold text-foreground dark:text-white flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Émargement Numérique & Anti-Fraude
                 </h4>
@@ -1021,7 +1021,7 @@ export default function StudentAbsencesPage() {
             <div className="flex justify-end pt-2">
               <button
                 onClick={() => setRegulationsModalOpen(false)}
-                className="px-5 py-2.5 rounded-xl bg-[#001A4B] text-white font-bold text-xs cursor-pointer shadow-md hover:bg-[#082663]"
+                className="px-5 py-2.5 rounded-xl bg-[#1a3673] text-white font-bold text-xs cursor-pointer shadow-md hover:bg-[#082663]"
               >
                 J'ai pris connaissance du règlement
               </button>

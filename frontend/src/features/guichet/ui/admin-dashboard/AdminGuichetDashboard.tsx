@@ -70,7 +70,7 @@ export const AdminGuichetDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       <PageHeader title="Guichet Électronique" subtitle="Demandes administratives — En attente, Prêt, À retirer" />
-      <div className="bg-card dark:bg-card rounded-2xl shadow-sm border border-border">
+      <div className="bg-card rounded-2xl shadow-sm border border-border">
 
       <div className="md:hidden p-4 space-y-3">
         {requests?.map((req) => (
@@ -108,7 +108,7 @@ export const AdminGuichetDashboard: React.FC = () => {
               <tr key={req.id} className="hover:bg-muted/50 dark:hover:bg-slate-800/50">
                 <td className="p-4 text-sm text-muted-foreground">#{req.id}</td>
                 <td className="p-4">
-                  <div className="font-medium text-foreground dark:text-foreground">
+                  <div className="font-medium text-foreground">
                     {req.student?.user?.first_name} {req.student?.user?.last_name}
                   </div>
                   <div className="text-xs text-muted-foreground">CIN: {req.student?.user?.cin}</div>

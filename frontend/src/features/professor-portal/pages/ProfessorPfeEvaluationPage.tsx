@@ -66,7 +66,7 @@ export default function ProfessorPfeEvaluationPage() {
   };
 
   return (
-    <div className="space-y-8 font-sans animate-in fade-in duration-500 text-foreground dark:text-foreground pb-28">
+    <div className="space-y-8 font-sans animate-in fade-in duration-500 text-foreground pb-28">
       
       {/* ── Executive Header Banner ── */}
       <div className="p-8 md:p-10 text-white border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden erp-page-banner">
@@ -74,7 +74,7 @@ export default function ProfessorPfeEvaluationPage() {
         <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div className="flex items-center gap-5 relative z-10">
-          <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center shadow-sm shadow-amber-500/20 text-[#001A4B] shrink-0 font-bold">
+          <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center shadow-sm shadow-amber-500/20 text-[#1a3673] shrink-0 font-bold">
             <Award className="w-8 h-8" />
           </div>
           <div className="space-y-1">
@@ -96,14 +96,14 @@ export default function ProfessorPfeEvaluationPage() {
       </div>
 
       {/* Candidate Profile Summary */}
-      <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border dark:border-border space-y-4">
-        <div className="flex items-center justify-between border-b border-border dark:border-border pb-3">
+      <div className="bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border space-y-4">
+        <div className="flex items-center justify-between border-b border-border pb-3">
           <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Dossier du Candidat</h2>
           <span className="text-xs font-bold text-slate-400">PFE 2026 — Session de Juin</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border">
+          <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border">
             <span className="text-[10px] font-bold uppercase text-slate-400">Étudiant(e)</span>
             <div className="font-bold text-sm text-foreground dark:text-white mt-0.5">
               {pfe?.student ? `${pfe.student.first_name} ${pfe.student.last_name}` : 'Amine Bennani'}
@@ -111,19 +111,19 @@ export default function ProfessorPfeEvaluationPage() {
             <div className="text-xs text-muted-foreground font-bold">CNE : {pfe?.student?.cne || 'N130094821'} • {pfe?.semester || 'S10'}</div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border">
+          <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border">
             <span className="text-[10px] font-bold uppercase text-slate-400">Filière & Spécialité</span>
             <div className="font-bold text-sm text-foreground dark:text-white mt-0.5">{pfe?.filiere || 'Grande École GFC'}</div>
             <div className="text-xs text-muted-foreground font-bold">ENCG Fès</div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border">
+          <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border">
             <span className="text-[10px] font-bold uppercase text-slate-400">Entreprise d'Accueil</span>
             <div className="font-bold text-sm text-foreground dark:text-white mt-0.5">{pfe?.company_name || 'PwC Maroc'}</div>
             <div className="text-xs text-muted-foreground font-bold">{pfe?.company_department || 'Audit & Advisory'}</div>
           </div>
 
-          <div className="md:col-span-3 p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border">
+          <div className="md:col-span-3 p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border">
             <span className="text-[10px] font-bold uppercase text-primary dark:text-blue-400">Intitulé du Mémoire de Fin d'Études</span>
             <div className="font-bold text-sm text-foreground dark:text-white mt-1">
               {pfe?.topic || pfe?.title || 'Impact des normes IFRS 16 sur l\'évaluation financière des entreprises cotées.'}
@@ -133,8 +133,8 @@ export default function ProfessorPfeEvaluationPage() {
       </div>
 
       {/* Criteria Evaluation Sliders */}
-      <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border dark:border-border space-y-6">
-        <div className="border-b border-border dark:border-border pb-4">
+      <div className="bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border space-y-6">
+        <div className="border-b border-border pb-4">
           <h2 className="text-base font-bold text-foreground dark:text-white uppercase tracking-wide">
             Barème & Critères d'Évaluation Officiels (Sur 20 Points)
           </h2>
@@ -143,7 +143,7 @@ export default function ProfessorPfeEvaluationPage() {
 
         <div className="space-y-6">
           {/* C1: Written report */}
-          <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border space-y-2">
+          <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border space-y-2">
             <div className="flex justify-between items-center text-xs font-bold">
               <span className="text-foreground dark:text-white">1. Qualité du Mémoire Écrit & Documentation (Sur 5 Pts)</span>
               <span className="text-primary dark:text-indigo-300 bg-primary/5 dark:bg-indigo-950 px-2.5 py-1 rounded-lg text-sm">{writtenReport} / 5</span>
@@ -155,13 +155,13 @@ export default function ProfessorPfeEvaluationPage() {
               step="0.25"
               value={writtenReport}
               onChange={e => setWrittenReport(parseFloat(e.target.value))}
-              className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#001A4B]"
+              className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#1a3673]"
             />
             <p className="text-[11px] text-slate-400">Structure, rigueur de la rédaction, bibliographie et respect des normes académiques ENCG.</p>
           </div>
 
           {/* C2: Methodology */}
-          <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border space-y-2">
+          <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border space-y-2">
             <div className="flex justify-between items-center text-xs font-bold">
               <span className="text-foreground dark:text-white">2. Rigueur Méthodologique & Diagnostic Entreprise (Sur 10 Pts)</span>
               <span className="text-primary dark:text-indigo-300 bg-primary/5 dark:bg-indigo-950 px-2.5 py-1 rounded-lg text-sm">{methodology} / 10</span>
@@ -173,13 +173,13 @@ export default function ProfessorPfeEvaluationPage() {
               step="0.5"
               value={methodology}
               onChange={e => setMethodology(parseFloat(e.target.value))}
-              className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#001A4B]"
+              className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#1a3673]"
             />
             <p className="text-[11px] text-slate-400">Pertinence des outils d'analyse, traitement des données empiriques et valeur ajoutée des préconisations.</p>
           </div>
 
           {/* C3: Oral defense */}
-          <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border space-y-2">
+          <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border space-y-2">
             <div className="flex justify-between items-center text-xs font-bold">
               <span className="text-foreground dark:text-white">3. Présentation Orale & Réponses aux Questions (Sur 5 Pts)</span>
               <span className="text-primary dark:text-indigo-300 bg-primary/5 dark:bg-indigo-950 px-2.5 py-1 rounded-lg text-sm">{oralDefense} / 5</span>
@@ -191,14 +191,14 @@ export default function ProfessorPfeEvaluationPage() {
               step="0.25"
               value={oralDefense}
               onChange={e => setOralDefense(parseFloat(e.target.value))}
-              className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#001A4B]"
+              className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#1a3673]"
             />
             <p className="text-[11px] text-slate-400">Clarté de l'exposé, gestion du temps, aisance oratoire et pertinence des réponses apportées au jury.</p>
           </div>
         </div>
 
         {/* Mention Calculated */}
-        <div className="p-5 rounded-2xl border border-border dark:border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="p-5 rounded-2xl border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <span className="text-[10px] font-bold uppercase text-slate-400">Mention Déterminée Automatiquement</span>
             <div className="font-bold text-base text-foreground dark:text-white mt-0.5">{mention.label}</div>
@@ -215,14 +215,14 @@ export default function ProfessorPfeEvaluationPage() {
             rows={3}
             value={remarks}
             onChange={e => setRemarks(e.target.value)}
-            className="w-full p-4 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-medium text-foreground dark:text-white focus:outline-none focus:ring-2 focus:ring-ring resize-none rounded-[var(--control-radius)]"
+            className="w-full p-4 bg-muted/50 dark:bg-card border border-border text-xs font-medium text-foreground dark:text-white focus:outline-none focus:ring-2 focus:ring-ring resize-none rounded-[var(--control-radius)]"
           />
         </div>
       </div>
 
       {/* Digital Signature & Validation Deck */}
-      <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border dark:border-border space-y-6">
-        <div className="border-b border-border dark:border-border pb-4 flex items-center justify-between">
+      <div className="bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border space-y-6">
+        <div className="border-b border-border pb-4 flex items-center justify-between">
           <h2 className="text-base font-bold text-foreground dark:text-white uppercase tracking-wide flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-primary" /> Émargement & Signature Électronique du Jury
           </h2>
@@ -230,27 +230,27 @@ export default function ProfessorPfeEvaluationPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border space-y-2">
+          <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border space-y-2">
             <span className="text-[10px] font-bold uppercase text-slate-400">Président du Jury</span>
             <div className="font-bold text-sm text-foreground dark:text-white">{presidentSignature}</div>
-            <div className="h-16 rounded-xl bg-card dark:bg-card border border-border dark:border-border flex items-center justify-center font-serif text-muted-foreground dark:text-foreground italic text-xs">
+            <div className="h-16 rounded-xl bg-card border border-border flex items-center justify-center font-serif text-muted-foreground dark:text-foreground italic text-xs">
               {isSigned ? `✍️ ${presidentSignature} (Certifié SHA-256)` : "En attente de signature..."}
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border space-y-2">
+          <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border space-y-2">
             <span className="text-[10px] font-bold uppercase text-slate-400">Membre Examinateur / Encadrant</span>
             <div className="font-bold text-sm text-foreground dark:text-white">{examinerSignature}</div>
-            <div className="h-16 rounded-xl bg-card dark:bg-card border border-border dark:border-border flex items-center justify-center font-serif text-muted-foreground dark:text-foreground italic text-xs">
+            <div className="h-16 rounded-xl bg-card border border-border flex items-center justify-center font-serif text-muted-foreground dark:text-foreground italic text-xs">
               {isSigned ? `✍️ ${examinerSignature} (Certifié SHA-256)` : "En attente de signature..."}
             </div>
           </div>
         </div>
 
-        <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border dark:border-border">
+        <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border">
           <button
             onClick={handleDownloadPv}
-            className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-muted dark:bg-card hover:bg-slate-200 text-foreground dark:text-foreground text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
+            className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-muted dark:bg-card hover:bg-slate-200 text-foreground text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >
             <Download className="w-4 h-4 text-primary" /> Prévisualiser le PV Officiel (PDF)
           </button>
@@ -262,7 +262,7 @@ export default function ProfessorPfeEvaluationPage() {
               "w-full sm:w-auto px-8 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg cursor-pointer",
               isSigned 
                 ? "bg-emerald-600 text-white" 
-                : "bg-[#001A4B] hover:bg-[#082663] text-white"
+                : "bg-[#1a3673] hover:bg-[#082663] text-white"
             )}
           >
             <CheckCircle2 className="w-4 h-4 text-amber-300" />

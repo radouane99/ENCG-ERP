@@ -166,9 +166,11 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::get('/admin/public-portal/attachments/{id}', [PublicPortalController::class, 'preview'])->whereUuid('id');
     Route::post('/admin/institution-settings', [InstitutionSettingsController::class, 'updateSettings']);
     Route::post('/admin/institution-settings/test-email', [InstitutionSettingsController::class, 'testResendEmail']);
+    Route::get('/admin/institution-settings/{key}', [InstitutionSettingsController::class, 'getSettingByKey']);
     Route::get('/institution-settings', [InstitutionSettingsController::class, 'getSettings']);
     Route::post('/institution-settings', [InstitutionSettingsController::class, 'updateSettings']);
     Route::post('/institution-settings/test-email', [InstitutionSettingsController::class, 'testResendEmail']);
+    Route::get('/institution-settings/{key}', [InstitutionSettingsController::class, 'getSettingByKey']);
 
     // Room Bookings PDF Export & Management
     Route::get('/room-bookings/{id}/autorisation-pdf', [PdfExportController::class, 'exportAutorisationSallePdf']);
@@ -339,11 +341,16 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
 
     Route::get('admin/academic/deliberations', [DeliberationController::class, 'index']);
     Route::match(['get', 'post'], 'academic/deliberate', [DeliberationController::class, 'run']);
+    Route::match(['get', 'post'], 'admin/academic/deliberate', [DeliberationController::class, 'run']);
     Route::match(['get', 'post'], 'admin/deliberations/run', [DeliberationController::class, 'run']);
     Route::match(['get', 'post'], 'deliberations/export-pv-pdf', [DeliberationController::class, 'exportPvQuery']);
 
     Route::post('deliberations/apply-rachat', [DeliberationController::class, 'applyRachat']);
     Route::get('deliberations/export-pv-rachat', [DeliberationController::class, 'exportRattrapage']);
+    Route::post('academic/deliberations/{id}/rachat', [DeliberationController::class, 'applyRachat']);
+    Route::get('academic/deliberations/{id}/pv', [DeliberationController::class, 'exportPvPdf']);
+    Route::post('admin/academic/deliberations/{id}/rachat', [DeliberationController::class, 'applyRachat']);
+    Route::get('admin/academic/deliberations/{id}/pv', [DeliberationController::class, 'exportPvPdf']);
     Route::get('academic/deliberations/jury-status', [DeliberationController::class, 'getJuryStatus']);
 
     Route::post('academic/deliberations/sign-jury', [DeliberationController::class, 'signJury']);
@@ -404,6 +411,7 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::get('admin/students/fiche-medicale-pdf', [PdfExportController::class, 'ficheMedicalePdf']);
     // ── Inscription Workflow & AI Gemini Vision Audit (Recommendations #1, #2, #4, #5, #7)
     Route::post('students/{student}/ai-audit', [StudentController::class, 'auditWithGeminiAi']);
+    Route::post('admin/students/{student}/ai-audit', [StudentController::class, 'auditWithGeminiAi']);
     Route::post('students/{student}/biometric-match', [StudentController::class, 'runBiometricMatch']);
     Route::patch('students/{student}/inscription-status', [StudentController::class, 'updateInscriptionStatus']);
     Route::get('students/{student}/dossier-audit-log', [StudentController::class, 'getDossierAuditLog']);
@@ -440,9 +448,18 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
         Route::post('vacataires/contracts/{contractId}/approve-hr', [VacataireController::class, 'approveHr']);
         Route::apiResource('vacataires', VacataireController::class);
     });
+    Route::prefix('admin/hr')->group(function () {
+        Route::apiResource('professors', ProfessorController::class);
+        Route::get('vacataires/{vacataire}/contract-pdf', [VacataireController::class, 'downloadContract']);
+        Route::post('vacataires/contracts/{contractId}/payments', [VacataireController::class, 'processPayment']);
+        Route::post('vacataires/contracts/{contractId}/approve-dept', [VacataireController::class, 'approveDepartment']);
+        Route::post('vacataires/contracts/{contractId}/approve-hr', [VacataireController::class, 'approveHr']);
+        Route::apiResource('vacataires', VacataireController::class);
+    });
 
     Route::apiResource('departments', DepartmentController::class);
     Route::post('users/{id}/security', [UserController::class, 'security'])->middleware('throttle:login');
+    Route::post('users/{id}/reset-password', [UserController::class, 'security'])->middleware('throttle:login');
     Route::get('users/{id}/security', [UserController::class, 'securityHistory']);
     Route::apiResource('users', UserController::class);
     Route::post('professor-assignments/auto-distribute', [ProfessorAssignmentController::class, 'autoDistribute']);
@@ -564,8 +581,16 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
         Route::post('/session/{sessionId}/send-batch-surveillants-whatsapp', [ConvocationController::class, 'sendBatchSurveillantsWhatsApp']);
     });
 
+    Route::prefix('admin/exams/{exam}/convocations')->group(function () {
+        Route::get('/', [AdminExamConvocationController::class, 'index']);
+        Route::post('/generate', [AdminExamConvocationController::class, 'generate']);
+        Route::post('/publish', [AdminExamConvocationController::class, 'publish']);
+    });
+    Route::get('/admin/exam-planning/{examId}/live-stats', [ConvocationController::class, 'liveStats']);
+
     // Convocations Lifecycle
     Route::prefix('convocations')->group(function () {
+        Route::post('/room-flash-alert', [ConvocationController::class, 'roomFlashAlert']);
         Route::post('/generate-session', [ConvocationController::class, 'generateSession']);
         Route::post('/publish-session', [ConvocationController::class, 'publishSession']);
         Route::post('/send-session', [ConvocationController::class, 'sendSession']);

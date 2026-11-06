@@ -248,13 +248,13 @@ export default function StudentGuichetPage() {
   };
 
   return (
-    <div data-testid="student-guichet-page" className="space-y-6 font-sans text-foreground dark:text-foreground pb-20">
+    <div data-testid="student-guichet-page" className="space-y-6 font-sans text-foreground pb-20">
       
       {/* ── Executive Top Header ── */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-slate-200/80 dark:border-border pb-5">
         <div className="space-y-1.5">
           <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="text-[#001A4B] dark:text-white flex items-center gap-2.5 erp-page-title">
+            <h1 className="text-[#1a3673] dark:text-white flex items-center gap-2.5 erp-page-title">
               <span>Guichet Électronique & Coffre-Fort</span>
               <span className="p-1.5 rounded-lg bg-amber-400/15 text-amber-500 border border-amber-400/30">
                 <ShieldCheck className="w-5 h-5 text-amber-500 dark:text-amber-400" />
@@ -268,13 +268,13 @@ export default function StudentGuichetPage() {
               Service Scolarité Ouvert • 24/7
             </span>
           </div>
-          <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium flex items-center gap-2 flex-wrap">
+          <p className="text-xs text-muted-foreground font-medium flex items-center gap-2 flex-wrap">
             <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span className="font-semibold text-slate-700 dark:text-foreground">ENCG Fès</span>
             <span className="text-slate-300 dark:text-slate-700">•</span>
             <span>Délivrance 100% Numérique & Signée QR Code</span>
             <span className="text-slate-300 dark:text-slate-700">•</span>
-            <span className="font-medium text-muted-foreground dark:text-muted-foreground capitalize">{currentDate}</span>
+            <span className="font-medium text-muted-foreground capitalize">{currentDate}</span>
           </p>
         </div>
 
@@ -283,7 +283,7 @@ export default function StudentGuichetPage() {
           <button
             onClick={() => refetch()}
             disabled={isFetching}
-            className="inline-flex items-center justify-center gap-2 h-10 px-3.5 rounded-xl bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-slate-700 dark:text-foreground hover:bg-muted/50 dark:hover:bg-slate-800 hover:border-slate-300 transition-all cursor-pointer disabled:opacity-50 shadow-2xs"
+            className="inline-flex items-center justify-center gap-2 h-10 px-3.5 rounded-xl bg-card border border-border text-xs font-bold text-slate-700 dark:text-foreground hover:bg-muted/50 dark:hover:bg-slate-800 hover:border-slate-300 transition-all cursor-pointer disabled:opacity-50 shadow-2xs"
             title="Rafraîchir les demandes"
           >
             <RefreshCcw className={cn("w-3.5 h-3.5 text-muted-foreground", isFetching && "animate-spin text-primary")} />
@@ -292,7 +292,7 @@ export default function StudentGuichetPage() {
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className="relative group overflow-hidden inline-flex items-center justify-center gap-2 h-10 px-5 rounded-xl bg-gradient-to-r from-[#001A4B] via-[#082663] to-[#041438] hover:from-[#082663] hover:to-[#0c3792] text-white text-xs font-bold shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer border border-blue-400/20 hover:scale-[1.02]"
+            className="relative group overflow-hidden inline-flex items-center justify-center gap-2 h-10 px-5 rounded-xl bg-gradient-to-r from-[#1a3673] via-[#082663] to-[#041438] hover:from-[#082663] hover:to-[#0c3792] text-white text-xs font-bold shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer border border-blue-400/20 hover:scale-[1.02]"
           >
             <div className="absolute inset-0 w-1/2 h-full bg-white/10 skew-x-12 -translate-x-full group-hover:translate-x-[300%] transition-transform duration-1000" />
             <Plus className="w-4 h-4 text-amber-300 transition-transform group-hover:rotate-90 duration-300" />
@@ -302,7 +302,7 @@ export default function StudentGuichetPage() {
       </div>
 
       {/* ── Executive Hero Banner with Live Security Seal & KPI Pod ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#001A4B] via-[#082663] to-[#020e28] text-white p-6 sm:p-7 lg:p-8 shadow-sm border border-blue-900/50">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a3673] via-[#082663] to-[#020e28] text-white p-6 sm:p-7 lg:p-8 shadow-sm border border-blue-900/50">
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
         <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
@@ -382,7 +382,7 @@ export default function StudentGuichetPage() {
       </div>
 
       {/* ── Filters & Search Toolbar ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card dark:bg-card p-3 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-border shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card p-3 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-border shadow-sm">
         {/* Status Filter Tabs */}
         <div className="flex items-center gap-1.5 bg-muted dark:bg-slate-800/80 p-1 rounded-xl overflow-x-auto w-full sm:w-auto">
           <button
@@ -390,7 +390,7 @@ export default function StudentGuichetPage() {
             className={cn(
               "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0 relative",
               filterStatus === 'all'
-                ? "bg-[#001A4B] text-white shadow-sm"
+                ? "bg-[#1a3673] text-white shadow-sm"
                 : "text-muted-foreground dark:text-foreground hover:text-foreground dark:hover:text-white"
             )}
           >
@@ -405,7 +405,7 @@ export default function StudentGuichetPage() {
             className={cn(
               "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0",
               filterStatus === 'ready'
-                ? "bg-[#001A4B] text-white shadow-sm"
+                ? "bg-[#1a3673] text-white shadow-sm"
                 : "text-muted-foreground dark:text-foreground hover:text-foreground dark:hover:text-white"
             )}
           >
@@ -423,7 +423,7 @@ export default function StudentGuichetPage() {
             className={cn(
               "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0",
               filterStatus === 'pending'
-                ? "bg-[#001A4B] text-white shadow-sm"
+                ? "bg-[#1a3673] text-white shadow-sm"
                 : "text-muted-foreground dark:text-foreground hover:text-foreground dark:hover:text-white"
             )}
           >
@@ -442,7 +442,7 @@ export default function StudentGuichetPage() {
               className={cn(
                 "flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer shrink-0",
                 filterStatus === 'rejected'
-                  ? "bg-[#001A4B] text-white shadow-sm"
+                  ? "bg-[#1a3673] text-white shadow-sm"
                   : "text-muted-foreground dark:text-foreground hover:text-foreground dark:hover:text-white"
               )}
             >
@@ -463,7 +463,7 @@ export default function StudentGuichetPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Rechercher une pièce ou référence..."
-              className="w-full pl-9 pr-8 py-2 text-xs bg-muted/50 dark:bg-slate-800/80 border border-border dark:border-border focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-foreground dark:text-white rounded-[var(--control-radius)]"
+              className="w-full pl-9 pr-8 py-2 text-xs bg-muted/50 dark:bg-slate-800/80 border border-border focus:outline-none focus:ring-2 focus:ring-blue-500/20 text-foreground dark:text-white rounded-[var(--control-radius)]"
             />
             {searchQuery && (
               <button 
@@ -485,9 +485,9 @@ export default function StudentGuichetPage() {
         className="space-y-4"
       >
         {isLoading ? (
-          <div className="bg-card dark:bg-card rounded-2xl p-16 text-center border border-border dark:border-border shadow-sm">
+          <div className="bg-card rounded-2xl p-16 text-center border border-border shadow-sm">
             <div className="relative w-12 h-12 mx-auto">
-              <div className="w-12 h-12 rounded-full border-4 border-primary/20 border-t-[#001A4B] animate-spin" />
+              <div className="w-12 h-12 rounded-full border-4 border-primary/20 border-t-[#1a3673] animate-spin" />
             </div>
             <p className="text-xs text-muted-foreground mt-4 font-semibold tracking-wide">
               Synchronisation de votre coffre-fort numérique sécurisé...
@@ -497,14 +497,14 @@ export default function StudentGuichetPage() {
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-card dark:bg-card rounded-2xl p-12 text-center shadow-sm border border-slate-200/80 dark:border-border space-y-4"
+            className="bg-card rounded-2xl p-12 text-center shadow-sm border border-slate-200/80 dark:border-border space-y-4"
           >
             <div className="w-16 h-16 rounded-2xl bg-primary/5 dark:bg-blue-950/40 text-primary flex items-center justify-center mx-auto border border-primary/20 dark:border-blue-900/50">
               <FileText className="w-8 h-8" />
             </div>
             <div className="space-y-1 max-w-md mx-auto">
               <h3 className="text-base font-bold text-foreground dark:text-white">Aucune demande trouvée</h3>
-              <p className="text-xs text-muted-foreground dark:text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {searchQuery 
                   ? "Aucune pièce administrative ne correspond à vos critères de recherche." 
                   : "Vous n'avez aucune demande active dans cette catégorie. Cliquez ci-dessous pour déposer une demande."}
@@ -512,7 +512,7 @@ export default function StudentGuichetPage() {
             </div>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center gap-2 h-10 px-6 rounded-xl bg-gradient-to-r from-[#001A4B] to-[#082663] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all cursor-pointer mt-2"
+              className="inline-flex items-center gap-2 h-10 px-6 rounded-xl bg-gradient-to-r from-[#1a3673] to-[#082663] text-white text-xs font-bold shadow-md hover:shadow-lg transition-all cursor-pointer mt-2"
             >
               <Plus className="w-4 h-4 text-amber-300" />
               <span>Déposer une nouvelle demande</span>
@@ -551,7 +551,7 @@ export default function StudentGuichetPage() {
                 variants={cardVariants}
                 whileHover={{ y: -3, transition: { duration: 0.2 } }}
                 className={cn(
-                  "relative overflow-hidden bg-card dark:bg-card border border-slate-200/90 dark:border-border rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-xl transition-all duration-300 space-y-5 group",
+                  "relative overflow-hidden bg-card border border-slate-200/90 dark:border-border rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-xl transition-all duration-300 space-y-5 group",
                   theme.cardBorder
                 )}
               >
@@ -581,15 +581,15 @@ export default function StudentGuichetPage() {
 
                     <div className="space-y-1">
                       <div className="flex items-center gap-2.5 flex-wrap">
-                        <h3 className="font-bold text-base sm:text-lg text-[#001A4B] dark:text-white leading-tight">
+                        <h3 className="font-bold text-base sm:text-lg text-[#1a3673] dark:text-white leading-tight">
                           {docTitle}
                         </h3>
-                        <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-lg bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground border border-slate-200/80 dark:border-border">
+                        <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-lg bg-muted dark:bg-card text-muted-foreground border border-slate-200/80 dark:border-border">
                           Réf: #{req.id}
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground dark:text-muted-foreground flex-wrap">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                         <span className="flex items-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5 text-slate-400" />
                           <span>Transmise le {formattedDate}</span>
@@ -606,7 +606,7 @@ export default function StudentGuichetPage() {
                         {req.motif && (
                           <>
                             <span className="text-slate-300 dark:text-slate-700">•</span>
-                            <span className="italic text-muted-foreground dark:text-muted-foreground">"{req.motif}"</span>
+                            <span className="italic text-muted-foreground">"{req.motif}"</span>
                           </>
                         )}
                       </div>
@@ -662,7 +662,7 @@ export default function StudentGuichetPage() {
 
                 {/* ── Modern Animated Instruction Stepper ── */}
                 <div className="py-3.5 px-3 sm:px-5 bg-slate-50/80 dark:bg-slate-800/40 rounded-2xl border border-border dark:border-slate-800/80 space-y-3">
-                  <div className="flex items-center justify-between text-xs font-bold text-muted-foreground dark:text-muted-foreground">
+                  <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
                     <span className="flex items-center gap-1.5">
                       <FileCheck className="w-3.5 h-3.5 text-primary dark:text-blue-400" />
                       <span>Circuit d'instruction officiel</span>
@@ -692,7 +692,7 @@ export default function StudentGuichetPage() {
                       <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-emerald-600 text-white shadow-md ring-4 ring-white dark:ring-slate-900 transition-transform group-hover:scale-110">
                         <Check className="w-4 h-4 stroke-[3]" />
                       </div>
-                      <span className="text-[10px] sm:text-[11px] font-bold text-foreground dark:text-foreground">
+                      <span className="text-[10px] sm:text-[11px] font-bold text-foreground">
                         1. Dépôt Initial
                       </span>
                     </div>
@@ -711,7 +711,7 @@ export default function StudentGuichetPage() {
                       </div>
                       <span className={cn(
                         "text-[10px] sm:text-[11px] font-bold",
-                        isRejected ? "text-rose-600 dark:text-rose-400" : isApproved ? "text-foreground dark:text-foreground" : "text-amber-600 dark:text-amber-400 font-bold"
+                        isRejected ? "text-rose-600 dark:text-rose-400" : isApproved ? "text-foreground" : "text-amber-600 dark:text-amber-400 font-bold"
                       )}>
                         {isRejected ? '2. Rejeté' : isApproved ? '2. Contrôle Scolarité' : '2. En Contrôle'}
                       </span>
@@ -722,7 +722,7 @@ export default function StudentGuichetPage() {
                       <div className={cn(
                         "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-md ring-4 ring-white dark:ring-slate-900 transition-all",
                         isApproved ? "bg-emerald-600 text-white shadow-[0_0_14px_rgba(16,185,129,0.5)]" :
-                        "bg-card dark:bg-card border-2 border-slate-300 dark:border-border text-slate-400"
+                        "bg-card border-2 border-slate-300 dark:border-border text-slate-400"
                       )}>
                         {isApproved ? <ShieldCheck className="w-4 h-4" /> : '3'}
                       </div>
@@ -746,7 +746,7 @@ export default function StudentGuichetPage() {
                       title="Cliquer pour copier l'empreinte SHA-256 complète"
                     >
                       <Lock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                      <span>Empreinte SHA-256 : <strong className="text-foreground dark:text-foreground">{req.hash ? req.hash.substring(0, 16) + '...' : 'e3b0c44298fc1c14...'}</strong></span>
+                      <span>Empreinte SHA-256 : <strong className="text-foreground">{req.hash ? req.hash.substring(0, 16) + '...' : 'e3b0c44298fc1c14...'}</strong></span>
                       {copiedHashId === req.id ? (
                         <CheckCheck className="w-3.5 h-3.5 text-emerald-600" />
                       ) : (
@@ -762,7 +762,7 @@ export default function StudentGuichetPage() {
                         <button
                           onClick={() => handlePreviewDocument(req)}
                           disabled={previewLoadingId === req.id}
-                          className="inline-flex items-center gap-1.5 h-9.5 px-4 rounded-xl bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-foreground dark:text-foreground text-xs font-bold transition-all cursor-pointer disabled:opacity-50 border border-slate-200/60 dark:border-border hover:shadow-sm"
+                          className="inline-flex items-center gap-1.5 h-9.5 px-4 rounded-xl bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-foreground text-xs font-bold transition-all cursor-pointer disabled:opacity-50 border border-slate-200/60 dark:border-border hover:shadow-sm"
                           title="Consulter l'exemplaire officiel certifié"
                         >
                           {previewLoadingId === req.id ? (
@@ -776,7 +776,7 @@ export default function StudentGuichetPage() {
                         <button
                           onClick={() => handleDownloadDocument(req)}
                           disabled={downloadLoadingId === req.id}
-                          className="relative group/btn overflow-hidden inline-flex items-center gap-2 h-9.5 px-4.5 rounded-xl bg-gradient-to-r from-[#001A4B] via-[#082663] to-[#041438] hover:from-[#082663] hover:to-[#0c3792] text-white text-xs font-bold shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer border border-blue-400/20 disabled:opacity-50 hover:scale-[1.02]"
+                          className="relative group/btn overflow-hidden inline-flex items-center gap-2 h-9.5 px-4.5 rounded-xl bg-gradient-to-r from-[#1a3673] via-[#082663] to-[#041438] hover:from-[#082663] hover:to-[#0c3792] text-white text-xs font-bold shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer border border-blue-400/20 disabled:opacity-50 hover:scale-[1.02]"
                           title="Télécharger le fichier PDF officiel avec QR Code et Sceau"
                         >
                           {downloadLoadingId === req.id ? (
@@ -812,10 +812,10 @@ export default function StudentGuichetPage() {
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-xl shadow-sm overflow-hidden"
+              className="bg-card border border-border rounded-2xl w-full max-w-xl shadow-sm overflow-hidden"
             >
               {/* Modal Header */}
-              <div className="p-5 sm:p-6 bg-gradient-to-r from-[#001A4B] via-[#082663] to-[#041438] text-white flex items-center justify-between">
+              <div className="p-5 sm:p-6 bg-gradient-to-r from-[#1a3673] via-[#082663] to-[#041438] text-white flex items-center justify-between">
                 <div className="space-y-1">
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/10 text-amber-300 border border-white/15">
                     <Sparkles className="w-3 h-3" /> Guichet Unique 100% En Ligne
@@ -885,7 +885,7 @@ export default function StudentGuichetPage() {
                             "p-3 rounded-2xl border transition-all cursor-pointer flex items-start gap-3",
                             isSelected 
                               ? "bg-blue-50/80 dark:bg-blue-950/40 border-primary dark:border-primary ring-2 ring-blue-500/20 shadow-sm"
-                              : "bg-muted/50 dark:bg-slate-800/60 border-border dark:border-border hover:border-slate-300"
+                              : "bg-muted/50 dark:bg-slate-800/60 border-border hover:border-slate-300"
                           )}
                         >
                           <div className={cn(
@@ -898,7 +898,7 @@ export default function StudentGuichetPage() {
                             <h4 className="text-xs font-bold text-foreground dark:text-white leading-tight">
                               {item.title}
                             </h4>
-                            <p className="text-[10px] text-muted-foreground dark:text-muted-foreground mt-0.5 line-clamp-1">
+                            <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">
                               {item.desc}
                             </p>
                           </div>
@@ -923,7 +923,7 @@ export default function StudentGuichetPage() {
                     value={newRequestData.motif}
                     onChange={(e) => setNewRequestData(p => ({ ...p, motif: e.target.value }))}
                     placeholder="Ex: Dossier de candidature stage, renouvellement carte séjour, dossier de bourse ou visa..."
-                    className="w-full px-3.5 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-medium text-foreground dark:text-foreground focus:ring-2 focus:ring-[#001A4B] focus:border-transparent outline-none resize-none rounded-[var(--control-radius)]"
+                    className="w-full px-3.5 py-2.5 border border-border bg-muted/50 dark:bg-card text-xs font-medium text-foreground focus:ring-2 focus:ring-[#1a3673] focus:border-transparent outline-none resize-none rounded-[var(--control-radius)]"
                   />
 
                   {/* Fast Motif Pills */}
@@ -940,7 +940,7 @@ export default function StudentGuichetPage() {
                         type="button"
                         key={pill}
                         onClick={() => setNewRequestData(p => ({ ...p, motif: pill }))}
-                        className="text-[10px] px-2 py-0.5 rounded-lg bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-slate-700 dark:text-foreground transition-colors cursor-pointer border border-border dark:border-border"
+                        className="text-[10px] px-2 py-0.5 rounded-lg bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-slate-700 dark:text-foreground transition-colors cursor-pointer border border-border"
                       >
                         {pill}
                       </button>
@@ -957,7 +957,7 @@ export default function StudentGuichetPage() {
                 </div>
 
                 {/* Modal Footer Actions */}
-                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border dark:border-border">
+                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-border">
                   <button 
                     type="button" 
                     onClick={() => setIsModalOpen(false)} 
@@ -968,7 +968,7 @@ export default function StudentGuichetPage() {
                   <button 
                     type="submit" 
                     disabled={requestMutation.isPending || !newRequestData.motif.trim()}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold bg-gradient-to-r from-[#001A4B] to-[#082663] hover:from-[#082663] hover:to-[#0c3792] text-white rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold bg-gradient-to-r from-[#1a3673] to-[#082663] hover:from-[#082663] hover:to-[#0c3792] text-white rounded-xl shadow-md transition-all cursor-pointer disabled:opacity-50"
                   >
                     {requestMutation.isPending ? (
                       <>
@@ -992,9 +992,9 @@ export default function StudentGuichetPage() {
       {/* ── Modal Aperçu Document PDF Officiel ── */}
       {isPreviewModalOpen && previewPdfBlobUrl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-5xl h-[92vh] flex flex-col shadow-sm overflow-hidden">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-5xl h-[92vh] flex flex-col shadow-sm overflow-hidden">
             {/* Modal Header */}
-            <div className="px-4 py-3.5 sm:px-6 sm:py-4 bg-[#001A4B] text-white flex items-center justify-between gap-3 shrink-0 border-b border-white/10">
+            <div className="px-4 py-3.5 sm:px-6 sm:py-4 bg-[#1a3673] text-white flex items-center justify-between gap-3 shrink-0 border-b border-white/10">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center shrink-0 border border-white/15">
                   <ShieldCheck className="w-5 h-5 text-emerald-400" />
@@ -1052,7 +1052,7 @@ export default function StudentGuichetPage() {
               <iframe
                 src={`${previewPdfBlobUrl}#toolbar=1&navpanes=0`}
                 title={`Aperçu PDF - ${previewDocTitle}`}
-                className="w-full h-full rounded-2xl border border-border dark:border-border shadow-inner bg-card"
+                className="w-full h-full rounded-2xl border border-border shadow-inner bg-card"
               />
             </div>
           </div>

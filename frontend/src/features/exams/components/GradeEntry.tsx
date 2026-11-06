@@ -151,7 +151,7 @@ function GradeEntryGrid() {
       {saveStatus === 'error' && <button type="button" className="min-h-11 rounded-lg border border-input px-3" onClick={() => {
         if (queueRef.current?.discard()) { setSaveStatus('idle'); void fetchGrid(); }
       }}>Abandonner les modifications locales et recharger</button>}
-      <div className="bg-card dark:bg-card rounded-2xl border border-border shadow-sm overflow-x-auto">
+      <div className="bg-card rounded-2xl border border-border shadow-sm overflow-x-auto">
         <table className="w-full text-sm text-left">
           <thead className="text-[10px] text-slate-400 uppercase tracking-wider bg-muted/50 border-b border-border">
             <tr>

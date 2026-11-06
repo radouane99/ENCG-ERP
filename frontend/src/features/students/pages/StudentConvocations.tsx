@@ -90,7 +90,7 @@ export default function StudentConvocations() {
       </div>
 
       {/* Main List */}
-      <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border overflow-x-auto">
+      <div className="bg-card rounded-2xl p-6 shadow-sm border border-border overflow-x-auto">
         <div className="flex items-center gap-3 mb-8">
           <div className="w-10 h-10 bg-[#001A4B] rounded-xl flex items-center justify-center shadow-sm">
             <CalendarIcon className="w-5 h-5 text-white" />

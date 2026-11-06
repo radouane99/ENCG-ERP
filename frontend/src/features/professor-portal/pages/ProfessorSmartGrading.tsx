@@ -63,7 +63,7 @@ export default function ProfessorSmartGrading() {
       <div className="grid lg:grid-cols-2 gap-6">
         
         {/* Left: Report Content Input */}
-        <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border space-y-4">
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-border space-y-4">
           <h2 className="font-bold text-base text-foreground dark:text-white flex items-center gap-2">
             <PenTool className="w-5 h-5 text-primary" /> Texte du Compte-Rendu Étudiant
           </h2>
@@ -74,7 +74,7 @@ export default function ProfessorSmartGrading() {
               type="text"
               value={rubric}
               onChange={e => setRubric(e.target.value)}
-              className="w-full px-4 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold rounded-[var(--control-radius)]"
+              className="w-full px-4 py-2.5 bg-muted/50 dark:bg-card border border-border text-xs font-bold rounded-[var(--control-radius)]"
               placeholder="Ex: Barème ENCG (20 pts) : 5 pts Rigueur, 10 pts Analyse, 5 pts Présentation"
             />
           </div>
@@ -111,14 +111,14 @@ export default function ProfessorSmartGrading() {
               value={reportContent}
               onChange={e => setReportContent(e.target.value)}
               placeholder="Collez ou saisissez ici le texte du compte-rendu de l'étudiant à évaluer..."
-              className="w-full p-4 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-medium resize-none outline-none focus:ring-2 focus:ring-indigo-500/30 rounded-[var(--control-radius)]"
+              className="w-full p-4 bg-muted/50 dark:bg-card border border-border text-xs font-medium resize-none outline-none focus:ring-2 focus:ring-indigo-500/30 rounded-[var(--control-radius)]"
             />
           </div>
 
           <button
             onClick={handleAnalyze}
             disabled={isProcessing || !reportContent.trim()}
-            className="w-full py-4 bg-gradient-to-r from-[#0f2863] to-indigo-700 hover:opacity-90 text-white font-bold rounded-2xl transition-all shadow-lg cursor-pointer flex items-center justify-center gap-2 text-xs uppercase tracking-wider disabled:opacity-40"
+            className="w-full py-4 bg-gradient-to-r from-[#1a3673] to-indigo-700 hover:opacity-90 text-white font-bold rounded-2xl transition-all shadow-lg cursor-pointer flex items-center justify-center gap-2 text-xs uppercase tracking-wider disabled:opacity-40"
           >
             {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-amber-400" />}
             {isProcessing ? 'Correction par l\'IA en cours...' : 'Lancer la Correction Intelligente IA'}
@@ -136,7 +136,7 @@ export default function ProfessorSmartGrading() {
           )}
 
           {isProcessing && (
-            <div className="bg-card dark:bg-card rounded-2xl border border-border dark:border-border p-12 text-center space-y-4">
+            <div className="bg-card rounded-2xl border border-border p-12 text-center space-y-4">
               <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto" />
               <p className="font-bold text-sm text-foreground dark:text-white">Google Gemini analyse la copie...</p>
               <p className="text-xs text-slate-400">Évaluation de la rigueur conceptuelle, calcul de la note et détection de plagiat.</p>
@@ -144,7 +144,7 @@ export default function ProfessorSmartGrading() {
           )}
 
           {result && !isProcessing && (
-            <div className="bg-card dark:bg-card rounded-2xl border border-border dark:border-border p-6 space-y-6 shadow-sm">
+            <div className="bg-card rounded-2xl border border-border p-6 space-y-6 shadow-sm">
               
               {/* Note et Plagiat */}
               <div className="flex items-center justify-between p-4 bg-primary/5 dark:bg-indigo-950/40 rounded-2xl border border-primary/20 dark:border-primary">
@@ -194,9 +194,9 @@ export default function ProfessorSmartGrading() {
 
               {/* Detailed Feedback */}
               {result.detailed_feedback && (
-                <div className="space-y-2 pt-2 border-t border-border dark:border-border">
+                <div className="space-y-2 pt-2 border-t border-border">
                   <h4 className="font-bold text-xs uppercase text-slate-400">Commentaire Pédagogique Détaillé</h4>
-                  <p className="text-xs font-medium text-slate-700 dark:text-foreground leading-relaxed bg-muted/50 dark:bg-card p-4 rounded-2xl border border-border dark:border-border">
+                  <p className="text-xs font-medium text-slate-700 dark:text-foreground leading-relaxed bg-muted/50 dark:bg-card p-4 rounded-2xl border border-border">
                     {result.detailed_feedback}
                   </p>
                 </div>

@@ -274,20 +274,20 @@ export default function CandidatureList() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div 
           onClick={() => setStatusFilter('all')}
-          className={cn("p-6 rounded-2xl bg-card dark:bg-card border shadow-md flex items-center justify-between cursor-pointer transition-all hover:scale-102", statusFilter === 'all' && "ring-2 ring-ring")}
+          className={cn("p-6 rounded-2xl bg-card border shadow-md flex items-center justify-between cursor-pointer transition-all hover:scale-102", statusFilter === 'all' && "ring-2 ring-ring")}
         >
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Total Candidats</p>
             <p className="text-3xl font-bold text-foreground dark:text-white">{candidatures.length || stats.total}</p>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-primary/5 dark:bg-blue-950/50 text-[#0f2863] dark:text-blue-300 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-2xl bg-primary/5 dark:bg-blue-950/50 text-[#1a3673] dark:text-blue-300 flex items-center justify-center">
             <Users className="w-6 h-6" />
           </div>
         </div>
 
         <div 
           onClick={() => setStatusFilter('pending')}
-          className={cn("p-6 rounded-2xl bg-card dark:bg-card border shadow-md flex items-center justify-between cursor-pointer transition-all hover:scale-102", statusFilter === 'pending' && "ring-2 ring-amber-500")}
+          className={cn("p-6 rounded-2xl bg-card border shadow-md flex items-center justify-between cursor-pointer transition-all hover:scale-102", statusFilter === 'pending' && "ring-2 ring-amber-500")}
         >
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">En Attente</p>
@@ -300,7 +300,7 @@ export default function CandidatureList() {
 
         <div 
           onClick={() => setStatusFilter('accepted')}
-          className={cn("p-6 rounded-2xl bg-card dark:bg-card border shadow-md flex items-center justify-between cursor-pointer transition-all hover:scale-102", statusFilter === 'accepted' && "ring-2 ring-emerald-500")}
+          className={cn("p-6 rounded-2xl bg-card border shadow-md flex items-center justify-between cursor-pointer transition-all hover:scale-102", statusFilter === 'accepted' && "ring-2 ring-emerald-500")}
         >
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Admis TAFSEM</p>
@@ -313,7 +313,7 @@ export default function CandidatureList() {
 
         <div 
           onClick={() => setStatusFilter('rejected')}
-          className={cn("p-6 rounded-2xl bg-card dark:bg-card border shadow-md flex items-center justify-between cursor-pointer transition-all hover:scale-102", statusFilter === 'rejected' && "ring-2 ring-rose-500")}
+          className={cn("p-6 rounded-2xl bg-card border shadow-md flex items-center justify-between cursor-pointer transition-all hover:scale-102", statusFilter === 'rejected' && "ring-2 ring-rose-500")}
         >
           <div>
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Dossiers Rejetés</p>
@@ -326,9 +326,9 @@ export default function CandidatureList() {
       </div>
 
       {/* Filters & Table Container */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
         {/* Toolbar */}
-        <div className="p-6 border-b border-border dark:border-border flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
+        <div className="p-6 border-b border-border flex flex-col sm:flex-row gap-4 items-center justify-between bg-slate-50/50 dark:bg-slate-800/50">
           <div className="relative w-full sm:w-96">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input 
@@ -336,14 +336,14 @@ export default function CandidatureList() {
               placeholder="Rechercher par nom, CNE, CIN ou numéro de dossier..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-card dark:bg-card border border-border dark:border-border text-xs font-semibold text-foreground dark:text-foreground outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
+              className="w-full pl-10 pr-4 py-2.5 bg-card border border-border text-xs font-semibold text-foreground outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
             />
           </div>
 
           <div className="flex items-center gap-3 w-full sm:w-auto">
             <button 
               onClick={fetchCandidatures}
-              className="px-4 py-2.5 bg-card dark:bg-card border border-border dark:border-border rounded-xl text-xs font-bold text-slate-700 dark:text-foreground hover:bg-muted/50 transition-colors flex items-center gap-2 cursor-pointer"
+              className="px-4 py-2.5 bg-card border border-border rounded-xl text-xs font-bold text-slate-700 dark:text-foreground hover:bg-muted/50 transition-colors flex items-center gap-2 cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" /> Actualiser
             </button>
@@ -354,11 +354,11 @@ export default function CandidatureList() {
         <div className="overflow-x-auto min-h-[350px]">
           {loading ? (
             <div className="flex justify-center items-center py-24 text-slate-400">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0f2863]"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1a3673]"></div>
             </div>
           ) : (
             <table className="w-full text-sm text-left">
-              <thead className="text-xs text-slate-400 uppercase tracking-wider bg-slate-50/80 dark:bg-slate-800/50 border-b border-border dark:border-border font-bold">
+              <thead className="text-xs text-slate-400 uppercase tracking-wider bg-slate-50/80 dark:bg-slate-800/50 border-b border-border font-bold">
                 <tr>
                   <th scope="col" className="px-6 py-4">Candidat & Dossier</th>
                   <th scope="col" className="px-6 py-4">Filière Demandée</th>
@@ -375,7 +375,7 @@ export default function CandidatureList() {
                         <div className="w-14 h-14 rounded-2xl bg-muted dark:bg-card text-slate-400 flex items-center justify-center">
                           <Users className="w-7 h-7" />
                         </div>
-                        <p className="text-base font-bold text-foreground dark:text-foreground">
+                        <p className="text-base font-bold text-foreground">
                           {searchQuery ? "Aucune candidature ne correspond à votre recherche." : "Aucune candidature enregistrée pour le moment."}
                         </p>
                         <p className="text-xs font-medium text-slate-400 leading-relaxed">
@@ -383,7 +383,7 @@ export default function CandidatureList() {
                         </p>
                         <button
                           onClick={() => setIsAddCandidateModalOpen(true)}
-                          className="mt-2 px-4 py-2 bg-[#0f2863] text-white rounded-xl text-xs font-bold shadow-md hover:bg-[#162e74] transition-all flex items-center gap-1.5 cursor-pointer"
+                          className="mt-2 px-4 py-2 bg-[#1a3673] text-white rounded-xl text-xs font-bold shadow-md hover:bg-[#162e74] transition-all flex items-center gap-1.5 cursor-pointer"
                         >
                           <UserPlus className="w-4 h-4 text-amber-400" /> Ajouter un candidat manuellement
                         </button>
@@ -396,7 +396,7 @@ export default function CandidatureList() {
                       <tr key={c.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-2xl bg-primary/5 dark:bg-blue-950/60 text-[#0f2863] dark:text-blue-300 border border-primary/20 dark:border-primary flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                            <div className="w-9 h-9 rounded-2xl bg-primary/5 dark:bg-blue-950/60 text-[#1a3673] dark:text-blue-300 border border-primary/20 dark:border-primary flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
                               {c.first_name?.charAt(0)}{c.last_name?.charAt(0)}
                             </div>
                             <div>
@@ -442,8 +442,8 @@ export default function CandidatureList() {
                             const isPending = c.status === 'pending' || c.status === 'under_review' || c.status === 'en_attente';
                             const isRejected = c.status === 'rejected' || c.status === 'rejete' || c.status === 'refused';
 
-                            let badgeStyle = "bg-[#0f2863]/10 text-[#0f2863] border-[#0f2863]/20";
-                            let icon = <Clock className="w-3.5 h-3.5 text-[#0f2863]" />;
+                            let badgeStyle = "bg-[#1a3673]/10 text-[#1a3673] border-[#1a3673]/20";
+                            let icon = <Clock className="w-3.5 h-3.5 text-[#1a3673]" />;
                             let label = "En Examen";
 
                             if (isListePrincipale) {
@@ -544,8 +544,8 @@ export default function CandidatureList() {
       {/* Campaign Modal */}
       {isCampaignModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] text-white flex items-center justify-between">
+          <div className="bg-card border border-border rounded-2xl shadow-sm w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 bg-gradient-to-r from-[#1a3673] via-[#1a387e] to-[#09193d] text-white flex items-center justify-between">
               <h3 className="text-lg font-bold">Nouvelle Campagne TAFSEM</h3>
               <button onClick={() => setIsCampaignModalOpen(false)} className="text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10">
                 <X className="w-5 h-5" />
@@ -586,7 +586,7 @@ export default function CandidatureList() {
                 <button type="button" onClick={() => setIsCampaignModalOpen(false)} className="px-5 py-2.5 rounded-xl border">
                   Annuler
                 </button>
-                <button type="submit" className="px-6 py-2.5 bg-[#0f2863] text-white rounded-xl shadow-md">
+                <button type="submit" className="px-6 py-2.5 bg-[#1a3673] text-white rounded-xl shadow-md">
                   Créer la Campagne
                 </button>
               </div>
@@ -598,7 +598,7 @@ export default function CandidatureList() {
       {/* ── MODAL 1: INSPECTION / VUE DÉTAILLÉE ── */}
       {selectedCandidate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-3xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+          <div className="bg-card border border-border rounded-2xl shadow-sm w-full max-w-3xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             
             {/* Header */}
             <div className="p-6 bg-gradient-to-r from-[#0c1e4e] via-[#162e74] to-[#081436] text-white flex items-center justify-between shrink-0">
@@ -617,35 +617,35 @@ export default function CandidatureList() {
             </div>
 
             {/* Tabs */}
-            <div className="flex items-center gap-2 p-3 bg-muted dark:bg-slate-800/80 border-b border-border dark:border-border text-xs font-bold shrink-0 overflow-x-auto">
+            <div className="flex items-center gap-2 p-3 bg-muted dark:bg-slate-800/80 border-b border-border text-xs font-bold shrink-0 overflow-x-auto">
               <button
                 onClick={() => setDetailTab('identity')}
-                className={cn("px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap", detailTab === 'identity' ? "bg-[#0f2863] text-white shadow-md font-bold" : "text-muted-foreground dark:text-foreground hover:bg-card dark:hover:bg-slate-700")}
+                className={cn("px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap", detailTab === 'identity' ? "bg-[#1a3673] text-white shadow-md font-bold" : "text-muted-foreground dark:text-foreground hover:bg-card dark:hover:bg-slate-700")}
               >
                 <User className="w-3.5 h-3.5" /> Identité & Contact
               </button>
               <button
                 onClick={() => setDetailTab('parents')}
-                className={cn("px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap", detailTab === 'parents' ? "bg-[#0f2863] text-white shadow-md font-bold" : "text-muted-foreground dark:text-foreground hover:bg-card dark:hover:bg-slate-700")}
+                className={cn("px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap", detailTab === 'parents' ? "bg-[#1a3673] text-white shadow-md font-bold" : "text-muted-foreground dark:text-foreground hover:bg-card dark:hover:bg-slate-700")}
               >
                 <Users className="w-3.5 h-3.5" /> Tuteurs & Urgence
               </button>
               <button
                 onClick={() => setDetailTab('bac')}
-                className={cn("px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap", detailTab === 'bac' ? "bg-[#0f2863] text-white shadow-md font-bold" : "text-muted-foreground dark:text-foreground hover:bg-card dark:hover:bg-slate-700")}
+                className={cn("px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap", detailTab === 'bac' ? "bg-[#1a3673] text-white shadow-md font-bold" : "text-muted-foreground dark:text-foreground hover:bg-card dark:hover:bg-slate-700")}
               >
                 <GraduationCap className="w-3.5 h-3.5" /> Bac & Orientation
               </button>
               <button
                 onClick={() => setDetailTab('docs')}
-                className={cn("px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap", detailTab === 'docs' ? "bg-[#0f2863] text-white shadow-md font-bold" : "text-muted-foreground dark:text-foreground hover:bg-card dark:hover:bg-slate-700")}
+                className={cn("px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap", detailTab === 'docs' ? "bg-[#1a3673] text-white shadow-md font-bold" : "text-muted-foreground dark:text-foreground hover:bg-card dark:hover:bg-slate-700")}
               >
                 <FileText className="w-3.5 h-3.5" /> Documents Scannés
               </button>
             </div>
 
             {/* Tab Content */}
-            <div className="p-6 overflow-y-auto space-y-4 text-xs font-bold text-foreground dark:text-foreground flex-1">
+            <div className="p-6 overflow-y-auto space-y-4 text-xs font-bold text-foreground flex-1">
               {detailTab === 'identity' && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border dark:border-slate-700/60 space-y-2">
@@ -769,13 +769,13 @@ export default function CandidatureList() {
             </div>
 
             {/* Footer Status Update Bar */}
-            <div className="p-4 bg-muted/50 dark:bg-slate-800/80 border-t border-border dark:border-border flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+            <div className="p-4 bg-muted/50 dark:bg-slate-800/80 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-400 font-bold">Statut Admissibilité :</span>
                 <select
                   value={selectedCandidate.status || 'pending'}
                   onChange={(e) => handleUpdateStatus(selectedCandidate.id, e.target.value)}
-                  className="px-3 py-1.5 bg-card dark:bg-card border-2 border-slate-300 dark:border-border text-xs font-bold cursor-pointer text-foreground dark:text-white rounded-[var(--control-radius)]"
+                  className="px-3 py-1.5 bg-card border-2 border-slate-300 dark:border-border text-xs font-bold cursor-pointer text-foreground dark:text-white rounded-[var(--control-radius)]"
                 >
                   <option value="accepted">🟢 Liste Principale (Admis)</option>
                   <option value="liste_attente_1">🟠 Liste d'Attente 1</option>
@@ -798,7 +798,7 @@ export default function CandidatureList() {
 
                 <button
                   onClick={() => handleExportConvocationPdf(selectedCandidate)}
-                  className="px-4 py-2 bg-[#0f2863] hover:bg-[#162e74] text-white rounded-xl text-xs font-bold shadow-md cursor-pointer flex items-center gap-1.5 transition-all"
+                  className="px-4 py-2 bg-[#1a3673] hover:bg-[#162e74] text-white rounded-xl text-xs font-bold shadow-md cursor-pointer flex items-center gap-1.5 transition-all"
                 >
                   <Printer className="w-3.5 h-3.5 text-amber-400" /> Convocation (PDF)
                 </button>
@@ -812,7 +812,7 @@ export default function CandidatureList() {
       {/* ── MODAL 2: MODIFICATION / ÉDITION ── */}
       {editingCandidate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+          <div className="bg-card border border-border rounded-2xl shadow-sm w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             
             {/* Header */}
             <div className="p-6 bg-gradient-to-r from-amber-600 via-amber-700 to-amber-900 text-white flex items-center justify-between shrink-0">
@@ -916,7 +916,7 @@ export default function CandidatureList() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-border dark:border-border shrink-0">
+              <div className="flex justify-end gap-3 pt-4 border-t border-border shrink-0">
                 <button
                   type="button"
                   onClick={() => setEditingCandidate(null)}
@@ -939,7 +939,7 @@ export default function CandidatureList() {
       {/* ── MODAL 3: SUPPRESSION / DANGER CONFIRM ── */}
       {deletingCandidate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-card dark:bg-card border-2 border-rose-500/30 rounded-2xl shadow-sm w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-card border-2 border-rose-500/30 rounded-2xl shadow-sm w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
             
             {/* Header */}
             <div className="p-6 bg-gradient-to-r from-rose-700 via-rose-800 to-rose-950 text-white flex items-center justify-between">
@@ -958,7 +958,7 @@ export default function CandidatureList() {
             </div>
 
             {/* Content */}
-            <div className="p-6 space-y-4 text-xs font-bold text-foreground dark:text-foreground">
+            <div className="p-6 space-y-4 text-xs font-bold text-foreground">
               <p className="text-sm font-semibold text-slate-700 dark:text-foreground leading-relaxed">
                 Êtes-vous sûr de vouloir supprimer définitivement le dossier de candidature de :
               </p>
@@ -980,7 +980,7 @@ export default function CandidatureList() {
               </p>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-border dark:border-border">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setDeletingCandidate(null)}
@@ -1014,7 +1014,7 @@ export default function CandidatureList() {
       {/* ── MODAL 4: AJOUTER UN CANDIDAT ── */}
       {isAddCandidateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+          <div className="bg-card border border-border rounded-2xl shadow-sm w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
             
             {/* Header */}
             <div className="p-6 bg-gradient-to-r from-emerald-600 via-teal-700 to-slate-900 text-white flex items-center justify-between shrink-0">
@@ -1179,7 +1179,7 @@ export default function CandidatureList() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-border dark:border-border shrink-0">
+              <div className="flex justify-end gap-3 pt-4 border-t border-border shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsAddCandidateModalOpen(false)}

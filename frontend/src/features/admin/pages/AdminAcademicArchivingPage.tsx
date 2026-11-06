@@ -544,7 +544,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
       </div>
 
       {/* ── Dual-Tab Navigation Bar ─────────────────────────────────────────── */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-2 shadow-sm">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-2 shadow-sm">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setActiveTab('roster')}
@@ -552,7 +552,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
               "flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer",
               activeTab === 'roster'
                 ? "bg-primary text-primary-foreground shadow-lg shadow-indigo-600/25"
-                : "text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-slate-800"
+                : "text-muted-foreground hover:bg-muted dark:hover:bg-slate-800"
             )}
           >
             <GraduationCap className="w-4 h-4" />
@@ -565,7 +565,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
               "flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer",
               activeTab === 'archives'
                 ? "bg-primary text-primary-foreground shadow-lg shadow-indigo-600/25"
-                : "text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-slate-800"
+                : "text-muted-foreground hover:bg-muted dark:hover:bg-slate-800"
             )}
           >
             <Archive className="w-4 h-4" />
@@ -584,7 +584,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             
             {/* Card 1: Total Evaluated */}
-            <div className="relative overflow-hidden bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-slate-200/80 dark:border-border space-y-4 hover:shadow-md transition-shadow">
+            <div className="relative overflow-hidden bg-card rounded-2xl p-5 shadow-sm border border-slate-200/80 dark:border-border space-y-4 hover:shadow-md transition-shadow">
               <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-600" />
               <div className="flex items-center justify-between">
                 <div className="p-3 rounded-2xl bg-primary/5 dark:bg-indigo-950 text-primary dark:text-indigo-400">
@@ -596,7 +596,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
               </div>
               <div>
                 <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Effectif Total Évalué</p>
-                <p className="text-3xl font-bold text-foreground dark:text-foreground mt-0.5">
+                <p className="text-3xl font-bold text-foreground mt-0.5">
                   {stats.total_students}
                 </p>
                 <p className="text-[10px] text-slate-400 mt-1 font-medium">Inscrits officiels session {currentYearObj.label}</p>
@@ -607,7 +607,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
             </div>
 
             {/* Card 2: Admis Directs (14/14 Modules) */}
-            <div className="relative overflow-hidden bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-slate-200/80 dark:border-border space-y-4 hover:shadow-md transition-shadow">
+            <div className="relative overflow-hidden bg-card rounded-2xl p-5 shadow-sm border border-slate-200/80 dark:border-border space-y-4 hover:shadow-md transition-shadow">
               <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-400" />
               <div className="flex items-center justify-between">
                 <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400">
@@ -630,7 +630,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
             </div>
 
             {/* Card 3: Admis avec Dette (Enjambement 1-2 modules) */}
-            <div className="relative overflow-hidden bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-slate-200/80 dark:border-border space-y-4 hover:shadow-md transition-shadow">
+            <div className="relative overflow-hidden bg-card rounded-2xl p-5 shadow-sm border border-slate-200/80 dark:border-border space-y-4 hover:shadow-md transition-shadow">
               <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-amber-500 to-orange-400" />
               <div className="flex items-center justify-between">
                 <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400">
@@ -653,7 +653,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
             </div>
 
             {/* Card 4: Redoublants (Conservation des acquis) */}
-            <div className="relative overflow-hidden bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-slate-200/80 dark:border-border space-y-4 hover:shadow-md transition-shadow">
+            <div className="relative overflow-hidden bg-card rounded-2xl p-5 shadow-sm border border-slate-200/80 dark:border-border space-y-4 hover:shadow-md transition-shadow">
               <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-rose-500 to-pink-500" />
               <div className="flex items-center justify-between">
                 <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400">
@@ -705,7 +705,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
           </div>
 
           {/* ── Search & Filter Command Hub ─────────────────────────────────── */}
-          <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-sm space-y-4">
+          <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-sm space-y-4">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               
               {/* Search Bar */}
@@ -716,7 +716,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
                   placeholder="Rechercher un étudiant par Nom, CNE ou Code APOGEE..."
                   value={rosterSearch}
                   onChange={(e) => setRosterSearch(e.target.value)}
-                  className="w-full ps-10 pe-10 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-foreground dark:text-foreground outline-none focus:ring-2 focus:ring-ring transition-all rounded-[var(--control-radius)]"
+                  className="w-full ps-10 pe-10 py-2.5 bg-muted/50 dark:bg-card border border-border text-xs font-bold text-foreground outline-none focus:ring-2 focus:ring-ring transition-all rounded-[var(--control-radius)]"
                 />
                 {rosterSearch && (
                   <button
@@ -734,7 +734,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
                 <select
                   value={levelFilter}
                   onChange={(e) => setLevelFilter(e.target.value)}
-                  className="px-3.5 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-slate-700 dark:text-foreground outline-none cursor-pointer hover:border-primary transition-all rounded-[var(--control-radius)]"
+                  className="px-3.5 py-2.5 bg-muted/50 dark:bg-card border border-border text-xs font-bold text-slate-700 dark:text-foreground outline-none cursor-pointer hover:border-primary transition-all rounded-[var(--control-radius)]"
                 >
                   <option value="ALL">Tous les Niveaux (S1-S10)</option>
                   <option value="S1_S2">1ère Année ➔ 2ème Année (S1/S2 ➔ S3/S4)</option>
@@ -748,7 +748,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
                 <select
                   value={decisionFilter}
                   onChange={(e) => setDecisionFilter(e.target.value as any)}
-                  className="px-3.5 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-slate-700 dark:text-foreground outline-none cursor-pointer hover:border-primary transition-all rounded-[var(--control-radius)]"
+                  className="px-3.5 py-2.5 bg-muted/50 dark:bg-card border border-border text-xs font-bold text-slate-700 dark:text-foreground outline-none cursor-pointer hover:border-primary transition-all rounded-[var(--control-radius)]"
                 >
                   <option value="ALL">Toutes les Décisions</option>
                   <option value="ADMIS_PUR">Admis Pur (100% Validé)</option>
@@ -769,7 +769,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
             </div>
 
             {/* Quick Filter Pills Row */}
-            <div className="pt-3 border-t border-border dark:border-border flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="pt-3 border-t border-border flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[11px] font-bold text-slate-400">Filtrage Rapide :</span>
                 
@@ -779,7 +779,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
                     "px-3 py-1 rounded-xl font-bold text-[11px] transition-all cursor-pointer",
                     decisionFilter === 'ALL'
                       ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
-                      : "bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground hover:bg-slate-200"
+                      : "bg-muted dark:bg-card text-muted-foreground hover:bg-slate-200"
                   )}
                 >
                   Tous ({allStudents.length})
@@ -825,14 +825,14 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
                 </button>
               </div>
 
-              <span className="text-[11px] text-muted-foreground dark:text-muted-foreground font-bold">
+              <span className="text-[11px] text-muted-foreground font-bold">
                 Affichage de <strong>{filteredStudents.length}</strong> sur <strong>{allStudents.length}</strong> étudiants
               </span>
             </div>
           </div>
 
           {/* ── Interactive Promotion Roster Table (Ultra-Refined Design) ───── */}
-          <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl overflow-hidden shadow-sm">
+          <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl overflow-hidden shadow-sm">
             {isLoadingRoster ? (
               <div className="p-16 flex flex-col items-center justify-center gap-3 text-muted-foreground">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -841,14 +841,14 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
             ) : filteredStudents.length === 0 ? (
               <div className="p-16 text-center text-slate-400 space-y-2">
                 <Users className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-700" />
-                <p className="text-sm font-bold text-muted-foreground dark:text-muted-foreground">Aucun étudiant ne correspond aux critères de recherche.</p>
+                <p className="text-sm font-bold text-muted-foreground">Aucun étudiant ne correspond aux critères de recherche.</p>
                 <p className="text-xs">Essayez d'ajuster les filtres de décision ou de niveau.</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
-                    <tr className="border-b border-border dark:border-border bg-slate-50/90 dark:bg-slate-800/50 text-[11px] text-muted-foreground dark:text-muted-foreground uppercase font-bold tracking-wider">
+                    <tr className="border-b border-border bg-slate-50/90 dark:bg-slate-800/50 text-[11px] text-muted-foreground uppercase font-bold tracking-wider">
                       <th className="p-4 ps-6">Étudiant</th>
                       <th className="p-4">Transition de Niveau</th>
                       <th className="p-4 text-center">Moyenne Annuelle</th>
@@ -883,7 +883,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
                                 {st.first_name[0]}{st.last_name[0]}
                               </div>
                               <div>
-                                <p className="font-bold text-foreground dark:text-foreground text-sm">
+                                <p className="font-bold text-foreground text-sm">
                                   {st.full_name}
                                 </p>
                                 <div className="flex items-center gap-2 mt-0.5">
@@ -901,7 +901,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
                           {/* Level Transition Pathway */}
                           <td className="p-4">
                             <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted/50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/80 text-xs">
-                              <span className="font-bold text-muted-foreground dark:text-muted-foreground">
+                              <span className="font-bold text-muted-foreground">
                                 {st.current_level}
                               </span>
                               <ArrowRight className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -934,7 +934,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
                           {/* Validated Modules with Micro-Progress Track */}
                           <td className="p-4 text-center">
                             <div className="inline-flex flex-col items-center gap-1">
-                              <span className="font-bold text-foreground dark:text-foreground text-xs">
+                              <span className="font-bold text-foreground text-xs">
                                 {st.validated_modules} / {st.total_modules}
                               </span>
                               <div className="w-16 h-1.5 bg-muted dark:bg-card rounded-full overflow-hidden">
@@ -975,11 +975,11 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
                                       key={debt.module_id}
                                       className="flex items-center justify-between p-1.5 rounded-lg bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200/90 dark:border-amber-900/50 text-[11px]"
                                     >
-                                      <span className="font-bold text-foreground dark:text-foreground truncate max-w-[240px]">
+                                      <span className="font-bold text-foreground truncate max-w-[240px]">
                                         <strong className="text-amber-700 dark:text-amber-400 font-mono me-1">[{debt.code}]</strong>
                                         {debt.name}
                                       </span>
-                                      <span className="font-bold text-amber-700 dark:text-amber-300 bg-card dark:bg-card px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800 shrink-0 ms-2">
+                                      <span className="font-bold text-amber-700 dark:text-amber-300 bg-card px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800 shrink-0 ms-2">
                                         {debt.grade !== null ? `${debt.grade.toFixed(2)}/20` : 'ABS'}
                                       </span>
                                     </div>
@@ -1005,7 +1005,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
                                   <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
                                   {st.failed_modules_count} modules non validés
                                 </span>
-                                <p className="text-[10px] text-muted-foreground dark:text-muted-foreground font-medium">
+                                <p className="text-[10px] text-muted-foreground font-medium">
                                   Conservation de <strong>{st.validated_modules} modules acquis</strong>
                                 </p>
                               </div>
@@ -1065,15 +1065,15 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
         <div className="space-y-8 animate-fade-in">
           
           {/* Pre-Archiving Audit & Compliance Checklist Banner */}
-          <div className="bg-card dark:bg-card rounded-2xl p-6 border border-slate-200/80 dark:border-border shadow-sm space-y-4">
+          <div className="bg-card rounded-2xl p-6 border border-slate-200/80 dark:border-border shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400">
                   <CheckCircle2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-foreground dark:text-foreground">Checklist de Validation Pré-Clôture ({currentYearObj.label})</h2>
-                  <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">Contrôles préalables obligatoires avant le verrouillage APOGEE</p>
+                  <h2 className="text-base font-bold text-foreground">Checklist de Validation Pré-Clôture ({currentYearObj.label})</h2>
+                  <p className="text-xs text-muted-foreground font-medium">Contrôles préalables obligatoires avant le verrouillage APOGEE</p>
                 </div>
               </div>
               <span className="px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-200 dark:border-emerald-800">
@@ -1082,34 +1082,34 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-              <div className="p-3.5 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-border flex items-center gap-3">
+              <div className="p-3.5 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border flex items-center gap-3">
                 <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
                 <div>
-                  <p className="font-bold text-foreground dark:text-foreground">PVs de Délibération</p>
+                  <p className="font-bold text-foreground">PVs de Délibération</p>
                   <p className="text-[11px] text-slate-400">Tous signés & certifiés</p>
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-border flex items-center gap-3">
+              <div className="p-3.5 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border flex items-center gap-3">
                 <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
                 <div>
-                  <p className="font-bold text-foreground dark:text-foreground">Réclamations de Notes</p>
+                  <p className="font-bold text-foreground">Réclamations de Notes</p>
                   <p className="text-[11px] text-slate-400">0 réclamation en attente</p>
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-border flex items-center gap-3">
+              <div className="p-3.5 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border flex items-center gap-3">
                 <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
                 <div>
-                  <p className="font-bold text-foreground dark:text-foreground">Rachat Jury APOGEE</p>
+                  <p className="font-bold text-foreground">Rachat Jury APOGEE</p>
                   <p className="text-[11px] text-slate-400">Appliqué et vérifié</p>
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-border flex items-center gap-3">
+              <div className="p-3.5 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border flex items-center gap-3">
                 <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
                 <div>
-                  <p className="font-bold text-foreground dark:text-foreground">Quitus Formation Continue</p>
+                  <p className="font-bold text-foreground">Quitus Formation Continue</p>
                   <p className="text-[11px] text-slate-400">Comptabilité soldée</p>
                 </div>
               </div>
@@ -1119,17 +1119,17 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
           {/* Advanced Archiving Tools Suite */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
             {/* Tool 1: ZIP Archive Vault */}
-            <div className="bg-card dark:bg-card rounded-2xl p-6 border border-slate-200/80 dark:border-border shadow-sm space-y-4">
+            <div className="bg-card rounded-2xl p-6 border border-slate-200/80 dark:border-border shadow-sm space-y-4">
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-2xl bg-primary/5 dark:bg-indigo-950 text-primary dark:text-indigo-400">
                   <FolderArchive className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-foreground dark:text-foreground">Coffre ZIP PVs</h3>
+                  <h3 className="text-sm font-bold text-foreground">Coffre ZIP PVs</h3>
                   <p className="text-[11px] text-slate-400">Archives S1-S10</p>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground dark:text-muted-foreground leading-relaxed">
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 Exporter l'ensemble des procès-verbaux de délibérations signés sous forme d'archive compressée ZIP.
               </p>
               <button
@@ -1142,17 +1142,17 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
             </div>
 
             {/* Tool 2: Transition Email Notifications */}
-            <div className="bg-card dark:bg-card rounded-2xl p-6 border border-slate-200/80 dark:border-border shadow-sm space-y-4">
+            <div className="bg-card rounded-2xl p-6 border border-slate-200/80 dark:border-border shadow-sm space-y-4">
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400">
                   <Mail className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-foreground dark:text-foreground">Alertes Rentrée</h3>
+                  <h3 className="text-sm font-bold text-foreground">Alertes Rentrée</h3>
                   <p className="text-[11px] text-slate-400">Resend Gateway</p>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground dark:text-muted-foreground leading-relaxed">
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 Notifier automatiquement les étudiants admis de leur affectation dans le semestre supérieur.
               </p>
               <button
@@ -1165,17 +1165,17 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
             </div>
 
             {/* Tool 3: Alumni Auto Migration */}
-            <div className="bg-card dark:bg-card rounded-2xl p-6 border border-slate-200/80 dark:border-border shadow-sm space-y-4">
+            <div className="bg-card rounded-2xl p-6 border border-slate-200/80 dark:border-border shadow-sm space-y-4">
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400">
                   <Award className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-foreground dark:text-foreground">Registre des lauréats</h3>
+                  <h3 className="text-sm font-bold text-foreground">Registre des lauréats</h3>
                   <p className="text-[11px] text-slate-400">Fin de cursus et décision du jury</p>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground dark:text-muted-foreground leading-relaxed">
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 Vérifier les décisions annuelles scellées et finaliser les diplomations de chaque formation, y compris les masters.
               </p>
               <button
@@ -1188,17 +1188,17 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
             </div>
 
             {/* Tool 4: Cloud Cold Storage Sync */}
-            <div className="bg-card dark:bg-card rounded-2xl p-6 border border-slate-200/80 dark:border-border shadow-sm space-y-4">
+            <div className="bg-card rounded-2xl p-6 border border-slate-200/80 dark:border-border shadow-sm space-y-4">
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-2xl bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400">
                   <Cloud className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-foreground dark:text-foreground">Vault S3 Cloud</h3>
+                  <h3 className="text-sm font-bold text-foreground">Vault S3 Cloud</h3>
                   <p className="text-[11px] text-slate-400">Stockage Sécurisé</p>
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground dark:text-muted-foreground leading-relaxed">
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 Synchroniser les registres scellés avec le serveur de stockage sécurisé externe conforme CNDP.
               </p>
               <button
@@ -1212,13 +1212,13 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
           </div>
 
           {/* Historic Archives Registry Table */}
-          <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-sm space-y-6">
+          <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-sm space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h2 className="text-lg font-bold text-foreground dark:text-foreground tracking-tight">
+                <h2 className="text-lg font-bold text-foreground tracking-tight">
                   Registre Certifié des Archives Universitaires
                 </h2>
-                <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium mt-0.5">
+                <p className="text-xs text-muted-foreground font-medium mt-0.5">
                   Historique des années clôturées et scellées conformément au règlement APOGEE et CNDP
                 </p>
               </div>
@@ -1230,7 +1230,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
                   placeholder="Rechercher année (ex: 2024-2025)..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="ps-9 pe-3 py-1.5 bg-muted dark:bg-card border border-border dark:border-border text-xs font-bold text-foreground dark:text-foreground focus:ring-2 focus:ring-ring outline-none w-64 rounded-[var(--control-radius)]"
+                  className="ps-9 pe-3 py-1.5 bg-muted dark:bg-card border border-border text-xs font-bold text-foreground focus:ring-2 focus:ring-ring outline-none w-64 rounded-[var(--control-radius)]"
                 />
               </div>
             </div>
@@ -1238,7 +1238,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
-                  <tr className="border-b border-border dark:border-border bg-muted/50 dark:bg-slate-800/40">
+                  <tr className="border-b border-border bg-muted/50 dark:bg-slate-800/40">
                     <th className="p-4 font-bold text-slate-400 uppercase">Année Académique</th>
                     <th className="p-4 font-bold text-slate-400 uppercase">Effectif Étudiants</th>
                     <th className="p-4 font-bold text-slate-400 uppercase">Taux Admis / Diplômés</th>
@@ -1251,9 +1251,9 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
                 <tbody>
                   {filteredArchives.map((archive) => (
                     <tr key={archive.id} className="border-b border-border dark:border-slate-800/60 hover:bg-slate-50/50">
-                      <td className="p-4 font-bold text-foreground dark:text-foreground text-sm">
+                      <td className="p-4 font-bold text-foreground text-sm">
                         {archive.yearLabel}
-                        <span className="px-2.5 py-0.5 rounded-full bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground text-[10px] font-bold uppercase ms-2 border border-border dark:border-border">
+                        <span className="px-2.5 py-0.5 rounded-full bg-muted dark:bg-card text-muted-foreground text-[10px] font-bold uppercase ms-2 border border-border">
                           {archive.isLocked ? 'Archivée' : 'En cours'}
                         </span>
                       </td>
@@ -1277,7 +1277,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
                           <span>{archive.blockchainHash ? `${archive.blockchainHash.substring(0, 10)}...` : "Non ancré"}</span>
                         </button>
                       </td>
-                      <td className="p-4 font-bold text-muted-foreground dark:text-muted-foreground whitespace-nowrap">
+                      <td className="p-4 font-bold text-muted-foreground whitespace-nowrap">
                         {archive.archivedDate}
                       </td>
                       <td className="p-4">
@@ -1301,17 +1301,17 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
       {/* ── STUDENT DETAIL MODAL (Inspect Module Notes & Debt) ──────────────── */}
       {selectedStudentForDetail && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl max-w-2xl w-full p-6 shadow-sm space-y-6 animate-in zoom-in-95 duration-200 text-xs">
-            <div className="flex items-center justify-between pb-4 border-b border-border dark:border-border">
+          <div className="bg-card border border-border rounded-2xl max-w-2xl w-full p-6 shadow-sm space-y-6 animate-in zoom-in-95 duration-200 text-xs">
+            <div className="flex items-center justify-between pb-4 border-b border-border">
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-2xl bg-primary/5 dark:bg-indigo-950 text-primary dark:text-indigo-400">
                   <GraduationCap className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-foreground dark:text-foreground">
+                  <h3 className="text-lg font-bold text-foreground">
                     Bilan Académique Individuel • {selectedStudentForDetail.full_name}
                   </h3>
-                  <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">
+                  <p className="text-xs text-muted-foreground font-medium">
                     CNE : <strong className="text-primary font-mono">{selectedStudentForDetail.cne}</strong> • Filière : <strong>{selectedStudentForDetail.filiere_name}</strong>
                   </p>
                 </div>
@@ -1354,7 +1354,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
 
             {/* Dettes Breakdown */}
             <div className="space-y-2">
-              <h4 className="font-bold text-foreground dark:text-foreground text-xs flex items-center gap-2">
+              <h4 className="font-bold text-foreground text-xs flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-amber-500" />
                 <span>Situation des Dettes de Modules (À Rattraper)</span>
               </h4>
@@ -1376,7 +1376,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
                           <span className="font-mono font-bold text-amber-700 dark:text-amber-300">
                             [{debt.code}]
                           </span>
-                          <span className="font-bold text-foreground dark:text-foreground">
+                          <span className="font-bold text-foreground">
                             {debt.name}
                           </span>
                         </div>
@@ -1386,7 +1386,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
                       </div>
 
                       <div className="text-right">
-                        <span className="px-3 py-1 rounded-xl bg-card dark:bg-card font-bold text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800">
+                        <span className="px-3 py-1 rounded-xl bg-card font-bold text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800">
                           {debt.grade !== null ? `${debt.grade.toFixed(2)} / 20` : 'ABS'}
                         </span>
                         <p className="text-[10px] text-rose-500 font-bold mt-1">Non Validé</p>
@@ -1423,24 +1423,24 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
       {/* ── SIMULATION DRY-RUN MODAL (Pre-Rollover Analysis & Specialty Projection) ── */}
       {isSimulationModalOpen && simulationResult && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in overflow-y-auto">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl max-w-4xl w-full p-6 md:p-8 shadow-sm space-y-6 animate-in zoom-in-95 duration-200 text-xs my-8 max-h-[90vh] flex flex-col">
+          <div className="bg-card border border-border rounded-2xl max-w-4xl w-full p-6 md:p-8 shadow-sm space-y-6 animate-in zoom-in-95 duration-200 text-xs my-8 max-h-[90vh] flex flex-col">
             
             {/* Modal Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-border dark:border-border shrink-0">
+            <div className="flex items-center justify-between pb-4 border-b border-border shrink-0">
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400">
                   <Sparkles className="w-6 h-6" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-bold text-foreground dark:text-foreground">
+                    <h3 className="text-lg font-bold text-foreground">
                       Rapport de Simulation à Blanc • Transition {simulationResult.simulated_year_label}
                     </h3>
                     <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-bold text-[10px] border border-emerald-200 dark:border-emerald-800">
                       Mode Dry-Run (0 Écriture)
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">
+                  <p className="text-xs text-muted-foreground font-medium">
                     Calcul instantané des passages de semestres, des orientations en spécialités S5 et de la conservation des modules acquis.
                   </p>
                 </div>
@@ -1504,7 +1504,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
               {simulationResult.projected_specialties && Object.keys(simulationResult.projected_specialties).length > 0 && (
                 <div className="bg-muted/50 dark:bg-slate-800/40 border border-border dark:border-slate-700/60 rounded-2xl p-4 space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-foreground dark:text-foreground flex items-center gap-2">
+                    <h4 className="font-bold text-foreground flex items-center gap-2">
                       <Award className="w-4 h-4 text-primary" />
                       <span>Orientation Automatique des Spécialités S5 (Tronc Commun ➔ Spécialité)</span>
                     </h4>
@@ -1513,7 +1513,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
 
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                     {Object.entries(simulationResult.projected_specialties).map(([specCode, count]) => (
-                      <div key={specCode} className="p-3 rounded-xl bg-card dark:bg-card border border-slate-200/80 dark:border-border flex items-center justify-between">
+                      <div key={specCode} className="p-3 rounded-xl bg-card border border-slate-200/80 dark:border-border flex items-center justify-between">
                         <span className="font-bold text-primary dark:text-indigo-400 font-mono text-sm">
                           {specCode}
                         </span>
@@ -1529,14 +1529,14 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
               {/* Projected Groups Breakdown */}
               {simulationResult.projected_groups && Object.keys(simulationResult.projected_groups).length > 0 && (
                 <div className="bg-muted/50 dark:bg-slate-800/40 border border-border dark:border-slate-700/60 rounded-2xl p-4 space-y-3">
-                  <h4 className="font-bold text-foreground dark:text-foreground flex items-center gap-2">
+                  <h4 className="font-bold text-foreground flex items-center gap-2">
                     <Users className="w-4 h-4 text-emerald-600" />
                     <span>Groupes Pédagogiques & Cohortes Simulués pour {simulationResult.simulated_year_label}</span>
                   </h4>
 
                   <div className="flex flex-wrap gap-2">
                     {Object.entries(simulationResult.projected_groups).map(([groupName, count]) => (
-                      <span key={groupName} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-card dark:bg-card border border-border dark:border-border text-[11px] font-bold text-foreground dark:text-foreground">
+                      <span key={groupName} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-card border border-border text-[11px] font-bold text-foreground">
                         <strong className="text-primary">{groupName}</strong>: {count as number} étudiants
                       </span>
                     ))}
@@ -1547,7 +1547,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
               {/* Sample Projected Roster Preview */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-foreground dark:text-foreground">
+                  <h4 className="font-bold text-foreground">
                     Aperçu des Transitions Simulées (Échantillon de {Math.min(8, (simulationResult.simulated_roster || []).length)} étudiants)
                   </h4>
                   <span className="text-[10px] text-slate-400 font-bold">
@@ -1555,10 +1555,10 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
                   </span>
                 </div>
 
-                <div className="border border-border dark:border-border rounded-2xl overflow-hidden">
+                <div className="border border-border rounded-2xl overflow-hidden">
                   <table className="w-full text-left border-collapse text-[11px]">
                     <thead>
-                      <tr className="bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground font-bold">
+                      <tr className="bg-muted dark:bg-card text-muted-foreground font-bold">
                         <th className="p-2.5">CNE</th>
                         <th className="p-2.5">Nom Complet</th>
                         <th className="p-2.5">Niveau Actuel</th>
@@ -1571,7 +1571,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
                       {(simulationResult.simulated_roster || []).slice(0, 8).map((st: any) => (
                         <tr key={st.student_id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
                           <td className="p-2.5 font-mono font-bold text-primary">{st.cne}</td>
-                          <td className="p-2.5 font-bold text-foreground dark:text-foreground">{st.full_name}</td>
+                          <td className="p-2.5 font-bold text-foreground">{st.full_name}</td>
                           <td className="p-2.5 text-muted-foreground">{st.current_level}</td>
                           <td className="p-2.5 font-bold text-emerald-600 dark:text-emerald-400">{st.projected_level}</td>
                           <td className="p-2.5 font-bold text-slate-700 dark:text-foreground">{st.projected_filiere_code}</td>
@@ -1596,7 +1596,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
             </div>
 
             {/* Modal Footer Actions */}
-            <div className="flex items-center justify-between pt-4 border-t border-border dark:border-border shrink-0">
+            <div className="flex items-center justify-between pt-4 border-t border-border shrink-0">
               <button
                 onClick={() => setIsSimulationModalOpen(false)}
                 className="px-5 py-2.5 rounded-xl bg-muted dark:bg-card text-slate-700 dark:text-foreground font-bold cursor-pointer hover:bg-slate-200"
@@ -1623,18 +1623,18 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
       {/* ── INTERACTIVE ROLLOVER & ARCHIVING MODAL WIZARD ─────────────────── */}
       {isRolloverModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl max-w-xl w-full p-8 shadow-sm space-y-6 animate-in zoom-in-95 duration-200">
+          <div className="bg-card border border-border rounded-2xl max-w-xl w-full p-8 shadow-sm space-y-6 animate-in zoom-in-95 duration-200">
             
-            <div className="flex items-center justify-between pb-4 border-b border-border dark:border-border">
+            <div className="flex items-center justify-between pb-4 border-b border-border">
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-2xl bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-400">
                   <Archive className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-foreground dark:text-foreground">
+                  <h3 className="text-lg font-bold text-foreground">
                     Bascule APOGEE & Clôture {currentYearObj.label}
                   </h3>
-                  <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">Moteur officiel de transition académique LMD</p>
+                  <p className="text-xs text-muted-foreground font-medium">Moteur officiel de transition académique LMD</p>
                 </div>
               </div>
             </div>
@@ -1659,14 +1659,14 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
                     type="text"
                     value={nextYearLabel}
                     onChange={(e) => setNextYearLabel(e.target.value)}
-                    className="w-full h-11 px-4 bg-muted/50 dark:bg-card border border-border dark:border-border font-bold text-primary text-sm outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
+                    className="w-full h-11 px-4 bg-muted/50 dark:bg-card border border-border font-bold text-primary text-sm outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
                   />
                 </div>
 
                 {/* Secure Admin Password / Security Code Input */}
                 <div className="space-y-2 text-xs">
                   <div className="flex items-center justify-between">
-                    <label className="font-bold text-foreground dark:text-foreground flex items-center gap-1.5">
+                    <label className="font-bold text-foreground flex items-center gap-1.5">
                       <KeyRound className="w-4 h-4 text-primary dark:text-indigo-400" />
                       <span>Mot de passe du responsable connecté</span>
                       <span className="text-rose-500 font-bold">*</span>
@@ -1690,7 +1690,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
                         "w-full h-12 ps-4 pe-11 bg-muted/50 dark:bg-card border text-sm font-semibold outline-none transition-all rounded-[var(--control-radius)]",
                         securityError
                           ? "border-rose-500 text-rose-600 focus:ring-2 focus:ring-rose-400 rounded-[var(--control-radius)]"
-                          : "border-border dark:border-border text-foreground dark:text-foreground focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
+                          : "border-border text-foreground focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
                       )}
                     />
                     <button
@@ -1715,7 +1715,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
                   )}
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-4 border-t border-border dark:border-border">
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
                   <button
                     onClick={() => {
                       setIsRolloverModalOpen(false);
@@ -1760,7 +1760,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
                         {rolloverStep > s.step ? <Check className="w-4 h-4" /> : s.step}
                       </div>
                       <div>
-                        <p className={cn("font-bold", rolloverStep >= s.step ? "text-foreground dark:text-foreground" : "text-slate-400")}>
+                        <p className={cn("font-bold", rolloverStep >= s.step ? "text-foreground" : "text-slate-400")}>
                           {s.title}
                         </p>
                         <p className="text-[11px] text-slate-400">{s.desc}</p>
@@ -1792,13 +1792,13 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
       {/* ── UNSEAL DEBOGAGE DEAN AUTHORIZATION MODAL ────────────────────────── */}
       {isUnsealModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl max-w-lg w-full p-6 shadow-sm space-y-6 animate-in zoom-in-95 duration-200 text-xs">
-            <div className="flex items-center gap-3 pb-3 border-b border-border dark:border-border">
+          <div className="bg-card border border-border rounded-2xl max-w-lg w-full p-6 shadow-sm space-y-6 animate-in zoom-in-95 duration-200 text-xs">
+            <div className="flex items-center gap-3 pb-3 border-b border-border">
               <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400">
                 <Unlock className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-foreground dark:text-foreground">
+                <h3 className="text-base font-bold text-foreground">
                   Procédure Dérogatoire de Déverrouillage d'Archive
                 </h3>
                 <p className="text-[11px] text-slate-400">Décision du Doyen & Traçabilité CNDP obligatoire</p>
@@ -1821,7 +1821,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
                 value={unsealReason}
                 onChange={(e) => setUnsealReason(e.target.value)}
                 placeholder="Saisir la référence de la décision rectorale ou du PV de délibération rectificatif..."
-                className="w-full p-3 bg-muted/50 dark:bg-card border border-border dark:border-border font-medium text-foreground dark:text-foreground text-xs outline-none rounded-[var(--control-radius)]"
+                className="w-full p-3 bg-muted/50 dark:bg-card border border-border font-medium text-foreground text-xs outline-none rounded-[var(--control-radius)]"
               />
             </div>
 
@@ -1846,17 +1846,17 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
       {/* ── INSPECT ARCHIVE MODAL DRAWER ───────────────────────────────────── */}
       {selectedArchive && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl max-w-2xl w-full p-6 shadow-sm space-y-6 animate-in zoom-in-95 duration-200 text-xs">
-            <div className="flex items-center justify-between pb-4 border-b border-border dark:border-border">
+          <div className="bg-card border border-border rounded-2xl max-w-2xl w-full p-6 shadow-sm space-y-6 animate-in zoom-in-95 duration-200 text-xs">
+            <div className="flex items-center justify-between pb-4 border-b border-border">
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-2xl bg-primary/5 dark:bg-indigo-950 text-primary dark:text-indigo-400">
                   <Archive className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-foreground dark:text-foreground">
+                  <h3 className="text-lg font-bold text-foreground">
                     Registre d'Archive ENCG — {selectedArchive.yearLabel}
                   </h3>
-                  <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">Scellement numérique CNDP & Empreinte Horodatée</p>
+                  <p className="text-xs text-muted-foreground font-medium">Scellement numérique CNDP & Empreinte Horodatée</p>
                 </div>
               </div>
               <button
@@ -1870,7 +1870,7 @@ const { data: archivingResponse, refetch: refetchArchiving } = useQuery({
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-slate-700/60 space-y-1">
                 <p className="text-[10px] font-bold text-slate-400 uppercase">Effectif Total Inscrit</p>
-                <p className="text-lg font-bold text-foreground dark:text-foreground">{selectedArchive.studentsCount} Étudiants</p>
+                <p className="text-lg font-bold text-foreground">{selectedArchive.studentsCount} Étudiants</p>
               </div>
 
               <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-slate-700/60 space-y-1">

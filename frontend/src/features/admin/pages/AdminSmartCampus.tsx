@@ -203,8 +203,8 @@ export default function AdminSmartCampus() {
         {/* Right Column: Infrastructure Status & Live IoT Security Cameras */}
         <div className="space-y-6">
           {/* Infrastructure Controls Sidebar */}
-          <div className="bg-card dark:bg-card rounded-2xl border border-slate-200/80 dark:border-border shadow-sm p-6 space-y-6">
-            <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
+          <div className="bg-card rounded-2xl border border-slate-200/80 dark:border-border shadow-sm p-6 space-y-6">
+            <div className="flex items-center justify-between border-b border-border pb-4">
               <h3 className="text-base font-bold text-foreground dark:text-white flex items-center gap-2">
                 <Cpu className="w-5 h-5 text-primary dark:text-indigo-400" /> État des Capteurs IoT
               </h3>
@@ -235,8 +235,8 @@ export default function AdminSmartCampus() {
           </div>
 
           {/* IoT Live Security Cameras */}
-          <div className="bg-card dark:bg-card rounded-2xl border border-slate-200/80 dark:border-border shadow-sm p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-border dark:border-border pb-3">
+          <div className="bg-card rounded-2xl border border-slate-200/80 dark:border-border shadow-sm p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
                 <Video className="w-4 h-4 text-rose-500" /> Caméras de Sécurité (IoT AI)
               </h3>
@@ -308,8 +308,8 @@ export default function AdminSmartCampus() {
       {/* Modal Room Remote Control */}
       {selectedRoomControls && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-lg shadow-sm overflow-hidden">
-            <div className="p-6 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white flex items-center justify-between">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-lg shadow-sm overflow-hidden">
+            <div className="p-6 bg-gradient-to-r from-[#1a3673] to-blue-900 text-white flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200">Télécommande IoT à Distance</span>
                 <h2 className="text-lg font-bold">{selectedRoomControls.name}</h2>
@@ -351,7 +351,7 @@ export default function AdminSmartCampus() {
                 </div>
               </div>
             </div>
-            <div className="p-4 border-t border-border dark:border-border bg-muted/50 dark:bg-card flex justify-end">
+            <div className="p-4 border-t border-border bg-muted/50 dark:bg-card flex justify-end">
               <button 
                 onClick={() => setSelectedRoomControls(null)}
                 className="px-6 py-2.5 bg-slate-900 dark:bg-slate-700 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition-colors cursor-pointer"

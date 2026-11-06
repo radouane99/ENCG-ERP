@@ -72,7 +72,7 @@ export default function ProfessorRecommendationsPage() {
           {isLoading ? (
             <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
           ) : requests.length === 0 ? (
-            <div className="bg-card dark:bg-card rounded-2xl p-8 text-center border border-border dark:border-border text-slate-400 text-xs font-medium space-y-2">
+            <div className="bg-card rounded-2xl p-8 text-center border border-border text-slate-400 text-xs font-medium space-y-2">
               <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
               <p>Aucune demande en attente.</p>
             </div>
@@ -86,10 +86,10 @@ export default function ProfessorRecommendationsPage() {
                   setDeliveryMethod(req.delivery_method || 'both')
                 }}
                 className={cn(
-                  "bg-card dark:bg-card rounded-2xl p-5 border shadow-sm cursor-pointer transition-all space-y-3",
+                  "bg-card rounded-2xl p-5 border shadow-sm cursor-pointer transition-all space-y-3",
                   selectedRequest?.id === req.id
                     ? "border-primary ring-2 ring-indigo-500/20"
-                    : "border-border dark:border-border hover:border-primary/20"
+                    : "border-border hover:border-primary/20"
                 )}
               >
                 <div className="flex items-center justify-between">
@@ -124,7 +124,7 @@ export default function ProfessorRecommendationsPage() {
               <p className="text-xs">L'IA calculera le score d'éligibilité et générera le projet de lettre prêt à être signé.</p>
             </div>
           ) : (
-            <div className="bg-card dark:bg-card rounded-2xl border border-border dark:border-border p-6 space-y-6 shadow-sm">
+            <div className="bg-card rounded-2xl border border-border p-6 space-y-6 shadow-sm">
               
               {/* Header & Eligibility Badge */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-primary/5 dark:bg-indigo-950/40 rounded-2xl border border-primary/20 dark:border-primary">
@@ -148,7 +148,7 @@ export default function ProfessorRecommendationsPage() {
                   rows={10}
                   value={editedLetter}
                   onChange={e => setEditedLetter(e.target.value)}
-                  className="w-full p-4 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-medium leading-relaxed resize-none outline-none focus:ring-2 focus:ring-indigo-500/30 rounded-[var(--control-radius)]"
+                  className="w-full p-4 bg-muted/50 dark:bg-card border border-border text-xs font-medium leading-relaxed resize-none outline-none focus:ring-2 focus:ring-indigo-500/30 rounded-[var(--control-radius)]"
                 />
               </div>
 
@@ -168,7 +168,7 @@ export default function ProfessorRecommendationsPage() {
                         "px-4 py-2 rounded-2xl text-xs font-bold border transition-all cursor-pointer",
                         deliveryMethod === m.key
                           ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-muted/50 dark:bg-card text-muted-foreground dark:text-foreground border-border dark:border-border"
+                          : "bg-muted/50 dark:bg-card text-muted-foreground dark:text-foreground border-border"
                       )}
                     >
                       {m.label}

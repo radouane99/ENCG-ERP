@@ -23,9 +23,12 @@ class TimetableService
                 'schedules.day_of_week',
                 'schedules.start_time',
                 'schedules.end_time',
+                'schedules.module_id',
                 'modules.name as module_name',
                 DB::raw('NULL as module_color'),
+                'schedules.room_id',
                 'rooms.name as room_name',
+                'schedules.group_id',
                 'groups.name as group_name',
                 'schedules.professor_id',
                 DB::raw("COALESCE(users.first_name, 'Professeur') as prof_first_name"),
@@ -41,6 +44,10 @@ class TimetableService
             $query->where('schedules.group_id', $filters['group_id']);
         }
 
+        if (! empty($filters['filiere_id'])) {
+            $query->where('groups.filiere_id', $filters['filiere_id']);
+        }
+
         if (! empty($filters['professor_id'])) {
             $query->where('schedules.professor_id', $filters['professor_id']);
         }
@@ -49,6 +56,10 @@ class TimetableService
             $query->where('schedules.room_id', $filters['room_id']);
         }
 
-        return $query->get();
+        return $query->get()->map(function ($row) {
+            $row->professor_name = trim(($row->prof_first_name ?? '').' '.($row->prof_last_name ?? ''));
+
+            return $row;
+        });
     }
 }

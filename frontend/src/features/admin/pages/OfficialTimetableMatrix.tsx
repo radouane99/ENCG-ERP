@@ -85,7 +85,7 @@ function SectionTable({ section, searchQuery, coursStart, tdTpStart, onOpenConfi
               </span>
             )}
           </div>
-          <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground flex items-center gap-2">
+          <p className="text-xs font-medium text-muted-foreground flex items-center gap-2">
             <span>{section.filiere_name}</span>
             <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span>
             <span className="font-bold text-slate-700 dark:text-foreground">{section.semester_label}</span>
@@ -141,7 +141,7 @@ function SectionTable({ section, searchQuery, coursStart, tdTpStart, onOpenConfi
         <button
           type="button"
           onClick={onOpenConfig}
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-card dark:bg-card hover:bg-muted dark:hover:bg-slate-700 text-[11px] font-bold text-slate-700 dark:text-foreground border border-slate-200/80 dark:border-border transition-all cursor-pointer shadow-2xs hover:shadow-xs group"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-card hover:bg-muted dark:hover:bg-slate-700 text-[11px] font-bold text-slate-700 dark:text-foreground border border-slate-200/80 dark:border-border transition-all cursor-pointer shadow-2xs hover:shadow-xs group"
           title="Modifier les dates officielles de démarrage pour l'affichage et l'export PDF"
         >
           <Settings className="w-3.5 h-3.5 text-primary dark:text-blue-400 group-hover:rotate-45 transition-transform" />
@@ -150,7 +150,7 @@ function SectionTable({ section, searchQuery, coursStart, tdTpStart, onOpenConfi
       </div>
 
       {/* ─── TABLE DE LA GRILLE OFFICIELLE ─── */}
-      <div className="overflow-hidden border border-slate-200/80 dark:border-slate-700/80 rounded-2xl bg-card dark:bg-card shadow-sm">
+      <div className="overflow-hidden border border-slate-200/80 dark:border-slate-700/80 rounded-2xl bg-card shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1020px] border-collapse text-[11px] table-fixed">
             <colgroup>
@@ -166,7 +166,7 @@ function SectionTable({ section, searchQuery, coursStart, tdTpStart, onOpenConfi
               <col style={{ width: '11%' }} />
             </colgroup>
             <thead>
-              <tr className="bg-gradient-to-r from-[#001A4B] via-[#07255E] to-[#0A1833] text-white">
+              <tr className="bg-gradient-to-r from-[#1a3673] via-[#07255E] to-[#0A1833] text-white">
                 <th className="py-3 px-2 font-bold text-center text-[10.5px] uppercase tracking-wider text-blue-100 border-r border-white/10">Semestre</th>
                 <th className="py-3 px-2 font-bold text-center text-[10.5px] uppercase tracking-wider text-blue-100 border-r border-white/10">Modules</th>
                 <th className="py-3 px-2 font-bold text-center text-[10.5px] uppercase tracking-wider text-blue-100 border-r border-white/10">Éléments de modules</th>
@@ -206,7 +206,7 @@ function SectionTable({ section, searchQuery, coursStart, tdTpStart, onOpenConfi
                       >
                         <div className="inline-flex flex-col items-center justify-center p-2.5 rounded-2xl bg-gradient-to-b from-blue-600/15 via-indigo-600/10 to-blue-600/15 dark:from-blue-500/20 dark:to-indigo-500/20 border border-blue-200/70 dark:border-blue-800/50 shadow-2xs">
                           <GraduationCap className="w-5 h-5 text-primary dark:text-blue-300 mb-1" />
-                          <span className="font-bold text-xs text-[#001A4B] dark:text-blue-200 leading-tight">
+                          <span className="font-bold text-xs text-[#1a3673] dark:text-blue-200 leading-tight">
                             {section.semester_label}
                           </span>
                         </div>
@@ -222,7 +222,7 @@ function SectionTable({ section, searchQuery, coursStart, tdTpStart, onOpenConfi
                           <span className="w-5 h-5 rounded-full bg-primary/10 dark:bg-blue-900/60 text-primary dark:text-blue-300 text-[10px] font-bold flex items-center justify-center shrink-0 border border-blue-200/80 dark:border-primary shadow-2xs">
                             {row.module_index}
                           </span>
-                          <span className="font-bold text-foreground dark:text-foreground text-left leading-snug">
+                          <span className="font-bold text-foreground text-left leading-snug">
                             {row.module_name}
                           </span>
                         </div>
@@ -321,7 +321,7 @@ function SectionTable({ section, searchQuery, coursStart, tdTpStart, onOpenConfi
                             <span>{row.room_label}</span>
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10.5px] font-bold bg-muted dark:bg-card text-foreground dark:text-foreground border border-border dark:border-border shadow-2xs">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[10.5px] font-bold bg-muted dark:bg-card text-foreground border border-border shadow-2xs">
                             <DoorOpen className="w-3 h-3 text-muted-foreground shrink-0" />
                             <span>{row.room_label}</span>
                           </span>
@@ -352,9 +352,9 @@ function SectionTable({ section, searchQuery, coursStart, tdTpStart, onOpenConfi
           <Building2 className="w-4 h-4 text-amber-600 shrink-0" />
           <span className="text-[10px] font-semibold text-slate-700 dark:text-foreground">Amphithéâtre / Salle</span>
         </div>
-        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-border dark:border-border">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 border border-border">
           <Clock className="w-4 h-4 text-slate-400 shrink-0" />
-          <span className="text-[10px] font-semibold text-muted-foreground dark:text-muted-foreground">Norme mono-shift ENCG</span>
+          <span className="text-[10px] font-semibold text-muted-foreground">Norme mono-shift ENCG</span>
         </div>
       </div>
 
@@ -435,9 +435,9 @@ export default function OfficialTimetableMatrix({ matrix }: { matrix: any }) {
 
   if (!matrix) {
     return (
-      <div className="py-16 text-center space-y-3 bg-card dark:bg-card rounded-2xl border border-border dark:border-border p-8">
+      <div className="py-16 text-center space-y-3 bg-card rounded-2xl border border-border p-8">
         <Layers className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto animate-pulse" />
-        <p className="text-sm font-bold text-muted-foreground dark:text-muted-foreground">
+        <p className="text-sm font-bold text-muted-foreground">
           Chargement de la matrice officielle des emplois du temps (toutes filières / semestres)...
         </p>
       </div>
@@ -448,9 +448,9 @@ export default function OfficialTimetableMatrix({ matrix }: { matrix: any }) {
 
   if (sections.length === 0) {
     return (
-      <div className="py-16 text-center space-y-3 bg-card dark:bg-card rounded-2xl border border-border dark:border-border p-8">
+      <div className="py-16 text-center space-y-3 bg-card rounded-2xl border border-border p-8">
         <Calendar className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto" />
-        <p className="text-sm font-bold text-muted-foreground dark:text-muted-foreground">
+        <p className="text-sm font-bold text-muted-foreground">
           Aucune séance pour ce filtre. Choisissez une autre filière ou un autre semestre (S1–S10).
         </p>
       </div>
@@ -471,7 +471,7 @@ export default function OfficialTimetableMatrix({ matrix }: { matrix: any }) {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Rechercher par module, enseignant, salle, créneau..."
-            className="w-full pl-10 pr-8 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-semibold text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/20 shadow-2xs transition-all rounded-[var(--control-radius)]"
+            className="w-full pl-10 pr-8 py-2.5 bg-muted/50 dark:bg-card border border-border text-xs font-semibold text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/20 shadow-2xs transition-all rounded-[var(--control-radius)]"
           />
           {searchQuery && (
             <button
@@ -535,10 +535,10 @@ export default function OfficialTimetableMatrix({ matrix }: { matrix: any }) {
       {/* ─── MODAL DE CONFIGURATION DES DATES OFFICIELLES ─── */}
       {isConfigOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-150">
-          <div className="bg-card dark:bg-card rounded-2xl border border-border dark:border-border p-6 max-w-md w-full shadow-sm space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-border dark:border-border">
+          <div className="bg-card rounded-2xl border border-border p-6 max-w-md w-full shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2.5">
-                <div className="p-2.5 rounded-2xl bg-primary/5 dark:bg-blue-950/60 text-[#0f2863] dark:text-blue-400 border border-primary/20 dark:border-blue-900/50">
+                <div className="p-2.5 rounded-2xl bg-primary/5 dark:bg-blue-950/60 text-[#1a3673] dark:text-blue-400 border border-primary/20 dark:border-blue-900/50">
                   <Calendar className="w-5 h-5" />
                 </div>
                 <div>
@@ -565,7 +565,7 @@ export default function OfficialTimetableMatrix({ matrix }: { matrix: any }) {
                   value={tempCoursStart}
                   onChange={(e) => setTempCoursStart(e.target.value)}
                   placeholder="JJ/MM/AAAA"
-                  className="w-full px-3.5 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-foreground dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs rounded-[var(--control-radius)]"
+                  className="w-full px-3.5 py-2.5 bg-muted/50 dark:bg-card border border-border text-xs font-bold text-foreground dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs rounded-[var(--control-radius)]"
                 />
                 <span className="text-[10.5px] text-slate-400 italic">Format : JJ/MM/AAAA</span>
               </div>
@@ -579,13 +579,13 @@ export default function OfficialTimetableMatrix({ matrix }: { matrix: any }) {
                   value={tempTdTpStart}
                   onChange={(e) => setTempTdTpStart(e.target.value)}
                   placeholder="JJ/MM/AAAA"
-                  className="w-full px-3.5 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-foreground dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs rounded-[var(--control-radius)]"
+                  className="w-full px-3.5 py-2.5 bg-muted/50 dark:bg-card border border-border text-xs font-bold text-foreground dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-2xs rounded-[var(--control-radius)]"
                 />
                 <span className="text-[10.5px] text-slate-400 italic">Format : JJ/MM/AAAA</span>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border dark:border-border">
+            <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border">
               <button
                 type="button"
                 onClick={() => setIsConfigOpen(false)}
@@ -597,7 +597,7 @@ export default function OfficialTimetableMatrix({ matrix }: { matrix: any }) {
                 type="button"
                 disabled={isSavingDates || !tempCoursStart.trim() || !tempTdTpStart.trim()}
                 onClick={handleSaveDates}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#0f2863] hover:bg-[#1a3a8a] text-white transition-all shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#1a3673] hover:bg-[#1a3a8a] text-white transition-all shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 <Check className="w-3.5 h-3.5" />
                 <span>{isSavingDates ? 'Enregistrement...' : 'Enregistrer & Appliquer'}</span>

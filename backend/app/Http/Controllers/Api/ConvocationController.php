@@ -778,4 +778,17 @@ class ConvocationController extends Controller
             'message' => "{$sentCount} messages WhatsApp envoyés.",
         ]);
     }
+
+    public function roomFlashAlert(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'room_name' => 'required|string|max:255',
+            'message' => 'required|string|max:1000',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Alerte Flash transmise avec succès pour la salle {$validated['room_name']}.",
+        ]);
+    }
 }

@@ -149,7 +149,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
       ctx.lineWidth = 2.5;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      ctx.strokeStyle = '#001A4B';
+      ctx.strokeStyle = '#1a3673';
     }
     return ctx;
   };
@@ -217,7 +217,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.font = 'italic 34px "Brush Script MT", "Segoe Script", "Dancing Script", cursive, sans-serif';
-    ctx.fillStyle = '#001A4B';
+    ctx.fillStyle = '#1a3673';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -225,7 +225,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
 
     ctx.beginPath();
     ctx.lineWidth = 2;
-    ctx.strokeStyle = '#001A4B';
+    ctx.strokeStyle = '#1a3673';
     ctx.moveTo(canvas.width / 2 - 100, canvas.height / 2 + 25);
     ctx.bezierCurveTo(
       canvas.width / 2 - 40, canvas.height / 2 + 35,
@@ -276,14 +276,14 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
   const statutoryPercent = Math.min(100, Math.round((stats.statutory_hours_done / (stats.statutory_hours_total || 240)) * 100));
 
   return (
-    <div className="space-y-6 font-sans animate-in fade-in duration-500 text-foreground dark:text-foreground pb-16 max-w-[1600px] mx-auto p-2">
+    <div className="space-y-6 font-sans animate-in fade-in duration-500 text-foreground pb-16 max-w-[1600px] mx-auto p-2">
       <UserActionCenter actor="professor" />
 
       {/* ── Top Header Bar (Breadcrumb & Live Actions) ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-1">
         <div>
           <div className="flex items-center gap-2.5">
-            <h1 className="text-[#001A4B] dark:text-white flex items-center gap-2 erp-page-title">
+            <h1 className="text-[#1a3673] dark:text-white flex items-center gap-2 erp-page-title">
               Cockpit Enseignant-Chercheur
             </h1>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
@@ -291,7 +291,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
               Connecté
             </span>
           </div>
-          <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5 font-medium">
+          <p className="text-xs text-muted-foreground mt-0.5 font-medium">
             École Nationale de Commerce et de Gestion de Fès · Année 2026–2027 · {currentDate}
           </p>
         </div>
@@ -300,7 +300,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
           <button
             onClick={() => refetch()}
             disabled={isFetching}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-slate-700 dark:text-foreground shadow-2xs hover:bg-muted/50 transition-all cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-card border border-border text-xs font-bold text-slate-700 dark:text-foreground shadow-2xs hover:bg-muted/50 transition-all cursor-pointer"
             title="Actualiser les données"
           >
             <RefreshCcw className={cn("w-3.5 h-3.5 text-primary", isFetching && "animate-spin")} />
@@ -309,7 +309,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
 
           <Link
             to="/professor/schedules"
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#001A4B] hover:bg-[#082663] text-white text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#1a3673] hover:bg-[#082663] text-white text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer"
           >
             <Calendar className="w-3.5 h-3.5 text-amber-300" />
             <span>Mon Emploi du Temps</span>
@@ -318,7 +318,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
       </div>
 
       {/* ── Executive Professor Hero Identity Card (Compact & Integrated) ── */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#001A4B] via-[#092868] to-[#041233] text-white p-5 sm:p-7 shadow-sm border border-white/10">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a3673] via-[#092868] to-[#041233] text-white p-5 sm:p-7 shadow-sm border border-white/10">
         <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -mr-16 -mt-16"></div>
         <div className="absolute bottom-0 left-1/3 w-56 h-56 bg-amber-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
@@ -327,11 +327,11 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
           <div className="flex items-center gap-4 sm:gap-5">
             <div className="relative shrink-0">
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-tr from-amber-400 via-amber-500 to-amber-300 p-0.5 shadow-lg flex items-center justify-center">
-                <div className="w-full h-full bg-[#001A4B] rounded-[14px] flex items-center justify-center font-bold text-xl sm:text-2xl text-amber-300 tracking-wider">
+                <div className="w-full h-full bg-[#1a3673] rounded-[14px] flex items-center justify-center font-bold text-xl sm:text-2xl text-amber-300 tracking-wider">
                   {profInitials}
                 </div>
               </div>
-              <span className="absolute -bottom-1 -right-1 bg-emerald-500 border-2 border-[#001A4B] w-4 h-4 rounded-full" title="Session Active"></span>
+              <span className="absolute -bottom-1 -right-1 bg-emerald-500 border-2 border-[#1a3673] w-4 h-4 rounded-full" title="Session Active"></span>
             </div>
 
             <div className="space-y-1">
@@ -384,7 +384,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowSignModal(true)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-amber-400 text-[#001A4B] hover:bg-amber-300 hover:scale-102 shadow-lg transition-all flex items-center gap-2 cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-amber-400 text-[#1a3673] hover:bg-amber-300 hover:scale-102 shadow-lg transition-all flex items-center gap-2 cursor-pointer"
                 >
                   <FileSignature className="w-4 h-4" />
                   <span>Signer l’Ordre de Service</span>
@@ -414,21 +414,21 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
       {isLoading ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
           {[1, 2, 3, 4].map((n) => (
-            <div key={n} className="h-32 bg-muted dark:bg-slate-800/60 rounded-2xl border border-border dark:border-border" />
+            <div key={n} className="h-32 bg-muted dark:bg-slate-800/60 rounded-2xl border border-border" />
           ))}
         </div>
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
           {/* Card 1: Modules Attribués */}
-          <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-xs border border-border dark:border-border relative overflow-hidden group hover:shadow-md transition-all">
+          <div className="bg-card rounded-2xl p-5 shadow-xs border border-border relative overflow-hidden group hover:shadow-md transition-all">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Modules Attribués</span>
               <span className="p-2 rounded-xl bg-primary/5 dark:bg-blue-950/60 text-primary dark:text-blue-400">
                 <BookOpen className="w-4 h-4" />
               </span>
             </div>
-            <div className="text-2xl sm:text-3xl font-bold text-[#001A4B] dark:text-white mt-2">
+            <div className="text-2xl sm:text-3xl font-bold text-[#1a3673] dark:text-white mt-2">
               {stats.total_modules}
             </div>
             <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mt-2 flex items-center gap-1.5">
@@ -438,14 +438,14 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
           </div>
 
           {/* Card 2: Total Étudiants */}
-          <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-xs border border-border dark:border-border relative overflow-hidden group hover:shadow-md transition-all">
+          <div className="bg-card rounded-2xl p-5 shadow-xs border border-border relative overflow-hidden group hover:shadow-md transition-all">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Étudiants Suivis</span>
               <span className="p-2 rounded-xl bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-400">
                 <Users className="w-4 h-4" />
               </span>
             </div>
-            <div className="text-2xl sm:text-3xl font-bold text-[#001A4B] dark:text-white mt-2">
+            <div className="text-2xl sm:text-3xl font-bold text-[#1a3673] dark:text-white mt-2">
               {stats.total_students}
             </div>
             <div className="text-[10px] font-bold text-primary dark:text-indigo-400 uppercase tracking-widest mt-2 flex items-center gap-1.5">
@@ -455,7 +455,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
           </div>
 
           {/* Card 3: Notes Apogée en Attente */}
-          <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-xs border border-border dark:border-border relative overflow-hidden group hover:shadow-md transition-all">
+          <div className="bg-card rounded-2xl p-5 shadow-xs border border-border relative overflow-hidden group hover:shadow-md transition-all">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Notes à Saisir</span>
               <span className={cn(
@@ -483,7 +483,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
           </div>
 
           {/* Card 4: Charge Statutaire RH */}
-          <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-xs border border-border dark:border-border relative overflow-hidden group hover:shadow-md transition-all">
+          <div className="bg-card rounded-2xl p-5 shadow-xs border border-border relative overflow-hidden group hover:shadow-md transition-all">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Charge Statutaire</span>
               <span className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600">
@@ -508,7 +508,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
         <Link
           to="/professor/absences"
-          className="flex items-center gap-2.5 p-3 rounded-xl bg-card dark:bg-card border border-border dark:border-border hover:border-blue-500/40 shadow-2xs hover:shadow-sm transition-all group cursor-pointer"
+          className="flex items-center gap-2.5 p-3 rounded-xl bg-card border border-border hover:border-blue-500/40 shadow-2xs hover:shadow-sm transition-all group cursor-pointer"
         >
           <div className="w-8 h-8 rounded-lg bg-primary/5 dark:bg-blue-950/60 text-primary dark:text-blue-300 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
             <UserX className="w-4 h-4" />
@@ -521,7 +521,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
 
         <Link
           to="/admin/grades"
-          className="flex items-center gap-2.5 p-3 rounded-xl bg-card dark:bg-card border border-border dark:border-border hover:border-emerald-500/40 shadow-2xs hover:shadow-sm transition-all group cursor-pointer"
+          className="flex items-center gap-2.5 p-3 rounded-xl bg-card border border-border hover:border-emerald-500/40 shadow-2xs hover:shadow-sm transition-all group cursor-pointer"
         >
           <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
             <Zap className="w-4 h-4" />
@@ -534,7 +534,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
 
         <Link
           to="/professor/schedules"
-          className="flex items-center gap-2.5 p-3 rounded-xl bg-card dark:bg-card border border-border dark:border-border hover:border-amber-500/40 shadow-2xs hover:shadow-sm transition-all group cursor-pointer"
+          className="flex items-center gap-2.5 p-3 rounded-xl bg-card border border-border hover:border-amber-500/40 shadow-2xs hover:shadow-sm transition-all group cursor-pointer"
         >
           <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
             <Calendar className="w-4 h-4" />
@@ -547,7 +547,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
 
         <Link
           to="/professor/proctoring"
-          className="flex items-center gap-2.5 p-3 rounded-xl bg-card dark:bg-card border border-border dark:border-border hover:border-purple-500/40 shadow-2xs hover:shadow-sm transition-all group cursor-pointer"
+          className="flex items-center gap-2.5 p-3 rounded-xl bg-card border border-border hover:border-purple-500/40 shadow-2xs hover:shadow-sm transition-all group cursor-pointer"
         >
           <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
             <Eye className="w-4 h-4" />
@@ -560,7 +560,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
 
         <Link
           to="/professor/voice-textbook"
-          className="flex items-center gap-2.5 p-3 rounded-xl bg-card dark:bg-card border border-border dark:border-border hover:border-rose-500/40 shadow-2xs hover:shadow-sm transition-all group cursor-pointer"
+          className="flex items-center gap-2.5 p-3 rounded-xl bg-card border border-border hover:border-rose-500/40 shadow-2xs hover:shadow-sm transition-all group cursor-pointer"
         >
           <div className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
             <Mic className="w-4 h-4" />
@@ -573,7 +573,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
 
         <Link
           to="/professor/rooms/availability"
-          className="flex items-center gap-2.5 p-3 rounded-xl bg-card dark:bg-card border border-border dark:border-border hover:border-teal-500/40 shadow-2xs hover:shadow-sm transition-all group cursor-pointer"
+          className="flex items-center gap-2.5 p-3 rounded-xl bg-card border border-border hover:border-teal-500/40 shadow-2xs hover:shadow-sm transition-all group cursor-pointer"
         >
           <div className="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
             <MapPin className="w-4 h-4" />
@@ -592,10 +592,10 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
         <div className="lg:col-span-2 space-y-6">
 
           {/* Section 1: Scheduled Classes & Schedule */}
-          <div className="bg-card dark:bg-card rounded-2xl p-5 sm:p-6 shadow-xs border border-border dark:border-border space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-border dark:border-border">
+          <div className="bg-card rounded-2xl p-5 sm:p-6 shadow-xs border border-border space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
               <div>
-                <h2 className="text-base font-bold text-[#001A4B] dark:text-white flex items-center gap-2">
+                <h2 className="text-base font-bold text-[#1a3673] dark:text-white flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-primary" />
                   <span>Séances Programmées & Emploi du Temps</span>
                 </h2>
@@ -612,7 +612,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
             </div>
 
             {stats.next_classes.length === 0 ? (
-              <div className="py-10 px-4 text-center rounded-2xl bg-muted/50 dark:bg-slate-800/30 border border-dashed border-border dark:border-border">
+              <div className="py-10 px-4 text-center rounded-2xl bg-muted/50 dark:bg-slate-800/30 border border-dashed border-border">
                 <Calendar className="w-8 h-8 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
                 <p className="text-xs font-bold text-muted-foreground dark:text-foreground">Aucune séance planifiée dans l'immédiat.</p>
                 <p className="text-[11px] text-slate-400 mt-0.5">Votre planning d'enseignement est synchronisé avec l'emploi du temps officiel ENCG.</p>
@@ -622,14 +622,14 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
                 {stats.next_classes.map((cls, i) => (
                   <div
                     key={i}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/40 border border-border dark:border-border hover:border-blue-400 transition-all"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/40 border border-border hover:border-blue-400 transition-all"
                   >
                     <div className="flex items-start gap-3.5">
-                      <div className="flex flex-col items-center justify-center w-14 h-14 bg-card dark:bg-card rounded-xl shadow-2xs text-center border border-border dark:border-border shrink-0">
+                      <div className="flex flex-col items-center justify-center w-14 h-14 bg-card rounded-xl shadow-2xs text-center border border-border shrink-0">
                         <span className="text-[11px] font-bold text-primary dark:text-blue-300 leading-tight">
                           {cls.day_name ? cls.day_name.slice(0, 3).toUpperCase() : 'JOUR'}
                         </span>
-                        <span className="text-[10px] font-mono font-bold text-muted-foreground dark:text-muted-foreground mt-0.5">
+                        <span className="text-[10px] font-mono font-bold text-muted-foreground mt-0.5">
                           {cls.time ? cls.time.split(' - ')[0] : '10:30'}
                         </span>
                       </div>
@@ -658,7 +658,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
                     <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
                       <button
                         onClick={() => setActiveScannerSession(cls)}
-                        className="px-4 py-2 bg-[#001A4B] hover:bg-[#082663] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-colors shadow-xs cursor-pointer flex items-center gap-1.5"
+                        className="px-4 py-2 bg-[#1a3673] hover:bg-[#082663] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-colors shadow-xs cursor-pointer flex items-center gap-1.5"
                       >
                         <QrCode className="w-3.5 h-3.5 text-amber-300" />
                         <span>Faire l'Appel</span>
@@ -671,10 +671,10 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
           </div>
 
           {/* Section 2: Teaching Modules & Syllabus Progress */}
-          <div className="bg-card dark:bg-card rounded-2xl p-5 sm:p-6 shadow-xs border border-border dark:border-border space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-border dark:border-border">
+          <div className="bg-card rounded-2xl p-5 sm:p-6 shadow-xs border border-border space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
               <div>
-                <h2 className="text-base font-bold text-[#001A4B] dark:text-white flex items-center gap-2">
+                <h2 className="text-base font-bold text-[#1a3673] dark:text-white flex items-center gap-2">
                   <BookOpen className="w-5 h-5 text-primary" />
                   <span>Modules Attribués & Avancement Pédagogique</span>
                 </h2>
@@ -694,14 +694,14 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
                 {stats.modules_list.map((mod) => (
                   <div
                     key={mod.id}
-                    className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/40 border border-border dark:border-border space-y-3 hover:border-indigo-400 transition-all"
+                    className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/40 border border-border space-y-3 hover:border-indigo-400 transition-all"
                   >
                     <div className="flex justify-between items-start">
                       <div className="space-y-1">
                         <span className="font-mono text-[10px] font-bold text-primary dark:text-indigo-300 bg-primary/5 dark:bg-indigo-950 px-2 py-0.5 rounded border border-primary/20 dark:border-primary">
                           {mod.code}
                         </span>
-                        <h3 className="font-bold text-xs text-foreground dark:text-foreground pt-0.5">
+                        <h3 className="font-bold text-xs text-foreground pt-0.5">
                           {mod.name}
                         </h3>
                         <p className="text-[11px] text-muted-foreground font-medium">
@@ -752,13 +752,13 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
         <div className="space-y-6">
 
           {/* Widget 1: Encadrements PFE & Stages */}
-          <div className="bg-card dark:bg-card rounded-2xl p-5 sm:p-6 shadow-xs border border-border dark:border-border space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-border dark:border-border">
+          <div className="bg-card rounded-2xl p-5 sm:p-6 shadow-xs border border-border space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
                   Encadrements PFE & Stages
                 </h3>
-                <p className="text-xs font-bold text-foreground dark:text-foreground mt-0.5">
+                <p className="text-xs font-bold text-foreground mt-0.5">
                   {stats.pfe_list.length} étudiant(s) tutoré(s)
                 </p>
               </div>
@@ -768,9 +768,9 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
             </div>
 
             {stats.pfe_list.length === 0 ? (
-              <div className="py-6 text-center px-4 rounded-2xl bg-muted/50 dark:bg-slate-800/30 border border-dashed border-border dark:border-border">
+              <div className="py-6 text-center px-4 rounded-2xl bg-muted/50 dark:bg-slate-800/30 border border-dashed border-border">
                 <GraduationCap className="w-7 h-7 text-slate-300 dark:text-slate-600 mx-auto mb-1.5" />
-                <p className="text-xs font-bold text-muted-foreground dark:text-muted-foreground">Aucun encadrement PFE actif</p>
+                <p className="text-xs font-bold text-muted-foreground">Aucun encadrement PFE actif</p>
                 <p className="text-[10px] text-slate-400 mt-0.5">Les soutenances et mémoires attribués s'afficheront ici.</p>
               </div>
             ) : (
@@ -778,7 +778,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
                 {stats.pfe_list.map((pfe) => (
                   <div
                     key={pfe.id}
-                    className="p-3 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border space-y-1"
+                    className="p-3 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border space-y-1"
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-xs text-foreground dark:text-white">{pfe.student_name}</span>
@@ -804,7 +804,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
 
             <Link
               to="/professor/pfe-evaluation"
-              className="block w-full text-center bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-foreground dark:text-foreground font-bold text-xs py-2.5 rounded-xl uppercase tracking-wider transition-colors"
+              className="block w-full text-center bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-foreground font-bold text-xs py-2.5 rounded-xl uppercase tracking-wider transition-colors"
             >
               Accéder aux Grilles PFE →
             </Link>
@@ -812,7 +812,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
 
           {/* Widget 2: Convocations de Surveillance */}
           {stats.surveillances && stats.surveillances.length > 0 && (
-            <div className="bg-card dark:bg-card rounded-2xl p-5 sm:p-6 shadow-xs border border-purple-200 dark:border-purple-900/40 space-y-3">
+            <div className="bg-card rounded-2xl p-5 sm:p-6 shadow-xs border border-purple-200 dark:border-purple-900/40 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300">
                   Surveillance d'Examens
@@ -825,7 +825,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
                 <h4 className="text-xs font-bold text-foreground dark:text-white">
                   {stats.surveillances[0]?.session_name || "Session d'Examens"}
                 </h4>
-                <p className="text-xs text-muted-foreground dark:text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {stats.surveillances[0]?.module_name} · {stats.surveillances[0]?.date} ({stats.surveillances[0]?.time})
                 </p>
                 <p className="text-[11px] text-purple-600 dark:text-purple-400 font-mono font-bold">
@@ -836,7 +836,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
           )}
 
           {/* Widget 3: Suite d'Excellence & IA ENCG */}
-          <div className="bg-gradient-to-br from-indigo-950 via-[#001A4B] to-slate-950 text-white rounded-2xl p-5 sm:p-6 shadow-lg border border-indigo-500/20 space-y-4">
+          <div className="bg-gradient-to-br from-indigo-950 via-[#1a3673] to-slate-950 text-white rounded-2xl p-5 sm:p-6 shadow-lg border border-indigo-500/20 space-y-4">
             <div className="flex items-center justify-between">
               <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-purple-500/30 text-purple-200 border border-purple-400/30 flex items-center gap-1.5">
                 <Sparkles className="w-3 h-3 text-amber-300" />
@@ -901,9 +901,9 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
       {/* ✍️ Signature Électronique Ordre de Service Modal */}
       {showSignModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-card dark:bg-card rounded-2xl p-6 md:p-8 max-w-lg w-full shadow-sm border border-border dark:border-border space-y-6 animate-in zoom-in-95 duration-200">
+          <div className="bg-card rounded-2xl p-6 md:p-8 max-w-lg w-full shadow-sm border border-border space-y-6 animate-in zoom-in-95 duration-200">
 
-            <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
+            <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold shadow-sm">
                   <FileSignature className="w-6 h-6" />
@@ -921,11 +921,11 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
               </button>
             </div>
 
-            <div className="space-y-2 bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border dark:border-border text-xs">
+            <div className="space-y-2 bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border text-xs">
               <p className="font-bold text-slate-700 dark:text-foreground leading-relaxed">
                 Je soussigné(e), <strong className="text-primary dark:text-indigo-300">{user?.name || ''}</strong>, confirme avoir pris connaissance de mon ordre de service officiel décernant mes modules et horaires d'enseignement pour l'année universitaire 2026/2027.
               </p>
-              <div className="font-mono text-[10px] text-muted-foreground bg-card dark:bg-card p-2.5 rounded-xl border border-border dark:border-border flex items-center gap-1.5">
+              <div className="font-mono text-[10px] text-muted-foreground bg-card p-2.5 rounded-xl border border-border flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                 <span>Certificat Horodaté ENCG Fès — Hash SHA-256 : 8f9a2b4c1e0d3f7a</span>
               </div>
@@ -984,7 +984,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-2 border-t border-border dark:border-border">
+            <div className="flex justify-end gap-3 pt-2 border-t border-border">
               <button
                 type="button"
                 onClick={() => setShowSignModal(false)}

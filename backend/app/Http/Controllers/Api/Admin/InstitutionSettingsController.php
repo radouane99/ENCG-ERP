@@ -34,13 +34,26 @@ class InstitutionSettingsController extends Controller
             'academic_rules' => ['validation_threshold' => LmdRules::VALIDATION_THRESHOLD, 'eliminatory_threshold' => LmdRules::ELIMINATORY_THRESHOLD, 'paid_filiere_types' => LmdRules::PAID_FILIERE_TYPES]]);
     }
 
+    public function getSettingByKey(Request $request, string $key): JsonResponse
+    {
+        $this->authorizeStaff($request);
+        $institution = Institution::findOrFail($request->user()->institution_id);
+        $settings = $institution->settings ?? [];
+
+        return response()->json([
+            'success' => true,
+            'key' => $key,
+            'value' => $settings[$key] ?? null,
+        ]);
+    }
+
     public function updateSettings(Request $request): JsonResponse
     {
         $this->authorizeStaff($request);
         $validated = $request->validate(['institutionName' => 'sometimes|required|string|max:255', 'nameAr' => 'nullable|string|max:255', 'universityName' => 'nullable|string|max:255',
             'directorName' => 'nullable|string|max:255', 'rectorName' => 'nullable|string|max:255', 'officialEmail' => 'nullable|email|max:255', 'supportPhone' => 'nullable|string|max:50',
-            'address' => 'nullable|string|max:1000', 'websiteUrl' => 'nullable|url|max:255', 'cndpDeclaration' => 'nullable|string|max:255', 'selectedYearId' => 'prohibited',
-            'passingGrade' => 'prohibited', 'eliminatoryGrade' => 'prohibited', 'maintenanceMode' => 'prohibited', 'sessionTimeoutMinutes' => 'prohibited']);
+            'address' => 'nullable|string|max:1000', 'websiteUrl' => 'nullable|url|max:255', 'cndpDeclaration' => 'nullable|string|max:255', 'key' => 'sometimes|string|max:100', 'value' => 'nullable|string|max:255',
+            'selectedYearId' => 'prohibited', 'passingGrade' => 'prohibited', 'eliminatoryGrade' => 'prohibited', 'maintenanceMode' => 'prohibited', 'sessionTimeoutMinutes' => 'prohibited']);
         DB::transaction(function () use ($request, $validated) {
             $institution = Institution::whereKey($request->user()->institution_id)->lockForUpdate()->firstOrFail();
             foreach (['institutionName' => 'name', 'nameAr' => 'name_ar', 'directorName' => 'director_name', 'rectorName' => 'rector_name', 'officialEmail' => 'email', 'supportPhone' => 'phone', 'address' => 'address', 'websiteUrl' => 'website'] as $input => $column) {
@@ -53,6 +66,9 @@ class InstitutionSettingsController extends Controller
                 if (array_key_exists($input, $validated)) {
                     $settings[$key] = $validated[$input];
                 }
+            }
+            if (! empty($validated['key'])) {
+                $settings[$validated['key']] = $validated['value'] ?? null;
             }
             $institution->settings = $settings;
             $institution->save();

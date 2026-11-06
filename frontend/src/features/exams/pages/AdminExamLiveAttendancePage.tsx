@@ -26,7 +26,7 @@ export default function AdminExamLiveAttendancePage() {
             <Eye className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-[#0f2863] italic erp-page-title">Dashboard Live Présences</h1>
+            <h1 className="text-[#1a3673] italic erp-page-title">Dashboard Live Présences</h1>
             <p className="text-xs text-muted-foreground">
               Suivi en temps réel : {stats?.exam ? `${stats.exam.module_name} - ${stats.exam.filiere_name} - ${stats.exam.group_name}` : 'Chargement...'}
             </p>
@@ -34,7 +34,7 @@ export default function AdminExamLiveAttendancePage() {
         </div>
         
         <div className="flex items-center gap-3">
-          <Link to={`/admin/exams/${id}/live-attendance/report`} className="h-10 px-4 rounded-xl bg-[#0f2863] hover:bg-[#1a387e] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors shadow-sm">
+          <Link to={`/admin/exams/${id}/live-attendance/report`} className="h-10 px-4 rounded-xl bg-[#1a3673] hover:bg-[#1a387e] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors shadow-sm">
             <Download className="w-4 h-4" /> TÉLÉCHARGER RAPPORT PDF
           </Link>
           <Link to="/admin/exams" className="h-10 px-4 rounded-xl border border-border bg-card text-muted-foreground text-xs font-bold uppercase tracking-wider flex items-center gap-2 hover:bg-muted/50 transition-colors shadow-sm">
@@ -93,7 +93,7 @@ export default function AdminExamLiveAttendancePage() {
 
       <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
         <div className="p-6 border-b border-border flex items-center justify-between">
-          <h2 className="text-lg font-bold text-[#0f2863]">Journal des scans (Flux en direct)</h2>
+          <h2 className="text-lg font-bold text-[#1a3673]">Journal des scans (Flux en direct)</h2>
           <button className="text-[10px] font-bold text-primary uppercase tracking-wider hover:underline flex items-center gap-1">
             Rafraîchir la liste
           </button>

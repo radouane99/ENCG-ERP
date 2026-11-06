@@ -7,9 +7,9 @@ export default function ReservationEditPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-[#0f2863] italic erp-page-title">Modifier la Réservation de Salle</h1>
+          <h1 className="text-[#1a3673] italic erp-page-title">Modifier la Réservation de Salle</h1>
         </div>
-        <Link to="/admin/reservations" className="px-5 py-2.5 bg-card border border-border text-[#0f2863] font-bold rounded-full hover:bg-muted/50 transition-colors text-xs uppercase tracking-wide">
+        <Link to="/admin/reservations" className="px-5 py-2.5 bg-card border border-border text-[#1a3673] font-bold rounded-full hover:bg-muted/50 transition-colors text-xs uppercase tracking-wide">
           Retour à la liste
         </Link>
       </div>
@@ -24,7 +24,7 @@ export default function ReservationEditPage() {
         </div>
 
         <form className="p-8 w-full max-w-3xl space-y-8">
-          <h3 className="text-lg font-bold text-[#0f2863] italic mb-6">Modifier les Détails</h3>
+          <h3 className="text-lg font-bold text-[#1a3673] italic mb-6">Modifier les Détails</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -83,7 +83,7 @@ export default function ReservationEditPage() {
           <div className="pt-2">
             <button 
               type="button" 
-              className="w-full py-4 bg-[#0f2863] text-white font-bold rounded-xl hover:bg-[#1a387e] transition-colors text-sm tracking-wide shadow-md flex items-center justify-center gap-2"
+              className="w-full py-4 bg-[#1a3673] text-white font-bold rounded-xl hover:bg-[#1a387e] transition-colors text-sm tracking-wide shadow-md flex items-center justify-center gap-2"
             >
               <Save className="w-4 h-4" /> Sauvegarder les Modifications
             </button>

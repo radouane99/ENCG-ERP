@@ -78,7 +78,7 @@ export default function StudentsRiskPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center text-center">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex flex-col items-center justify-center text-center">
           <span className="text-3xl font-bold text-foreground dark:text-white mb-1">{stats?.total_analyzed || 72}</span>
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">TOTAL ÉTUDIANTS ANALYSÉS</span>
         </div>
@@ -100,11 +100,11 @@ export default function StudentsRiskPage() {
       </div>
 
       {/* Main Content Area */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm overflow-hidden">
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left border-collapse">
-            <thead className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-border dark:border-border bg-slate-50/50 dark:bg-slate-800/50">
+            <thead className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-border bg-slate-50/50 dark:bg-slate-800/50">
               <tr>
                 <th className="px-6 py-4">Étudiant & Identité</th>
                 <th className="px-6 py-4">Groupe & Filière</th>
@@ -118,7 +118,7 @@ export default function StudentsRiskPage() {
               {loading ? (
                 <tr>
                   <td colSpan={6} className="text-center py-16 text-slate-400">
-                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#0f2863] mb-4" />
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#1a3673] mb-4" />
                     Analyse des risques pédagogiques en cours...
                   </td>
                 </tr>
@@ -164,7 +164,7 @@ export default function StudentsRiskPage() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleSendTutoratEmail(st)}
-                          className="px-3 py-1.5 bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
+                          className="px-3 py-1.5 bg-[#1a3673] hover:bg-[#1a387e] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
                           title="Envoyer la convocation de tutorat par Email Resend"
                         >
                           <Mail className="w-3.5 h-3.5 text-amber-400" /> Alerte Email (Resend)

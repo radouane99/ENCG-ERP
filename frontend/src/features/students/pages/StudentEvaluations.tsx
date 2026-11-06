@@ -79,7 +79,7 @@ export default function StudentEvaluations() {
   const renderStarRating = (key: keyof typeof ratings, label: string, description: string) => {
     const val = ratings[key];
     return (
-      <div className="bg-muted/50 dark:bg-slate-800/50 p-4 rounded-2xl border border-border dark:border-border space-y-2">
+      <div className="bg-muted/50 dark:bg-slate-800/50 p-4 rounded-2xl border border-border space-y-2">
         <div className="flex justify-between items-center">
           <label className="text-xs font-bold text-foreground dark:text-white uppercase tracking-wider">{label}</label>
           <span className="text-xs font-mono font-bold text-amber-500 bg-amber-50 dark:bg-amber-950 px-2 py-0.5 rounded-lg">
@@ -104,7 +104,7 @@ export default function StudentEvaluations() {
   };
 
   return (
-    <div className="space-y-8 font-sans animate-in fade-in duration-500 text-foreground dark:text-foreground pb-24">
+    <div className="space-y-8 font-sans animate-in fade-in duration-500 text-foreground pb-24">
       
       {/* ── Executive Hero Banner ── */}
       <div className="p-6 sm:p-8 text-white border border-white/10 relative overflow-hidden flex flex-col xl:flex-row xl:items-center justify-between gap-8 erp-page-banner">
@@ -141,9 +141,9 @@ export default function StudentEvaluations() {
           <Spinner size="lg" />
         </div>
       ) : modulesList.length === 0 ? (
-        <div className="bg-card dark:bg-card rounded-2xl p-12 text-center border border-border dark:border-border space-y-3">
+        <div className="bg-card rounded-2xl p-12 text-center border border-border space-y-3">
           <BookOpen className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto" />
-          <h3 className="text-base font-bold text-foreground dark:text-foreground">Aucun module à évaluer</h3>
+          <h3 className="text-base font-bold text-foreground">Aucun module à évaluer</h3>
           <p className="text-xs text-slate-400 max-w-md mx-auto">La campagne d'évaluation des enseignements pour votre semestre n'a pas encore de modules configurés.</p>
         </div>
       ) : (
@@ -157,7 +157,7 @@ export default function StudentEvaluations() {
                   "p-6 rounded-2xl border transition-all flex flex-col justify-between space-y-4",
                   isDone 
                     ? "bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800" 
-                    : "bg-card dark:bg-card border-border dark:border-border hover:shadow-md hover:border-primary/20"
+                    : "bg-card border-border hover:shadow-md hover:border-primary/20"
                 )}
               >
                 <div className="space-y-2">
@@ -188,7 +188,7 @@ export default function StudentEvaluations() {
                   ) : (
                     <button
                       onClick={() => setSelectedModule(mod)}
-                      className="w-full py-3 bg-[#001A4B] hover:bg-[#082663] text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full py-3 bg-[#1a3673] hover:bg-[#082663] text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
                     >
                       Évaluer ce Cours <ArrowRight className="w-4 h-4" />
                     </button>
@@ -203,10 +203,10 @@ export default function StudentEvaluations() {
       {/* ── Evaluation Form Modal ── */}
       {selectedModule && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-2xl shadow-sm overflow-hidden max-h-[90vh] flex flex-col">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-2xl shadow-sm overflow-hidden max-h-[90vh] flex flex-col">
             
             {/* Modal Header */}
-            <div className="p-6 bg-gradient-to-r from-[#001A4B] to-blue-900 text-white flex items-center justify-between shrink-0">
+            <div className="p-6 bg-gradient-to-r from-[#1a3673] to-blue-900 text-white flex items-center justify-between shrink-0">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-amber-300">Formulaire Anonymisé</span>
                 <h2 className="text-base font-bold">{selectedModule.name}</h2>
@@ -235,7 +235,7 @@ export default function StudentEvaluations() {
                   value={comment}
                   onChange={e => setComment(e.target.value)}
                   placeholder="Partagez vos remarques pour aider l'équipe pédagogique à faire évoluer le cours..."
-                  className="w-full h-24 p-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs text-foreground dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
+                  className="w-full h-24 p-3 bg-muted/50 dark:bg-card border border-border text-xs text-foreground dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
                 />
               </div>
 
@@ -244,7 +244,7 @@ export default function StudentEvaluations() {
                 <span>Ce formulaire est 100% anonymisé par clé asymétrique ENCG Fès.</span>
               </div>
 
-              <div className="pt-3 border-t border-border dark:border-border flex justify-end gap-3">
+              <div className="pt-3 border-t border-border flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setSelectedModule(null)}

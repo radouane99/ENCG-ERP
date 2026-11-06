@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace App\Domain\Student\Models;
 
-use App\Domain\Academic\Models\FinalProject;
-use App\Domain\AI\Models\RiskPrediction;
-use App\Domain\Attendance\Models\Attendance;
-use App\Domain\Exam\Models\DeliberationDecision;
-use App\Domain\Exam\Models\Grade;
-use App\Domain\HR\Models\Internship;
-use App\Domain\Institution\Models\Institution;
 use App\Domain\Shared\Traits\Auditable;
 use App\Domain\Shared\Traits\BelongsToInstitution;
+use App\Models\Attendance;
+use App\Models\DeliberationDecision;
+use App\Models\FinalProject;
+use App\Models\Grade;
+use App\Models\Institution;
+use App\Models\Internship;
+use App\Models\RiskPrediction;
 use App\Models\StudentDocument;
+use App\Models\StudentPathway;
+use App\Models\StudentRegistration;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

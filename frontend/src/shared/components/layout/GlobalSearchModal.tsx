@@ -162,7 +162,7 @@ export function GlobalSearchModal({ isOpen, onClose }: GlobalSearchModalProps) {
         
         {/* Search Input Bar */}
         <div className="flex items-center px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
-          <div className="w-9 h-9 rounded-xl bg-[#0f2863]/10 dark:bg-sky-500/10 flex items-center justify-center text-[#0f2863] dark:text-sky-400 mr-3 shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-[#1a3673]/10 dark:bg-sky-500/10 flex items-center justify-center text-[#1a3673] dark:text-sky-400 mr-3 shrink-0">
             <Search className="w-5 h-5" />
           </div>
           <input

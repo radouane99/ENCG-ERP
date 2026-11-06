@@ -28,7 +28,7 @@ export default function DeliberationPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/admin/grades/pv')}
-            className="px-5 py-2.5 bg-gradient-to-r from-[#0f2863] to-[#1e40af] hover:from-[#15347d] text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-md hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
+            className="px-5 py-2.5 bg-gradient-to-r from-[#1a3673] to-[#1e40af] hover:from-[#15347d] text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-md hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
           >
             <FileText className="w-4 h-4 text-amber-300" />
             📜 Voir & Imprimer les PVs Officiels
@@ -60,13 +60,13 @@ export default function DeliberationPage() {
                 <td colSpan={6} className="px-6 py-12 text-center">
                   <div className="max-w-md mx-auto space-y-3">
                     <Calculator className="w-12 h-12 text-primary mx-auto" />
-                    <h3 className="font-bold text-foreground dark:text-foreground">Aucune session de délibération enregistrée</h3>
+                    <h3 className="font-bold text-foreground">Aucune session de délibération enregistrée</h3>
                     <p className="text-xs text-muted-foreground">
                       Consultez la matrice des délibérations et générez les Procès-Verbaux officiels directement depuis le hub des PVs.
                     </p>
                     <button
                       onClick={() => navigate('/admin/grades/pv')}
-                      className="mt-2 px-5 py-2.5 bg-[#0f2863] text-white rounded-xl text-xs font-bold shadow-md hover:bg-[#15347d] transition-all inline-flex items-center gap-2"
+                      className="mt-2 px-5 py-2.5 bg-[#1a3673] text-white rounded-xl text-xs font-bold shadow-md hover:bg-[#15347d] transition-all inline-flex items-center gap-2"
                     >
                       <FileText className="w-4 h-4 text-amber-300" />
                       Ouvrir le Hub des PVs Officiels
@@ -90,7 +90,7 @@ export default function DeliberationPage() {
                 <td className="px-6 py-4 text-end">
                   <button 
                     onClick={() => navigate('/admin/grades/pv')}
-                    className="bg-[#0f2863] hover:bg-[#15347d] text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-2 ms-auto cursor-pointer"
+                    className="bg-[#1a3673] hover:bg-[#15347d] text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center gap-2 ms-auto cursor-pointer"
                   >
                     <FileText className="w-3.5 h-3.5 text-amber-300"/> Imprimer le PV Officiel
                   </button>

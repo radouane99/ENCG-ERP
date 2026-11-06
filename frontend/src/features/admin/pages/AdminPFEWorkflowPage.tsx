@@ -177,7 +177,7 @@ export default function AdminPFEWorkflowPage() {
           className={cn(
             "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'kanban'
-              ? "bg-[#0f2863] text-white shadow-md"
+              ? "bg-[#1a3673] text-white shadow-md"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
         >
@@ -190,7 +190,7 @@ export default function AdminPFEWorkflowPage() {
           className={cn(
             "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'jurys'
-              ? "bg-[#0f2863] text-white shadow-md"
+              ? "bg-[#1a3673] text-white shadow-md"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
         >
@@ -203,7 +203,7 @@ export default function AdminPFEWorkflowPage() {
           className={cn(
             "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'evaluation'
-              ? "bg-[#0f2863] text-white shadow-md"
+              ? "bg-[#1a3673] text-white shadow-md"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
         >
@@ -237,7 +237,7 @@ export default function AdminPFEWorkflowPage() {
                       {items.length === 0 ? (
                         <p className="text-center text-xs text-slate-400 py-8">Aucun PFE dans cette étape</p>
                       ) : items.map((pfe: any) => (
-                        <div key={pfe.id} className="bg-card dark:bg-card rounded-2xl p-3.5 shadow-sm border border-border dark:border-border space-y-2.5">
+                        <div key={pfe.id} className="bg-card rounded-2xl p-3.5 shadow-sm border border-border space-y-2.5">
                           <p className="font-bold text-xs text-foreground dark:text-white line-clamp-2">{pfe.title || 'Titre non défini'}</p>
 
                           <div className="space-y-1 text-[11px]">

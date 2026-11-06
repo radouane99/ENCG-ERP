@@ -171,6 +171,9 @@ Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
         Route::patch('/events/move', [CalendarController::class, 'moveEvent']);
         Route::get('/events', [CalendarController::class, 'getEvents']);
         Route::get('/', [TimetableController::class, 'index']);
+        Route::get('/group/{filiereId}', [TimetableController::class, 'index']);
+        Route::get('/{type}/{id}', [TimetableController::class, 'index'])
+            ->whereIn('type', ['group', 'professor', 'room', 'filiere']);
         Route::get('/export/{type}/{id}', [TimetableExportController::class, 'exportForFullCalendar']);
         Route::get('/export/{type}/{id}/matrix', [TimetableExportController::class, 'officialMatrix']);
         Route::get('/export/{type}/{id}/pdf', [TimetableExportController::class, 'exportPdf']);
@@ -187,6 +190,7 @@ Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
     Route::get('/rooms/occupancy-matrix', [RoomBookingController::class, 'occupancyMatrix']);
     Route::get('/rooms/weekly-master-matrix', [RoomBookingController::class, 'weeklyMasterMatrix']);
     Route::get('/rooms/{room}/door-sign-pdf', [RoomBookingController::class, 'doorSignPdf']);
+    Route::match(['put', 'patch'], '/room-bookings/{roomBooking}/status', [RoomBookingController::class, 'update']);
     Route::apiResource('room-bookings', RoomBookingController::class)->except(['show']);
 
     // Anti-Fraud Documents & PDFs
@@ -239,6 +243,7 @@ Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
 
     // Alumni / Insertion Pro
     Route::prefix('alumni')->group(function () {
+        Route::get('/', [AlumniController::class, 'graduates']);
         Route::get('/graduates', [AlumniController::class, 'graduates']);
         Route::post('/graduates/finalize', [AlumniController::class, 'finalizeGraduation']);
         Route::get('/graduation-candidates', [AlumniController::class, 'graduationCandidates']);

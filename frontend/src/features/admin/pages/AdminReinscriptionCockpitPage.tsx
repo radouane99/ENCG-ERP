@@ -306,7 +306,7 @@ export default function AdminReinscriptionCockpitPage() {
                       🎓
                     </div>
                     <div className="max-w-md mx-auto space-y-1">
-                      <h3 className="font-bold text-sm text-foreground dark:text-foreground">
+                      <h3 className="font-bold text-sm text-foreground">
                         Aucun dossier ne correspond aux filtres
                       </h3>
                       <p className="text-xs text-muted-foreground">

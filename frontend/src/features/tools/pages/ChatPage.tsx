@@ -5,7 +5,7 @@ export default function ChatPage() {
       
       {/* Header */}
       <div className="flex items-center gap-3 mb-2 shrink-0">
-        <h1 className="text-[#001A4B] italic erp-page-title">Messagerie Interne</h1>
+        <h1 className="text-[#1a3673] italic erp-page-title">Messagerie Interne</h1>
       </div>
 
       {/* Chat Container */}

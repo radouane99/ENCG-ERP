@@ -247,7 +247,7 @@ const PdfCanvasViewer: React.FC<{ url: string; zoom?: number; rotate?: number }>
       >
         <canvas
           ref={canvasRef}
-          className="max-w-none shadow-sm rounded-xl border border-border dark:border-border bg-card"
+          className="max-w-none shadow-sm rounded-xl border border-border bg-card"
           style={{ height: '440px', width: 'auto' }}
         />
       </div>
@@ -304,7 +304,7 @@ const ImageViewerWithPan: React.FC<{ url: string; zoom: number; rotate: number }
         <img
           src={url}
           alt="Scan Document Inspection"
-          className="shadow-sm rounded-xl border border-border dark:border-border bg-card"
+          className="shadow-sm rounded-xl border border-border bg-card"
           style={{ maxHeight: '440px', width: 'auto' }}
         />
       </div>
@@ -705,10 +705,10 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
 
   return createPortal(
     <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950 animate-in fade-in duration-200 overflow-hidden">
-      <div className="bg-card dark:bg-card w-screen h-screen max-w-none rounded-none shadow-none overflow-hidden flex flex-col relative">
+      <div className="bg-card w-screen h-screen max-w-none rounded-none shadow-none overflow-hidden flex flex-col relative">
 
         {/* Header Bar Banner — Ultra-Ergonomic ENCG Royal Navy Header */}
-        <div className="px-4 sm:px-6 pt-3.5 pb-2 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] text-white shrink-0 relative overflow-hidden border-b border-blue-900/40 flex flex-col justify-between shadow-md">
+        <div className="px-4 sm:px-6 pt-3.5 pb-2 bg-gradient-to-r from-[#1a3673] via-[#1a387e] to-[#09193d] text-white shrink-0 relative overflow-hidden border-b border-blue-900/40 flex flex-col justify-between shadow-md">
           <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
 
           {/* Candidate Profile Summary Line */}
@@ -724,7 +724,7 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                   )}
                 </div>
                 <span className={cn(
-                  "absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[#0f2863] flex items-center justify-center text-[9px] font-bold",
+                  "absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-[#1a3673] flex items-center justify-center text-[9px] font-bold",
                   isValide ? "bg-emerald-500 text-white" : isPending ? "bg-amber-500 text-white" : "bg-rose-500 text-white"
                 )}>
                   {isValide ? '✓' : '!'}
@@ -911,11 +911,11 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
               <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden">
 
                 {/* ════════ LEFT PANEL (5 COLS - 41.6% WIDTH): Données Déclarées ════════ */}
-                <div className="lg:col-span-5 overflow-y-auto custom-scrollbar bg-card dark:bg-card border-r border-border dark:border-border flex flex-col">
+                <div className="lg:col-span-5 overflow-y-auto custom-scrollbar bg-card border-r border-border flex flex-col">
 
                   {/* Left Header */}
-                  <div className="px-4 py-3 bg-muted/50 dark:bg-slate-800/80 border-b border-border dark:border-border sticky top-0 z-10">
-                    <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#0f2863] dark:text-blue-300 flex items-center gap-1.5">
+                  <div className="px-4 py-3 bg-muted/50 dark:bg-slate-800/80 border-b border-border sticky top-0 z-10">
+                    <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#1a3673] dark:text-blue-300 flex items-center gap-1.5">
                       <FileText className="w-3.5 h-3.5 text-amber-500" />
                       Données Déclarées (À Vérifier)
                     </h3>
@@ -927,7 +927,7 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                     <div className="rounded-xl border border-border dark:border-slate-700/60 overflow-hidden">
                       <div className="px-3 py-2 bg-muted/50 dark:bg-slate-800/60 border-b border-border dark:border-slate-700/40 flex items-center gap-1.5">
                         <User className="w-3 h-3 text-primary" />
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#0f2863] dark:text-blue-300">État Civil</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#1a3673] dark:text-blue-300">État Civil</span>
                       </div>
                       <div className="p-3 space-y-2">
                         {[
@@ -982,7 +982,7 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                         ].map(row => (
                           <div key={row.label} className="flex items-start justify-between gap-2 text-xs">
                             <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold shrink-0 w-28">{row.label}</span>
-                            <span className="font-bold text-foreground dark:text-foreground text-right text-[11px] truncate">{row.value}</span>
+                            <span className="font-bold text-foreground text-right text-[11px] truncate">{row.value}</span>
                           </div>
                         ))}
                       </div>
@@ -1006,7 +1006,7 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                         ].map(row => (
                           <div key={row.label} className="flex items-start justify-between gap-2 text-xs">
                             <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold shrink-0 w-28">{row.label}</span>
-                            <span className="font-bold text-foreground dark:text-foreground text-right text-[11px] truncate">{row.value}</span>
+                            <span className="font-bold text-foreground text-right text-[11px] truncate">{row.value}</span>
                           </div>
                         ))}
                       </div>
@@ -1028,7 +1028,7 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                         ].map(row => (
                           <div key={row.label} className="flex items-start justify-between gap-2 text-xs">
                             <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold shrink-0 w-28">{row.label}</span>
-                            <span className={cn("font-bold text-foreground dark:text-foreground text-right text-[11px] truncate", row.mono && "font-mono")}>{row.value}</span>
+                            <span className={cn("font-bold text-foreground text-right text-[11px] truncate", row.mono && "font-mono")}>{row.value}</span>
                           </div>
                         ))}
                       </div>
@@ -1038,7 +1038,7 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                 </div>
 
                 {/* ════════ CENTER PANEL (4 COLS - 33.3% WIDTH): Inspection Viewer HD ════════ */}
-                <div className="lg:col-span-4 flex flex-col overflow-hidden border-r border-border dark:border-border bg-muted dark:bg-background">
+                <div className="lg:col-span-4 flex flex-col overflow-hidden border-r border-border bg-muted dark:bg-background">
 
                   {/* Document Tabs Toolbar */}
                   <div className="p-2.5 bg-slate-900 border-b border-slate-800 text-white flex flex-wrap items-center justify-between gap-2 shrink-0">
@@ -1197,11 +1197,11 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                 </div>
 
                 {/* ════════ RIGHT PANEL (3 COLS - 25% WIDTH): Actions & Décision Unique ════════ */}
-                <div className="lg:col-span-3 overflow-y-auto custom-scrollbar bg-card dark:bg-card flex flex-col">
+                <div className="lg:col-span-3 overflow-y-auto custom-scrollbar bg-card flex flex-col">
 
                   {/* Right Header */}
-                  <div className="px-4 py-3 bg-muted/50 dark:bg-slate-800/80 border-b border-border dark:border-border sticky top-0 z-10">
-                    <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#0f2863] dark:text-blue-300 flex items-center gap-1.5">
+                  <div className="px-4 py-3 bg-muted/50 dark:bg-slate-800/80 border-b border-border sticky top-0 z-10">
+                    <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#1a3673] dark:text-blue-300 flex items-center gap-1.5">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                       Actions de Vérification
                     </h3>
@@ -1227,7 +1227,7 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                             <div key={doc.key} className="flex items-center justify-between px-3 py-2 text-xs hover:bg-muted/50 dark:hover:bg-slate-800/40 transition-colors">
                               <div className="flex items-center gap-2 min-w-0">
                                 <span className="text-base shrink-0">{doc.icon}</span>
-                                <span className={cn("font-medium truncate text-[11px]", hasDoc ? "text-foreground dark:text-foreground" : "text-slate-400")}>{doc.label}</span>
+                                <span className={cn("font-medium truncate text-[11px]", hasDoc ? "text-foreground" : "text-slate-400")}>{doc.label}</span>
                                 {doc.required && !hasDoc && <span className="text-[8px] text-rose-500 font-bold uppercase shrink-0">Requis</span>}
                               </div>
                               <div className="flex items-center gap-1.5 shrink-0">
@@ -1275,7 +1275,7 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                             <div key={item.key} className={cn(
                               'rounded-lg border transition-all',
                               isDeposed
-                                ? "bg-card dark:bg-card border-border dark:border-border"
+                                ? "bg-card border-border"
                                 : 'bg-amber-50/60 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800'
                             )}>
                               <label className="flex items-center justify-between px-2.5 py-1.5 cursor-pointer select-none">
@@ -1296,7 +1296,7 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                                     }}
                                     className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500 cursor-pointer accent-amber-600"
                                   />
-                                  <span className="font-bold text-[10.5px] text-foreground dark:text-foreground">{item.label}</span>
+                                  <span className="font-bold text-[10.5px] text-foreground">{item.label}</span>
                                 </div>
                                 <span className={cn(
                                   "text-[8.5px] font-bold px-1.5 py-0.5 rounded uppercase",
@@ -1354,7 +1354,7 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                         })()}
                       </div>
                       <div className="p-3 space-y-2">
-                        <p className="text-[11px] text-muted-foreground dark:text-muted-foreground font-medium">
+                        <p className="text-[11px] text-muted-foreground font-medium">
                           Document: <strong className="text-foreground dark:text-white">{selectedDocForSplit?.title || '📜 Baccalauréat'}</strong>
                         </p>
                         <div className="grid grid-cols-2 gap-2">
@@ -1547,32 +1547,32 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
           {/* TAB 1: IDENTITÉ */}
           {activeTab === 'identity' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in">
-              <div className="bg-card dark:bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
-                <h3 className="text-sm font-bold text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-border dark:border-border pb-3">
+              <div className="bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
+                <h3 className="text-sm font-bold text-[#1a3673] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-border pb-3">
                   <User className="w-4 h-4 text-amber-500" /> Identité Principale (Français & Arabe)
                 </h3>
 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-xs font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider block mb-1">CNE / Code Massar</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">CNE / Code Massar</span>
                     <span className="font-mono font-bold text-primary dark:text-blue-400 text-base">{student.cne || 'Non renseigné'}</span>
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider block mb-1">Numéro CNIE</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">Numéro CNIE</span>
                     <span className="font-mono font-bold text-foreground dark:text-white text-base">{student.cin || 'Non renseigné'}</span>
                   </div>
 
                   <div>
-                    <span className="text-xs font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider block mb-1">Nom en Français</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">Nom en Français</span>
                     <span className="font-bold text-foreground dark:text-white uppercase text-base">{student.last_name || 'Non renseigné'}</span>
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider block mb-1">Prénom en Français</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">Prénom en Français</span>
                     <span className="font-bold text-foreground dark:text-white uppercase text-base">{student.first_name || 'Non renseigné'}</span>
                   </div>
 
                   <div>
-                    <span className="text-xs font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider block mb-1">Nom en Arabe</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">Nom en Arabe</span>
                     {isEditing ? (
                       <input
                         type="text"
@@ -1589,7 +1589,7 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                     )}
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider block mb-1">Prénom en Arabe</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">Prénom en Arabe</span>
                     {isEditing ? (
                       <input
                         type="text"
@@ -1608,18 +1608,18 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                 </div>
               </div>
 
-              <div className="bg-card dark:bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
-                <h3 className="text-base font-bold text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-border dark:border-border pb-3">
+              <div className="bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
+                <h3 className="text-base font-bold text-[#1a3673] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-border pb-3">
                   <Calendar className="w-5 h-5 text-amber-500" /> Naissance & Nationalité
                 </h3>
 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-xs font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider block mb-1">Genre / Sexe</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">Genre / Sexe</span>
                     <span className="font-bold text-foreground dark:text-white">{student.gender === 'female' ? 'Féminin (أنثى)' : student.gender === 'male' ? 'Masculin (ذكر)' : 'Masculin'}</span>
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider block mb-1">Date de Naissance</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">Date de Naissance</span>
                     <span className="font-bold text-foreground dark:text-white">
                       {(() => {
                         if (!student.birth_date) return 'Non renseignée';
@@ -1631,20 +1631,20 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                   </div>
 
                   <div>
-                    <span className="text-xs font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider block mb-1">Lieu de Naissance (FR)</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">Lieu de Naissance (FR)</span>
                     <span className="font-bold text-foreground dark:text-white">{student.birth_city || 'Non renseigné'}</span>
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider block mb-1">Lieu de Naissance (AR)</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">Lieu de Naissance (AR)</span>
                     <span className="font-bold text-foreground dark:text-white font-serif">{student.birth_city_ar || 'غير محدد'}</span>
                   </div>
 
                   <div>
-                    <span className="text-xs font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider block mb-1">Nationalité</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">Nationalité</span>
                     <span className="font-bold text-emerald-600 dark:text-emerald-400">{student.nationality || 'Marocaine'}</span>
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider block mb-1">Pays de Naissance</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-1">Pays de Naissance</span>
                     <span className="font-bold text-foreground dark:text-white">{student.birth_country || 'Maroc'}</span>
                   </div>
                 </div>
@@ -1655,8 +1655,8 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
           {/* TAB 2: COORDONNÉES */}
           {activeTab === 'contact' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in">
-              <div className="bg-card dark:bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
-                <h3 className="text-base font-bold text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-border dark:border-border pb-3">
+              <div className="bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
+                <h3 className="text-base font-bold text-[#1a3673] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-border pb-3">
                   <Mail className="w-5 h-5 text-primary" /> Adresses E-mail & Téléphone
                 </h3>
 
@@ -1676,8 +1676,8 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                 </div>
               </div>
 
-              <div className="bg-card dark:bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
-                <h3 className="text-base font-bold text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-border dark:border-border pb-3">
+              <div className="bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
+                <h3 className="text-base font-bold text-[#1a3673] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-border pb-3">
                   <MapPin className="w-5 h-5 text-primary" /> Adresse de Résidence & Région
                 </h3>
 
@@ -1703,8 +1703,8 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
           {activeTab === 'parents' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in">
               {/* Informations Père */}
-              <div className="bg-card dark:bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
-                <h3 className="text-base font-bold text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-border dark:border-border pb-3">
+              <div className="bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
+                <h3 className="text-base font-bold text-[#1a3673] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-border pb-3">
                   <ShieldCheck className="w-5 h-5 text-emerald-500" /> Renseignements sur le Père
                 </h3>
 
@@ -1729,8 +1729,8 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
               </div>
 
               {/* Informations Mère */}
-              <div className="bg-card dark:bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
-                <h3 className="text-base font-bold text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-border dark:border-border pb-3">
+              <div className="bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
+                <h3 className="text-base font-bold text-[#1a3673] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2 border-b border-border pb-3">
                   <ShieldCheck className="w-5 h-5 text-emerald-500" /> Renseignements sur la Mère
                 </h3>
 
@@ -1760,8 +1760,8 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
           {activeTab === 'academic' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in">
               {/* Baccalauréat d'Origine */}
-              <div className="bg-card dark:bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
-                <h3 className="text-base font-bold text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center justify-between border-b border-border dark:border-border pb-3">
+              <div className="bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
+                <h3 className="text-base font-bold text-[#1a3673] dark:text-blue-300 uppercase tracking-wider flex items-center justify-between border-b border-border pb-3">
                   <span className="flex items-center gap-2">
                     <Award className="w-5 h-5 text-purple-500" /> Baccalauréat d'Origine
                   </span>
@@ -1829,8 +1829,8 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
               </div>
 
               {/* Inscription & Affectation ENCG Fès */}
-              <div className="bg-card dark:bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
-                <h3 className="text-base font-bold text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center justify-between border-b border-border dark:border-border pb-3">
+              <div className="bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-4">
+                <h3 className="text-base font-bold text-[#1a3673] dark:text-blue-300 uppercase tracking-wider flex items-center justify-between border-b border-border pb-3">
                   <span className="flex items-center gap-2">
                     <BookOpen className="w-5 h-5 text-purple-500" /> Inscription & Affectation ENCG Fès
                   </span>
@@ -1848,7 +1848,7 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                   </div>
                   <div>
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Mode d'Accès</span>
-                    <span className="font-bold text-[#0f2863] dark:text-blue-300 text-base">{student.access_mode || 'TAFEM (Concours National)'}</span>
+                    <span className="font-bold text-[#1a3673] dark:text-blue-300 text-base">{student.access_mode || 'TAFEM (Concours National)'}</span>
                   </div>
 
                   <div>
@@ -1879,9 +1879,9 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
 
           {/* TAB 5: STATUT ADMINISTRATIF & VALIDATION DOSSIER */}
           {activeTab === 'administrative' && (
-            <div className="bg-card dark:bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-6 animate-in fade-in">
-              <div className="flex items-center justify-between border-b border-border dark:border-border pb-3">
-                <h3 className="text-sm font-bold text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2">
+            <div className="bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm space-y-6 animate-in fade-in">
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <h3 className="text-sm font-bold text-[#1a3673] dark:text-blue-300 uppercase tracking-wider flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-emerald-500" /> Contrôle Smart & Validation Officielle du Dossier Physique
                 </h3>
                 <span className="text-[10px] font-bold uppercase text-primary bg-primary/5 dark:bg-indigo-950 px-2.5 py-1 rounded-full border border-primary/20">
@@ -1924,7 +1924,7 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                       <div key={item.key} className={cn(
                         'rounded-xl border-2 transition-all overflow-hidden',
                         isDeposed
-                          ? "bg-card dark:bg-card border-emerald-200 dark:border-emerald-800"
+                          ? "bg-card border-emerald-200 dark:border-emerald-800"
                           : 'bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-700'
                       )}>
                         <label className="flex items-center justify-between px-3 py-2.5 cursor-pointer select-none">
@@ -1946,7 +1946,7 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                             />
                             <span className={cn(
                               "font-bold text-sm",
-                              isDeposed ? "text-foreground dark:text-foreground" : "text-amber-900 dark:text-amber-200"
+                              isDeposed ? "text-foreground" : "text-amber-900 dark:text-amber-200"
                             )}>{item.label}</span>
                           </div>
                           <span className={cn(
@@ -1976,7 +1976,7 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                             </a>
                             <button
                               onClick={() => setPendingReceipt(prev => ({ ...prev, [item.key]: false }))}
-                              className="px-2.5 py-2 text-[9px] text-slate-400 hover:text-muted-foreground font-bold uppercase cursor-pointer border border-border dark:border-border rounded-lg hover:bg-muted/50 dark:hover:bg-slate-800 transition-all"
+                              className="px-2.5 py-2 text-[9px] text-slate-400 hover:text-muted-foreground font-bold uppercase cursor-pointer border border-border rounded-lg hover:bg-muted/50 dark:hover:bg-slate-800 transition-all"
                             >
                               Ignorer
                             </button>
@@ -2021,21 +2021,21 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                   <div className="space-y-6">
                     {/* Status Overview Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
-                      <div className="p-4 rounded-2xl bg-muted/50 dark:bg-card border border-border dark:border-border space-y-1">
+                      <div className="p-4 rounded-2xl bg-muted/50 dark:bg-card border border-border space-y-1">
                         <span className="text-[10px] font-bold text-slate-400 uppercase">Statut Inscription</span>
                         <div className="font-bold text-foreground dark:text-white text-sm">
                           {(student as any).inscription_status || student.status || 'submitted'}
                         </div>
                       </div>
 
-                      <div className="p-4 rounded-2xl bg-muted/50 dark:bg-card border border-border dark:border-border space-y-1">
+                      <div className="p-4 rounded-2xl bg-muted/50 dark:bg-card border border-border space-y-1">
                         <span className="text-[10px] font-bold text-slate-400 uppercase">Intégrité Pièces Physiques</span>
                         <div className={cn("font-bold text-sm", isFullyValid ? "text-emerald-600" : "text-amber-600")}>
                           {isFullyValid ? '✅ 100% Conforme & Complet' : `⚠️ ${criticalMissing.length} Élément(s) Manquant(s)`}
                         </div>
                       </div>
 
-                      <div className="p-4 rounded-2xl bg-muted/50 dark:bg-card border border-border dark:border-border space-y-1">
+                      <div className="p-4 rounded-2xl bg-muted/50 dark:bg-card border border-border space-y-1">
                         <span className="text-[10px] font-bold text-slate-400 uppercase">Audit IA Gemini Vision</span>
                         <div className={cn("font-bold text-sm", hasAiAudit ? "text-purple-600 dark:text-purple-400" : "text-slate-400")}>
                           {hasAiAudit ? `🟢 Audit Certifié (${aiAuditResult.confidence_score}%)` : '⚪ Non Effectué'}
@@ -2044,8 +2044,8 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                     </div>
 
                     {/* Pre-Confirmation Validation Checklist */}
-                    <div className="p-5 rounded-2xl bg-muted/50 dark:bg-card border border-border dark:border-border space-y-3">
-                      <h4 className="text-xs font-bold uppercase text-foreground dark:text-foreground tracking-wider flex items-center justify-between">
+                    <div className="p-5 rounded-2xl bg-muted/50 dark:bg-card border border-border space-y-3">
+                      <h4 className="text-xs font-bold uppercase text-foreground tracking-wider flex items-center justify-between">
                         <span>📋 Liste de Contrôle Pré-Validation (Vérification Systématique)</span>
                         <span className="text-[10px] font-bold text-slate-400">
                           {missingItems.filter(i => i.ok).length} / {missingItems.length} vérifiés
@@ -2075,7 +2075,7 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                     </div>
 
                     {/* Smart Action Guard Buttons */}
-                    <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-border dark:border-border">
+                    <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-border">
                       <div className="text-[11px] text-muted-foreground font-medium">
                         {isFullyValid ? (
                           <span className="text-emerald-600 font-bold flex items-center gap-1">
@@ -2159,7 +2159,7 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
 
               {/* Printable PVC Card Visualizer */}
               <div className="flex justify-center p-6">
-                <div className="w-[380px] h-[230px] rounded-2xl bg-gradient-to-br from-[#0f2863] via-[#1a387e] to-[#09193d] text-white p-5 shadow-sm border border-blue-400/30 relative overflow-hidden flex flex-col justify-between">
+                <div className="w-[380px] h-[230px] rounded-2xl bg-gradient-to-br from-[#1a3673] via-[#1a387e] to-[#09193d] text-white p-5 shadow-sm border border-blue-400/30 relative overflow-hidden flex flex-col justify-between">
                   {/* Background Watermark Pattern */}
                   <div className="absolute top-0 right-0 w-32 h-32 bg-amber-400/10 rounded-full blur-2xl pointer-events-none" />
 
@@ -2264,7 +2264,7 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                   const canPreview = hasFile || (docReq as any).source === 'system';
 
                   return (
-                    <div key={docReq.key} className="bg-card dark:bg-card p-5 rounded-2xl border border-border dark:border-border shadow-sm flex flex-col justify-between space-y-4 hover:border-primary/20 transition-colors">
+                    <div key={docReq.key} className="bg-card p-5 rounded-2xl border border-border shadow-sm flex flex-col justify-between space-y-4 hover:border-primary/20 transition-colors">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
                           <span className="text-2xl p-2 bg-muted dark:bg-slate-700 rounded-2xl shrink-0">{docReq.icon}</span>
@@ -2284,14 +2284,14 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                       </div>
 
                       {hasFile && docItem && (
-                        <div className="p-3 bg-muted/50 dark:bg-card rounded-2xl border border-border dark:border-border text-[10px] font-mono text-muted-foreground flex items-center justify-between">
+                        <div className="p-3 bg-muted/50 dark:bg-card rounded-2xl border border-border text-[10px] font-mono text-muted-foreground flex items-center justify-between">
                           <span className="truncate max-w-[200px]">{docItem.original_filename || 'document_numérisé.pdf'}</span>
                           <span>{docItem.file_size ? `${Math.round(docItem.file_size / 1024)} KB` : 'PDF/Scan'}</span>
                         </div>
                       )}
 
                       {/* Action buttons */}
-                      <div className="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-border dark:border-border">
+                      <div className="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-border">
                         {canPreview ? (
                           <button
                             type="button"
@@ -2376,12 +2376,12 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                   <RefreshCw className="w-6 h-6 animate-spin" />
                 </div>
               ) : auditLogs.length === 0 ? (
-                <div className="bg-card dark:bg-card p-8 rounded-2xl border border-border dark:border-border text-center text-slate-400">
+                <div className="bg-card p-8 rounded-2xl border border-border text-center text-slate-400">
                   <p className="font-bold text-sm">Aucun événement d'audit enregistré pour le moment.</p>
                   <p className="text-xs mt-1">Chaque modification de statut ou téléversement générera automatiquement une entrée d'audit.</p>
                 </div>
               ) : (
-                <div className="bg-card dark:bg-card rounded-2xl border border-border dark:border-border overflow-hidden shadow-sm">
+                <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
                   <div className="divide-y divide-slate-100 dark:divide-slate-700">
                     {auditLogs.map((log: any) => (
                       <div key={log.id} className="p-4 hover:bg-muted/50 dark:hover:bg-slate-700/50 transition-colors flex items-start justify-between gap-4">
@@ -2454,8 +2454,8 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
     {/* Lightbox / Document Preview Modal (FULLY RESPONSIVE HIGH RES) */}
     {previewDoc && (
       <div className="fixed inset-0 z-[99999] flex items-center justify-center p-2 sm:p-6 bg-slate-950/85 backdrop-blur-md animate-in zoom-in-95">
-        <div className="bg-card dark:bg-card rounded-2xl sm:rounded-2xl max-w-6xl w-[94vw] sm:w-[90vw] lg:w-[85vw] h-[90vh] sm:h-[88vh] overflow-hidden flex flex-col justify-between shadow-sm border border-border dark:border-border my-auto mx-auto">
-          <div className="p-5 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white flex items-center justify-between shrink-0">
+        <div className="bg-card rounded-2xl sm:rounded-2xl max-w-6xl w-[94vw] sm:w-[90vw] lg:w-[85vw] h-[90vh] sm:h-[88vh] overflow-hidden flex flex-col justify-between shadow-sm border border-border my-auto mx-auto">
+          <div className="p-5 bg-gradient-to-r from-[#1a3673] to-blue-900 text-white flex items-center justify-between shrink-0">
             <h4 className="text-base font-bold flex items-center gap-2">
               <FileText className="w-5 h-5 text-amber-400" /> Aperçu du Scan Officiel : {previewDoc.title}
             </h4>
@@ -2463,7 +2463,7 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
               <X className="w-6 h-6" />
             </button>
           </div>
-          <div className="p-0 flex-1 overflow-hidden flex items-center justify-center bg-card dark:bg-card">
+          <div className="p-0 flex-1 overflow-hidden flex items-center justify-center bg-card">
             {(() => {
               const url = previewDoc?.url || '';
               const lower = url.toLowerCase();
@@ -2481,7 +2481,7 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
     {/* 🖨️ Dedicated Guichet Print Modal Overlay for Original Documents */}
     {showGuichetPrintModal && (
       <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-in zoom-in-95 duration-200">
-        <div className="bg-card dark:bg-card rounded-2xl max-w-lg w-full p-6 shadow-sm border border-border dark:border-border space-y-5 text-center">
+        <div className="bg-card rounded-2xl max-w-lg w-full p-6 shadow-sm border border-border space-y-5 text-center">
           <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
             <CheckCircle2 className="w-9 h-9 text-emerald-500" />
           </div>
@@ -2490,13 +2490,13 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
             <h3 className="text-xl font-bold text-foreground dark:text-white uppercase tracking-tight">
               ✅ Dossier Validé avec Succès !
             </h3>
-            <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1 font-medium">
+            <p className="text-xs text-muted-foreground mt-1 font-medium">
               Candidat : <strong className="text-foreground dark:text-white">{student.last_name?.toUpperCase()} {student.first_name}</strong> (CNE: <code className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">{student.cne}</code>)
             </p>
           </div>
 
           <div className="p-3 bg-muted/50 dark:bg-slate-800/50 rounded-2xl border border-border dark:border-slate-700/60 space-y-2 text-left">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
               🖨️ Vos Documents Officiels (Modèles Originaux) :
             </p>
             {[
@@ -2519,7 +2519,7 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                 url: `/api/admin/students/fiche-medicale-pdf?student_id=${student.id}&cne=${encodeURIComponent(student.cne || '')}`
               },
             ].map(doc => (
-              <div key={doc.title} className="flex items-center justify-between p-2.5 bg-card dark:bg-card rounded-xl border border-border dark:border-border text-xs gap-2">
+              <div key={doc.title} className="flex items-center justify-between p-2.5 bg-card rounded-xl border border-border text-xs gap-2">
                 <div className="min-w-0 flex-1">
                   <p className="font-bold text-foreground dark:text-white truncate">{doc.title}</p>
                   <p className="text-[10px] text-muted-foreground truncate">{doc.desc}</p>
@@ -2582,7 +2582,7 @@ const [verifiedScans, setVerifiedScans] = useState<Record<string, 'conforme' | '
                 setShowGuichetPrintModal(false);
                 onClose();
               }}
-              className="w-full sm:w-auto px-5 py-3 bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-foreground dark:text-foreground font-bold text-xs rounded-xl cursor-pointer transition-all shrink-0 border border-slate-300 dark:border-border"
+              className="w-full sm:w-auto px-5 py-3 bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-foreground font-bold text-xs rounded-xl cursor-pointer transition-all shrink-0 border border-slate-300 dark:border-border"
             >
               Passer au Suivant →
             </button>

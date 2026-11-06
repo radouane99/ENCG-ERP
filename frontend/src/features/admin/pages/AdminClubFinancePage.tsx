@@ -10,8 +10,8 @@ export default function AdminClubFinancePage() {
         </Link>
         <div className="flex flex-col items-center">
           <div className="flex items-center gap-3 mb-1">
-            <Landmark className="w-6 h-6 text-[#0f2863]" />
-            <h1 className="text-[#0f2863] italic erp-page-title">Demandes de Budget — Clubs</h1>
+            <Landmark className="w-6 h-6 text-[#1a3673]" />
+            <h1 className="text-[#1a3673] italic erp-page-title">Demandes de Budget — Clubs</h1>
           </div>
           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
             GESTION FINANCIÈRE DES ACTIVITÉS PARA-UNIVERSITAIRES

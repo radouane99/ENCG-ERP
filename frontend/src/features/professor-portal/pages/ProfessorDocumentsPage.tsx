@@ -211,7 +211,7 @@ export default function ProfessorDocumentsPage() {
       {/* Role Detection Header Pill */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-muted dark:bg-slate-800/60 p-2.5 rounded-2xl border border-border dark:border-slate-700/60">
         <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground dark:text-foreground pl-2">
-          <GraduationCap className="w-4 h-4 text-[#001A4B] dark:text-blue-400" />
+          <GraduationCap className="w-4 h-4 text-[#1a3673] dark:text-blue-400" />
           <span>Statut Enseignant Détecté :</span>
           <span className={cn(
             "px-2.5 py-0.5 rounded-lg text-[11px] font-bold uppercase tracking-wider",
@@ -232,7 +232,7 @@ export default function ProfessorDocumentsPage() {
         "rounded-2xl p-8 text-white shadow-sm border flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden",
         isVacataire
           ? "bg-gradient-to-r from-slate-950 via-slate-900 to-[#1e1b4b] border-amber-500/30"
-          : "bg-gradient-to-r from-slate-900 via-indigo-950 to-[#001A4B] border-indigo-900/60"
+          : "bg-gradient-to-r from-slate-900 via-indigo-950 to-[#1a3673] border-indigo-900/60"
       )}>
         <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3"></div>
         <div className="flex items-center gap-4 relative z-10">
@@ -270,7 +270,7 @@ export default function ProfessorDocumentsPage() {
             className={cn(
               "px-5 py-3 font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-lg cursor-pointer flex items-center gap-2",
               isVacataire
-                ? "bg-amber-400 hover:bg-amber-300 text-[#001A4B] shadow-amber-400/20"
+                ? "bg-amber-400 hover:bg-amber-300 text-[#1a3673] shadow-amber-400/20"
                 : "bg-emerald-500 hover:bg-emerald-400 text-white shadow-emerald-500/20"
             )}
           >
@@ -319,7 +319,7 @@ export default function ProfessorDocumentsPage() {
         <div className="bg-card border border-border rounded-2xl p-6 md:p-7 shadow-sm space-y-5 animate-in fade-in">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-primary/5 dark:bg-indigo-950/50 text-[#001A4B] dark:text-blue-400 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-primary/5 dark:bg-indigo-950/50 text-[#1a3673] dark:text-blue-400 flex items-center justify-center shrink-0">
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div>
@@ -442,7 +442,7 @@ export default function ProfessorDocumentsPage() {
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="w-12 h-12 rounded-2xl bg-primary/5 dark:bg-indigo-950/50 group-hover:bg-[#0f2863] flex items-center justify-center transition-colors shadow-sm">
+                  <div className="w-12 h-12 rounded-2xl bg-primary/5 dark:bg-indigo-950/50 group-hover:bg-[#1a3673] flex items-center justify-center transition-colors shadow-sm">
                     {renderIcon(doc.id)}
                   </div>
                   <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg text-[10px] font-bold uppercase tracking-wider">
@@ -542,7 +542,7 @@ export default function ProfessorDocumentsPage() {
                       {isReady ? (
                         <button
                           onClick={() => handleDownloadPdf(req)}
-                          className="px-4 py-2 bg-[#001A4B] hover:bg-[#082663] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
+                          className="px-4 py-2 bg-[#1a3673] hover:bg-[#082663] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
                         >
                           <Download className="w-3.5 h-3.5 text-amber-400" /> Télécharger PDF
                         </button>
@@ -606,7 +606,7 @@ export default function ProfessorDocumentsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in">
           <div className="bg-card rounded-2xl shadow-sm w-full max-w-xl overflow-hidden border border-border animate-in zoom-in-95 space-y-6">
             
-            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-[#001A4B] p-6 text-white relative">
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-[#1a3673] p-6 text-white relative">
               <button 
                 onClick={() => setShowModal(false)}
                 className="absolute top-5 right-5 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-1.5 transition-colors cursor-pointer"

@@ -255,27 +255,27 @@ export default function ClassroomShowPage() {
   const backUrl = isStudent ? '/student/classroom' : '/classroom'
 
   return (
-    <div className="space-y-6 animate-in max-w-7xl mx-auto pb-24 font-sans text-foreground dark:text-foreground">
+    <div className="space-y-6 animate-in max-w-7xl mx-auto pb-24 font-sans text-foreground">
       
       {/* Top Breadcrumb Navigation */}
       <div className="flex items-center gap-2 mb-4">
         <Link 
           to={backUrl} 
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted dark:bg-card hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold text-[#001A4B] dark:text-white transition-all shadow-2xs"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted dark:bg-card hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold text-[#1a3673] dark:text-white transition-all shadow-2xs"
         >
           <ChevronLeft className="w-3.5 h-3.5" />
           <span>Retour aux Classes</span>
         </Link>
         <span className="text-slate-300 dark:text-slate-600">/</span>
-        <span className="text-xs font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">{courseCode}</span>
+        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{courseCode}</span>
         <span className="text-slate-300 dark:text-slate-600">/</span>
-        <h1 className="text-foreground dark:text-foreground truncate erp-page-title">
+        <h1 className="text-foreground truncate erp-page-title">
           {courseTitle}
         </h1>
       </div>
 
       {/* Hero Header Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#001A4B] via-[#0A2A66] to-[#1E3A8A] text-white p-6 sm:p-10 shadow-sm border border-white/10">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#1a3673] via-[#0A2A66] to-[#1E3A8A] text-white p-6 sm:p-10 shadow-sm border border-white/10">
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/3" />
         <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -368,13 +368,13 @@ export default function ClassroomShowPage() {
           {activeTab === 'annonces' && (
             <div className="space-y-6">
               {isProfessorOrAdmin && (
-                <form onSubmit={handlePublishAnnouncement} className="bg-card dark:bg-card rounded-2xl p-6 border border-border dark:border-border shadow-sm space-y-4">
+                <form onSubmit={handlePublishAnnouncement} className="bg-card rounded-2xl p-6 border border-border shadow-sm space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
                       <Megaphone className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-bold text-foreground dark:text-foreground">Publier une annonce officielle</h3>
+                      <h3 className="text-sm font-bold text-foreground">Publier une annonce officielle</h3>
                       <p className="text-xs text-slate-400">Diffusion instantanée et persistée pour {filiereName}</p>
                     </div>
                   </div>
@@ -384,7 +384,7 @@ export default function ClassroomShowPage() {
                     value={announcementTitle}
                     onChange={(e) => setAnnouncementTitle(e.target.value)}
                     placeholder="Titre de l'annonce (ex: Consignes pour la séance de TD)..."
-                    className="w-full p-3 border border-border dark:border-border bg-muted/50 dark:bg-slate-800/50 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary rounded-[var(--control-radius)]"
+                    className="w-full p-3 border border-border bg-muted/50 dark:bg-slate-800/50 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary rounded-[var(--control-radius)]"
                   />
 
                   <textarea
@@ -392,13 +392,13 @@ export default function ClassroomShowPage() {
                     value={announcementText}
                     onChange={(e) => setAnnouncementText(e.target.value)}
                     placeholder="Rédigez votre annonce pédagogique ou consigne de cours..."
-                    className="w-full p-4 border border-border dark:border-border bg-muted/50 dark:bg-slate-800/50 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary rounded-[var(--control-radius)]"
+                    className="w-full p-4 border border-border bg-muted/50 dark:bg-slate-800/50 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary rounded-[var(--control-radius)]"
                   />
                   <div className="flex justify-end">
                     <button
                       type="submit"
                       disabled={!announcementText.trim() || publishingAnn}
-                      className="px-5 py-2.5 rounded-xl bg-[#001A4B] hover:bg-[#092868] text-white text-xs font-bold shadow-md transition-all disabled:opacity-50 cursor-pointer"
+                      className="px-5 py-2.5 rounded-xl bg-[#1a3673] hover:bg-[#092868] text-white text-xs font-bold shadow-md transition-all disabled:opacity-50 cursor-pointer"
                     >
                       {publishingAnn ? 'Publication en cours...' : 'Publier l\'annonce'}
                     </button>
@@ -408,7 +408,7 @@ export default function ClassroomShowPage() {
 
               {/* Announcements Feed */}
               {announcements.length === 0 ? (
-                <div className="bg-card dark:bg-card rounded-2xl p-10 border border-border dark:border-border text-center space-y-2">
+                <div className="bg-card rounded-2xl p-10 border border-border text-center space-y-2">
                   <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mx-auto">
                     <Megaphone className="w-6 h-6" />
                   </div>
@@ -418,10 +418,10 @@ export default function ClassroomShowPage() {
               ) : (
                 <div className="space-y-4">
                   {announcements.map((ann) => (
-                    <div key={ann.id} className="bg-card dark:bg-card rounded-2xl p-6 border border-border dark:border-border shadow-sm hover:shadow-md transition-all">
+                    <div key={ann.id} className="bg-card rounded-2xl p-6 border border-border shadow-sm hover:shadow-md transition-all">
                       <div className="flex items-start justify-between gap-4 mb-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-2xl bg-[#001A4B] text-white font-bold text-xs flex items-center justify-center shadow-sm">
+                          <div className="w-10 h-10 rounded-2xl bg-[#1a3673] text-white font-bold text-xs flex items-center justify-center shadow-sm">
                             {ann.author.slice(0, 2).toUpperCase()}
                           </div>
                           <div>
@@ -445,7 +445,7 @@ export default function ClassroomShowPage() {
 
           {/* 2. Tab Supports & Polycopiés (Real Database Records) */}
           {activeTab === 'supports' && (
-            <div className="bg-card dark:bg-card rounded-2xl p-6 border border-border dark:border-border shadow-sm space-y-6">
+            <div className="bg-card rounded-2xl p-6 border border-border shadow-sm space-y-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-base font-bold text-foreground dark:text-white flex items-center gap-2">
@@ -479,7 +479,7 @@ export default function ClassroomShowPage() {
                             {cleanMojibake(mat.title)}
                           </h4>
                           {mat.description && (
-                            <p className="text-xs text-muted-foreground dark:text-muted-foreground line-clamp-1 mt-0.5">
+                            <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
                               {cleanMojibake(mat.description)}
                             </p>
                           )}
@@ -496,7 +496,7 @@ export default function ClassroomShowPage() {
                         target="_blank"
                         rel="noreferrer"
                         download
-                        className="px-3.5 py-2 rounded-xl bg-muted dark:bg-card hover:bg-[#001A4B] hover:text-white text-xs font-bold text-slate-700 dark:text-foreground transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer flex-shrink-0"
+                        className="px-3.5 py-2 rounded-xl bg-muted dark:bg-card hover:bg-[#1a3673] hover:text-white text-xs font-bold text-slate-700 dark:text-foreground transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer flex-shrink-0"
                       >
                         <Download className="w-3.5 h-3.5" />
                         <span>Télécharger</span>
@@ -510,7 +510,7 @@ export default function ClassroomShowPage() {
 
           {/* 3. Tab Devoirs & Travaux (Real Database Records) */}
           {activeTab === 'devoirs' && (
-            <div className="bg-card dark:bg-card rounded-2xl p-6 border border-border dark:border-border shadow-sm space-y-6">
+            <div className="bg-card rounded-2xl p-6 border border-border shadow-sm space-y-6">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-base font-bold text-foreground dark:text-white flex items-center gap-2">
@@ -582,7 +582,7 @@ export default function ClassroomShowPage() {
                               target="_blank"
                               rel="noreferrer"
                               download
-                              className="px-3 py-1.5 rounded-xl bg-card dark:bg-card border border-border dark:border-border hover:bg-muted text-xs font-bold text-slate-700 dark:text-foreground transition-all inline-flex items-center gap-1"
+                              className="px-3 py-1.5 rounded-xl bg-card border border-border hover:bg-muted text-xs font-bold text-slate-700 dark:text-foreground transition-all inline-flex items-center gap-1"
                             >
                               <FileText className="w-3.5 h-3.5 text-primary" />
                               <span>Sujet PDF</span>
@@ -592,7 +592,7 @@ export default function ClassroomShowPage() {
                           {!assign.is_submitted && (
                             <button
                               onClick={() => setSubmittingAssignmentId(submittingAssignmentId === assign.id ? null : assign.id)}
-                              className="px-4 py-1.5 rounded-xl bg-[#001A4B] hover:bg-[#092868] text-white text-xs font-bold shadow-sm transition-all inline-flex items-center gap-1.5 cursor-pointer"
+                              className="px-4 py-1.5 rounded-xl bg-[#1a3673] hover:bg-[#092868] text-white text-xs font-bold shadow-sm transition-all inline-flex items-center gap-1.5 cursor-pointer"
                             >
                               <Upload className="w-3.5 h-3.5" />
                               <span>Déposer mon travail</span>
@@ -603,14 +603,14 @@ export default function ClassroomShowPage() {
 
                       {/* Inline Submission Box */}
                       {submittingAssignmentId === assign.id && (
-                        <div className="pt-3 border-t border-border dark:border-border space-y-3 animate-in">
+                        <div className="pt-3 border-t border-border space-y-3 animate-in">
                           <textarea
                             rows={2}
                             value={submissionText}
                             onChange={(e) => setSubmissionText(e.target.value)}
                             placeholder="Votre travail ou lien du rendu..."
                             aria-label="Texte de votre travail"
-                            className="w-full p-3 border border-border dark:border-border bg-card dark:bg-card text-xs focus:outline-none focus:ring-2 focus:ring-primary rounded-[var(--control-radius)]"
+                            className="w-full p-3 border border-border bg-card text-xs focus:outline-none focus:ring-2 focus:ring-primary rounded-[var(--control-radius)]"
                           />
                           <label className="block text-sm">Fichier du rendu<input type="file" accept=".pdf,.doc,.docx,.zip" onChange={event => setSubmissionFile(event.target.files?.[0] ?? null)} /></label>
                           <div className="flex items-center justify-between">
@@ -645,11 +645,11 @@ export default function ClassroomShowPage() {
 
           {/* 4. Tab Chat (Real Database Messages) */}
           {activeTab === 'chat' && (
-            <div className="bg-card dark:bg-card rounded-2xl border border-border dark:border-border shadow-sm h-[560px] flex flex-col overflow-hidden">
-              <div className="p-4 border-b border-border dark:border-border flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/50">
+            <div className="bg-card rounded-2xl border border-border shadow-sm h-[560px] flex flex-col overflow-hidden">
+              <div className="p-4 border-b border-border flex items-center justify-between bg-slate-50/70 dark:bg-slate-800/50">
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <h3 className="text-xs sm:text-sm font-bold text-foreground dark:text-foreground">
+                  <h3 className="text-xs sm:text-sm font-bold text-foreground">
                     Salon d'Échange Académique — {filiereName}
                   </h3>
                 </div>
@@ -669,14 +669,14 @@ export default function ClassroomShowPage() {
                   chatMessages.map((msg) => (
                     <div key={msg.id} className={cn("flex flex-col", msg.isMe ? "items-end" : "items-start")}>
                       <div className="flex items-baseline gap-2 mb-1">
-                        <span className="text-[11px] font-bold text-muted-foreground dark:text-muted-foreground">{msg.sender}</span>
+                        <span className="text-[11px] font-bold text-muted-foreground">{msg.sender}</span>
                         <span className="text-[10px] text-slate-400">{msg.time}</span>
                       </div>
                       <div className={cn(
                         "p-3.5 rounded-2xl max-w-md text-xs sm:text-sm leading-relaxed shadow-2xs",
                         msg.isMe 
-                          ? "bg-[#001A4B] text-white rounded-tr-xs" 
-                          : "bg-muted dark:bg-card text-foreground dark:text-foreground rounded-tl-xs"
+                          ? "bg-[#1a3673] text-white rounded-tr-xs" 
+                          : "bg-muted dark:bg-card text-foreground rounded-tl-xs"
                       )}>
                         {cleanMojibake(msg.text)}
                       </div>
@@ -685,18 +685,18 @@ export default function ClassroomShowPage() {
                 )}
               </div>
 
-              <form onSubmit={handleSendChat} className="p-3 sm:p-4 border-t border-border dark:border-border bg-slate-50/50 dark:bg-slate-800/30 flex items-center gap-2">
+              <form onSubmit={handleSendChat} className="p-3 sm:p-4 border-t border-border bg-slate-50/50 dark:bg-slate-800/30 flex items-center gap-2">
                 <input
                   type="text"
                   value={newChatMessage}
                   onChange={(e) => setNewChatMessage(e.target.value)}
                   placeholder="Écrire un message pour le groupe..."
-                  className="flex-1 h-11 px-4 border border-border dark:border-border bg-card dark:bg-card text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary rounded-[var(--control-radius)]"
+                  className="flex-1 h-11 px-4 border border-border bg-card text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-primary rounded-[var(--control-radius)]"
                 />
                 <button
                   type="submit"
                   disabled={!newChatMessage.trim() || sendingMessage}
-                  className="h-11 px-4 rounded-xl bg-[#001A4B] hover:bg-[#092868] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
+                  className="h-11 px-4 rounded-xl bg-[#1a3673] hover:bg-[#092868] text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all disabled:opacity-50 cursor-pointer"
                 >
                   <Send className="w-4 h-4" />
                 </button>
@@ -706,7 +706,7 @@ export default function ClassroomShowPage() {
 
           {/* 5. Tab IA Tutor */}
           {activeTab === 'ia' && (
-            <div className="bg-card dark:bg-card rounded-2xl border border-border dark:border-border shadow-sm h-[560px] flex flex-col overflow-hidden">
+            <div className="bg-card rounded-2xl border border-border shadow-sm h-[560px] flex flex-col overflow-hidden">
               <div className="p-4 bg-gradient-to-r from-violet-700 to-indigo-700 text-white flex items-center justify-between shadow-xs">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center">
@@ -733,8 +733,8 @@ export default function ClassroomShowPage() {
                     <div className={cn(
                       "p-4 rounded-2xl max-w-lg text-xs sm:text-sm leading-relaxed shadow-2xs",
                       msg.role === 'user'
-                        ? "bg-[#001A4B] text-white rounded-tr-xs"
-                        : "bg-card dark:bg-card border border-slate-200/80 dark:border-border text-foreground dark:text-foreground rounded-tl-xs"
+                        ? "bg-[#1a3673] text-white rounded-tr-xs"
+                        : "bg-card border border-slate-200/80 dark:border-border text-foreground rounded-tl-xs"
                     )}>
                       {msg.text}
                     </div>
@@ -748,13 +748,13 @@ export default function ClassroomShowPage() {
                 )}
               </div>
 
-              <form onSubmit={handleAskIa} className="p-3 sm:p-4 border-t border-border dark:border-border bg-card dark:bg-card flex items-center gap-2">
+              <form onSubmit={handleAskIa} className="p-3 sm:p-4 border-t border-border bg-card flex items-center gap-2">
                 <input
                   type="text"
                   value={iaPrompt}
                   onChange={(e) => setIaPrompt(e.target.value)}
                   placeholder="Posez une question sur le cours, les TD ou les examens..."
-                  className="flex-1 h-11 px-4 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 rounded-[var(--control-radius)]"
+                  className="flex-1 h-11 px-4 border border-border bg-muted/50 dark:bg-card text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 rounded-[var(--control-radius)]"
                 />
                 <button
                   type="submit"
@@ -774,9 +774,9 @@ export default function ClassroomShowPage() {
         <div className="space-y-6">
           
           {/* Quick Supports Card */}
-          <div className="bg-card dark:bg-card rounded-2xl p-6 border border-border dark:border-border shadow-sm">
+          <div className="bg-card rounded-2xl p-6 border border-border shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-sm text-foreground dark:text-foreground flex items-center gap-2">
+              <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
                 <Folder className="w-4 h-4 text-amber-500" />
                 <span>Documents Récents</span>
               </h3>
@@ -790,7 +790,7 @@ export default function ClassroomShowPage() {
             ) : (
               <div className="space-y-2.5">
                 {materials.slice(0, 4).map((m) => (
-                  <div key={m.id} className="p-2.5 rounded-xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-border flex items-center justify-between text-xs">
+                  <div key={m.id} className="p-2.5 rounded-xl bg-muted/50 dark:bg-slate-800/60 border border-border flex items-center justify-between text-xs">
                     <span className="font-bold text-slate-700 dark:text-foreground truncate pr-2">{cleanMojibake(m.title)}</span>
                     <a href={m.file_url || '#'} target="_blank" rel="noreferrer" download className="text-primary hover:underline flex-shrink-0">
                       <Download className="w-3.5 h-3.5" />
@@ -802,26 +802,26 @@ export default function ClassroomShowPage() {
           </div>
 
           {/* Academic Info Card */}
-          <div className="bg-card dark:bg-card rounded-2xl p-6 border border-border dark:border-border shadow-sm space-y-4">
-            <h3 className="font-bold text-sm text-foreground dark:text-foreground flex items-center gap-2">
+          <div className="bg-card rounded-2xl p-6 border border-border shadow-sm space-y-4">
+            <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
               <Info className="w-4 h-4 text-primary" />
               <span>Fiche Technique du Module</span>
             </h3>
             
             <div className="space-y-3 text-xs">
-              <div className="flex justify-between items-center pb-2.5 border-b border-border dark:border-border">
+              <div className="flex justify-between items-center pb-2.5 border-b border-border">
                 <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">CODE OFFICIEL</span>
-                <span className="font-bold text-[#001A4B] dark:text-blue-400">{courseCode}</span>
+                <span className="font-bold text-[#1a3673] dark:text-blue-400">{courseCode}</span>
               </div>
-              <div className="flex justify-between items-center pb-2.5 border-b border-border dark:border-border">
+              <div className="flex justify-between items-center pb-2.5 border-b border-border">
                 <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">COEFFICIENT</span>
                 <span className="font-bold text-slate-700 dark:text-foreground">{course?.coefficient || '2.00'}</span>
               </div>
-              <div className="flex justify-between items-center pb-2.5 border-b border-border dark:border-border">
+              <div className="flex justify-between items-center pb-2.5 border-b border-border">
                 <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">CRÉDITS (ECTS)</span>
                 <span className="font-bold text-slate-700 dark:text-foreground">{course?.credits || 4} ECTS</span>
               </div>
-              <div className="flex justify-between items-center pb-2.5 border-b border-border dark:border-border">
+              <div className="flex justify-between items-center pb-2.5 border-b border-border">
                 <span className="font-bold text-slate-400 uppercase tracking-wider text-[10px]">FILIÈRE</span>
                 <span className="font-bold text-primary dark:text-blue-400 truncate max-w-[150px] text-right">{filiereName}</span>
               </div>
@@ -838,7 +838,7 @@ export default function ClassroomShowPage() {
               <HelpCircle className="w-4 h-4" />
               <span>Assistance Pédagogique</span>
             </div>
-            <p className="text-muted-foreground dark:text-muted-foreground leading-relaxed text-[11px]">
+            <p className="text-muted-foreground leading-relaxed text-[11px]">
               En cas de question relative au déroulement des séances ou aux supports, vous pouvez contacter directement votre enseignant ou utiliser le salon interactif ci-contre.
             </p>
           </div>
@@ -872,8 +872,8 @@ function TabButton({
       className={cn(
         "flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
         active
-          ? "bg-card dark:bg-card text-[#001A4B] dark:text-white shadow-xs border border-slate-200/80 dark:border-border"
-          : "text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-750",
+          ? "bg-card text-[#1a3673] dark:text-white shadow-xs border border-slate-200/80 dark:border-border"
+          : "text-muted-foreground hover:text-foreground dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-750",
         highlight && !active && "text-violet-600 dark:text-violet-400"
       )}
     >

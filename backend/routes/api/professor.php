@@ -70,6 +70,7 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:professor|vacata
 
     // AI Tools for Professor
     Route::post('/professor/ai/generate-qcm', [AiAssistantController::class, 'generateQuiz']);
+    Route::get('/professor/ai/class-analytics/{moduleId}', [ProfessorAiController::class, 'getClassAnalytics']);
     Route::post('/professor/ai/grade-report', [ProfessorAiController::class, 'gradeReport']);
     Route::post('/professor/smart-grading/process', [SmartGradingController::class, 'process']);
     Route::post('/professor/smart-grading/export', [SmartGradingController::class, 'export']);

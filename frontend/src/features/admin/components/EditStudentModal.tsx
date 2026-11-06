@@ -52,7 +52,7 @@ export default function EditStudentModal({
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-card rounded-2xl w-full max-w-md overflow-hidden shadow-sm animate-in zoom-in-95">
         <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-          <h3 className="font-bold text-[#0f2863]">Modifier l'étudiant</h3>
+          <h3 className="font-bold text-[#1a3673]">Modifier l'étudiant</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-muted-foreground transition-colors">
             <X className="w-5 h-5" />
           </button>
@@ -89,7 +89,7 @@ export default function EditStudentModal({
           </div>
           <div className="pt-4 flex items-center justify-end gap-3">
             <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted/50 rounded-lg transition-colors">Annuler</button>
-            <button type="submit" disabled={saving} className="px-4 py-2 bg-[#0f2863] text-white text-sm font-medium rounded-lg hover:bg-[#1a387e] transition-colors flex items-center gap-2">
+            <button type="submit" disabled={saving} className="px-4 py-2 bg-[#1a3673] text-white text-sm font-medium rounded-lg hover:bg-[#1a387e] transition-colors flex items-center gap-2">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Enregistrer
             </button>

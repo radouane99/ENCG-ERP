@@ -195,7 +195,7 @@ export default function AdminClubsPage() {
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-4 flex flex-col sm:flex-row gap-4 items-center justify-between">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-4 flex flex-col sm:flex-row gap-4 items-center justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
@@ -203,7 +203,7 @@ export default function AdminClubsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Rechercher par nom de club ou president..."
-            className="w-full pl-11 pr-4 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none transition-all rounded-[var(--control-radius)]"
+            className="w-full pl-11 pr-4 py-2.5 bg-muted/50 dark:bg-card border border-border text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none transition-all rounded-[var(--control-radius)]"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -213,7 +213,7 @@ export default function AdminClubsPage() {
               onClick={() => setStatusFilter(st)}
               className={cn(
                 "px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer",
-                statusFilter === st ? "bg-[#0f2863] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground hover:bg-slate-200"
+                statusFilter === st ? "bg-[#1a3673] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground hover:bg-slate-200"
               )}
             >
               {st === 'all' ? 'Tous' : st === 'active' ? 'Agréés' : 'En Attente'}
@@ -239,12 +239,12 @@ export default function AdminClubsPage() {
           const membersCount = club.members_count ?? club.members?.length ?? 30
 
           return (
-            <div key={club.id} className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-sm hover:shadow-2xl transition-all flex flex-col justify-between space-y-5">
+            <div key={club.id} className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-sm hover:shadow-2xl transition-all flex flex-col justify-between space-y-5">
 
               {/* Club Header */}
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#0f2863] to-blue-600 flex items-center justify-center text-amber-300 font-bold text-2xl shadow-md shrink-0">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#1a3673] to-blue-600 flex items-center justify-center text-amber-300 font-bold text-2xl shadow-md shrink-0">
                     {club.name.charAt(0)}
                   </div>
                   <div>
@@ -265,7 +265,7 @@ export default function AdminClubsPage() {
                 </span>
               </div>
 
-              <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground line-clamp-2">
+              <p className="text-xs font-medium text-muted-foreground line-clamp-2">
                 {club.description}
               </p>
 
@@ -286,7 +286,7 @@ export default function AdminClubsPage() {
               </div>
 
               {/* Actions */}
-              <div className="pt-4 border-t border-border dark:border-border space-y-2">
+              <div className="pt-4 border-t border-border space-y-2">
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handlePrintAgrement(club)}
@@ -298,7 +298,7 @@ export default function AdminClubsPage() {
                   <button
                     onClick={() => handleDownloadAgrementPdf(club)}
                     title="Télécharger le fichier PDF certifié"
-                    className="p-2 bg-muted dark:bg-card hover:bg-primary hover:text-white text-slate-700 dark:text-foreground rounded-xl transition-all border border-border dark:border-border cursor-pointer"
+                    className="p-2 bg-muted dark:bg-card hover:bg-primary hover:text-white text-slate-700 dark:text-foreground rounded-xl transition-all border border-border cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" />
                   </button>
@@ -334,8 +334,8 @@ export default function AdminClubsPage() {
       {/* Modal Calendrier Inter-Clubs */}
       {showCalendarModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-lg shadow-sm overflow-hidden">
-            <div className="p-6 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white flex items-center justify-between">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-lg shadow-sm overflow-hidden">
+            <div className="p-6 bg-gradient-to-r from-[#1a3673] to-blue-900 text-white flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200">Détecteur Anti-Collision</span>
                 <h2 className="text-lg font-bold">Calendrier Consolidé Inter-Clubs</h2>
@@ -348,7 +348,7 @@ export default function AdminClubsPage() {
               </div>
               <div className="space-y-3">
                 {calendarEvents.map((ev, idx) => (
-                  <div key={idx} className="p-4 bg-muted/50 dark:bg-card rounded-2xl border border-border dark:border-border flex items-center gap-4">
+                  <div key={idx} className="p-4 bg-muted/50 dark:bg-card rounded-2xl border border-border flex items-center gap-4">
                     <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-md", ev.color)}>
                       <Calendar className="w-5 h-5" />
                     </div>
@@ -357,7 +357,7 @@ export default function AdminClubsPage() {
                       <p className="text-[10px] font-bold text-primary mt-0.5">{ev.club}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] font-bold text-foreground dark:text-foreground">{ev.date}</p>
+                      <p className="text-[10px] font-bold text-foreground">{ev.date}</p>
                       <p className="text-[10px] font-bold text-slate-400">{ev.room}</p>
                     </div>
                   </div>
@@ -371,8 +371,8 @@ export default function AdminClubsPage() {
       {/* Modal Déblocage Budget */}
       {showBudgetModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-md shadow-sm overflow-hidden">
-            <div className="p-6 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white flex items-center justify-between">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-md shadow-sm overflow-hidden">
+            <div className="p-6 bg-gradient-to-r from-[#1a3673] to-blue-900 text-white flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200">Guichet de Financement Associatif</span>
                 <h2 className="text-base font-bold">Déblocage — {showBudgetModal.name}</h2>
@@ -386,16 +386,16 @@ export default function AdminClubsPage() {
                   <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                   <input required type="number" value={budgetAmount} onChange={(e) => setBudgetAmount(e.target.value)}
                     placeholder="Ex: 5000"
-                    className="w-full pl-11 pr-4 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none rounded-[var(--control-radius)]" />
+                    className="w-full pl-11 pr-4 py-2.5 border border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none rounded-[var(--control-radius)]" />
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-400 tracking-wider mb-1.5">Motif & Justification *</label>
                 <textarea required rows={3} value={budgetReason} onChange={(e) => setBudgetReason(e.target.value)}
                   placeholder="Ex: Organisation de la Semaine de l'Entrepreneuriat Social 2026..."
-                  className="w-full px-4 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none resize-none rounded-[var(--control-radius)]" />
+                  className="w-full px-4 py-2.5 border border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none resize-none rounded-[var(--control-radius)]" />
               </div>
-              <div className="flex justify-end gap-3 pt-2 border-t border-border dark:border-border">
+              <div className="flex justify-end gap-3 pt-2 border-t border-border">
                 <button type="button" onClick={() => setShowBudgetModal(null)} className="px-5 py-2.5 text-xs font-bold text-muted-foreground hover:bg-muted rounded-xl cursor-pointer">ANNULER</button>
                 <button type="submit" className="px-6 py-2.5 text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl shadow-md cursor-pointer flex items-center gap-1.5">
                   <Send className="w-3.5 h-3.5" /> SOUMETTRE À LA DAF

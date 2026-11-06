@@ -229,12 +229,12 @@ const [selectedAbsence, setSelectedAbsence] = useState<AbsenceItem | null>(null)
           className={cn(
             "p-4 rounded-2xl border transition-all cursor-pointer group relative overflow-hidden flex items-center justify-between",
             statusFilter === ''
-              ? "bg-card dark:bg-card border-primary ring-2 ring-indigo-500/20 shadow-md"
-              : "bg-card dark:bg-card border-slate-200/80 dark:border-border hover:border-slate-300 dark:hover:border-slate-700 shadow-xs"
+              ? "bg-card border-primary ring-2 ring-indigo-500/20 shadow-md"
+              : "bg-card border-slate-200/80 dark:border-border hover:border-slate-300 dark:hover:border-slate-700 shadow-xs"
           )}
         >
           <div className="space-y-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">Total Demandes</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Total Demandes</span>
             <div className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">{stats.total || absences.length || 0}</div>
             <div className="text-[10px] text-slate-400 font-medium">Toutes les soumissions</div>
           </div>
@@ -250,7 +250,7 @@ const [selectedAbsence, setSelectedAbsence] = useState<AbsenceItem | null>(null)
             "p-4 rounded-2xl border transition-all cursor-pointer group relative overflow-hidden flex items-center justify-between",
             statusFilter === 'pending'
               ? "bg-amber-50/80 dark:bg-amber-950/40 border-amber-500 ring-2 ring-amber-500/20 shadow-md"
-              : "bg-card dark:bg-card border-slate-200/80 dark:border-border hover:border-amber-400/60 shadow-xs"
+              : "bg-card border-slate-200/80 dark:border-border hover:border-amber-400/60 shadow-xs"
           )}
         >
           <div className="space-y-1">
@@ -273,7 +273,7 @@ const [selectedAbsence, setSelectedAbsence] = useState<AbsenceItem | null>(null)
             "p-4 rounded-2xl border transition-all cursor-pointer group relative overflow-hidden flex items-center justify-between",
             statusFilter === 'approved'
               ? "bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-500 ring-2 ring-emerald-500/20 shadow-md"
-              : "bg-card dark:bg-card border-slate-200/80 dark:border-border hover:border-emerald-400/60 shadow-xs"
+              : "bg-card border-slate-200/80 dark:border-border hover:border-emerald-400/60 shadow-xs"
           )}
         >
           <div className="space-y-1">
@@ -293,7 +293,7 @@ const [selectedAbsence, setSelectedAbsence] = useState<AbsenceItem | null>(null)
             "p-4 rounded-2xl border transition-all cursor-pointer group relative overflow-hidden flex items-center justify-between",
             statusFilter === 'rejected'
               ? "bg-rose-50/80 dark:bg-rose-950/40 border-rose-500 ring-2 ring-rose-500/20 shadow-md"
-              : "bg-card dark:bg-card border-slate-200/80 dark:border-border hover:border-rose-400/60 shadow-xs"
+              : "bg-card border-slate-200/80 dark:border-border hover:border-rose-400/60 shadow-xs"
           )}
         >
           <div className="space-y-1">
@@ -311,7 +311,7 @@ const [selectedAbsence, setSelectedAbsence] = useState<AbsenceItem | null>(null)
       {/* ══════════════════════════════════════════════════════════════
           3. SEARCH, STATUS PILLS & FILTER BAR
       ══════════════════════════════════════════════════════════════ */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-xs p-3.5 sm:p-4 space-y-3">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-xs p-3.5 sm:p-4 space-y-3">
         <div className="flex flex-col lg:flex-row gap-3 items-center justify-between">
           
           {/* Live Search Input */}
@@ -322,7 +322,7 @@ const [selectedAbsence, setSelectedAbsence] = useState<AbsenceItem | null>(null)
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Rechercher par étudiant (FR/AR), CNE, CIN, module..."
-              className="w-full pl-10 pr-9 py-2 bg-muted/50 dark:bg-slate-800/80 border border-border dark:border-border text-xs font-semibold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-primary transition-all placeholder:text-slate-400 rounded-[var(--control-radius)]"
+              className="w-full pl-10 pr-9 py-2 bg-muted/50 dark:bg-slate-800/80 border border-border text-xs font-semibold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-primary transition-all placeholder:text-slate-400 rounded-[var(--control-radius)]"
             />
             {search && (
               <button 
@@ -351,7 +351,7 @@ const [selectedAbsence, setSelectedAbsence] = useState<AbsenceItem | null>(null)
                   "px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 border",
                   statusFilter === val
                     ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                    : "bg-muted/50 dark:bg-card text-muted-foreground dark:text-foreground border-border dark:border-border hover:border-indigo-400"
+                    : "bg-muted/50 dark:bg-card text-muted-foreground dark:text-foreground border-border hover:border-indigo-400"
                 )}
               >
                 <span>{label}</span>
@@ -378,7 +378,7 @@ const [selectedAbsence, setSelectedAbsence] = useState<AbsenceItem | null>(null)
         </div>
 
         {/* Counter and Meta Strip */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground dark:text-muted-foreground pt-2 border-t border-border dark:border-slate-800/80">
+        <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border dark:border-slate-800/80">
           <div className="flex items-center gap-2">
             <span className="font-bold text-foreground dark:text-white">
               {absences.length} {absences.length > 1 ? 'dossiers répertoriés' : 'dossier répertorié'}
@@ -394,11 +394,11 @@ const [selectedAbsence, setSelectedAbsence] = useState<AbsenceItem | null>(null)
       {/* ══════════════════════════════════════════════════════════════
           4. MAIN DATA TABLE (REFINED & ELEVATED)
       ══════════════════════════════════════════════════════════════ */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-xs overflow-hidden">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-start border-collapse">
             <thead>
-              <tr className="bg-slate-50/90 dark:bg-slate-800/80 border-b border-slate-200/70 dark:border-border text-[10px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
+              <tr className="bg-slate-50/90 dark:bg-slate-800/80 border-b border-slate-200/70 dark:border-border text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                 <th className="px-5 py-3.5 text-start">Étudiant(e) / Identité</th>
                 <th className="px-4 py-3.5 text-start">Séance & Module Manqué</th>
                 <th className="px-4 py-3.5 text-start">Comparaison Dates & Délai 48h</th>
@@ -459,7 +459,7 @@ const [selectedAbsence, setSelectedAbsence] = useState<AbsenceItem | null>(null)
                             )}
                           </div>
 
-                          <div className="flex items-center gap-2 text-[11px] font-semibold text-muted-foreground dark:text-muted-foreground mt-0.5">
+                          <div className="flex items-center gap-2 text-[11px] font-semibold text-muted-foreground mt-0.5">
                             <span className="text-primary dark:text-indigo-400 font-bold">CNE: {item.student?.cne || 'N/A'}</span>
                             <span>•</span>
                             <span>CIN: {item.student?.cin || 'N/A'}</span>
@@ -491,7 +491,7 @@ const [selectedAbsence, setSelectedAbsence] = useState<AbsenceItem | null>(null)
                           )}>
                             {item.attendance?.session_type || 'CM'}
                           </span>
-                          <span className="text-[11px] font-semibold text-muted-foreground dark:text-muted-foreground">
+                          <span className="text-[11px] font-semibold text-muted-foreground">
                             Groupe: <strong className="text-slate-700 dark:text-foreground font-mono">{item.attendance?.group_name || 'TC-S2-G1'}</strong>
                           </span>
                         </div>
@@ -501,12 +501,12 @@ const [selectedAbsence, setSelectedAbsence] = useState<AbsenceItem | null>(null)
                     {/* Column 3: Dates Comparison & 48h Compliance */}
                     <td className="px-4 py-3.5">
                       <div className="space-y-1 text-[11px]">
-                        <div className="flex items-center gap-1.5 font-bold text-foreground dark:text-foreground">
+                        <div className="flex items-center gap-1.5 font-bold text-foreground">
                           <Calendar className="w-3 h-3 text-primary" />
                           <span>Absence : <span className="font-mono">{item.attendance?.date || item.absence_date || item.created_at}</span></span>
                         </div>
 
-                        <div className="flex items-center gap-1.5 text-muted-foreground dark:text-muted-foreground">
+                        <div className="flex items-center gap-1.5 text-muted-foreground">
                           <Stethoscope className="w-3 h-3 text-amber-500" />
                           <span>Certificat : <span className="font-mono">{item.certificate_date || item.created_at}</span></span>
                         </div>
@@ -581,22 +581,22 @@ const [selectedAbsence, setSelectedAbsence] = useState<AbsenceItem | null>(null)
         </div>
 
         {/* Pagination Footer */}
-        <div className="px-5 py-3.5 border-t border-border dark:border-border flex items-center justify-between gap-4">
-          <span className="text-xs font-bold text-muted-foreground dark:text-muted-foreground">
+        <div className="px-5 py-3.5 border-t border-border flex items-center justify-between gap-4">
+          <span className="text-xs font-bold text-muted-foreground">
             Page {page} sur {totalPages} • Total de {stats.total || absences.length} dossiers
           </span>
           <div className="flex gap-2">
             <button
               disabled={page === 1}
               onClick={() => setPage(p => p - 1)}
-              className="px-3.5 py-1.5 border border-border dark:border-border rounded-xl text-slate-700 dark:text-foreground font-bold hover:bg-muted/50 dark:hover:bg-slate-800 text-xs disabled:opacity-40 transition-all cursor-pointer"
+              className="px-3.5 py-1.5 border border-border rounded-xl text-slate-700 dark:text-foreground font-bold hover:bg-muted/50 dark:hover:bg-slate-800 text-xs disabled:opacity-40 transition-all cursor-pointer"
             >
               Précédent
             </button>
             <button
               disabled={page === totalPages}
               onClick={() => setPage(p => p + 1)}
-              className="px-3.5 py-1.5 border border-border dark:border-border rounded-xl text-slate-700 dark:text-foreground font-bold hover:bg-muted/50 dark:hover:bg-slate-800 text-xs disabled:opacity-40 transition-all cursor-pointer"
+              className="px-3.5 py-1.5 border border-border rounded-xl text-slate-700 dark:text-foreground font-bold hover:bg-muted/50 dark:hover:bg-slate-800 text-xs disabled:opacity-40 transition-all cursor-pointer"
             >
               Suivant
             </button>
@@ -609,10 +609,10 @@ const [selectedAbsence, setSelectedAbsence] = useState<AbsenceItem | null>(null)
       ══════════════════════════════════════════════════════════════ */}
       {selectedAbsence && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-[200] animate-in fade-in">
-          <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 max-w-2xl w-full shadow-sm border border-border dark:border-border space-y-6 max-h-[90vh] overflow-y-auto">
+          <div className="bg-card rounded-2xl p-6 sm:p-8 max-w-2xl w-full shadow-sm border border-border space-y-6 max-h-[90vh] overflow-y-auto">
             
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
+            <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-3.5">
                 <div className="w-12 h-12 rounded-2xl bg-primary/5 dark:bg-indigo-950/80 text-primary dark:text-indigo-400 flex items-center justify-center font-bold">
                   <Stethoscope className="w-6 h-6" />
@@ -715,9 +715,9 @@ const [selectedAbsence, setSelectedAbsence] = useState<AbsenceItem | null>(null)
             {/* Reason & Observations */}
             <div className="space-y-1.5">
               <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Motif Déclaré</div>
-              <div className="p-3.5 bg-muted/50 dark:bg-card rounded-xl border border-border dark:border-border text-xs font-semibold text-foreground dark:text-foreground">
+              <div className="p-3.5 bg-muted/50 dark:bg-card rounded-xl border border-border text-xs font-semibold text-foreground">
                 <div className="font-bold text-primary dark:text-indigo-400 mb-0.5">{selectedAbsence.reason}</div>
-                <div className="text-muted-foreground dark:text-muted-foreground text-[11px]">{selectedAbsence.description || 'Justificatif soumis en ligne via le portail étudiant.'}</div>
+                <div className="text-muted-foreground text-[11px]">{selectedAbsence.description || 'Justificatif soumis en ligne via le portail étudiant.'}</div>
               </div>
             </div>
 
@@ -748,7 +748,7 @@ const [selectedAbsence, setSelectedAbsence] = useState<AbsenceItem | null>(null)
             </div>
 
             {/* Decision Footer Buttons */}
-            <div className="pt-4 border-t border-border dark:border-border">
+            <div className="pt-4 border-t border-border">
               {selectedAbsence.status === 'pending' ? (
                 <div className="flex gap-3 w-full">
                   <button
@@ -780,7 +780,7 @@ const [selectedAbsence, setSelectedAbsence] = useState<AbsenceItem | null>(null)
       ══════════════════════════════════════════════════════════════ */}
       {rejectingAbsence && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 z-[200] animate-in fade-in">
-          <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-7 max-w-md w-full shadow-sm border border-border dark:border-border space-y-5">
+          <div className="bg-card rounded-2xl p-6 sm:p-7 max-w-md w-full shadow-sm border border-border space-y-5">
             
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -809,7 +809,7 @@ const [selectedAbsence, setSelectedAbsence] = useState<AbsenceItem | null>(null)
                 onChange={(e) => setRejectionReason(e.target.value)}
                 placeholder="Précisez la raison (ex: dépassement des 48h, document illisible, absence de cachet...)"
                 rows={3}
-                className="w-full p-3 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-semibold text-foreground dark:text-white focus:ring-2 focus:ring-rose-500 outline-none rounded-[var(--control-radius)]"
+                className="w-full p-3 border border-border bg-muted/50 dark:bg-card text-xs font-semibold text-foreground dark:text-white focus:ring-2 focus:ring-rose-500 outline-none rounded-[var(--control-radius)]"
               />
               
               <div className="flex flex-wrap gap-1.5 mt-2.5">
@@ -831,7 +831,7 @@ const [selectedAbsence, setSelectedAbsence] = useState<AbsenceItem | null>(null)
               </div>
             </div>
 
-            <div className="flex justify-end gap-2.5 pt-2 border-t border-border dark:border-border">
+            <div className="flex justify-end gap-2.5 pt-2 border-t border-border">
               <button
                 onClick={() => setRejectingAbsence(null)}
                 className="px-4 py-2 bg-muted dark:bg-card hover:bg-slate-200 text-slate-700 dark:text-foreground rounded-xl font-bold text-xs"

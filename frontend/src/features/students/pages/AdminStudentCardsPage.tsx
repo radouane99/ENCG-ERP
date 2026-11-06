@@ -614,7 +614,7 @@ const { data: cardResponse, isLoading, refetch } = useQuery({
                 style={{ pageBreakInside: 'avoid', width: '86mm', height: '54mm' }}
               >
                 {/* Top Gradient Banner Header */}
-                <div className="bg-gradient-to-r from-[#0b1f4f] via-[#0f2863] to-[#1d3d82] text-white px-2.5 py-1.5 flex items-center justify-between border-b-2 border-amber-400/90 relative overflow-hidden">
+                <div className="bg-gradient-to-r from-[#0b1f4f] via-[#1a3673] to-[#1d3d82] text-white px-2.5 py-1.5 flex items-center justify-between border-b-2 border-amber-400/90 relative overflow-hidden">
                   {/* Watermark Logo Background */}
                   <div className="absolute -right-4 -bottom-4 opacity-10 pointer-events-none">
                     <img src="/logo-encg.png" alt="" className="h-16 w-auto" />
@@ -635,7 +635,7 @@ const { data: cardResponse, isLoading, refetch } = useQuery({
                   </div>
 
                   <div className="z-10 text-right shrink-0">
-                    <span className="bg-amber-400 text-[#0f2863] text-[6px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shadow-xs">
+                    <span className="bg-amber-400 text-[#1a3673] text-[6px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider shadow-xs">
                       {academicYear}
                     </span>
                     <p className="text-[4.5px] text-slate-300 font-bold uppercase mt-0.5">CARTE ÉTUDIANT</p>
@@ -646,16 +646,16 @@ const { data: cardResponse, isLoading, refetch } = useQuery({
                 <div className="px-2.5 py-1 flex items-center gap-2.5 flex-1 min-h-0 bg-gradient-to-b from-slate-50/50 to-white">
                   {/* Photo Container */}
                   <div className="relative shrink-0">
-                    <div className="w-[19mm] h-[23mm] bg-card rounded-lg border-2 border-[#0f2863] flex items-center justify-center overflow-hidden shadow-sm">
+                    <div className="w-[19mm] h-[23mm] bg-card rounded-lg border-2 border-[#1a3673] flex items-center justify-center overflow-hidden shadow-sm">
                       {cardData.photo_url ? (
                         <img src={cardData.photo_url} alt="Photo" className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-[#0f2863] text-amber-300 flex items-center justify-center font-bold text-xs">
+                        <div className="w-8 h-8 rounded-full bg-[#1a3673] text-amber-300 flex items-center justify-center font-bold text-xs">
                           {cardData.student.name.charAt(0)}
                         </div>
                       )}
                     </div>
-                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-[#0f2863] text-amber-300 text-[4.5px] font-bold px-1 rounded uppercase tracking-tighter whitespace-nowrap shadow-2xs">
+                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-[#1a3673] text-amber-300 text-[4.5px] font-bold px-1 rounded uppercase tracking-tighter whitespace-nowrap shadow-2xs">
                       OFFICIEL
                     </span>
                   </div>
@@ -675,7 +675,7 @@ const { data: cardResponse, isLoading, refetch } = useQuery({
                     {/* Filière & Option */}
                     <div className="space-y-0.2">
                       <div className="flex items-center justify-between text-[6px] font-bold">
-                        <span className="text-[#0f2863] truncate max-w-[110px]" title={cardData.student.filiere}>
+                        <span className="text-[#1a3673] truncate max-w-[110px]" title={cardData.student.filiere}>
                           📚 {cardData.student.filiere}
                         </span>
                         <span className="bg-amber-100 text-amber-900 px-1 rounded font-bold text-[5.5px] shrink-0 border border-amber-200">
@@ -697,7 +697,7 @@ const { data: cardResponse, isLoading, refetch } = useQuery({
                 </div>
 
                 {/* Footer Barcode & Legal Disclaimer */}
-                <div className="bg-[#0f2863] text-white px-2 py-0.5 flex items-center justify-between text-[5px] border-t border-amber-400/80">
+                <div className="bg-[#1a3673] text-white px-2 py-0.5 flex items-center justify-between text-[5px] border-t border-amber-400/80">
                   <div className="flex items-center gap-1.5">
                     <div className="bg-card px-1 py-0.2 rounded shrink-0">
                       <Barcode value={cardNumber} height={12} className="w-[50px]" />

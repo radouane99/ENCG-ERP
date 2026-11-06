@@ -228,7 +228,7 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
           <div className="flex flex-wrap items-center gap-3">
             {topModules.map(m => (
               <div key={m.module_code} className="bg-muted/50 border border-border px-4 py-2 rounded-xl flex items-center gap-2.5">
-                <span className="font-mono text-xs font-bold text-[#0f2863]">{m.module_code}</span>
+                <span className="font-mono text-xs font-bold text-[#1a3673]">{m.module_code}</span>
                 <span className="text-xs font-bold text-slate-700 line-clamp-1">{m.module_name}</span>
                 <span className="px-2 py-0.5 bg-amber-100 text-amber-900 text-[10px] font-bold rounded-md">{m.count} étudiants</span>
               </div>
@@ -288,7 +288,7 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && fetchData()}
                 placeholder="Nom, Prénom, CNE, Apogée..."
-                className="w-full pl-11 pr-4 py-3 border border-border text-xs font-bold bg-card text-foreground focus:ring-2 focus:ring-[#0f2863] outline-hidden shadow-xs rounded-[var(--control-radius)]"
+                className="w-full pl-11 pr-4 py-3 border border-border text-xs font-bold bg-card text-foreground focus:ring-2 focus:ring-[#1a3673] outline-hidden shadow-xs rounded-[var(--control-radius)]"
               />
             </div>
           </div>
@@ -313,7 +313,7 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
               {loading ? (
                 <tr>
                   <td colSpan={6} className="text-center py-16">
-                    <Loader2 className="w-8 h-8 animate-spin text-[#0f2863] mx-auto" />
+                    <Loader2 className="w-8 h-8 animate-spin text-[#1a3673] mx-auto" />
                     <p className="text-xs font-bold text-slate-400 mt-2">Chargement des données réservistes...</p>
                   </td>
                 </tr>
@@ -381,7 +381,7 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
                       </button>
                       <button
                         onClick={() => handleOpenDerogationModal(student)}
-                        className="px-3.5 py-2 bg-[#0f2863] hover:bg-[#193a86] text-white rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer inline-flex items-center gap-1.5"
+                        className="px-3.5 py-2 bg-[#1a3673] hover:bg-[#193a86] text-white rounded-xl text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer inline-flex items-center gap-1.5"
                       >
                         <Award className="w-3.5 h-3.5" /> Gérer Dérogation
                       </button>
@@ -431,7 +431,7 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
                 <select
                   value={derogationStatus}
                   onChange={(e) => setDerogationStatus(e.target.value)}
-                  className="w-full bg-muted/50 border border-border p-3 text-xs font-bold text-foreground focus:ring-2 focus:ring-[#0f2863] outline-hidden rounded-[var(--control-radius)]"
+                  className="w-full bg-muted/50 border border-border p-3 text-xs font-bold text-foreground focus:ring-2 focus:ring-[#1a3673] outline-hidden rounded-[var(--control-radius)]"
                 >
                   <option value="accordee">✅ Dérogation Accordée (Autorisé)</option>
                   <option value="en_attente">⏳ Dossier en Attente de Décision</option>
@@ -449,7 +449,7 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
                   value={derogationRef}
                   onChange={(e) => setDerogationRef(e.target.value)}
                   placeholder="Ex: DEROG-2026-FES-482"
-                  className="w-full bg-muted/50 border border-border p-3 text-xs font-bold text-foreground focus:ring-2 focus:ring-[#0f2863] outline-hidden font-mono rounded-[var(--control-radius)]"
+                  className="w-full bg-muted/50 border border-border p-3 text-xs font-bold text-foreground focus:ring-2 focus:ring-[#1a3673] outline-hidden font-mono rounded-[var(--control-radius)]"
                 />
               </div>
 
@@ -462,7 +462,7 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
                   value={derogationNotes}
                   onChange={(e) => setDerogationNotes(e.target.value)}
                   placeholder="Commentaires du Conseil d'Établissement..."
-                  className="w-full bg-muted/50 border border-border p-4 text-xs font-semibold text-foreground focus:ring-2 focus:ring-[#0f2863] outline-hidden resize-none rounded-[var(--control-radius)]"
+                  className="w-full bg-muted/50 border border-border p-4 text-xs font-semibold text-foreground focus:ring-2 focus:ring-[#1a3673] outline-hidden resize-none rounded-[var(--control-radius)]"
                 />
               </div>
             </div>
@@ -479,7 +479,7 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
                 type="button"
                 onClick={handleSaveDerogation}
                 disabled={savingDerogation}
-                className="flex-1 py-3.5 px-4 font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-[#0f2863] to-[#1d429b] hover:from-[#15347d] hover:to-[#224cb0] rounded-2xl shadow-lg active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="flex-1 py-3.5 px-4 font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-[#1a3673] to-[#1d429b] hover:from-[#15347d] hover:to-[#224cb0] rounded-2xl shadow-lg active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 {savingDerogation ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
                 Enregistrer Décision
@@ -519,13 +519,13 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
 
             {loadingAudit || !auditData ? (
               <div className="py-16 text-center">
-                <Loader2 className="w-8 h-8 animate-spin text-[#0f2863] mx-auto" />
+                <Loader2 className="w-8 h-8 animate-spin text-[#1a3673] mx-auto" />
                 <p className="text-xs font-bold text-slate-400 mt-2">Chargement de l'historique archivé...</p>
               </div>
             ) : (
               <div className="space-y-6 overflow-y-auto pr-2 flex-1">
                 {/* Student Summary */}
-                <div className="bg-gradient-to-r from-slate-900 to-[#0f2863] p-6 rounded-2xl text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md">
+                <div className="bg-gradient-to-r from-slate-900 to-[#1a3673] p-6 rounded-2xl text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md">
                   <div>
                     <span className="text-[10px] font-bold uppercase text-indigo-300 tracking-widest">{auditData.student.filiere_code} — {auditData.student.filiere_name}</span>
                     <h4 className="text-xl font-bold">{auditData.student.full_name}</h4>
@@ -575,7 +575,7 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
                         )}
                       >
                         <div className="flex items-center gap-3">
-                          <span className="w-9 h-9 rounded-xl bg-card border border-border flex items-center justify-center font-mono font-bold text-xs text-[#0f2863] shrink-0">
+                          <span className="w-9 h-9 rounded-xl bg-card border border-border flex items-center justify-center font-mono font-bold text-xs text-[#1a3673] shrink-0">
                             S{m.semester_number}
                           </span>
                           <div>
@@ -619,7 +619,7 @@ const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
               <button
                 type="button"
                 onClick={() => setIsAuditModalOpen(false)}
-                className="py-3 px-6 text-xs font-bold uppercase text-white bg-[#0f2863] hover:bg-[#193a86] rounded-xl transition-all shadow-md cursor-pointer"
+                className="py-3 px-6 text-xs font-bold uppercase text-white bg-[#1a3673] hover:bg-[#193a86] rounded-xl transition-all shadow-md cursor-pointer"
               >
                 Fermer
               </button>

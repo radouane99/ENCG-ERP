@@ -191,7 +191,7 @@ const { data, isLoading, isError, error, refetch } = useQuery({
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-600 to-[#0f2863] p-0.5 shadow-sm shrink-0 flex items-center justify-center">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-600 to-[#1a3673] p-0.5 shadow-sm shrink-0 flex items-center justify-center">
               <div className="w-full h-full bg-[#031b3b]/80 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/20">
                 <Key className="w-8 h-8 md:w-10 md:h-10 text-amber-300 animate-pulse" />
               </div>
@@ -269,7 +269,7 @@ const { data, isLoading, isError, error, refetch } = useQuery({
       </div>
 
       {/* ── Search & Interactive Quick-Filter Hub ── */}
-      <div className="bg-card dark:bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-border shadow-sm space-y-4">
+      <div className="bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-border shadow-sm space-y-4">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="relative w-full md:w-96">
             <Search className="w-4 h-4 text-slate-400 absolute start-4 top-1/2 -translate-y-1/2" />
@@ -278,7 +278,7 @@ const { data, isLoading, isError, error, refetch } = useQuery({
               value={search}
               onChange={e => { setSearch(e.target.value); setPage(1) }}
               placeholder="Rechercher par nom ou adresse email..."
-              className="w-full ps-11 pe-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none transition-all rounded-[var(--control-radius)]"
+              className="w-full ps-11 pe-4 py-3 bg-muted/50 dark:bg-card border border-border text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none transition-all rounded-[var(--control-radius)]"
             />
           </div>
 
@@ -287,7 +287,7 @@ const { data, isLoading, isError, error, refetch } = useQuery({
             <select
               value={roleFilter}
               onChange={e => { setRoleFilter(e.target.value); setPage(1) }}
-              className="px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none cursor-pointer rounded-[var(--control-radius)]"
+              className="px-4 py-3 bg-muted/50 dark:bg-card border border-border text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none cursor-pointer rounded-[var(--control-radius)]"
             >
               <option value="">Tous les Rôles Système</option>
               {rolesList.map((r: any) => (
@@ -298,7 +298,7 @@ const { data, isLoading, isError, error, refetch } = useQuery({
         </div>
 
         {/* Category Quick Filter Pills */}
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border dark:border-border text-xs">
+        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border text-xs">
           <span className="font-bold text-slate-400 text-[11px] uppercase tracking-wider mr-1">Filtre rapide :</span>
 
           <button
@@ -307,7 +307,7 @@ const { data, isLoading, isError, error, refetch } = useQuery({
             className={cn(
               "px-3.5 py-1.5 rounded-xl font-bold text-xs transition-all cursor-pointer",
               activeCategoryFilter === 'ALL'
-                ? "bg-[#0f2863] text-white shadow-sm"
+                ? "bg-[#1a3673] text-white shadow-sm"
                 : "bg-muted dark:bg-card text-muted-foreground dark:text-foreground hover:bg-slate-200"
             )}
           >
@@ -370,7 +370,7 @@ const { data, isLoading, isError, error, refetch } = useQuery({
 
       {/* ── Users & Roles Table ── */}
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-card dark:bg-card rounded-2xl border border-border dark:border-border space-y-3">
+        <div className="flex flex-col items-center justify-center py-20 bg-card rounded-2xl border border-border space-y-3">
           <Spinner size="lg" />
           <p className="text-xs font-bold text-slate-400">Chargement de la matrice des accès RBAC...</p>
         </div>
@@ -392,11 +392,11 @@ const { data, isLoading, isError, error, refetch } = useQuery({
           </button>
         </div>
       ) : filteredUsers.length > 0 ? (
-        <div className="bg-card dark:bg-card rounded-2xl border border-border dark:border-border overflow-hidden shadow-sm">
+        <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-start border-collapse">
               <thead>
-                <tr className="bg-slate-50/80 dark:bg-slate-800/60 border-b border-border dark:border-border text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <tr className="bg-slate-50/80 dark:bg-slate-800/60 border-b border-border text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                   <th className="p-4 ps-6 text-start">Utilisateur & Identité</th>
                   <th className="p-4 text-start">Rôles Système Attribués</th>
                   <th className="p-4 text-start">Habilitations & Permissions</th>
@@ -469,7 +469,7 @@ const { data, isLoading, isError, error, refetch } = useQuery({
 
           {/* Pagination bar */}
           {usersPaginated && usersPaginated.last_page > 1 && (
-            <div className="p-4 border-t border-border dark:border-border flex items-center justify-between text-xs text-muted-foreground">
+            <div className="p-4 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
               <span>Page {usersPaginated.current_page} sur {usersPaginated.last_page} ({usersPaginated.total} utilisateurs)</span>
               <div className="flex items-center gap-2">
                 <button
@@ -493,9 +493,9 @@ const { data, isLoading, isError, error, refetch } = useQuery({
           )}
         </div>
       ) : (
-        <div className="p-16 text-center bg-muted/50 dark:bg-card rounded-2xl border border-dashed border-border dark:border-border space-y-3">
+        <div className="p-16 text-center bg-muted/50 dark:bg-card rounded-2xl border border-dashed border-border space-y-3">
           <UserCog className="w-12 h-12 text-slate-300 mx-auto" />
-          <h3 className="text-base font-bold text-foreground dark:text-foreground">Aucun utilisateur ne correspond aux critères</h3>
+          <h3 className="text-base font-bold text-foreground">Aucun utilisateur ne correspond aux critères</h3>
           <p className="text-xs text-slate-400">Modifiez votre recherche ou sélectionnez un autre filtre de rôle.</p>
         </div>
       )}
@@ -503,9 +503,9 @@ const { data, isLoading, isError, error, refetch } = useQuery({
       {/* ── Edit Role & Permissions Modal (Matrice RBAC) ── */}
       {selectedUser && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-card dark:bg-card rounded-2xl p-6 md:p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-sm border border-border dark:border-border space-y-6 animate-in zoom-in-95">
+          <div className="bg-card rounded-2xl p-6 md:p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-sm border border-border space-y-6 animate-in zoom-in-95">
             
-            <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
+            <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-11 h-11 rounded-2xl bg-primary text-primary-foreground font-bold text-base flex items-center justify-center shadow-md">
                   {selectedUser.name ? selectedUser.name.charAt(0).toUpperCase() : 'U'}
@@ -525,7 +525,7 @@ const { data, isLoading, isError, error, refetch } = useQuery({
             </div>
 
             {/* Presets Row */}
-            <div className="space-y-2 bg-muted/50 dark:bg-slate-800/40 p-4 rounded-2xl border border-border dark:border-border">
+            <div className="space-y-2 bg-muted/50 dark:bg-slate-800/40 p-4 rounded-2xl border border-border">
               <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">
                 MODÈLES DE RÔLES PRÉ-CONFIGURÉS (PRESETS 1-CLIC)
               </span>
@@ -587,7 +587,7 @@ const { data, isLoading, isError, error, refetch } = useQuery({
                           "flex items-center justify-between p-3 rounded-2xl border text-xs font-bold text-start transition-all cursor-pointer",
                           isChecked 
                             ? "bg-primary text-primary-foreground border-primary shadow-md shadow-indigo-600/20"
-                            : "bg-muted/50 dark:bg-card border-border dark:border-border text-slate-700 dark:text-foreground hover:border-primary/20"
+                            : "bg-muted/50 dark:bg-card border-border text-slate-700 dark:text-foreground hover:border-primary/20"
                         )}
                       >
                         <span>{r.label}</span>
@@ -606,7 +606,7 @@ const { data, isLoading, isError, error, refetch } = useQuery({
                 
                 <div className="space-y-4">
                   {permissionGroups.map((group: any, gIdx: number) => (
-                    <div key={gIdx} className="bg-muted/50 dark:bg-slate-800/40 p-4 rounded-2xl border border-border dark:border-border space-y-2.5">
+                    <div key={gIdx} className="bg-muted/50 dark:bg-slate-800/40 p-4 rounded-2xl border border-border space-y-2.5">
                       <span className="text-xs font-bold text-primary dark:text-indigo-300 block">
                         {group.category}
                       </span>
@@ -621,7 +621,7 @@ const { data, isLoading, isError, error, refetch } = useQuery({
                                 "flex items-center justify-between p-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer",
                                 isChecked
                                   ? "bg-purple-100/70 border-purple-300 text-purple-900 dark:bg-purple-950/60 dark:text-purple-200"
-                                  : "bg-card dark:bg-card border-border dark:border-border text-muted-foreground dark:text-muted-foreground hover:border-slate-300"
+                                  : "bg-card border-border text-muted-foreground hover:border-slate-300"
                               )}
                             >
                               <span>{p.label}</span>
@@ -640,7 +640,7 @@ const { data, isLoading, isError, error, refetch } = useQuery({
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 pt-4 border-t border-border dark:border-border">
+              <div className="flex items-center gap-3 pt-4 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setSelectedUser(null)}

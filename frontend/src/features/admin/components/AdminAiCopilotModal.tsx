@@ -72,7 +72,7 @@ export default function AdminAiCopilotModal({ isOpen, onClose }: AdminAiCopilotM
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className={cn("bg-card rounded-2xl w-full max-w-2xl shadow-sm overflow-hidden flex flex-col h-[650px] border border-border animate-in zoom-in-95", isRtl && "rtl")}>
         {/* Header */}
-        <div className="bg-gradient-to-r from-[#0f2863] to-[#002e5b] text-white p-5 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-[#1a3673] to-[#002e5b] text-white p-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-amber-400 text-foreground rounded-2xl flex items-center justify-center font-bold shadow-md">
               <Bot className="w-6 h-6" />
@@ -115,14 +115,14 @@ export default function AdminAiCopilotModal({ isOpen, onClose }: AdminAiCopilotM
             >
               <div className={cn(
                 "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold",
-                msg.sender === 'user' ? "bg-slate-900 text-white" : "bg-primary/10 text-[#0f2863]"
+                msg.sender === 'user' ? "bg-slate-900 text-white" : "bg-primary/10 text-[#1a3673]"
               )}>
                 {msg.sender === 'user' ? 'Admin' : <Bot className="w-4 h-4" />}
               </div>
 
               <div className={cn(
                 "p-4 rounded-2xl text-xs leading-relaxed shadow-sm space-y-3",
-                msg.sender === 'user' ? "bg-[#0f2863] text-white rounded-tr-none" : "bg-muted/50 border border-border text-foreground rounded-tl-none"
+                msg.sender === 'user' ? "bg-[#1a3673] text-white rounded-tr-none" : "bg-muted/50 border border-border text-foreground rounded-tl-none"
               )}>
                 <p>{msg.text}</p>
 
@@ -132,7 +132,7 @@ export default function AdminAiCopilotModal({ isOpen, onClose }: AdminAiCopilotM
                     {msg.data.kpis.map((kpi: any, kIdx: number) => (
                       <div key={kIdx} className="bg-card p-2.5 rounded-xl border border-border text-center">
                         <div className="text-[10px] text-slate-400 font-bold uppercase">{kpi.label}</div>
-                        <div className="text-sm font-bold text-[#0f2863] mt-0.5">{kpi.value}</div>
+                        <div className="text-sm font-bold text-[#1a3673] mt-0.5">{kpi.value}</div>
                       </div>
                     ))}
                   </div>
@@ -161,7 +161,7 @@ export default function AdminAiCopilotModal({ isOpen, onClose }: AdminAiCopilotM
           <button
             type="submit"
             disabled={loading || !inputQuery.trim()}
-            className="bg-[#0f2863] hover:bg-[#1a387e] text-white p-3.5 rounded-2xl shadow-md transition-all disabled:opacity-50"
+            className="bg-[#1a3673] hover:bg-[#1a387e] text-white p-3.5 rounded-2xl shadow-md transition-all disabled:opacity-50"
           >
             <Send className="w-4 h-4" />
           </button>

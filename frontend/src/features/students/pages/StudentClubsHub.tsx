@@ -193,8 +193,8 @@ export default function StudentClubsHub() {
       <meta charset="utf-8">
       <title>Carte Officielle de Membre — ${safeClubName}</title>
       <style>
-        body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; padding: 40px; background: #f8fafc; color: #001A4B; margin: 0; display: flex; justify-content: center; }
-        .card { width: 420px; background: linear-gradient(135deg, #001A4B 0%, #0a2f7d 100%); color: white; border-radius: 24px; padding: 28px; box-shadow: 0 20px 40px rgba(0,26,75,0.25); position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.15); }
+        body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; padding: 40px; background: #f8fafc; color: #1a3673; margin: 0; display: flex; justify-content: center; }
+        .card { width: 420px; background: linear-gradient(135deg, #1a3673 0%, #0a2f7d 100%); color: white; border-radius: 24px; padding: 28px; box-shadow: 0 20px 40px rgba(0,26,75,0.25); position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.15); }
         .watermark { position: absolute; right: -20px; bottom: -20px; font-size: 140px; font-weight: 900; color: rgba(255,255,255,0.03); user-select: none; pointer-events: none; }
         .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 14px; }
         .brand-title { font-size: 11px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; color: #facc15; }
@@ -255,7 +255,7 @@ export default function StudentClubsHub() {
   if (isLoading) {
     return (
       <div className="flex flex-col h-[60vh] items-center justify-center gap-3 font-sans">
-        <div className="w-10 h-10 border-4 border-[#001A4B]/20 border-t-[#001A4B] rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-[#1a3673]/20 border-t-[#1a3673] rounded-full animate-spin" />
         <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
           Chargement du hub associatif de l'ENCG Fès...
         </p>
@@ -264,9 +264,9 @@ export default function StudentClubsHub() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 font-sans animate-in fade-in pb-24 text-foreground dark:text-foreground">
+    <div className="max-w-7xl mx-auto space-y-8 font-sans animate-in fade-in pb-24 text-foreground">
 
-      {/* ── Executive Hero Banner (Moroccan Royal Navy #001A4B) ── */}
+      {/* ── Executive Hero Banner (Moroccan Royal Navy #1a3673) ── */}
       <div className="relative overflow-hidden p-7 md:p-10 text-white border border-white/10 space-y-6 erp-page-banner">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/15 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
         <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -274,7 +274,7 @@ export default function StudentClubsHub() {
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex flex-col sm:flex-row sm:items-center gap-6">
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-amber-400 via-amber-300 to-amber-100 p-1 shadow-sm shrink-0">
-              <div className="w-full h-full bg-[#001A4B] rounded-2xl flex items-center justify-center shadow-inner">
+              <div className="w-full h-full bg-[#1a3673] rounded-2xl flex items-center justify-center shadow-inner">
                 <Tent className="w-9 h-9 text-amber-300" />
               </div>
             </div>
@@ -293,9 +293,9 @@ export default function StudentClubsHub() {
 
           <button
             onClick={() => setShowCreateModal(true)}
-            className="shrink-0 flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-[#001A4B] font-bold rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg hover:shadow-amber-400/20 cursor-pointer active:scale-95 self-start lg:self-auto"
+            className="shrink-0 flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-[#1a3673] font-bold rounded-2xl transition-all text-xs uppercase tracking-wider shadow-lg hover:shadow-amber-400/20 cursor-pointer active:scale-95 self-start lg:self-auto"
           >
-            <Plus className="w-4 h-4 text-[#001A4B]" /> Créer un Club
+            <Plus className="w-4 h-4 text-[#1a3673]" /> Créer un Club
           </button>
         </div>
 
@@ -350,7 +350,7 @@ export default function StudentClubsHub() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Rechercher par nom, président, domaine..."
-              className="w-full pl-11 pr-4 py-3 bg-card dark:bg-card border border-border dark:border-border text-xs font-bold focus:ring-4 focus:ring-blue-500/15 outline-none transition-all shadow-xs rounded-[var(--control-radius)]"
+              className="w-full pl-11 pr-4 py-3 bg-card border border-border text-xs font-bold focus:ring-4 focus:ring-blue-500/15 outline-none transition-all shadow-xs rounded-[var(--control-radius)]"
             />
           </div>
 
@@ -363,8 +363,8 @@ export default function StudentClubsHub() {
                 className={cn(
                   "px-2.5 py-1 rounded-xl text-[10px] font-bold transition-all cursor-pointer",
                   selectedCategory === cat
-                    ? "bg-[#001A4B] text-white shadow-xs"
-                    : "bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-700"
+                    ? "bg-[#1a3673] text-white shadow-xs"
+                    : "bg-muted dark:bg-card text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-700"
                 )}
               >
                 {cat === 'all' ? 'Tous' : categoryLabels[cat] || cat}
@@ -390,11 +390,11 @@ export default function StudentClubsHub() {
                 return (
                   <div 
                     key={club.id} 
-                    className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-xs hover:shadow-md transition-all space-y-3.5 group"
+                    className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-xs hover:shadow-md transition-all space-y-3.5 group"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#001A4B] to-blue-700 flex items-center justify-center text-amber-300 font-bold text-lg shadow-sm shrink-0">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#1a3673] to-blue-700 flex items-center justify-center text-amber-300 font-bold text-lg shadow-sm shrink-0">
                           {club.name.charAt(0)}
                         </div>
                         <div>
@@ -416,16 +416,16 @@ export default function StudentClubsHub() {
                       )}
                     </div>
 
-                    <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground leading-relaxed line-clamp-3">
+                    <p className="text-xs font-medium text-muted-foreground leading-relaxed line-clamp-3">
                       {club.description}
                     </p>
 
-                    <div className="pt-2 border-t border-border dark:border-border flex items-center gap-2">
+                    <div className="pt-2 border-t border-border flex items-center gap-2">
                       {!isMember ? (
                         <button
                           onClick={() => setShowJoinModal(club)}
                           disabled={joinMutation.isPending}
-                          className="flex-1 py-2.5 bg-[#001A4B] hover:bg-secondary text-white font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-50"
+                          className="flex-1 py-2.5 bg-[#1a3673] hover:bg-secondary text-white font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-50"
                         >
                           <UserPlus className="w-3.5 h-3.5" /> Rejoindre le Club
                         </button>
@@ -441,7 +441,7 @@ export default function StudentClubsHub() {
                             onClick={() => handleLeaveClub(club)}
                             disabled={leaveMutation.isPending}
                             title="Quitter le club"
-                            className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-xl transition-colors cursor-pointer border border-border dark:border-border"
+                            className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 rounded-xl transition-colors cursor-pointer border border-border"
                           >
                             <LogOut className="w-4 h-4" />
                           </button>
@@ -455,7 +455,7 @@ export default function StudentClubsHub() {
           </div>
 
           {/* BDE Recruitment Card */}
-          <div className="bg-gradient-to-br from-[#001A4B] via-[#09296e] to-[#04132e] rounded-2xl p-6 text-white space-y-3.5 shadow-sm border border-white/10 relative overflow-hidden">
+          <div className="bg-gradient-to-br from-[#1a3673] via-[#09296e] to-[#04132e] rounded-2xl p-6 text-white space-y-3.5 shadow-sm border border-white/10 relative overflow-hidden">
             <div className="w-10 h-10 rounded-2xl bg-amber-400/20 border border-amber-400/30 flex items-center justify-center text-amber-300">
               <Megaphone className="w-5 h-5" />
             </div>
@@ -467,7 +467,7 @@ export default function StudentClubsHub() {
             </div>
             <button
               onClick={() => setShowBdeModal(true)}
-              className="w-full bg-amber-400 hover:bg-amber-300 text-[#001A4B] py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer active:scale-95"
+              className="w-full bg-amber-400 hover:bg-amber-300 text-[#1a3673] py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer active:scale-95"
             >
               Postuler au BDE →
             </button>
@@ -489,9 +489,9 @@ export default function StudentClubsHub() {
           {/* Share an Announcement / News */}
           <form 
             onSubmit={handlePostShared} 
-            className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row items-center gap-3.5"
+            className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-xs flex flex-col sm:flex-row items-center gap-3.5"
           >
-            <div className="w-10 h-10 rounded-2xl bg-[#001A4B] text-amber-300 flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
+            <div className="w-10 h-10 rounded-2xl bg-[#1a3673] text-amber-300 flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
               {user?.name ? user.name.charAt(0) : 'Y'}
             </div>
             <input
@@ -499,13 +499,13 @@ export default function StudentClubsHub() {
               value={newPost}
               onChange={(e) => setNewPost(e.target.value)}
               placeholder="Partager une actualité ou annonce avec les étudiants de l'ENCG Fès..."
-              className="flex-1 w-full bg-muted/50 dark:bg-card border border-border dark:border-border px-4 py-2.5 text-xs font-bold focus:ring-4 focus:ring-blue-500/15 outline-none transition-all rounded-[var(--control-radius)]"
+              className="flex-1 w-full bg-muted/50 dark:bg-card border border-border px-4 py-2.5 text-xs font-bold focus:ring-4 focus:ring-blue-500/15 outline-none transition-all rounded-[var(--control-radius)]"
             />
             {myClubs.length > 1 && (
               <select
                 value={selectedClubForPost || ''}
                 onChange={(e) => setSelectedClubForPost(Number(e.target.value))}
-                className="bg-muted dark:bg-card border border-border dark:border-border px-3 py-2 text-[11px] font-bold text-slate-700 dark:text-foreground outline-none rounded-[var(--control-radius)]"
+                className="bg-muted dark:bg-card border border-border px-3 py-2 text-[11px] font-bold text-slate-700 dark:text-foreground outline-none rounded-[var(--control-radius)]"
               >
                 {myClubs.map(c => (
                   <option key={c.id} value={c.id}>{c.name}</option>
@@ -515,7 +515,7 @@ export default function StudentClubsHub() {
             <button 
               type="submit" 
               disabled={createEventMutation.isPending || !newPost.trim()}
-              className="w-full sm:w-auto px-5 py-2.5 bg-[#001A4B] hover:bg-secondary disabled:opacity-50 text-white font-bold text-xs rounded-2xl cursor-pointer flex items-center justify-center gap-1.5 shadow-md transition-all active:scale-95 shrink-0"
+              className="w-full sm:w-auto px-5 py-2.5 bg-[#1a3673] hover:bg-secondary disabled:opacity-50 text-white font-bold text-xs rounded-2xl cursor-pointer flex items-center justify-center gap-1.5 shadow-md transition-all active:scale-95 shrink-0"
             >
               <Send className="w-3.5 h-3.5" /> Publier
             </button>
@@ -538,12 +538,12 @@ export default function StudentClubsHub() {
                 return (
                   <div 
                     key={event.id || idx} 
-                    className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-xs hover:shadow-md transition-all space-y-4"
+                    className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-xs hover:shadow-md transition-all space-y-4"
                   >
                     {/* Event Header */}
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3.5">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#001A4B] to-blue-700 flex items-center justify-center text-amber-300 font-bold text-lg shadow-sm shrink-0">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#1a3673] to-blue-700 flex items-center justify-center text-amber-300 font-bold text-lg shadow-sm shrink-0">
                           {clubName.charAt(0)}
                         </div>
                         <div>
@@ -574,7 +574,7 @@ export default function StudentClubsHub() {
                       {event.location && (
                         <>
                           <span className="text-slate-300 dark:text-slate-700">•</span>
-                          <div className="flex items-center gap-1.5 text-muted-foreground dark:text-muted-foreground">
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
                             <MapPin className="w-4 h-4 text-amber-500" />
                             <span>{event.location}</span>
                           </div>
@@ -583,7 +583,7 @@ export default function StudentClubsHub() {
                     </div>
 
                     {/* Action Footer */}
-                    <div className="flex items-center justify-between pt-3 border-t border-border dark:border-border">
+                    <div className="flex items-center justify-between pt-3 border-t border-border">
                       <div className="flex items-center gap-4">
                         <button
                           onClick={() => handleToggleLike(event.id)}
@@ -610,7 +610,7 @@ export default function StudentClubsHub() {
                           "px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95",
                           isParticipating
                             ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 border border-emerald-200 dark:border-emerald-800"
-                            : "bg-[#001A4B] hover:bg-secondary text-white"
+                            : "bg-[#1a3673] hover:bg-secondary text-white"
                         )}
                       >
                         <Check className="w-3.5 h-3.5" />
@@ -629,8 +629,8 @@ export default function StudentClubsHub() {
       {/* ── Modal: Rejoindre un Club ── */}
       {showJoinModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-md shadow-sm overflow-hidden">
-            <div className="p-6 bg-gradient-to-r from-[#001A4B] to-blue-900 text-white flex items-center justify-between">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-md shadow-sm overflow-hidden">
+            <div className="p-6 bg-gradient-to-r from-[#1a3673] to-blue-900 text-white flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-amber-300">
                   Adhésion Officielle
@@ -666,7 +666,7 @@ export default function StudentClubsHub() {
               </div>
             </div>
 
-            <div className="p-4 border-t border-border dark:border-border flex justify-end gap-3">
+            <div className="p-4 border-t border-border flex justify-end gap-3">
               <button 
                 onClick={() => setShowJoinModal(null)} 
                 className="px-5 py-2.5 text-xs font-bold text-muted-foreground hover:bg-muted dark:hover:bg-slate-800 rounded-xl cursor-pointer"
@@ -676,7 +676,7 @@ export default function StudentClubsHub() {
               <button 
                 onClick={() => handleJoinClub(showJoinModal)}
                 disabled={joinMutation.isPending}
-                className="px-6 py-2.5 text-xs font-bold bg-[#001A4B] text-white hover:bg-secondary rounded-xl shadow-md cursor-pointer flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+                className="px-6 py-2.5 text-xs font-bold bg-[#1a3673] text-white hover:bg-secondary rounded-xl shadow-md cursor-pointer flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
               >
                 <UserPlus className="w-3.5 h-3.5" /> REJOINDRE LE CLUB
               </button>
@@ -688,8 +688,8 @@ export default function StudentClubsHub() {
       {/* ── Modal: Créer un Club ── */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-lg shadow-sm overflow-hidden">
-            <div className="p-6 bg-gradient-to-r from-[#001A4B] to-blue-900 text-white flex items-center justify-between">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-lg shadow-sm overflow-hidden">
+            <div className="p-6 bg-gradient-to-r from-[#1a3673] to-blue-900 text-white flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-amber-300">
                   Création d'Association Étudiante
@@ -714,7 +714,7 @@ export default function StudentClubsHub() {
                   value={form.name} 
                   onChange={(e) => setForm(p => ({ ...p, name: e.target.value }))}
                   placeholder="Ex: Club Data Science & IA Financière"
-                  className="w-full px-4 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-blue-500/15 outline-none rounded-[var(--control-radius)]"
+                  className="w-full px-4 py-2.5 border border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-blue-500/15 outline-none rounded-[var(--control-radius)]"
                 />
               </div>
 
@@ -725,7 +725,7 @@ export default function StudentClubsHub() {
                 <select 
                   value={form.category} 
                   onChange={(e) => setForm(p => ({ ...p, category: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-blue-500/15 outline-none cursor-pointer rounded-[var(--control-radius)]"
+                  className="w-full px-4 py-2.5 border border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-blue-500/15 outline-none cursor-pointer rounded-[var(--control-radius)]"
                 >
                   <option value="scientific">Scientifique & Business (Finance, Conseil, Entrepreneuriat)</option>
                   <option value="cultural">Culturel & Artistique (Musique, Théâtre, Arts visuels)</option>
@@ -744,11 +744,11 @@ export default function StudentClubsHub() {
                   value={form.description} 
                   onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))}
                   placeholder="Décrivez la raison d'être du club, les types d'événements envisagés et la valeur ajoutée pour les étudiants..."
-                  className="w-full px-4 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-blue-500/15 outline-none resize-none rounded-[var(--control-radius)]"
+                  className="w-full px-4 py-2.5 border border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-blue-500/15 outline-none resize-none rounded-[var(--control-radius)]"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-3 border-t border-border dark:border-border">
+              <div className="flex justify-end gap-3 pt-3 border-t border-border">
                 <button 
                   type="button" 
                   onClick={() => setShowCreateModal(false)} 
@@ -759,7 +759,7 @@ export default function StudentClubsHub() {
                 <button 
                   type="submit" 
                   disabled={createClubMutation.isPending}
-                  className="px-6 py-2.5 text-xs font-bold bg-[#001A4B] text-white hover:bg-secondary rounded-xl shadow-md cursor-pointer flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+                  className="px-6 py-2.5 text-xs font-bold bg-[#1a3673] text-white hover:bg-secondary rounded-xl shadow-md cursor-pointer flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
                 >
                   <Send className="w-3.5 h-3.5" /> ENREGISTRER LE CLUB
                 </button>
@@ -772,8 +772,8 @@ export default function StudentClubsHub() {
       {/* ── Modal: Postuler au BDE ── */}
       {showBdeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-md shadow-sm overflow-hidden">
-            <div className="p-6 bg-gradient-to-r from-[#001A4B] to-blue-900 text-white flex items-center justify-between">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-md shadow-sm overflow-hidden">
+            <div className="p-6 bg-gradient-to-r from-[#1a3673] to-blue-900 text-white flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-amber-300">
                   Recrutement Campus
@@ -796,7 +796,7 @@ export default function StudentClubsHub() {
                 <select 
                   value={bdePole} 
                   onChange={(e) => setBdePole(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-blue-500/15 outline-none cursor-pointer rounded-[var(--control-radius)]"
+                  className="w-full px-4 py-2.5 border border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-blue-500/15 outline-none cursor-pointer rounded-[var(--control-radius)]"
                 >
                   <option value="communication">Pôle Communication & Médias Digitaux</option>
                   <option value="evenementiel">Pôle Événementiel & Intégration</option>
@@ -814,11 +814,11 @@ export default function StudentClubsHub() {
                   value={bdeMotivation}
                   onChange={(e) => setBdeMotivation(e.target.value)}
                   placeholder="Pourquoi souhaitez-vous intégrer le BDE ? Vos points forts..."
-                  className="w-full px-4 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-blue-500/15 outline-none resize-none rounded-[var(--control-radius)]"
+                  className="w-full px-4 py-2.5 border border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-blue-500/15 outline-none resize-none rounded-[var(--control-radius)]"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-3 border-t border-border dark:border-border">
+              <div className="flex justify-end gap-3 pt-3 border-t border-border">
                 <button 
                   type="button" 
                   onClick={() => setShowBdeModal(false)} 
@@ -828,7 +828,7 @@ export default function StudentClubsHub() {
                 </button>
                 <button 
                   type="submit" 
-                  className="px-6 py-2.5 text-xs font-bold bg-amber-400 hover:bg-amber-300 text-[#001A4B] rounded-xl shadow-md cursor-pointer flex items-center gap-1.5 active:scale-95"
+                  className="px-6 py-2.5 text-xs font-bold bg-amber-400 hover:bg-amber-300 text-[#1a3673] rounded-xl shadow-md cursor-pointer flex items-center gap-1.5 active:scale-95"
                 >
                   <Send className="w-3.5 h-3.5" /> TRANSMETTRE MA CANDIDATURE
                 </button>

@@ -631,14 +631,14 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
       </div>
 
       {/* ── 🧭 Segmented Navigation Tabs ────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 bg-card dark:bg-card p-1.5 rounded-2xl border border-slate-200/80 dark:border-border shadow-xs overflow-x-auto">
+      <div className="flex items-center gap-2 bg-card p-1.5 rounded-2xl border border-slate-200/80 dark:border-border shadow-xs overflow-x-auto">
         <button
           onClick={() => setActiveTab('generator')}
           className={cn(
             "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'generator'
-              ? "bg-[#0f2863] text-white shadow-sm"
-              : "text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-slate-800 hover:text-foreground"
+              ? "bg-[#1a3673] text-white shadow-sm"
+              : "text-muted-foreground hover:bg-muted dark:hover:bg-slate-800 hover:text-foreground"
           )}
         >
           <Cpu className="w-4 h-4 text-blue-400" />
@@ -650,8 +650,8 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
           className={cn(
             "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'manual_board'
-              ? "bg-[#0f2863] text-white shadow-sm"
-              : "text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-slate-800 hover:text-foreground"
+              ? "bg-[#1a3673] text-white shadow-sm"
+              : "text-muted-foreground hover:bg-muted dark:hover:bg-slate-800 hover:text-foreground"
           )}
         >
           <Hand className="w-4 h-4 text-amber-400" />
@@ -663,8 +663,8 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
           className={cn(
             "flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'matrix'
-              ? "bg-[#0f2863] text-white shadow-sm"
-              : "text-muted-foreground dark:text-muted-foreground hover:bg-muted dark:hover:bg-slate-800 hover:text-foreground"
+              ? "bg-[#1a3673] text-white shadow-sm"
+              : "text-muted-foreground hover:bg-muted dark:hover:bg-slate-800 hover:text-foreground"
           )}
         >
           <Grid className="w-4 h-4 text-emerald-400" />
@@ -680,7 +680,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
 
           {/* 📊 High-End KPI Metric Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-xs flex items-center justify-between">
+            <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-xs flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Séances Programmées</p>
                 <p className="text-2xl font-bold text-foreground dark:text-white">
@@ -696,7 +696,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
               </div>
             </div>
 
-            <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-xs flex items-center justify-between">
+            <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-xs flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Score d'Optimisation</p>
                 <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
@@ -711,7 +711,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
               </div>
             </div>
 
-            <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-xs flex items-center justify-between">
+            <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-xs flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Salles & Amphis</p>
                 <p className="text-2xl font-bold text-primary dark:text-indigo-400">
@@ -725,7 +725,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
               </div>
             </div>
 
-            <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-xs flex items-center justify-between">
+            <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-xs flex items-center justify-between">
               <div className="space-y-1">
                 <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Conflits d'Horaires</p>
                 <p className={cn("text-2xl font-bold", conflictsCount === 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600")}>
@@ -751,10 +751,10 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
             {/* Left Column: Paramètres du Solveur IA (5 Cols) with CustomSelect */}
-            <div className="lg:col-span-5 bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-xs space-y-5">
-              <div className="flex items-center justify-between pb-3.5 border-b border-border dark:border-border">
+            <div className="lg:col-span-5 bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-xs space-y-5">
+              <div className="flex items-center justify-between pb-3.5 border-b border-border">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#0f2863] text-white flex items-center justify-center font-bold">
+                  <div className="w-8 h-8 rounded-xl bg-[#1a3673] text-white flex items-center justify-center font-bold">
                     <Sliders className="w-4 h-4 text-blue-300" />
                   </div>
                   <div>
@@ -773,7 +773,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                 {/* 1. Semestre & Période */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <label className="block text-[10px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
+                    <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                       1. Période & Semestre Cible :
                     </label>
                     <span className="text-[10px] font-bold text-primary dark:text-blue-400">
@@ -792,8 +792,8 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       className={cn(
                         "py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center",
                         selectedSemester === 'odd'
-                          ? "bg-[#0f2863] text-white border-[#0f2863] shadow-xs"
-                          : "bg-muted/50 dark:bg-card border-border dark:border-border text-slate-700 dark:text-foreground hover:bg-muted"
+                          ? "bg-[#1a3673] text-white border-[#1a3673] shadow-xs"
+                          : "bg-muted/50 dark:bg-card border-border text-slate-700 dark:text-foreground hover:bg-muted"
                       )}
                     >
                       🍂 Automne
@@ -805,8 +805,8 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       className={cn(
                         "py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center",
                         selectedSemester === 'even'
-                          ? "bg-[#0f2863] text-white border-[#0f2863] shadow-xs"
-                          : "bg-muted/50 dark:bg-card border-border dark:border-border text-slate-700 dark:text-foreground hover:bg-muted"
+                          ? "bg-[#1a3673] text-white border-[#1a3673] shadow-xs"
+                          : "bg-muted/50 dark:bg-card border-border text-slate-700 dark:text-foreground hover:bg-muted"
                       )}
                     >
                       🌸 Printemps
@@ -818,8 +818,8 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       className={cn(
                         "py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center",
                         selectedSemester === 'all'
-                          ? "bg-[#0f2863] text-white border-[#0f2863] shadow-xs"
-                          : "bg-muted/50 dark:bg-card border-border dark:border-border text-slate-700 dark:text-foreground hover:bg-muted"
+                          ? "bg-[#1a3673] text-white border-[#1a3673] shadow-xs"
+                          : "bg-muted/50 dark:bg-card border-border text-slate-700 dark:text-foreground hover:bg-muted"
                       )}
                     >
                       🎓 Annuel
@@ -837,7 +837,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
 
                 {/* 2. Filière Cible */}
                 <div>
-                  <label className="block text-[10px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider mb-1.5">
+                  <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
                     2. Filière Académique :
                   </label>
                   <CustomSelect
@@ -851,7 +851,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
 
                 {/* 3. Stratégie Heuristique */}
                 <div>
-                  <label className="block text-[10px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider mb-1.5">
+                  <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
                     3. Stratégie Heuristique (Solveur) :
                   </label>
                   <CustomSelect
@@ -870,7 +870,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                   </div>
 
                   <div>
-                    <div className="flex items-center justify-between text-xs font-bold text-foreground dark:text-foreground mb-1">
+                    <div className="flex items-center justify-between text-xs font-bold text-foreground mb-1">
                       <span className="flex items-center gap-1.5"><Leaf className="w-3.5 h-3.5 text-emerald-500" /> Économie d'Énergie Bâtiments</span>
                       <span className="font-mono text-emerald-600 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded text-[11px]">{energyWeight}%</span>
                     </div>
@@ -885,7 +885,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                   </div>
 
                   <div>
-                    <div className="flex items-center justify-between text-xs font-bold text-foreground dark:text-foreground mb-1">
+                    <div className="flex items-center justify-between text-xs font-bold text-foreground mb-1">
                       <span className="flex items-center gap-1.5"><User className="w-3.5 h-3.5 text-primary" /> Disponibilité des Professeurs</span>
                       <span className="font-mono text-primary font-bold bg-primary/5 dark:bg-indigo-950/60 px-2 py-0.5 rounded text-[11px]">{profAvailWeight}%</span>
                     </div>
@@ -900,7 +900,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                   </div>
 
                   <div>
-                    <div className="flex items-center justify-between text-xs font-bold text-foreground dark:text-foreground mb-1">
+                    <div className="flex items-center justify-between text-xs font-bold text-foreground mb-1">
                       <span className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5 text-purple-500" /> Regroupement Bâtiments</span>
                       <span className="font-mono text-purple-600 font-bold bg-purple-50 dark:bg-purple-950/60 px-2 py-0.5 rounded text-[11px]">{buildingWeight}%</span>
                     </div>
@@ -925,7 +925,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       className="w-4 h-4 rounded text-primary focus:ring-ring"
                     />
                     <div className="text-xs">
-                      <span className="font-bold text-foreground dark:text-foreground block">Samedi Après-Midi Libre</span>
+                      <span className="font-bold text-foreground block">Samedi Après-Midi Libre</span>
                       <span className="text-[10px] text-slate-400">Préservation des week-ends étudiants et profs</span>
                     </div>
                   </label>
@@ -938,16 +938,16 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       className="w-4 h-4 rounded text-primary focus:ring-ring"
                     />
                     <div className="text-xs">
-                      <span className="font-bold text-foreground dark:text-foreground block">Priorité Cours Magistraux le Matin</span>
+                      <span className="font-bold text-foreground block">Priorité Cours Magistraux le Matin</span>
                       <span className="text-[10px] text-slate-400">Amphis programmés de 08h30 à 12h15</span>
                     </div>
                   </label>
                 </div>
 
                 {/* 5. Affectation des Salles Dédiées par Département / Filière */}
-                <div className="space-y-2 pt-2 border-t border-border dark:border-border">
+                <div className="space-y-2 pt-2 border-t border-border">
                   <div className="flex items-center justify-between">
-                    <label className="block text-[10px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
+                    <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                       5. Salles Dédiées par Filière :
                     </label>
                     <button
@@ -967,7 +967,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       <div className="space-y-1.5">
                         {Object.entries(dedicatedRooms).map(([filCode, rNames]) => (
                           <div key={filCode} className="flex items-center justify-between text-xs">
-                            <span className="font-bold text-foreground dark:text-foreground px-2 py-0.5 rounded bg-card dark:bg-card border border-border dark:border-border text-[10px]">
+                            <span className="font-bold text-foreground px-2 py-0.5 rounded bg-card border border-border text-[10px]">
                               {filCode}
                             </span>
                             <div className="flex items-center gap-1 flex-wrap justify-end">
@@ -985,7 +985,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                         ))}
                       </div>
                     ) : (
-                      <p className="text-[11px] text-muted-foreground dark:text-muted-foreground italic leading-relaxed">
+                      <p className="text-[11px] text-muted-foreground italic leading-relaxed">
                         ✨ Attribution automatique : Le solveur sélectionne directement les amphis et salles de cours de la base selon les effectifs et capacités réelles.
                       </p>
                     )}
@@ -993,9 +993,9 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                 </div>
 
                 {/* 6. Affectation des Professeurs par Filière */}
-                <div className="space-y-2 pt-2 border-t border-border dark:border-border">
+                <div className="space-y-2 pt-2 border-t border-border">
                   <div className="flex items-center justify-between">
-                    <label className="block text-[10px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
+                    <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                       6. Professeurs par Filière :
                     </label>
                     <button
@@ -1015,7 +1015,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       <div className="space-y-1.5">
                         {Object.entries(dedicatedProfessors).map(([filCode, pNames]) => (
                           <div key={filCode} className="flex items-center justify-between text-xs">
-                            <span className="font-bold text-foreground dark:text-foreground px-2 py-0.5 rounded bg-card dark:bg-card border border-border dark:border-border text-[10px]">
+                            <span className="font-bold text-foreground px-2 py-0.5 rounded bg-card border border-border text-[10px]">
                               {filCode}
                             </span>
                             <div className="flex items-center gap-1 flex-wrap justify-end">
@@ -1036,7 +1036,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                         ))}
                       </div>
                     ) : (
-                      <p className="text-[11px] text-muted-foreground dark:text-muted-foreground italic leading-relaxed">
+                      <p className="text-[11px] text-muted-foreground italic leading-relaxed">
                         ✨ Attribution automatique : L'ensemble des enseignants de la base de données sont affectés selon leurs départements et modules associés.
                       </p>
                     )}
@@ -1044,12 +1044,12 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                 </div>
 
                 {/* ─── 🚀 ACTION BUTTONS (GENERATE & RESET) ─────────────────── */}
-                <div className="pt-3 border-t border-border dark:border-border flex flex-col gap-2.5">
+                <div className="pt-3 border-t border-border flex flex-col gap-2.5">
                   <button
                     type="button"
                     onClick={() => generateMutation.mutate()}
                     disabled={generateMutation.isPending}
-                    className="w-full py-3 px-5 bg-gradient-to-r from-indigo-600 via-blue-700 to-[#0f2863] hover:from-indigo-700 hover:to-blue-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-md hover:shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    className="w-full py-3 px-5 bg-gradient-to-r from-indigo-600 via-blue-700 to-[#1a3673] hover:from-indigo-700 hover:to-blue-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-md hover:shadow-indigo-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                   >
                     {generateMutation.isPending ? (
                       <RefreshCw className="w-4 h-4 animate-spin text-white" />
@@ -1063,11 +1063,11 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
             </div>
 
             {/* Right Column: Live Conflict Scanner & Campus Room Radar (7 Cols) */}
-            <div className="lg:col-span-7 bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-xs flex flex-col justify-between space-y-6">
+            <div className="lg:col-span-7 bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-xs flex flex-col justify-between space-y-6">
 
               <div className="space-y-4">
                 {/* Header with status badge & Refresh button */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-border dark:border-border">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-border">
                   <div className="flex items-center gap-3">
                     <div className={cn("w-3 h-3 rounded-full", conflictsCount === 0 ? "bg-emerald-500 animate-pulse" : "bg-rose-500 animate-ping")} />
                     <div>
@@ -1119,7 +1119,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                        <div className="p-3 bg-card dark:bg-card rounded-xl border border-slate-200/80 dark:border-border space-y-1">
+                        <div className="p-3 bg-card rounded-xl border border-slate-200/80 dark:border-border space-y-1">
                           <div className="text-[10px] font-bold text-slate-400 uppercase">Amphithéâtres ({campusAmphis.length})</div>
                           <div className="text-xs font-bold text-foreground dark:text-white flex items-center justify-between">
                             <span className="truncate" title={campusAmphis.map((r: any) => r.name).join(', ')}>
@@ -1132,7 +1132,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                           </div>
                         </div>
 
-                        <div className="p-3 bg-card dark:bg-card rounded-xl border border-slate-200/80 dark:border-border space-y-1">
+                        <div className="p-3 bg-card rounded-xl border border-slate-200/80 dark:border-border space-y-1">
                           <div className="text-[10px] font-bold text-slate-400 uppercase">Salles de TD & Cours ({campusClassrooms.length})</div>
                           <div className="text-xs font-bold text-foreground dark:text-white flex items-center justify-between">
                             <span>{campusClassrooms.length} Salles de cours</span>
@@ -1143,7 +1143,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                           </div>
                         </div>
 
-                        <div className="p-3 bg-card dark:bg-card rounded-xl border border-slate-200/80 dark:border-border space-y-1">
+                        <div className="p-3 bg-card rounded-xl border border-slate-200/80 dark:border-border space-y-1">
                           <div className="text-[10px] font-bold text-slate-400 uppercase">Labos Informatique ({campusLabs.length})</div>
                           <div className="text-xs font-bold text-foreground dark:text-white flex items-center justify-between">
                             <span className="truncate" title={campusLabs.map((r: any) => r.name).join(', ')}>
@@ -1211,7 +1211,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                               <button
                                 onClick={() => resolveMutation.mutate(conf.schedule_id)}
                                 disabled={resolveMutation.isPending}
-                                className="px-2.5 py-1 bg-card dark:bg-card border border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-300 rounded-lg text-[10px] font-bold hover:bg-rose-50 transition-colors flex items-center gap-1 cursor-pointer"
+                                className="px-2.5 py-1 bg-card border border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-300 rounded-lg text-[10px] font-bold hover:bg-rose-50 transition-colors flex items-center gap-1 cursor-pointer"
                               >
                                 <Wand2 className="w-3 h-3" />
                                 <span>Résoudre</span>
@@ -1240,7 +1240,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
 
               {/* Action Save to Database */}
               {scheduledSessions.length > 0 && (
-                <div className="pt-4 border-t border-border dark:border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-emerald-500/5 dark:bg-emerald-950/20 p-4 rounded-2xl border border-emerald-200/60 dark:border-emerald-900/40">
+                <div className="pt-4 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-emerald-500/5 dark:bg-emerald-950/20 p-4 rounded-2xl border border-emerald-200/60 dark:border-emerald-900/40">
                   <div className="text-xs text-slate-700 dark:text-foreground">
                     Grille calculée : <strong className="text-emerald-700 dark:text-emerald-400 font-bold">{scheduledSessions.length} séances prêtes à être déployées</strong> en base de données.
                   </div>
@@ -1300,7 +1300,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
               {/* ── 📅 Règle Pédagogique ENCG Fès (Calendrier Semestriel S1 vs S4) ── */}
               <div className="p-4 bg-gradient-to-r from-blue-900/10 via-indigo-900/10 to-blue-900/10 border border-blue-200/80 dark:border-blue-900/50 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-2xl bg-[#0f2863] text-white flex items-center justify-center shrink-0 shadow-xs text-base">
+                  <div className="w-10 h-10 rounded-2xl bg-[#1a3673] text-white flex items-center justify-center shrink-0 shadow-xs text-base">
                     📅
                   </div>
                   <div className="space-y-0.5">
@@ -1312,7 +1312,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                         Norme USMBA
                       </span>
                     </div>
-                    <p className="text-muted-foreground dark:text-muted-foreground text-[11px] leading-relaxed">
+                    <p className="text-muted-foreground text-[11px] leading-relaxed">
                       Démarrage des <strong>Cours Magistraux (CM • Section en Amphithéâtre)</strong> dès la semaine <strong>S1</strong> (mi-septembre) • Démarrage des <strong>Travaux Dirigés (TD • Sous-groupes en Salle de classe)</strong> à partir de la semaine <strong>S4</strong> (+3 semaines).
                     </p>
                   </div>
@@ -1354,7 +1354,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                           ? "Rechercher par salle ou amphithéâtre..."
                           : "Recherche rapide : module, enseignant, section, salle..."
                       }
-                      className="w-full pl-10 pr-24 py-2.5 bg-card dark:bg-card border border-slate-300 dark:border-border text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-primary shadow-xs transition-all rounded-[var(--control-radius)]"
+                      className="w-full pl-10 pr-24 py-2.5 bg-card border border-slate-300 dark:border-border text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-primary shadow-xs transition-all rounded-[var(--control-radius)]"
                     />
 
                     {/* Clear X button & result badge inside search input */}
@@ -1400,8 +1400,8 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                     className={cn(
                       "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                       formatFilter === 'all'
-                        ? "bg-[#0f2863] text-white shadow-xs"
-                        : "bg-card dark:bg-card text-muted-foreground dark:text-muted-foreground border border-border dark:border-border hover:bg-muted"
+                        ? "bg-[#1a3673] text-white shadow-xs"
+                        : "bg-card text-muted-foreground border border-border hover:bg-muted"
                     )}
                   >
                     <span>Tous les formats</span>
@@ -1415,7 +1415,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                       formatFilter === 'cm'
                         ? "bg-amber-600 text-white shadow-xs"
-                        : "bg-card dark:bg-card text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 hover:bg-amber-50"
+                        : "bg-card text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 hover:bg-amber-50"
                     )}
                   >
                     <span>🏛️ CM • Section</span>
@@ -1429,7 +1429,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                       formatFilter === 'td'
                         ? "bg-primary text-primary-foreground shadow-xs"
-                        : "bg-card dark:bg-card text-primary dark:text-blue-400 border border-primary/20 dark:border-blue-900/50 hover:bg-primary/5"
+                        : "bg-card text-primary dark:text-blue-400 border border-primary/20 dark:border-blue-900/50 hover:bg-primary/5"
                     )}
                   >
                     <span>📝 TD • Sous-groupe</span>
@@ -1443,7 +1443,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                       formatFilter === 'tp'
                         ? "bg-purple-600 text-white shadow-xs"
-                        : "bg-card dark:bg-card text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-900/50 hover:bg-purple-50"
+                        : "bg-card text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-900/50 hover:bg-purple-50"
                     )}
                   >
                     <span>💻 TP • Machine</span>
@@ -1463,8 +1463,8 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                     className={cn(
                       "px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                       searchScope === 'all'
-                        ? "bg-[#0f2863] text-white shadow-xs"
-                        : "bg-card dark:bg-card text-muted-foreground dark:text-muted-foreground border border-border dark:border-border hover:bg-muted"
+                        ? "bg-[#1a3673] text-white shadow-xs"
+                        : "bg-card text-muted-foreground border border-border hover:bg-muted"
                     )}
                   >
                     <span>Tous les critères</span>
@@ -1477,7 +1477,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       "px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                       searchScope === 'module'
                         ? "bg-primary text-primary-foreground shadow-xs"
-                        : "bg-card dark:bg-card text-muted-foreground dark:text-muted-foreground border border-border dark:border-border hover:bg-muted"
+                        : "bg-card text-muted-foreground border border-border hover:bg-muted"
                     )}
                   >
                     <BookOpen className="w-3 h-3" />
@@ -1491,7 +1491,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       "px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                       searchScope === 'professor'
                         ? "bg-emerald-600 text-white shadow-xs"
-                        : "bg-card dark:bg-card text-muted-foreground dark:text-muted-foreground border border-border dark:border-border hover:bg-muted"
+                        : "bg-card text-muted-foreground border border-border hover:bg-muted"
                     )}
                   >
                     <User className="w-3 h-3" />
@@ -1505,7 +1505,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       "px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                       searchScope === 'group'
                         ? "bg-purple-600 text-white shadow-xs"
-                        : "bg-card dark:bg-card text-muted-foreground dark:text-muted-foreground border border-border dark:border-border hover:bg-muted"
+                        : "bg-card text-muted-foreground border border-border hover:bg-muted"
                     )}
                   >
                     <Users className="w-3 h-3" />
@@ -1519,7 +1519,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       "px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                       searchScope === 'room'
                         ? "bg-amber-600 text-white shadow-xs"
-                        : "bg-card dark:bg-card text-muted-foreground dark:text-muted-foreground border border-border dark:border-border hover:bg-muted"
+                        : "bg-card text-muted-foreground border border-border hover:bg-muted"
                     )}
                   >
                     <Building2 className="w-3 h-3" />
@@ -1576,7 +1576,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                     className={cn(
                       "px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer",
                       filiereFilter === 'all'
-                        ? "bg-[#0f2863] text-white shadow-xs"
+                        ? "bg-[#1a3673] text-white shadow-xs"
                         : "bg-muted text-muted-foreground hover:bg-muted/80"
                     )}
                   >
@@ -1606,7 +1606,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
 
               {/* Sessions Cards Grid OR Empty State */}
               {filteredSessions.length === 0 ? (
-                <div className="p-12 text-center border-2 border-dashed border-border dark:border-border rounded-2xl space-y-3 bg-muted/20 animate-in fade-in">
+                <div className="p-12 text-center border-2 border-dashed border-border rounded-2xl space-y-3 bg-muted/20 animate-in fade-in">
                   <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
                     <SearchX className="w-7 h-7" />
                   </div>
@@ -1621,7 +1621,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                   <button
                     type="button"
                     onClick={resetAllFilters}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0f2863] hover:bg-[#1a3d8f] text-white font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-sm"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#1a3673] hover:bg-[#1a3d8f] text-white font-bold text-xs uppercase tracking-wider transition-all cursor-pointer shadow-sm"
                   >
                     <RotateCcw className="w-3.5 h-3.5" />
                     <span>Réinitialiser la recherche & les filtres</span>
@@ -1771,7 +1771,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
               <button
                 type="button"
                 onClick={() => refetchConflicts()}
-                className="px-3.5 py-1.5 rounded-xl bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-slate-700 dark:text-foreground hover:bg-muted/50 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                className="px-3.5 py-1.5 rounded-xl bg-card border border-border text-xs font-bold text-slate-700 dark:text-foreground hover:bg-muted/50 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
               >
                 <RefreshCw className="w-3.5 h-3.5 text-primary" />
                 <span>Actualiser la Grille</span>
@@ -1810,7 +1810,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
               <button
                 type="button"
                 onClick={() => refetchMatrix()}
-                className="px-3.5 py-2 rounded-xl bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-slate-700 dark:text-foreground hover:bg-muted/50 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                className="px-3.5 py-2 rounded-xl bg-card border border-border text-xs font-bold text-slate-700 dark:text-foreground hover:bg-muted/50 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
               >
                 <RefreshCw className={cn("w-3.5 h-3.5 text-primary", isMatrixFetching && "animate-spin")} />
                 <span>Actualiser</span>
@@ -1847,7 +1847,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
       {/* ─── 🔴 MODAL CONFIRMATION REMISE À ZÉRO DE L'EMPLOI DU TEMPS ───────── */}
       {showClearModal && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-rose-200 dark:border-rose-900/60 rounded-2xl p-6 md:p-8 max-w-xl w-full shadow-sm space-y-6">
+          <div className="bg-card border border-rose-200 dark:border-rose-900/60 rounded-2xl p-6 md:p-8 max-w-xl w-full shadow-sm space-y-6">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-200 dark:border-rose-800">
                 <Trash2 className="w-6 h-6 animate-pulse" />
@@ -1863,14 +1863,14 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
             </div>
 
             {/* Mode Switcher Tabs */}
-            <div className="flex p-1 bg-muted dark:bg-card rounded-2xl border border-border dark:border-border">
+            <div className="flex p-1 bg-muted dark:bg-card rounded-2xl border border-border">
               <button
                 type="button"
                 onClick={() => setClearMode('period')}
                 className={cn(
                   "flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer",
                   clearMode === 'period'
-                    ? "bg-card dark:bg-card text-foreground dark:text-white shadow-xs"
+                    ? "bg-card text-foreground dark:text-white shadow-xs"
                     : "text-muted-foreground hover:text-foreground dark:text-muted-foreground"
                 )}
               >
@@ -1883,7 +1883,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                 className={cn(
                   "flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer",
                   clearMode === 'single'
-                    ? "bg-card dark:bg-card text-foreground dark:text-white shadow-xs"
+                    ? "bg-card text-foreground dark:text-white shadow-xs"
                     : "text-muted-foreground hover:text-foreground dark:text-muted-foreground"
                 )}
               >
@@ -1896,7 +1896,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                 className={cn(
                   "flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer",
                   clearMode === 'all'
-                    ? "bg-card dark:bg-card text-foreground dark:text-white shadow-xs"
+                    ? "bg-card text-foreground dark:text-white shadow-xs"
                     : "text-muted-foreground hover:text-foreground dark:text-muted-foreground"
                 )}
               >
@@ -1907,7 +1907,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
             {/* 1. Mode Par Période */}
             {clearMode === 'period' && (
               <div className="space-y-2">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                   Sélectionnez la période académique à réinitialiser :
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1918,7 +1918,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       "p-3.5 rounded-2xl border text-left transition-all cursor-pointer",
                       clearPeriod === 'odd'
                         ? "border-primary bg-blue-50/80 dark:bg-blue-950/40 text-blue-950 dark:text-blue-300 ring-2 ring-blue-500/20"
-                        : "border-border dark:border-border bg-card dark:bg-card text-slate-700 dark:text-foreground"
+                        : "border-border bg-card text-slate-700 dark:text-foreground"
                     )}
                   >
                     <div className="text-xs font-bold flex items-center gap-1.5">
@@ -1936,7 +1936,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       "p-3.5 rounded-2xl border text-left transition-all cursor-pointer",
                       clearPeriod === 'even'
                         ? "border-purple-600 bg-purple-50/80 dark:bg-purple-950/40 text-purple-950 dark:text-purple-300 ring-2 ring-purple-500/20"
-                        : "border-border dark:border-border bg-card dark:bg-card text-slate-700 dark:text-foreground"
+                        : "border-border bg-card text-slate-700 dark:text-foreground"
                     )}
                   >
                     <div className="text-xs font-bold flex items-center gap-1.5">
@@ -1953,7 +1953,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
             {/* 2. Mode Par Semestre Précis (S1 à S10) */}
             {clearMode === 'single' && (
               <div className="space-y-2.5">
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                   Choisissez le semestre exact à remettre à zéro :
                 </label>
                 <div className="grid grid-cols-5 gap-2">
@@ -1968,7 +1968,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                           "py-3 px-2 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1",
                           isSelected
                             ? "border-rose-600 bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 ring-2 ring-rose-500/20 font-bold shadow-xs"
-                            : "border-border dark:border-border bg-card dark:bg-card hover:bg-muted/50 text-slate-700 dark:text-foreground"
+                            : "border-border bg-card hover:bg-muted/50 text-slate-700 dark:text-foreground"
                         )}
                       >
                         <span className="text-xs font-bold">S{sNum}</span>
@@ -1991,18 +1991,18 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                 <p className="font-bold text-rose-900 dark:text-rose-200">
                   🎓 Réinitialisation globale de toute l'année universitaire
                 </p>
-                <p className="text-[11px] text-muted-foreground dark:text-muted-foreground">
+                <p className="text-[11px] text-muted-foreground">
                   Toutes les séances de tous les semestres (S1 à S10), toutes filières confondues, seront effacées pour repartir sur une page 100% vierge.
                 </p>
               </div>
             )}
 
             <div className="p-4 bg-muted/50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-border text-xs text-muted-foreground dark:text-foreground space-y-1.5">
-              <p className="font-bold text-foreground dark:text-foreground flex items-center gap-1.5">
+              <p className="font-bold text-foreground flex items-center gap-1.5">
                 <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
                 Action immédiate
               </p>
-              <p className="text-[11px] text-muted-foreground dark:text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground">
                 Les créneaux de séances concernés seront supprimés de la base de données. Vous pourrez ensuite relancer le <strong>Solveur IA</strong> sur le semestre de votre choix.
               </p>
             </div>
@@ -2040,9 +2040,9 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
       {/* ── 🏛️ Modal: Affectation des Ressources Dédiées (Salles & Professeurs) par Filière ── */}
       {showDedicatedRoomsModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-card dark:bg-card rounded-2xl border border-border dark:border-border shadow-sm max-w-3xl w-full p-6 md:p-8 space-y-5 animate-in zoom-in-95">
+          <div className="bg-card rounded-2xl border border-border shadow-sm max-w-3xl w-full p-6 md:p-8 space-y-5 animate-in zoom-in-95">
 
-            <div className="flex items-center justify-between pb-4 border-b border-border dark:border-border">
+            <div className="flex items-center justify-between pb-4 border-b border-border">
               <div className="flex items-center gap-3">
                 <div className={cn(
                   "w-10 h-10 rounded-2xl flex items-center justify-center font-bold border transition-all",
@@ -2078,7 +2078,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                 className={cn(
                   "flex-1 py-2 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer",
                   resourceModalTab === 'rooms'
-                    ? "bg-card dark:bg-card text-primary dark:text-indigo-300 shadow-sm border border-slate-200/60 dark:border-border"
+                    ? "bg-card text-primary dark:text-indigo-300 shadow-sm border border-slate-200/60 dark:border-border"
                     : "text-muted-foreground hover:text-foreground dark:hover:text-slate-200"
                 )}
               >
@@ -2095,7 +2095,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                 className={cn(
                   "flex-1 py-2 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer",
                   resourceModalTab === 'professors'
-                    ? "bg-card dark:bg-card text-emerald-700 dark:text-emerald-300 shadow-sm border border-slate-200/60 dark:border-border"
+                    ? "bg-card text-emerald-700 dark:text-emerald-300 shadow-sm border border-slate-200/60 dark:border-border"
                     : "text-muted-foreground hover:text-foreground dark:hover:text-slate-200"
                 )}
               >
@@ -2130,7 +2130,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                       setDedicatedRooms(newMap);
                       toast.success("Répartition équilibrée appliquée selon vos salles réelles !");
                     }}
-                    className="px-3 py-1.5 rounded-xl bg-[#0f2863] text-white text-[11px] font-bold whitespace-nowrap cursor-pointer hover:bg-secondary transition-all shadow-xs"
+                    className="px-3 py-1.5 rounded-xl bg-[#1a3673] text-white text-[11px] font-bold whitespace-nowrap cursor-pointer hover:bg-secondary transition-all shadow-xs"
                   >
                     ⚡ Répartition Équilibrée Réelle
                   </button>
@@ -2178,7 +2178,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                                     "px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 border",
                                     isSelected
                                       ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                                      : "bg-card dark:bg-card text-muted-foreground dark:text-muted-foreground border-border dark:border-border hover:bg-muted"
+                                      : "bg-card text-muted-foreground border-border hover:bg-muted"
                                   )}
                                 >
                                   <span>{isSelected ? '✓' : '+'}</span>
@@ -2245,7 +2245,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                             <div>
                               <div className="flex items-center gap-2">
                                 <span className="font-bold text-xs text-foreground dark:text-white">{fLabel}</span>
-                                <span className="px-2 py-0.5 rounded-md bg-card dark:bg-card border border-border dark:border-border text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                                <span className="px-2 py-0.5 rounded-md bg-card border border-border text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
                                   {assigned.length} prof{assigned.length > 1 ? 's' : ''} affecté{assigned.length > 1 ? 's' : ''}
                                 </span>
                               </div>
@@ -2260,7 +2260,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                                     [fCode]: availableProfessorsList.map((p: any) => p.name)
                                   }));
                                 }}
-                                className="px-2 py-0.5 rounded bg-card dark:bg-card border border-border dark:border-border font-bold text-muted-foreground dark:text-foreground hover:text-emerald-600 cursor-pointer"
+                                className="px-2 py-0.5 rounded bg-card border border-border font-bold text-muted-foreground dark:text-foreground hover:text-emerald-600 cursor-pointer"
                               >
                                 Tout cocher
                               </button>
@@ -2272,7 +2272,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                                     [fCode]: []
                                   }));
                                 }}
-                                className="px-2 py-0.5 rounded bg-card dark:bg-card border border-border dark:border-border font-bold text-slate-400 hover:text-rose-600 cursor-pointer"
+                                className="px-2 py-0.5 rounded bg-card border border-border font-bold text-slate-400 hover:text-rose-600 cursor-pointer"
                               >
                                 Vider
                               </button>
@@ -2300,7 +2300,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                                     "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 border text-left",
                                     isSelected
                                       ? "bg-emerald-600 text-white border-emerald-700 shadow-sm"
-                                      : "bg-card dark:bg-card text-slate-700 dark:text-foreground border-border dark:border-border hover:border-emerald-500 hover:bg-emerald-50/40"
+                                      : "bg-card text-slate-700 dark:text-foreground border-border hover:border-emerald-500 hover:bg-emerald-50/40"
                                   )}
                                 >
                                   <span className="font-bold text-xs">{isSelected ? '✓' : '+'}</span>
@@ -2325,7 +2325,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
               </div>
             )}
 
-            <div className="pt-3 border-t border-border dark:border-border flex items-center justify-between gap-3">
+            <div className="pt-3 border-t border-border flex items-center justify-between gap-3">
               <div className="text-[11px] text-slate-400">
                 {resourceModalTab === 'professors' ? (
                   <span>Ces choix définiront les priorités d'assignation du <strong>Solveur IA</strong> par filière.</span>
@@ -2339,7 +2339,7 @@ const [showClearModal, setShowClearModal] = useState<boolean>(false);
                   setShowDedicatedRoomsModal(false);
                   toast.success("Affectations enregistrées et prêtes pour la génération !");
                 }}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-blue-700 to-[#0f2863] text-white font-bold text-xs uppercase tracking-wider shadow-md hover:shadow-indigo-500/20 transition-all cursor-pointer"
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 via-blue-700 to-[#1a3673] text-white font-bold text-xs uppercase tracking-wider shadow-md hover:shadow-indigo-500/20 transition-all cursor-pointer"
               >
                 Enregistrer & Appliquer au Solveur
               </button>

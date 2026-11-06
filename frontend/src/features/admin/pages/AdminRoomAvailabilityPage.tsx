@@ -124,7 +124,7 @@ export default function AdminRoomAvailabilityPage() {
         </div>
       </div>
 
-      <div className="bg-card dark:bg-card rounded-2xl border border-border dark:border-border p-5 md:p-6 space-y-5">
+      <div className="bg-card rounded-2xl border border-border p-5 md:p-6 space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <label className="space-y-1.5">
             <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Date</span>
@@ -199,7 +199,7 @@ export default function AdminRoomAvailabilityPage() {
         <button
           type="button"
           onClick={() => { setEnabled(true); query.refetch() }}
-          className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#0f2863] text-white text-xs font-bold uppercase tracking-wider"
+          className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#1a3673] text-white text-xs font-bold uppercase tracking-wider"
         >
           {query.isFetching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
           Voir les salles disponibles

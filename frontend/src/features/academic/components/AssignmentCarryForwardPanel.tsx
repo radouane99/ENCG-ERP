@@ -65,14 +65,14 @@ export default function AssignmentCarryForwardPanel({ years }: { years: { id: st
   const selectedYear = prevYears.find(y => String(y.id) === String(source));
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#0f2863] via-[#12327a] to-[#0a1d4a] p-6 shadow-2xl shadow-[#0f2863]/30">
+    <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#1a3673] via-[#12327a] to-[#0a1d4a] p-6 shadow-2xl shadow-[#1a3673]/30">
       <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-amber-400/20 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-emerald-400/15 blur-3xl" />
 
       <div className="relative flex flex-col gap-5">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-300 to-amber-500 text-[#0f2863] shadow-lg shadow-amber-500/30">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-300 to-amber-500 text-[#1a3673] shadow-lg shadow-amber-500/30">
               <History className="h-6 w-6" />
             </div>
             <div>
@@ -122,7 +122,7 @@ export default function AssignmentCarryForwardPanel({ years }: { years: { id: st
             type="button"
             disabled={!source || carry.isPending}
             onClick={() => carry.mutate(false)}
-            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 px-5 py-3 text-sm font-black text-[#0f2863] shadow-lg shadow-amber-500/30 transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 px-5 py-3 text-sm font-black text-[#1a3673] shadow-lg shadow-amber-500/30 transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {carry.isPending ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
             Prévisualiser la reconduction

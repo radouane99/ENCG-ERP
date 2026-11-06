@@ -555,7 +555,7 @@ export default function AdminActivityLogsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in">
           <div className="bg-card rounded-2xl shadow-sm w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-border animate-in zoom-in-95 space-y-6">
             
-            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-[#001A4B] p-6 text-white relative">
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-[#1a3673] p-6 text-white relative">
               <button 
                 onClick={() => setSelectedLogForDiff(null)}
                 className="absolute top-5 right-5 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-1.5 transition-colors cursor-pointer"
@@ -684,7 +684,7 @@ export default function AdminActivityLogsPage() {
       {showChainModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in">
           <div className="bg-card rounded-2xl shadow-sm w-full max-w-2xl overflow-hidden border border-border animate-in zoom-in-95 space-y-6">
-            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-[#001A4B] p-6 text-white relative">
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-[#1a3673] p-6 text-white relative">
               <button 
                 onClick={() => setShowChainModal(false)}
                 className="absolute top-5 right-5 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-1.5 transition-colors cursor-pointer"

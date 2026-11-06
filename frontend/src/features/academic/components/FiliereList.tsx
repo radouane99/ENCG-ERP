@@ -76,7 +76,7 @@ function CustomChefSelect({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-4 py-3 border border-amber-300 dark:border-amber-800 rounded-2xl bg-card dark:bg-card text-xs font-bold shadow-sm transition-all cursor-pointer hover:border-amber-500"
+        className="w-full flex items-center justify-between px-4 py-3 border border-amber-300 dark:border-amber-800 rounded-2xl bg-card text-xs font-bold shadow-sm transition-all cursor-pointer hover:border-amber-500"
       >
         <div className="flex items-center gap-2 truncate">
           <UserCheck className={cn("w-4 h-4 shrink-0", selectedProf ? "text-emerald-600" : "text-amber-500")} />
@@ -88,7 +88,7 @@ function CustomChefSelect({
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-card dark:bg-card border border-amber-200 dark:border-amber-800 rounded-2xl shadow-sm overflow-hidden p-2 space-y-2 animate-in fade-in duration-150">
+        <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-card border border-amber-200 dark:border-amber-800 rounded-2xl shadow-sm overflow-hidden p-2 space-y-2 animate-in fade-in duration-150">
           <div className="relative">
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
             <input
@@ -96,7 +96,7 @@ function CustomChefSelect({
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Rechercher un enseignant par nom ou email..."
-              className="w-full pl-9 pr-3 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold outline-none text-foreground dark:text-white rounded-[var(--control-radius)]"
+              className="w-full pl-9 pr-3 py-2 bg-muted/50 dark:bg-card border border-border text-xs font-bold outline-none text-foreground dark:text-white rounded-[var(--control-radius)]"
               autoFocus
             />
           </div>
@@ -120,7 +120,7 @@ function CustomChefSelect({
                   onClick={() => { onChange(String(p.id)); setIsOpen(false); }}
                   className={cn(
                     "w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between gap-2 cursor-pointer",
-                    String(value) === String(p.id) ? "bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 shadow-sm" : "hover:bg-muted dark:hover:bg-slate-800 text-foreground dark:text-foreground"
+                    String(value) === String(p.id) ? "bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 shadow-sm" : "hover:bg-muted dark:hover:bg-slate-800 text-foreground"
                   )}
                 >
                   <div className="min-w-0">
@@ -336,7 +336,7 @@ export default function FiliereList() {
 
       {/* Analytics KPI Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-md flex items-center justify-between">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-md flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">FILIÈRES ENCG</span>
             <h3 className="text-3xl font-bold text-foreground dark:text-white mt-1">{filieres.length}</h3>
@@ -347,7 +347,7 @@ export default function FiliereList() {
           </div>
         </div>
 
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-md flex items-center justify-between">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-md flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">CHEFS DE FILIÈRE ASSIGNÉS</span>
             <h3 className="text-3xl font-bold text-emerald-600 mt-1">{assignedChefCount} / {filieres.length}</h3>
@@ -358,7 +358,7 @@ export default function FiliereList() {
           </div>
         </div>
 
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-md flex items-center justify-between">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-md flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">RECHERCHE RAPIDE</span>
             <div className="relative mt-2">
@@ -368,7 +368,7 @@ export default function FiliereList() {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Filtrer par nom ou code..."
-                className="w-full pl-9 pr-4 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
+                className="w-full pl-9 pr-4 py-2 bg-muted/50 dark:bg-card border border-border text-xs font-bold outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
               />
             </div>
           </div>
@@ -377,14 +377,14 @@ export default function FiliereList() {
 
       {loading ? (
         <div className="flex justify-center items-center py-20 text-slate-400">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#0f2863]"></div>
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#1a3673]"></div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredFilieres.map((filiere) => (
-            <div key={filiere.id} className="bg-card dark:bg-card rounded-2xl shadow-lg border border-slate-200/80 dark:border-border overflow-hidden flex flex-col hover:shadow-2xl transition-all duration-300 group">
+            <div key={filiere.id} className="bg-card rounded-2xl shadow-lg border border-slate-200/80 dark:border-border overflow-hidden flex flex-col hover:shadow-2xl transition-all duration-300 group">
               {/* Card Header (Deep Blue Gradient) */}
-              <div className="bg-gradient-to-r from-[#0f2863] to-[#1e40af] p-6 relative">
+              <div className="bg-gradient-to-r from-[#1a3673] to-[#1e40af] p-6 relative">
                 <div className="flex justify-between items-start mb-3">
                   <span className="bg-white/20 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-xl tracking-widest uppercase border border-white/20">
                     {filiere.code}
@@ -399,7 +399,7 @@ export default function FiliereList() {
               </div>
 
               {/* Chef de Filiere Designation Banner */}
-              <div className="p-4 bg-muted/50 dark:bg-slate-800/50 border-b border-border dark:border-border flex items-center justify-between gap-3">
+              <div className="p-4 bg-muted/50 dark:bg-slate-800/50 border-b border-border flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
                   <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs shrink-0", filiere.responsable_name && filiere.responsable_name !== 'Non assigné' ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")}>
                     <UserCheck className="w-4 h-4" />
@@ -427,7 +427,7 @@ export default function FiliereList() {
                 const maxCap = filiere.max_capacity ?? 150;
                 const fillPercentage = Math.min(100, Math.round((studentCount / maxCap) * 100));
                 return (
-                  <div className="px-5 py-3 bg-muted/50 dark:bg-slate-800/60 border-t border-border dark:border-border flex items-center justify-between text-xs font-bold">
+                  <div className="px-5 py-3 bg-muted/50 dark:bg-slate-800/60 border-t border-border flex items-center justify-between text-xs font-bold">
                     <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Capacité d'Accueil (BDD):</span>
                     <span className="text-emerald-700 dark:text-emerald-300 font-mono">
                       {studentCount} / {maxCap} Étudiants ({fillPercentage}%)
@@ -438,7 +438,7 @@ export default function FiliereList() {
 
 
               {/* Stats Section */}
-              <div className="grid grid-cols-2 divide-x divide-slate-100 dark:divide-slate-800 py-3 bg-card dark:bg-card">
+              <div className="grid grid-cols-2 divide-x divide-slate-100 dark:divide-slate-800 py-3 bg-card">
                 <div className="text-center px-4">
                   <div className="text-xl font-bold text-foreground dark:text-white">{filiere.groups_count ?? 1}</div>
                   <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Groupes</div>
@@ -450,10 +450,10 @@ export default function FiliereList() {
               </div>
 
               {/* Actions Section */}
-              <div className="flex flex-wrap items-center justify-between p-3.5 divide-x divide-slate-100 dark:divide-slate-800 border-t border-border dark:border-border bg-slate-50/50 dark:bg-slate-900/50 gap-2">
+              <div className="flex flex-wrap items-center justify-between p-3.5 divide-x divide-slate-100 dark:divide-slate-800 border-t border-border bg-slate-50/50 dark:bg-slate-900/50 gap-2">
                 <button 
                   onClick={() => setSelectedFiliereForModal(filiere)}
-                  className="px-2.5 py-1.5 bg-card dark:bg-card hover:bg-muted text-slate-700 dark:text-foreground rounded-xl text-[10px] font-bold uppercase tracking-wider border border-border dark:border-border transition-colors flex items-center gap-1 cursor-pointer"
+                  className="px-2.5 py-1.5 bg-card hover:bg-muted text-slate-700 dark:text-foreground rounded-xl text-[10px] font-bold uppercase tracking-wider border border-border transition-colors flex items-center gap-1 cursor-pointer"
                 >
                   <Eye className="w-3.5 h-3.5 text-primary" /> Semestres S1-S10
                 </button>
@@ -499,9 +499,9 @@ export default function FiliereList() {
       {/* Modal CRUD with Chef de Filiere Assignment */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-lg overflow-hidden space-y-0">
+          <div className="bg-card border border-border rounded-2xl shadow-sm w-full max-w-lg overflow-hidden space-y-0">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-border dark:border-border bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] text-white">
+            <div className="flex items-center justify-between p-6 border-b border-border bg-gradient-to-r from-[#1a3673] via-[#1a387e] to-[#09193d] text-white">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center font-bold text-amber-300 shadow-lg">
                   <GraduationCap className="w-5 h-5 text-amber-400" />
@@ -521,33 +521,33 @@ export default function FiliereList() {
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider mb-1.5">Code Filière *</label>
+                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Code Filière *</label>
                   <input 
                     type="text" required 
                     value={formData.code} 
                     onChange={e => setFormData({...formData, code: e.target.value})}
-                    className="w-full px-4 py-3 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-mono font-bold text-foreground dark:text-white uppercase outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
+                    className="w-full px-4 py-3 border border-border bg-muted/50 dark:bg-card text-xs font-mono font-bold text-foreground dark:text-white uppercase outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
                     placeholder="Ex: GFC" 
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider mb-1.5">Durée (Années) *</label>
+                  <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Durée (Années) *</label>
                   <input 
                     type="number" required min={1} max={7}
                     value={formData.duration_years} 
                     onChange={e => setFormData({...formData, duration_years: Number(e.target.value)})}
-                    className="w-full px-4 py-3 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
+                    className="w-full px-4 py-3 border border-border bg-muted/50 dark:bg-card text-xs font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider mb-1.5">Nom Officiel (Français) *</label>
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Nom Officiel (Français) *</label>
                 <input 
                   type="text" required 
                   value={formData.name} 
                   onChange={e => setFormData({...formData, name: e.target.value})}
-                  className="w-full px-4 py-3 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
+                  className="w-full px-4 py-3 border border-border bg-muted/50 dark:bg-card text-xs font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
                   placeholder="Ex: Gestion Financière et Comptable" 
                 />
               </div>
@@ -570,11 +570,11 @@ export default function FiliereList() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider mb-1.5">Type de formation</label>
+                <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Type de formation</label>
                 <select 
                   value={formData.type} 
                   onChange={e => setFormData({...formData, type: e.target.value})}
-                  className="w-full px-4 py-3 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
+                  className="w-full px-4 py-3 border border-border bg-muted/50 dark:bg-card text-xs font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
                 >
                   <option value="grande_ecole">Formation initiale ENCG — gratuite (TAFEM / CNAEM)</option>
                   <option value="formation_initiale">Autre formation initiale — gratuite</option>
@@ -589,7 +589,7 @@ export default function FiliereList() {
                 </select>
               </div>
 
-              <div className="flex items-center justify-between p-3.5 bg-muted/50 dark:bg-slate-800/50 rounded-2xl border border-border dark:border-border">
+              <div className="flex items-center justify-between p-3.5 bg-muted/50 dark:bg-slate-800/50 rounded-2xl border border-border">
                 <div>
                   <div className="text-xs font-bold text-foreground dark:text-white">Statut Opérationnel</div>
                   <div className="text-[10px] text-slate-400">Activer ou désactiver l'ouverture de la filière</div>
@@ -599,15 +599,15 @@ export default function FiliereList() {
                   id="filiere_is_active"
                   checked={formData.is_active} 
                   onChange={e => setFormData({...formData, is_active: e.target.checked})}
-                  className="w-5 h-5 rounded-md text-[#0f2863] focus:ring-[#0f2863] cursor-pointer"
+                  className="w-5 h-5 rounded-md text-[#1a3673] focus:ring-[#1a3673] cursor-pointer"
                 />
               </div>
               
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-border dark:border-border">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
                 <button type="button" onClick={handleCloseModal} className="px-5 py-3 text-xs font-bold text-muted-foreground hover:bg-muted dark:hover:bg-slate-800 rounded-2xl transition-colors cursor-pointer">
                   ANNULER
                 </button>
-                <button type="submit" className="px-6 py-3.5 text-xs font-bold bg-gradient-to-r from-[#0f2863] to-[#1e40af] text-white hover:from-[#15347d] hover:to-[#254cb6] rounded-2xl shadow-sm transition-all cursor-pointer uppercase tracking-wider">
+                <button type="submit" className="px-6 py-3.5 text-xs font-bold bg-gradient-to-r from-[#1a3673] to-[#1e40af] text-white hover:from-[#15347d] hover:to-[#254cb6] rounded-2xl shadow-sm transition-all cursor-pointer uppercase tracking-wider">
                   {editingId ? 'METTRE À JOUR' : 'ENREGISTRER'}
                 </button>
               </div>
@@ -620,10 +620,10 @@ export default function FiliereList() {
       {/* 👁️ MODAL: SEMESTRES S1-S10 & MODULES */}
       {selectedFiliereForModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-2xl overflow-hidden space-y-6 p-6">
-            <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
+          <div className="bg-card border border-border rounded-2xl shadow-sm w-full max-w-2xl overflow-hidden space-y-6 p-6">
+            <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[#0f2863] text-white flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-2xl bg-[#1a3673] text-white flex items-center justify-center font-bold">
                   <GraduationCap className="w-5 h-5 text-amber-300" />
                 </div>
                 <div>
@@ -635,10 +635,10 @@ export default function FiliereList() {
             </div>
 
             <div className="space-y-4 text-xs">
-              <div className="bg-muted/50 dark:bg-slate-800/50 p-4 rounded-2xl border border-border dark:border-border flex items-center justify-between">
+              <div className="bg-muted/50 dark:bg-slate-800/50 p-4 rounded-2xl border border-border flex items-center justify-between">
                 <div>
                   <div className="font-bold text-slate-700 dark:text-foreground">Chef de Filière / Coordinateur:</div>
-                  <div className="font-bold text-sm text-[#0f2863] dark:text-amber-300 mt-0.5">{selectedFiliereForModal.responsable_name || '—'}</div>
+                  <div className="font-bold text-sm text-[#1a3673] dark:text-amber-300 mt-0.5">{selectedFiliereForModal.responsable_name || '—'}</div>
                 </div>
                 <div className="text-right">
                   <div className="font-mono font-bold text-emerald-600 text-sm">Volume Horaire Global : 2 400 Heures</div>
@@ -647,12 +647,12 @@ export default function FiliereList() {
               </div>
 
               <div className="space-y-2">
-                <div className="font-bold text-foreground dark:text-foreground uppercase tracking-wider text-[10px]">
+                <div className="font-bold text-foreground uppercase tracking-wider text-[10px]">
                   Semestres & Volumes Horaires d'Enseignement (CM / TD) :
                 </div>
                 <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1">
                   {['S1 — Tronc Commun', 'S2 — Tronc Commun', 'S3 — Tronc Commun', 'S4 — Tronc Commun', 'S5 — Spécialité Approfondie', 'S6 — Stage & Projets', 'S7 — Management Stratégique', 'S8 — Spécialisation Métier', 'S9 — Séminaires & Recherche', 'S10 — PFE & Stage Fin d\'Études'].map((s, idx) => (
-                    <div key={idx} className="p-3 bg-muted/50 dark:bg-card rounded-xl font-bold text-foreground dark:text-foreground border border-border dark:border-border flex items-center justify-between">
+                    <div key={idx} className="p-3 bg-muted/50 dark:bg-card rounded-xl font-bold text-foreground border border-border flex items-center justify-between">
                       <span>🎓 {s}</span>
                       <span className="text-[10px] font-mono text-primary dark:text-indigo-400">240 Heures</span>
                     </div>
@@ -662,16 +662,16 @@ export default function FiliereList() {
 
             </div>
 
-            <div className="flex justify-end gap-3 pt-2 border-t border-border dark:border-border">
+            <div className="flex justify-end gap-3 pt-2 border-t border-border">
               <button
                 onClick={() => handleExportMaquettePdf(selectedFiliereForModal)}
-                className="px-4 py-2.5 bg-amber-400 hover:bg-amber-500 text-[#0f2863] font-bold rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+                className="px-4 py-2.5 bg-amber-400 hover:bg-amber-500 text-[#1a3673] font-bold rounded-xl text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
               >
                 <Printer className="w-3.5 h-3.5" /> Télécharger Maquette (PDF A4)
               </button>
               <button
                 onClick={() => setSelectedFiliereForModal(null)}
-                className="px-6 py-2.5 bg-[#0f2863] text-white font-bold rounded-xl text-xs uppercase tracking-wider cursor-pointer"
+                className="px-6 py-2.5 bg-[#1a3673] text-white font-bold rounded-xl text-xs uppercase tracking-wider cursor-pointer"
               >
                 Fermer
               </button>

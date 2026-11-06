@@ -50,8 +50,8 @@ export default function StudentRecommendationsPage() {
             <title>Lettre de Recommandation — ENCG Fès</title>
             <style>
               body { font-family: 'Times New Roman', serif; padding: 40px; line-height: 1.6; color: #111; }
-              .header { text-align: center; border-bottom: 2px solid #0f2863; padding-bottom: 15px; margin-bottom: 30px; }
-              .header h1 { font-size: 18px; margin: 0; color: #0f2863; font-family: Arial, sans-serif; }
+              .header { text-align: center; border-bottom: 2px solid #1a3673; padding-bottom: 15px; margin-bottom: 30px; }
+              .header h1 { font-size: 18px; margin: 0; color: #1a3673; font-family: Arial, sans-serif; }
               .header p { font-size: 12px; margin: 5px 0 0 0; color: #555; }
               .content { font-size: 14px; text-align: justify; margin-bottom: 40px; }
               .signature { text-align: right; margin-top: 50px; font-weight: bold; }
@@ -108,7 +108,7 @@ export default function StudentRecommendationsPage() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Left: Request Form */}
-        <div className="lg:col-span-1 bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border space-y-4">
+        <div className="lg:col-span-1 bg-card rounded-2xl p-6 shadow-sm border border-border space-y-4">
           <h2 className="font-bold text-base text-foreground dark:text-white flex items-center gap-2">
             <Plus className="w-5 h-5 text-primary" /> Nouvelle Demande
           </h2>
@@ -120,7 +120,7 @@ export default function StudentRecommendationsPage() {
               value={purpose}
               onChange={e => setPurpose(e.target.value)}
               placeholder="Ex: Candidature Master Audit & Finance / Bourse Mobilité"
-              className="w-full px-4 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold rounded-[var(--control-radius)]"
+              className="w-full px-4 py-2.5 bg-muted/50 dark:bg-card border border-border text-xs font-bold rounded-[var(--control-radius)]"
             />
           </div>
 
@@ -129,7 +129,7 @@ export default function StudentRecommendationsPage() {
             <select
               value={deliveryMethod}
               onChange={e => setDeliveryMethod(e.target.value as any)}
-              className="w-full px-4 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold rounded-[var(--control-radius)]"
+              className="w-full px-4 py-2.5 bg-muted/50 dark:bg-card border border-border text-xs font-bold rounded-[var(--control-radius)]"
             >
               <option value="both">🌐 Espace Étudiant PDF + Envoi par Email</option>
               <option value="platform">📱 Espace Étudiant PDF Uniquement</option>
@@ -144,7 +144,7 @@ export default function StudentRecommendationsPage() {
               delivery_method: deliveryMethod
             })}
             disabled={submitMutation.isPending}
-            className="w-full py-4 bg-gradient-to-r from-[#0f2863] to-indigo-700 hover:opacity-90 text-white font-bold rounded-2xl transition-all shadow-lg cursor-pointer flex items-center justify-center gap-2 text-xs uppercase tracking-wider disabled:opacity-40"
+            className="w-full py-4 bg-gradient-to-r from-[#1a3673] to-indigo-700 hover:opacity-90 text-white font-bold rounded-2xl transition-all shadow-lg cursor-pointer flex items-center justify-center gap-2 text-xs uppercase tracking-wider disabled:opacity-40"
           >
             {submitMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 text-amber-300" />}
             Envoyer la Demande au Professeur
@@ -160,7 +160,7 @@ export default function StudentRecommendationsPage() {
           {isRequestsLoading ? (
             <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
           ) : requests.length === 0 ? (
-            <div className="bg-card dark:bg-card rounded-2xl p-12 text-center border border-border dark:border-border text-slate-400 text-xs font-medium space-y-2">
+            <div className="bg-card rounded-2xl p-12 text-center border border-border text-slate-400 text-xs font-medium space-y-2">
               <FileText className="w-8 h-8 text-indigo-400/40 mx-auto" />
               <p>Vous n'avez pas encore effectué de demande de lettre de recommandation.</p>
             </div>
@@ -168,7 +168,7 @@ export default function StudentRecommendationsPage() {
             requests.map(req => (
               <div
                 key={req.id}
-                className="bg-card dark:bg-card rounded-2xl p-6 border border-border dark:border-border shadow-sm space-y-4"
+                className="bg-card rounded-2xl p-6 border border-border shadow-sm space-y-4"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
@@ -184,7 +184,7 @@ export default function StudentRecommendationsPage() {
                 </div>
 
                 {req.status === 'approved' && (
-                  <div className="pt-3 border-t border-border dark:border-border flex items-center justify-between gap-4">
+                  <div className="pt-3 border-t border-border flex items-center justify-between gap-4">
                     <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
                       <ShieldCheck className="w-4 h-4" /> Signé électroniquement le {req.signed_at ? new Date(req.signed_at).toLocaleDateString('fr-FR') : 'récemment'}
                     </span>

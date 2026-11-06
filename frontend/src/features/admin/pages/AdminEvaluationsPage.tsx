@@ -138,7 +138,7 @@ export default function AdminEvaluationsPage() {
         "rounded-2xl p-6 border shadow-sm flex items-start gap-4 transition-all",
         isCampaignOpen
           ? "bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-900/60"
-          : "bg-muted/50 dark:bg-slate-800/40 border-border dark:border-border"
+          : "bg-muted/50 dark:bg-slate-800/40 border-border"
       )}>
         <div className={cn(
           "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 font-bold text-sm",
@@ -161,14 +161,14 @@ export default function AdminEvaluationsPage() {
               ? 'La campagne d\'évaluation est actuellement OUVERTE aux étudiants.'
               : 'La campagne d\'évaluation est actuellement CLÔTURÉE.'}
           </h3>
-          <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground mt-0.5">
+          <p className="text-xs font-medium text-muted-foreground mt-0.5">
             Les étudiants enregistrent leurs évaluations anonymement en base de données SQL. Les statistiques sont agrégées en temps réel.
           </p>
         </div>
       </div>
 
       {/* ── Main Section: Evaluation Results Table ── */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-sm space-y-6">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-sm space-y-6">
 
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div>
@@ -183,7 +183,7 @@ export default function AdminEvaluationsPage() {
             <select
               value={selectedFiliere}
               onChange={(e) => setSelectedFiliere(e.target.value)}
-              className="w-full sm:w-48 px-4 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-[#0f2863] dark:text-white outline-none cursor-pointer rounded-[var(--control-radius)]"
+              className="w-full sm:w-48 px-4 py-2.5 bg-muted/50 dark:bg-card border border-border text-xs font-bold text-[#1a3673] dark:text-white outline-none cursor-pointer rounded-[var(--control-radius)]"
             >
               <option value="all">Toutes les Filières</option>
               <option value="Audit & Contrôle">Audit & Contrôle</option>
@@ -200,7 +200,7 @@ export default function AdminEvaluationsPage() {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Rechercher professeur, module..."
-                className="w-full pl-11 pr-4 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none rounded-[var(--control-radius)]"
+                className="w-full pl-11 pr-4 py-2 bg-muted/50 dark:bg-card border border-border text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none rounded-[var(--control-radius)]"
               />
             </div>
           </div>
@@ -215,7 +215,7 @@ export default function AdminEvaluationsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-border dark:border-border text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                <tr className="border-b border-border text-[10px] font-bold uppercase text-slate-400 tracking-wider">
                   <th className="py-3 px-4">Module & Enseignant</th>
                   <th className="py-3 px-4 text-center">Avis DB</th>
                   <th className="py-3 px-4 text-center">Q1 (Organisation)</th>
@@ -252,19 +252,19 @@ export default function AdminEvaluationsPage() {
                         {item.count} avis
                       </td>
 
-                      <td className="py-4 px-4 text-center font-mono font-bold text-xs text-foreground dark:text-foreground">
+                      <td className="py-4 px-4 text-center font-mono font-bold text-xs text-foreground">
                         {item.q1} / 5
                       </td>
 
-                      <td className="py-4 px-4 text-center font-mono font-bold text-xs text-foreground dark:text-foreground">
+                      <td className="py-4 px-4 text-center font-mono font-bold text-xs text-foreground">
                         {item.q2} / 5
                       </td>
 
-                      <td className="py-4 px-4 text-center font-mono font-bold text-xs text-foreground dark:text-foreground">
+                      <td className="py-4 px-4 text-center font-mono font-bold text-xs text-foreground">
                         {item.q3} / 5
                       </td>
 
-                      <td className="py-4 px-4 text-center font-mono font-bold text-xs text-foreground dark:text-foreground">
+                      <td className="py-4 px-4 text-center font-mono font-bold text-xs text-foreground">
                         {item.q4} / 5
                       </td>
 
@@ -299,7 +299,7 @@ export default function AdminEvaluationsPage() {
       </div>
 
       {/* ── Qualitative Anonymous Feedback Feed (Real DB Comments) ── */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-sm space-y-6">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-sm space-y-6">
         <div>
           <h2 className="text-lg font-bold text-foreground dark:text-white flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-purple-600" /> Retours Qualitatifs & Commentaires Anonymes (Base SQL)

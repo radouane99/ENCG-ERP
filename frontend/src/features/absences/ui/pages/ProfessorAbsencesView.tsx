@@ -444,8 +444,8 @@ export default function ProfessorAbsencesView() {
 
       {/* ── 2. ÉTAPE 1 : SÉLECTION DE LA FILIÈRE (TOP COCKPIT) ── */}
       {!isSessionActive && (
-        <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border dark:border-border pb-3">
+        <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-xl bg-primary/5 dark:bg-blue-950/60 text-primary dark:text-blue-400">
                 <BookOpen size={20} />
@@ -467,7 +467,7 @@ export default function ProfessorAbsencesView() {
                 <select
                   value={selectedFiliere}
                   onChange={(e) => setSelectedFiliere(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-[#0f2863] dark:text-white outline-none cursor-pointer rounded-[var(--control-radius)]"
+                  className="w-full px-4 py-2.5 bg-muted/50 dark:bg-card border border-border text-xs font-bold text-[#1a3673] dark:text-white outline-none cursor-pointer rounded-[var(--control-radius)]"
                 >
                   <option value="all">🌐 Toutes vos Filières Affectées</option>
                   {filieres.map((f: any) => (
@@ -490,8 +490,8 @@ export default function ProfessorAbsencesView() {
                 className={cn(
                   "px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border",
                   selectedFiliere === 'all'
-                    ? "bg-[#0f2863] text-white border-[#0f2863] shadow-sm"
-                    : "bg-muted/50 dark:bg-card text-muted-foreground dark:text-foreground border-border dark:border-border hover:bg-muted"
+                    ? "bg-[#1a3673] text-white border-[#1a3673] shadow-sm"
+                    : "bg-muted/50 dark:bg-card text-muted-foreground dark:text-foreground border-border hover:bg-muted"
                 )}
               >
                 🌐 Toutes vos Filières
@@ -504,7 +504,7 @@ export default function ProfessorAbsencesView() {
                     "px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer border flex items-center gap-1.5",
                     selectedFiliere === f.id.toString()
                       ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                      : "bg-muted/50 dark:bg-card text-slate-700 dark:text-foreground border-border dark:border-border hover:border-indigo-400"
+                      : "bg-muted/50 dark:bg-card text-slate-700 dark:text-foreground border-border hover:border-indigo-400"
                   )}
                 >
                   <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white/20">{f.code}</span>
@@ -523,8 +523,8 @@ export default function ProfessorAbsencesView() {
 
       {/* ── 3. ÉTAPE 2 : MINI WEEKLY TIMETABLE PLANNING (PLANNING HEBDOMADAIRE 1-CLIC) ── */}
       {!isSessionActive && (
-        <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border dark:border-border pb-3">
+        <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-xl bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-400">
                 <CalendarDays size={20} />
@@ -625,16 +625,16 @@ export default function ProfessorAbsencesView() {
               })}
             </div>
           ) : (
-            <div className="py-10 px-6 text-center bg-slate-50/60 dark:bg-slate-800/30 rounded-2xl border border-dashed border-border dark:border-border space-y-2.5">
+            <div className="py-10 px-6 text-center bg-slate-50/60 dark:bg-slate-800/30 rounded-2xl border border-dashed border-border space-y-2.5">
               <div className="w-12 h-12 mx-auto rounded-2xl bg-primary/5 dark:bg-indigo-950/60 text-primary flex items-center justify-center">
                 <Clock size={22} />
               </div>
-              <h4 className="text-sm font-bold text-foreground dark:text-foreground">
+              <h4 className="text-sm font-bold text-foreground">
                 {schedules.length === 0
                   ? "Aucune séance programmée dans votre emploi du temps officiel"
                   : `Aucune séance trouvée pour ${selectedDayFilter === 'all' ? 'cette sélection' : selectedDayFilter}`}
               </h4>
-              <p className="text-xs text-muted-foreground dark:text-muted-foreground max-w-md mx-auto">
+              <p className="text-xs text-muted-foreground max-w-md mx-auto">
                 {schedules.length === 0
                   ? "Vous n'avez aucun créneau de cours planifié dans le système pour le moment."
                   : "Sélectionnez un autre jour ou changez de filière pour afficher vos cours programmés."}
@@ -646,8 +646,8 @@ export default function ProfessorAbsencesView() {
 
       {/* ── 3. Manual Config & Selectors Form ─────────────────────────── */}
       {!isSessionActive ? (
-        <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b border-border dark:border-border pb-3">
+        <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-border pb-3">
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-foreground flex items-center gap-2">
               <Layers size={16} className="text-primary" /> Configuration Manuelle de la Séance
             </h3>
@@ -662,7 +662,7 @@ export default function ProfessorAbsencesView() {
                 value={selectedFiliere}
                 onChange={(e) => setSelectedFiliere(e.target.value)}
                 disabled={filieres.length === 0}
-                className="w-full px-4 py-3 bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-[#0f2863] dark:text-white focus:outline-none focus:border-primary transition-colors cursor-pointer disabled:opacity-50 rounded-[var(--control-radius)]"
+                className="w-full px-4 py-3 bg-card border border-border text-xs font-bold text-[#1a3673] dark:text-white focus:outline-none focus:border-primary transition-colors cursor-pointer disabled:opacity-50 rounded-[var(--control-radius)]"
               >
                 {filieres.length > 0 ? (
                   <>
@@ -684,7 +684,7 @@ export default function ProfessorAbsencesView() {
                 value={selectedGroupe}
                 onChange={(e) => setSelectedGroupe(e.target.value)}
                 disabled={groupes.length === 0}
-                className="w-full px-4 py-3 bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-[#0f2863] dark:text-white focus:outline-none focus:border-primary transition-colors cursor-pointer disabled:opacity-50 rounded-[var(--control-radius)]"
+                className="w-full px-4 py-3 bg-card border border-border text-xs font-bold text-[#1a3673] dark:text-white focus:outline-none focus:border-primary transition-colors cursor-pointer disabled:opacity-50 rounded-[var(--control-radius)]"
               >
                 {groupes.length > 0 ? (
                   groupes.map((g: any) => (
@@ -703,7 +703,7 @@ export default function ProfessorAbsencesView() {
                 value={selectedModule}
                 onChange={(e) => setSelectedModule(e.target.value)}
                 disabled={filteredModules.length === 0}
-                className="w-full px-4 py-3 bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-[#0f2863] dark:text-white focus:outline-none focus:border-primary transition-colors cursor-pointer disabled:opacity-50 rounded-[var(--control-radius)]"
+                className="w-full px-4 py-3 bg-card border border-border text-xs font-bold text-[#1a3673] dark:text-white focus:outline-none focus:border-primary transition-colors cursor-pointer disabled:opacity-50 rounded-[var(--control-radius)]"
               >
                 {filteredModules.length > 0 ? (
                   filteredModules.map((m: any) => (
@@ -722,7 +722,7 @@ export default function ProfessorAbsencesView() {
                 type="text" 
                 value={roomName}
                 onChange={(e) => setRoomName(e.target.value)}
-                className="w-full px-4 py-3 bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-[#0f2863] dark:text-white focus:outline-none focus:border-primary transition-colors rounded-[var(--control-radius)]"
+                className="w-full px-4 py-3 bg-card border border-border text-xs font-bold text-[#1a3673] dark:text-white focus:outline-none focus:border-primary transition-colors rounded-[var(--control-radius)]"
                 placeholder="Ex: Amphi 2"
               />
             </div>
@@ -734,7 +734,7 @@ export default function ProfessorAbsencesView() {
                 type="date" 
                 value={sessionDate}
                 onChange={(e) => setSessionDate(e.target.value)}
-                className="w-full px-4 py-3 bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-[#0f2863] dark:text-white focus:outline-none focus:border-primary transition-colors cursor-pointer rounded-[var(--control-radius)]"
+                className="w-full px-4 py-3 bg-card border border-border text-xs font-bold text-[#1a3673] dark:text-white focus:outline-none focus:border-primary transition-colors cursor-pointer rounded-[var(--control-radius)]"
               />
             </div>
           </div>
@@ -745,7 +745,7 @@ export default function ProfessorAbsencesView() {
           
           {/* Live Stats Row */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <div className="p-4 bg-card dark:bg-card border border-slate-200/90 dark:border-border rounded-2xl shadow-xs">
+            <div className="p-4 bg-card border border-slate-200/90 dark:border-border rounded-2xl shadow-xs">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">EFFECTIF TOTAL</span>
               <span className="text-2xl font-bold text-foreground dark:text-white font-mono mt-1 block">{stats.total} Étudiants</span>
             </div>
@@ -772,8 +772,8 @@ export default function ProfessorAbsencesView() {
           </div>
 
           {/* Mode Selector Tabs */}
-          <div className="bg-card dark:bg-card border border-slate-200/90 dark:border-border rounded-2xl p-6 shadow-sm space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border dark:border-border pb-4">
+          <div className="bg-card border border-slate-200/90 dark:border-border rounded-2xl p-6 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
               <div className="flex items-center gap-2 p-1 bg-muted dark:bg-card rounded-2xl">
                 <button
                   onClick={() => setActiveTab('trombi')}
@@ -820,7 +820,7 @@ export default function ProfessorAbsencesView() {
                       placeholder="Chercher étudiant..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-9 pr-4 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold outline-none focus:ring-2 focus:ring-ring w-48 sm:w-60 rounded-[var(--control-radius)]"
+                      className="pl-9 pr-4 py-2 bg-muted/50 dark:bg-card border border-border text-xs font-bold outline-none focus:ring-2 focus:ring-ring w-48 sm:w-60 rounded-[var(--control-radius)]"
                     />
                   </div>
                 </div>
@@ -890,7 +890,7 @@ export default function ProfessorAbsencesView() {
                   <p className="text-xs text-muted-foreground font-medium">Les étudiants scannent ce code avec leur application mobile pour s'enregistrer automatiquement</p>
                 </div>
 
-                <div className="relative p-6 bg-card dark:bg-card rounded-2xl border-2 border-dashed border-primary inline-block shadow-sm">
+                <div className="relative p-6 bg-card rounded-2xl border-2 border-dashed border-primary inline-block shadow-sm">
                   {qrToken && qrCountdown > 0 ? <QRCodeSVG value={qrToken} size={224} className="mx-auto rounded-xl bg-card p-2" aria-label="Code de présence de la session" /> : <p>Code expiré ou indisponible. Utilisez l’appel manuel.</p>}
                   <div className="mt-4 flex items-center justify-center gap-2 text-xs font-bold text-primary dark:text-indigo-300">
                     <Clock size={16} className="animate-spin" />
@@ -921,7 +921,7 @@ export default function ProfessorAbsencesView() {
                 </button>
 
                 {voiceTranscript && (
-                  <div className="p-4 bg-muted/50 dark:bg-card rounded-2xl border border-border dark:border-border text-xs font-bold text-slate-700 dark:text-foreground">
+                  <div className="p-4 bg-muted/50 dark:bg-card rounded-2xl border border-border text-xs font-bold text-slate-700 dark:text-foreground">
                     <p className="text-slate-400 text-[10px] uppercase mb-1">Dernière dictée capturée :</p>
                     <p>"{voiceTranscript}"</p>
                   </div>

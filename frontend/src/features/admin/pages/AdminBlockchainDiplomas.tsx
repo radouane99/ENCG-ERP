@@ -151,7 +151,7 @@ const { data, isLoading, refetch } = useQuery({
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-center gap-6">
             {/* Holographic Glowing Icon Badge */}
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-600 to-[#0f2863] p-0.5 shadow-sm shrink-0 flex items-center justify-center">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-600 to-[#1a3673] p-0.5 shadow-sm shrink-0 flex items-center justify-center">
               <div className="w-full h-full bg-[#031b3b]/80 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/20">
                 <Boxes className="w-8 h-8 md:w-10 md:h-10 text-amber-300 animate-pulse" />
               </div>
@@ -288,12 +288,12 @@ const { data, isLoading, refetch } = useQuery({
 
         {/* Right Column: Public Cryptographic Verifier */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
+          <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
             <div>
               <h2 className="text-lg font-bold text-foreground dark:text-white flex items-center gap-2">
                 <Search className="w-5 h-5 text-primary" /> Vérificateur Public Cryptographique
               </h2>
-              <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground mt-1">
+              <p className="text-xs font-medium text-muted-foreground mt-1">
                 Saisissez l'empreinte SHA-256, l'ID de transaction (tx_...), le CNE ou le nom de l'étudiant pour vérifier l'authenticité d'un diplôme ENCG.
               </p>
             </div>
@@ -306,14 +306,14 @@ const { data, isLoading, refetch } = useQuery({
                   value={verifyQuery}
                   onChange={(e) => setVerifyQuery(e.target.value)}
                   placeholder="Saisir Hash SHA-256 (0x...), Transaction ID, CNE ou Nom..."
-                  className="w-full pl-11 pr-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold font-mono focus:ring-4 focus:ring-indigo-500/15 outline-none rounded-[var(--control-radius)]"
+                  className="w-full pl-11 pr-4 py-3 bg-muted/50 dark:bg-card border border-border text-xs font-bold font-mono focus:ring-4 focus:ring-indigo-500/15 outline-none rounded-[var(--control-radius)]"
                   onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
                 />
               </div>
               <button
                 onClick={() => handleVerify()}
                 disabled={verifyMutation.isPending || !verifyQuery.trim()}
-                className="px-6 py-3 bg-[#0f2863] hover:bg-secondary text-white font-bold text-xs rounded-2xl shadow-md cursor-pointer transition-all disabled:opacity-50 flex items-center justify-center gap-2 shrink-0 active:scale-95"
+                className="px-6 py-3 bg-[#1a3673] hover:bg-secondary text-white font-bold text-xs rounded-2xl shadow-md cursor-pointer transition-all disabled:opacity-50 flex items-center justify-center gap-2 shrink-0 active:scale-95"
               >
                 {verifyMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4 text-amber-400" />}
                 Vérifier le Certificat
@@ -364,7 +364,7 @@ const { data, isLoading, refetch } = useQuery({
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs bg-card dark:bg-card p-4 rounded-2xl border border-emerald-100 dark:border-emerald-900/40">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs bg-card p-4 rounded-2xl border border-emerald-100 dark:border-emerald-900/40">
                       <div>
                         <span className="text-[10px] font-bold uppercase text-slate-400 block">Lauréat Certifié</span>
                         <span className="font-bold text-foreground dark:text-white text-sm">{verificationResult.data.student}</span>
@@ -382,7 +382,7 @@ const { data, isLoading, refetch } = useQuery({
 
                       <div className="sm:col-span-2">
                         <span className="text-[10px] font-bold uppercase text-slate-400 block">Intitulé du Diplôme</span>
-                        <span className="font-bold text-foreground dark:text-foreground">{verificationResult.data.degree}</span>
+                        <span className="font-bold text-foreground">{verificationResult.data.degree}</span>
                       </div>
 
                       <div>
@@ -390,7 +390,7 @@ const { data, isLoading, refetch } = useQuery({
                         <span className="font-bold text-emerald-600">{verificationResult.data.network_status || 'VERIFIED'}</span>
                       </div>
 
-                      <div className="col-span-full pt-2 border-t border-border dark:border-border">
+                      <div className="col-span-full pt-2 border-t border-border">
                         <span className="text-[10px] font-bold uppercase text-slate-400 block">Empreinte SHA-256 (Smart Contract Transaction)</span>
                         <span className="font-mono text-[11px] font-bold text-primary dark:text-indigo-400 break-all">{verificationResult.data.hash}</span>
                       </div>
@@ -400,7 +400,7 @@ const { data, isLoading, refetch } = useQuery({
                       <button
                         type="button"
                         onClick={() => handlePrintDiplomaCert(verificationResult.data)}
-                        className="px-4 py-2 bg-[#0f2863] text-white font-bold text-xs rounded-xl shadow-sm hover:bg-secondary transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                        className="px-4 py-2 bg-[#1a3673] text-white font-bold text-xs rounded-xl shadow-sm hover:bg-secondary transition-colors inline-flex items-center gap-1.5 cursor-pointer"
                       >
                         <Printer className="w-3.5 h-3.5 text-amber-300" />
                         Imprimer l'Attestation Officielle
@@ -429,8 +429,8 @@ const { data, isLoading, refetch } = useQuery({
       </div>
 
       {/* ── Blockchain Ledger Table (Pure Database Connection) ── */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border dark:border-border pb-4">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 md:p-8 shadow-sm space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4">
           <div>
             <h2 className="text-lg font-bold text-foreground dark:text-white flex items-center gap-2">
               <LinkIcon className="w-5 h-5 text-primary" /> Registre des Émissions (Database Ledger)
@@ -449,7 +449,7 @@ const { data, isLoading, refetch } = useQuery({
                 value={tableSearch}
                 onChange={(e) => setTableSearch(e.target.value)}
                 placeholder="Filtrer par nom, CNE, diplôme..."
-                className="pl-8 pr-3 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold outline-none w-56 focus:border-primary rounded-[var(--control-radius)]"
+                className="pl-8 pr-3 py-2 bg-muted/50 dark:bg-card border border-border text-xs font-bold outline-none w-56 focus:border-primary rounded-[var(--control-radius)]"
               />
             </div>
 
@@ -470,13 +470,13 @@ const { data, isLoading, refetch } = useQuery({
             <p className="text-xs font-bold text-slate-400">Chargement du registre Blockchain...</p>
           </div>
         ) : certificates.length === 0 ? (
-          <div className="p-12 md:p-16 text-center bg-muted/50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-border dark:border-border space-y-4">
+          <div className="p-12 md:p-16 text-center bg-muted/50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-border space-y-4">
             <div className="w-16 h-16 rounded-2xl bg-primary/5 dark:bg-indigo-950/50 text-primary flex items-center justify-center mx-auto shadow-sm">
               <Award className="w-8 h-8" />
             </div>
             <div className="space-y-1">
-              <h3 className="font-bold text-foreground dark:text-foreground text-base">Aucun diplôme ancré pour le moment</h3>
-              <p className="text-xs text-muted-foreground dark:text-muted-foreground max-w-md mx-auto leading-relaxed">
+              <h3 className="font-bold text-foreground text-base">Aucun diplôme ancré pour le moment</h3>
+              <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
                 Cliquez sur le bouton ci-dessous pour lancer l'ancrage réel de la Promotion 2026 et enregistrer les certificats cryptographiques dans la base de données et le ledger.
               </p>
             </div>
@@ -490,10 +490,10 @@ const { data, isLoading, refetch } = useQuery({
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-2xl border border-border dark:border-border">
+          <div className="overflow-x-auto rounded-2xl border border-border">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50/80 dark:bg-slate-800/60 border-b border-border dark:border-border text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                <tr className="bg-slate-50/80 dark:bg-slate-800/60 border-b border-border text-[10px] font-bold uppercase text-slate-400 tracking-wider">
                   <th className="py-3.5 px-4">Lauréat & CNE</th>
                   <th className="py-3.5 px-4">Intitulé du Diplôme</th>
                   <th className="py-3.5 px-4">Date d'Ancrage</th>
@@ -519,7 +519,7 @@ const { data, isLoading, refetch } = useQuery({
                       </div>
                     </td>
 
-                    <td className="py-4 px-4 font-bold text-foreground dark:text-foreground max-w-xs">
+                    <td className="py-4 px-4 font-bold text-foreground max-w-xs">
                       {cert.degree}
                     </td>
 
@@ -530,7 +530,7 @@ const { data, isLoading, refetch } = useQuery({
                     <td className="py-4 px-4">
                       <div
                         onClick={() => handleCopyHash(cert.hash)}
-                        className="inline-flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground dark:text-foreground bg-muted dark:bg-card px-2.5 py-1.5 rounded-xl border border-border dark:border-border cursor-pointer hover:border-indigo-400 transition-colors"
+                        className="inline-flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground dark:text-foreground bg-muted dark:bg-card px-2.5 py-1.5 rounded-xl border border-border cursor-pointer hover:border-indigo-400 transition-colors"
                         title="Cliquer pour copier l'empreinte"
                       >
                         <span className="w-28 truncate">{cert.hash}</span>
@@ -567,7 +567,7 @@ const { data, isLoading, refetch } = useQuery({
                       <button
                         type="button"
                         onClick={() => handlePrintDiplomaCert(cert)}
-                        className="px-3 py-1.5 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white shadow-md rounded-xl font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1.5 hover:shadow-lg active:scale-95"
+                        className="px-3 py-1.5 bg-gradient-to-r from-[#1a3673] to-blue-900 text-white shadow-md rounded-xl font-bold text-[11px] transition-all cursor-pointer inline-flex items-center gap-1.5 hover:shadow-lg active:scale-95"
                       >
                         <Printer className="w-3.5 h-3.5 text-amber-300" />
                         Attestation PDF

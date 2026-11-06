@@ -38,8 +38,20 @@ export {
 } from './Card'
 
 export { LoadingScreen }            from './LoadingScreen'
-export { Table }                    from './Table'
+export {
+  Table,
+  TableHeader,
+  TableBody,
+  TableFooter,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableCaption,
+} from './Table'
 export { StatCard }                 from './StatCard'
+export { EmptyState }               from './EmptyState'
+export { PageHeader }               from '../layout/PageHeader'
+export type { PageHeaderProps }     from '../layout/PageHeader'
 
 export { CustomSelect }             from './CustomSelect'
 export type { CustomSelectProps, SelectOption } from './CustomSelect'

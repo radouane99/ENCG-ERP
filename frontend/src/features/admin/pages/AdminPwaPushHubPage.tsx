@@ -352,17 +352,17 @@ export default function AdminPwaPushHubPage() {
 
       {/* ── Mobile Device Stats KPIs ───────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-slate-200/80 dark:border-border flex items-center gap-4 hover:shadow-md transition-shadow">
+        <div className="bg-card rounded-2xl p-5 shadow-sm border border-slate-200/80 dark:border-border flex items-center gap-4 hover:shadow-md transition-shadow">
           <div className="p-3.5 rounded-2xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400">
             <Smartphone className="w-5 h-5" />
           </div>
           <div>
             <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Utilisateurs PWA (BDD)</p>
-            <p className="text-2xl font-bold text-foreground dark:text-foreground">{totalUsersCount} Actifs</p>
+            <p className="text-2xl font-bold text-foreground">{totalUsersCount} Actifs</p>
           </div>
         </div>
 
-        <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-slate-200/80 dark:border-border flex items-center gap-4 hover:shadow-md transition-shadow">
+        <div className="bg-card rounded-2xl p-5 shadow-sm border border-slate-200/80 dark:border-border flex items-center gap-4 hover:shadow-md transition-shadow">
           <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
             <CheckCircle2 className="w-5 h-5" />
           </div>
@@ -372,7 +372,7 @@ export default function AdminPwaPushHubPage() {
           </div>
         </div>
 
-        <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-slate-200/80 dark:border-border flex items-center gap-4 hover:shadow-md transition-shadow">
+        <div className="bg-card rounded-2xl p-5 shadow-sm border border-slate-200/80 dark:border-border flex items-center gap-4 hover:shadow-md transition-shadow">
           <div className="p-3.5 rounded-2xl bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-400">
             <Users className="w-5 h-5" />
           </div>
@@ -382,7 +382,7 @@ export default function AdminPwaPushHubPage() {
           </div>
         </div>
 
-        <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-slate-200/80 dark:border-border flex items-center gap-4 hover:shadow-md transition-shadow">
+        <div className="bg-card rounded-2xl p-5 shadow-sm border border-slate-200/80 dark:border-border flex items-center gap-4 hover:shadow-md transition-shadow">
           <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-500">
             <Volume2 className="w-5 h-5" />
           </div>
@@ -396,7 +396,7 @@ export default function AdminPwaPushHubPage() {
       {/* ── Broadcast Category Presets ─────────────────────────────────────── */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-foreground dark:text-foreground flex items-center gap-2">
+          <h2 className="text-base font-bold text-foreground flex items-center gap-2">
             <Radio className="w-4 h-4 text-purple-600 dark:text-purple-400" />
             <span>Sélectionner le Modèle d'Alerte Push</span>
           </h2>
@@ -417,7 +417,7 @@ export default function AdminPwaPushHubPage() {
                   "p-5 rounded-2xl border text-left transition-all cursor-pointer space-y-3 relative overflow-hidden group",
                   isSelected
                     ? "bg-slate-950 text-white border-purple-500 shadow-sm ring-2 ring-purple-500/50 scale-[1.02]"
-                    : "bg-card dark:bg-card border-slate-200/80 dark:border-border hover:border-purple-300 dark:hover:border-purple-700"
+                    : "bg-card border-slate-200/80 dark:border-border hover:border-purple-300 dark:hover:border-purple-700"
                 )}
               >
                 <div className="flex items-center justify-between">
@@ -426,14 +426,14 @@ export default function AdminPwaPushHubPage() {
                   </div>
                   <span className={cn(
                     "text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full",
-                    isSelected ? "bg-purple-900/60 text-purple-200 border border-purple-700" : "bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground"
+                    isSelected ? "bg-purple-900/60 text-purple-200 border border-purple-700" : "bg-muted dark:bg-card text-muted-foreground"
                   )}>
                     {preset.badge}
                   </span>
                 </div>
 
                 <div>
-                  <h3 className={cn("text-xs font-bold leading-snug", isSelected ? "text-white" : "text-foreground dark:text-foreground")}>
+                  <h3 className={cn("text-xs font-bold leading-snug", isSelected ? "text-white" : "text-foreground")}>
                     {preset.title}
                   </h3>
                 </div>
@@ -447,13 +447,13 @@ export default function AdminPwaPushHubPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Form Column */}
-        <div className="lg:col-span-2 bg-card dark:bg-card rounded-2xl p-8 border border-slate-200/80 dark:border-border shadow-sm space-y-6">
-          <div className="flex items-center justify-between pb-4 border-b border-border dark:border-border">
+        <div className="lg:col-span-2 bg-card rounded-2xl p-8 border border-slate-200/80 dark:border-border shadow-sm space-y-6">
+          <div className="flex items-center justify-between pb-4 border-b border-border">
             <div>
-              <h2 className="text-base font-bold text-foreground dark:text-foreground">
+              <h2 className="text-base font-bold text-foreground">
                 Rédiger et Cibler la Notification
               </h2>
-              <p className="text-xs text-muted-foreground dark:text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Sélectionnez le niveau d'études, la filière ou le groupe à avertir
               </p>
             </div>
@@ -467,7 +467,7 @@ export default function AdminPwaPushHubPage() {
             {/* 🎯 Granular Target Audience Scope Selection */}
             <div className="space-y-3.5 p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-border">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <label className="font-bold text-foreground dark:text-foreground flex items-center gap-1.5">
+                <label className="font-bold text-foreground flex items-center gap-1.5">
                   <Users className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                   <span>Périmètre de Ciblage</span>
                 </label>
@@ -504,7 +504,7 @@ export default function AdminPwaPushHubPage() {
                         "p-2.5 rounded-xl border text-left font-bold text-xs transition-all cursor-pointer flex flex-col justify-between gap-1",
                         isActive
                           ? "bg-purple-600 text-white border-purple-600 shadow-md ring-2 ring-purple-400/40"
-                          : "bg-card dark:bg-card border-border dark:border-border text-slate-700 dark:text-foreground hover:border-purple-300"
+                          : "bg-card border-border text-slate-700 dark:text-foreground hover:border-purple-300"
                       )}
                     >
                       <div className="flex items-center justify-between">
@@ -521,9 +521,9 @@ export default function AdminPwaPushHubPage() {
 
               {/* Dynamic Dropdown: Année d'Études (1ère à 5ème Année) */}
               {targetScope === 'academic_year_level' && (
-                <div className="pt-2 animate-fade-in space-y-2 bg-card dark:bg-card p-3.5 rounded-xl border border-purple-200 dark:border-purple-800">
+                <div className="pt-2 animate-fade-in space-y-2 bg-card p-3.5 rounded-xl border border-purple-200 dark:border-purple-800">
                   <div className="space-y-1">
-                    <label className="font-bold text-foreground dark:text-foreground text-[11px]">
+                    <label className="font-bold text-foreground text-[11px]">
                       Choisir l'Année d'Études ENCG :
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -536,7 +536,7 @@ export default function AdminPwaPushHubPage() {
                             "py-2 px-2 rounded-lg border text-center font-bold text-[11px] transition-all cursor-pointer",
                             selectedYearLevel === y.level
                               ? "bg-purple-600 text-white border-purple-600 shadow-sm"
-                              : "bg-muted/50 dark:bg-card border-border dark:border-border text-slate-700 dark:text-foreground"
+                              : "bg-muted/50 dark:bg-card border-border text-slate-700 dark:text-foreground"
                           )}
                         >
                           <div>{y.level === 1 ? '1ère Année' : `${y.level}ème Année`}</div>
@@ -549,13 +549,13 @@ export default function AdminPwaPushHubPage() {
                   </div>
 
                   <div className="pt-1 space-y-1">
-                    <label className="font-bold text-muted-foreground dark:text-muted-foreground text-[10px]">
+                    <label className="font-bold text-muted-foreground text-[10px]">
                       Filtrer également par Filière (Optionnel) :
                     </label>
                     <select
                       value={selectedFiliereId}
                       onChange={(e) => setSelectedFiliereId(e.target.value ? Number(e.target.value) : '')}
-                      className="w-full h-9 px-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-foreground dark:text-foreground outline-none rounded-[var(--control-radius)]"
+                      className="w-full h-9 px-3 bg-muted/50 dark:bg-card border border-border text-xs font-bold text-foreground outline-none rounded-[var(--control-radius)]"
                     >
                       <option value="">Toutes les filières de cette année</option>
                       {filieres.map((f) => (
@@ -568,9 +568,9 @@ export default function AdminPwaPushHubPage() {
 
               {/* Dynamic Dropdown: Semestre Spécifique (S1 à S10) */}
               {targetScope === 'semester' && (
-                <div className="pt-2 animate-fade-in space-y-2 bg-card dark:bg-card p-3.5 rounded-xl border border-purple-200 dark:border-purple-800">
+                <div className="pt-2 animate-fade-in space-y-2 bg-card p-3.5 rounded-xl border border-purple-200 dark:border-purple-800">
                   <div className="space-y-1">
-                    <label className="font-bold text-foreground dark:text-foreground text-[11px]">
+                    <label className="font-bold text-foreground text-[11px]">
                       Choisir le Semestre Précis (S1 à S10) :
                     </label>
                     <div className="grid grid-cols-5 sm:grid-cols-10 gap-1.5">
@@ -583,7 +583,7 @@ export default function AdminPwaPushHubPage() {
                             "py-2 px-1 rounded-lg border text-center font-bold text-xs transition-all cursor-pointer",
                             selectedSemesterNum === s.semester_number
                               ? "bg-purple-600 text-white border-purple-600 shadow-sm"
-                              : "bg-muted/50 dark:bg-card border-border dark:border-border text-slate-700 dark:text-foreground"
+                              : "bg-muted/50 dark:bg-card border-border text-slate-700 dark:text-foreground"
                           )}
                         >
                           <div>{s.code}</div>
@@ -596,13 +596,13 @@ export default function AdminPwaPushHubPage() {
                   </div>
 
                   <div className="pt-1 space-y-1">
-                    <label className="font-bold text-muted-foreground dark:text-muted-foreground text-[10px]">
+                    <label className="font-bold text-muted-foreground text-[10px]">
                       Filtrer également par Filière (Optionnel) :
                     </label>
                     <select
                       value={selectedFiliereId}
                       onChange={(e) => setSelectedFiliereId(e.target.value ? Number(e.target.value) : '')}
-                      className="w-full h-9 px-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-foreground dark:text-foreground outline-none rounded-[var(--control-radius)]"
+                      className="w-full h-9 px-3 bg-muted/50 dark:bg-card border border-border text-xs font-bold text-foreground outline-none rounded-[var(--control-radius)]"
                     >
                       <option value="">Toutes les filières de ce semestre</option>
                       {filieres.map((f) => (
@@ -622,7 +622,7 @@ export default function AdminPwaPushHubPage() {
                   <select
                     value={selectedFiliereId}
                     onChange={(e) => setSelectedFiliereId(Number(e.target.value))}
-                    className="w-full h-10 px-3 bg-card dark:bg-card border border-purple-300 dark:border-purple-800 font-bold text-foreground dark:text-foreground text-xs outline-none focus:ring-2 focus:ring-purple-500 rounded-[var(--control-radius)]"
+                    className="w-full h-10 px-3 bg-card border border-purple-300 dark:border-purple-800 font-bold text-foreground text-xs outline-none focus:ring-2 focus:ring-purple-500 rounded-[var(--control-radius)]"
                   >
                     {filieres.map((f) => (
                       <option key={f.id} value={f.id}>
@@ -642,7 +642,7 @@ export default function AdminPwaPushHubPage() {
                   <select
                     value={selectedGroupId}
                     onChange={(e) => setSelectedGroupId(Number(e.target.value))}
-                    className="w-full h-10 px-3 bg-card dark:bg-card border border-purple-300 dark:border-purple-800 font-bold text-foreground dark:text-foreground text-xs outline-none focus:ring-2 focus:ring-purple-500 rounded-[var(--control-radius)]"
+                    className="w-full h-10 px-3 bg-card border border-purple-300 dark:border-purple-800 font-bold text-foreground text-xs outline-none focus:ring-2 focus:ring-purple-500 rounded-[var(--control-radius)]"
                   >
                     {groups.map((g) => (
                       <option key={g.id} value={g.id}>
@@ -662,7 +662,7 @@ export default function AdminPwaPushHubPage() {
                   <select
                     value={selectedDepartmentId}
                     onChange={(e) => setSelectedDepartmentId(Number(e.target.value))}
-                    className="w-full h-10 px-3 bg-card dark:bg-card border border-purple-300 dark:border-purple-800 font-bold text-foreground dark:text-foreground text-xs outline-none focus:ring-2 focus:ring-purple-500 rounded-[var(--control-radius)]"
+                    className="w-full h-10 px-3 bg-card border border-purple-300 dark:border-purple-800 font-bold text-foreground text-xs outline-none focus:ring-2 focus:ring-purple-500 rounded-[var(--control-radius)]"
                   >
                     {departments.map((d) => (
                       <option key={d.id} value={d.id}>
@@ -684,7 +684,7 @@ export default function AdminPwaPushHubPage() {
                     onClick={() => setChannels(c => ({ ...c, push: !c.push }))}
                     className={cn(
                       "flex-1 py-2 px-2.5 rounded-xl border font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all cursor-pointer",
-                      channels.push ? "bg-purple-50 text-purple-700 border-purple-300 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-700" : "bg-muted/50 dark:bg-card text-slate-400 border-border dark:border-border"
+                      channels.push ? "bg-purple-50 text-purple-700 border-purple-300 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-700" : "bg-muted/50 dark:bg-card text-slate-400 border-border"
                     )}
                   >
                     <Smartphone className="w-3.5 h-3.5" /> PWA Push
@@ -694,7 +694,7 @@ export default function AdminPwaPushHubPage() {
                     onClick={() => setChannels(c => ({ ...c, email: !c.email }))}
                     className={cn(
                       "flex-1 py-2 px-2.5 rounded-xl border font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all cursor-pointer",
-                      channels.email ? "bg-primary/5 text-primary border-primary/20 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-primary" : "bg-muted/50 dark:bg-card text-slate-400 border-border dark:border-border"
+                      channels.email ? "bg-primary/5 text-primary border-primary/20 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-primary" : "bg-muted/50 dark:bg-card text-slate-400 border-border"
                     )}
                   >
                     <Mail className="w-3.5 h-3.5" /> Email
@@ -704,7 +704,7 @@ export default function AdminPwaPushHubPage() {
                     onClick={() => setChannels(c => ({ ...c, system: !c.system }))}
                     className={cn(
                       "flex-1 py-2 px-2.5 rounded-xl border font-bold text-[11px] flex items-center justify-center gap-1.5 transition-all cursor-pointer",
-                      channels.system ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-700" : "bg-muted/50 dark:bg-card text-slate-400 border-border dark:border-border"
+                      channels.system ? "bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-700" : "bg-muted/50 dark:bg-card text-slate-400 border-border"
                     )}
                   >
                     <Monitor className="w-3.5 h-3.5" /> Portail
@@ -720,7 +720,7 @@ export default function AdminPwaPushHubPage() {
                     onClick={() => setUrgencyLevel('normal')}
                     className={cn(
                       "flex-1 py-2 px-2.5 rounded-xl border font-bold text-[11px] text-center transition-all cursor-pointer",
-                      urgencyLevel === 'normal' ? "bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900" : "bg-muted/50 dark:bg-card text-muted-foreground border-border dark:border-border"
+                      urgencyLevel === 'normal' ? "bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900" : "bg-muted/50 dark:bg-card text-muted-foreground border-border"
                     )}
                   >
                     Normale
@@ -730,7 +730,7 @@ export default function AdminPwaPushHubPage() {
                     onClick={() => setUrgencyLevel('urgent')}
                     className={cn(
                       "flex-1 py-2 px-2.5 rounded-xl border font-bold text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer",
-                      urgencyLevel === 'urgent' ? "bg-amber-500 text-white border-amber-500 shadow-sm" : "bg-muted/50 dark:bg-card text-muted-foreground border-border dark:border-border"
+                      urgencyLevel === 'urgent' ? "bg-amber-500 text-white border-amber-500 shadow-sm" : "bg-muted/50 dark:bg-card text-muted-foreground border-border"
                     )}
                   >
                     <Flame className="w-3.5 h-3.5" /> Haute
@@ -740,7 +740,7 @@ export default function AdminPwaPushHubPage() {
                     onClick={() => setUrgencyLevel('critical')}
                     className={cn(
                       "flex-1 py-2 px-2.5 rounded-xl border font-bold text-[11px] flex items-center justify-center gap-1 transition-all cursor-pointer",
-                      urgencyLevel === 'critical' ? "bg-rose-600 text-white border-rose-600 shadow-sm" : "bg-muted/50 dark:bg-card text-muted-foreground border-border dark:border-border"
+                      urgencyLevel === 'critical' ? "bg-rose-600 text-white border-rose-600 shadow-sm" : "bg-muted/50 dark:bg-card text-muted-foreground border-border"
                     )}
                   >
                     <ShieldAlert className="w-3.5 h-3.5" /> Critique
@@ -760,7 +760,7 @@ export default function AdminPwaPushHubPage() {
                 maxLength={80}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full h-11 px-4 bg-muted/50 dark:bg-card border border-border dark:border-border font-bold text-foreground dark:text-foreground text-xs outline-none focus:ring-2 focus:ring-purple-500 rounded-[var(--control-radius)]"
+                className="w-full h-11 px-4 bg-muted/50 dark:bg-card border border-border font-bold text-foreground text-xs outline-none focus:ring-2 focus:ring-purple-500 rounded-[var(--control-radius)]"
                 placeholder="Ex : 📅 Changement de Salle — Finance d'Entreprise..."
               />
             </div>
@@ -776,13 +776,13 @@ export default function AdminPwaPushHubPage() {
                 maxLength={250}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="w-full p-4 bg-muted/50 dark:bg-card border border-border dark:border-border font-medium text-foreground dark:text-foreground text-xs outline-none focus:ring-2 focus:ring-purple-500 leading-relaxed resize-none rounded-[var(--control-radius)]"
+                className="w-full p-4 bg-muted/50 dark:bg-card border border-border font-medium text-foreground text-xs outline-none focus:ring-2 focus:ring-purple-500 leading-relaxed resize-none rounded-[var(--control-radius)]"
                 placeholder="Saisissez le texte complet de l'alerte ciblée..."
               />
             </div>
           </div>
 
-          <div className="pt-4 border-t border-border dark:border-border flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="pt-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="space-y-0.5">
               <p className="text-[11px] font-bold text-slate-700 dark:text-foreground flex items-center gap-1.5">
                 <ShieldCheck className="w-4 h-4 text-emerald-500" />
@@ -879,14 +879,14 @@ export default function AdminPwaPushHubPage() {
       </div>
 
       {/* ── Real Broadcast History Log Table ─────────────────────────── */}
-      <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-slate-200/80 dark:border-border space-y-4">
+      <div className="bg-card rounded-2xl p-6 shadow-sm border border-slate-200/80 dark:border-border space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400">
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-foreground dark:text-foreground">
+              <h3 className="text-base font-bold text-foreground">
                 Historique des Diffusions Réelles (Persistance BDD)
               </h3>
               <p className="text-xs text-slate-400 font-medium">
@@ -904,7 +904,7 @@ export default function AdminPwaPushHubPage() {
                 placeholder="Filtrer les alertes..."
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
-                className="h-9 pl-9 pr-4 text-xs font-medium bg-muted/50 dark:bg-card border border-border dark:border-border text-foreground dark:text-foreground outline-none focus:ring-2 focus:ring-purple-500 w-48 sm:w-60 rounded-[var(--control-radius)]"
+                className="h-9 pl-9 pr-4 text-xs font-medium bg-muted/50 dark:bg-card border border-border text-foreground outline-none focus:ring-2 focus:ring-purple-500 w-48 sm:w-60 rounded-[var(--control-radius)]"
               />
             </div>
 
@@ -916,7 +916,7 @@ export default function AdminPwaPushHubPage() {
 
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left border-collapse">
-            <thead className="bg-muted/50 dark:bg-card text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-border dark:border-border">
+            <thead className="bg-muted/50 dark:bg-card text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-border">
               <tr>
                 <th className="px-4 py-3">ID & Date</th>
                 <th className="px-4 py-3">Titre de l'Alerte</th>
@@ -936,13 +936,13 @@ export default function AdminPwaPushHubPage() {
               ) : (
                 filteredLogs.map((log: any) => (
                   <tr key={log.id} className="hover:bg-muted/50 dark:hover:bg-slate-800/40 transition-colors">
-                    <td className="px-4 py-3.5 font-bold text-foreground dark:text-foreground">
+                    <td className="px-4 py-3.5 font-bold text-foreground">
                       <div className="font-mono">#{log.id}</div>
                       <div className="text-[10px] text-slate-400 font-normal">{log.sent_at}</div>
                     </td>
                     <td className="px-4 py-3.5 font-bold text-foreground dark:text-white">
                       <div>{log.title}</div>
-                      <div className="text-[11px] font-medium text-muted-foreground dark:text-muted-foreground truncate max-w-sm">{log.message}</div>
+                      <div className="text-[11px] font-medium text-muted-foreground truncate max-w-sm">{log.message}</div>
                     </td>
                     <td className="px-4 py-3.5 font-bold text-slate-700 dark:text-foreground">
                       <span className="px-2.5 py-1 rounded-full bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 font-bold text-[10px] uppercase border border-purple-200 dark:border-purple-800">

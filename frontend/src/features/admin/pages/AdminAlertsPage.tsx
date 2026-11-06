@@ -165,12 +165,12 @@ export default function AdminAlertsPage() {
 function AlertCard({ alert, getIcon, getBadgeColor }: any) {
   return (
     <div className={cn(
-      "bg-card dark:bg-card border rounded-2xl p-5 shadow-sm flex items-start gap-4 hover:shadow-md transition-all",
+      "bg-card border rounded-2xl p-5 shadow-sm flex items-start gap-4 hover:shadow-md transition-all",
       alert.type === 'CRITIQUE'
         ? "border-rose-200 dark:border-rose-900/50"
         : alert.type === 'AVERTISSEMENT'
           ? "border-amber-200 dark:border-amber-900/50"
-          : "border-border dark:border-border"
+          : "border-border"
     )}>
       <div className={cn(
         "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0",
@@ -187,11 +187,11 @@ function AlertCard({ alert, getIcon, getBadgeColor }: any) {
           <span className="text-[10px] font-bold text-slate-400">{alert.category}</span>
         </div>
         <h3 className="font-bold text-sm text-foreground dark:text-white">{alert.title}</h3>
-        <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground mt-0.5">{alert.description}</p>
+        <p className="text-xs font-medium text-muted-foreground mt-0.5">{alert.description}</p>
       </div>
 
       {alert.count !== undefined && (
-        <div className="px-3 py-1.5 bg-muted/50 dark:bg-card border border-border dark:border-border rounded-2xl text-center shrink-0">
+        <div className="px-3 py-1.5 bg-muted/50 dark:bg-card border border-border rounded-2xl text-center shrink-0">
           <span className="text-lg font-bold text-foreground dark:text-white font-mono block">{alert.count}</span>
           <span className="text-[9px] font-bold text-slate-400 uppercase">cas</span>
         </div>

@@ -204,19 +204,16 @@ export default function AdminDashboard() {
   const userName = user?.name || 'Admin ENCG Fès';
 
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'} className={cn(
-      "min-h-screen text-foreground dark:text-foreground font-sans transition-colors duration-300 pb-16",
-      isRTL && "font-serif"
-    )}>
+    <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen text-foreground font-sans transition-colors duration-300 pb-16">
       <div className="w-full space-y-5">
 
         {/* ══════════════════════════════════════════════════════════════
             HERO HEADER — Premium Dark Glassmorphism
         ══════════════════════════════════════════════════════════════ */}
-        <div className="relative overflow-hidden rounded-2xl" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #0f172a 100%)' }}>
+        <div className="relative overflow-hidden rounded-2xl erp-page-banner" style={{ background: 'linear-gradient(120deg, var(--brand-navy-deep), var(--brand-navy))' }}>
           {/* Decorative orbs */}
           <div className="absolute top-0 left-1/4 w-[400px] h-[400px] rounded-full opacity-20 pointer-events-none" style={{ background: 'radial-gradient(circle, #6366f1 0%, transparent 70%)', transform: 'translateY(-50%)' }} />
-          <div className="absolute bottom-0 right-1/3 w-[300px] h-[300px] rounded-full opacity-15 pointer-events-none" style={{ background: 'radial-gradient(circle, #a855f7 0%, transparent 70%)', transform: 'translateY(40%)' }} />
+          <div className="absolute bottom-0 right-1/3 w-[300px] h-[300px] rounded-full opacity-15 pointer-events-none" style={{ background: 'radial-gradient(circle, #f59e0b 0%, transparent 70%)', transform: 'translateY(40%)' }} />
           <div className="absolute top-1/2 right-0 w-[200px] h-[200px] rounded-full opacity-10 pointer-events-none" style={{ background: 'radial-gradient(circle, #06b6d4 0%, transparent 70%)', transform: 'translate(30%, -50%)' }} />
 
           {/* Subtle grid texture */}
@@ -243,7 +240,7 @@ export default function AdminDashboard() {
                 <div>
                   <h1 className="text-white leading-[1.1] erp-page-title">
                     Bonjour, {userName.split(' ')[0]}{' '}
-                    <span className="text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(135deg, #818cf8, #c084fc)' }}>
+                    <span className="text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(135deg, #fbbf24, #f59e0b)' }}>
                       {userName.split(' ').slice(1).join(' ')}
                     </span>
                   </h1>
@@ -348,8 +345,8 @@ export default function AdminDashboard() {
         {/* ══════════════════════════════════════════════════════════════
             FILTERS BAR
         ══════════════════════════════════════════════════════════════ */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-card dark:bg-card border border-slate-200/80 dark:border-border">
-          <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground dark:text-muted-foreground">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-card border border-slate-200/80 dark:border-border">
+          <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
             <Filter className="w-3.5 h-3.5 text-primary" />
             <span>{t.filterLabel}</span>
           </div>
@@ -357,7 +354,7 @@ export default function AdminDashboard() {
             <select
               value={selectedFiliere}
               onChange={(e) => setSelectedFiliere(e.target.value)}
-              className="px-3 py-1.5 text-xs font-bold bg-muted/50 dark:bg-card border border-border dark:border-border text-foreground dark:text-foreground outline-none focus:ring-2 focus:ring-ring cursor-pointer rounded-[var(--control-radius)]"
+              className="px-3 py-1.5 text-xs font-bold bg-muted/50 dark:bg-card border border-border text-foreground outline-none focus:ring-2 focus:ring-ring cursor-pointer rounded-[var(--control-radius)]"
             >
               <option value="all">{t.allFilieres}</option>
               {filiereDist.map((f: any) => (
@@ -367,7 +364,7 @@ export default function AdminDashboard() {
             <select
               value={selectedSemester}
               onChange={(e) => setSelectedSemester(e.target.value)}
-              className="px-3 py-1.5 text-xs font-bold bg-muted/50 dark:bg-card border border-border dark:border-border text-foreground dark:text-foreground outline-none focus:ring-2 focus:ring-ring cursor-pointer rounded-[var(--control-radius)]"
+              className="px-3 py-1.5 text-xs font-bold bg-muted/50 dark:bg-card border border-border text-foreground outline-none focus:ring-2 focus:ring-ring cursor-pointer rounded-[var(--control-radius)]"
             >
               <option value="all">{t.allSemesters}</option>
               {['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10'].map(s => (
@@ -449,7 +446,7 @@ export default function AdminDashboard() {
         {/* ══════════════════════════════════════════════════════════════
             AI COPILOT BANNER — Premium Neural Style
         ══════════════════════════════════════════════════════════════ */}
-        <div className="relative overflow-hidden rounded-2xl p-6 text-white" style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #2e1065 50%, #1e1b4b 100%)', border: '1px solid rgba(139,92,246,0.3)' }}>
+        <div className="relative overflow-hidden rounded-2xl p-6 text-white erp-page-banner" style={{ background: 'linear-gradient(135deg, var(--brand-navy-deep) 0%, var(--brand-navy) 100%)', border: '1px solid rgba(255,255,255,0.15)' }}>
           <div className="absolute top-0 right-0 w-64 h-64 opacity-20 pointer-events-none" style={{ background: 'radial-gradient(circle, #a855f7 0%, transparent 70%)' }} />
           <div className="absolute -bottom-8 left-1/4 w-48 h-48 opacity-10 pointer-events-none" style={{ background: 'radial-gradient(circle, #6366f1 0%, transparent 70%)' }} />
 
@@ -494,14 +491,14 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
           {/* Guichet Express Widget */}
-          <div className="rounded-2xl p-6 flex flex-col bg-card dark:bg-card border border-slate-200/80 dark:border-border">
+          <div className="rounded-2xl p-6 flex flex-col bg-card border border-slate-200/80 dark:border-border">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400" style={{ border: '1px solid rgba(245,158,11,0.25)' }}>
                   <Stamp size={18} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-foreground dark:text-foreground">{t.guichetTitle}</h3>
+                  <h3 className="text-sm font-bold text-foreground">{t.guichetTitle}</h3>
                   <p className="text-[11px] text-slate-400 font-medium">{t.guichetDesc}</p>
                 </div>
               </div>
@@ -555,7 +552,7 @@ export default function AdminDashboard() {
               )}
             </div>
 
-            <div className="mt-4 pt-4 border-t border-border dark:border-border">
+            <div className="mt-4 pt-4 border-t border-border">
               <Link to="/admin/guichet" className="flex items-center justify-between text-xs font-bold text-primary dark:text-indigo-400 hover:opacity-80 transition-opacity">
                 <span>{t.viewAllGuichet}</span>
                 <ChevronRight size={14} />
@@ -564,14 +561,14 @@ export default function AdminDashboard() {
           </div>
 
           {/* Exam Readiness Widget */}
-          <div className="rounded-2xl p-6 flex flex-col bg-card dark:bg-card border border-slate-200/80 dark:border-border">
+          <div className="rounded-2xl p-6 flex flex-col bg-card border border-slate-200/80 dark:border-border">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400" style={{ border: '1px solid rgba(168,85,247,0.25)' }}>
                   <Calendar size={18} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-foreground dark:text-foreground">{t.examTitle}</h3>
+                  <h3 className="text-sm font-bold text-foreground">{t.examTitle}</h3>
                   <p className="text-[11px] text-slate-400 font-medium truncate max-w-[180px]">{examStats.sessionTitle}</p>
                 </div>
               </div>
@@ -616,7 +613,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-border dark:border-border">
+            <div className="mt-4 pt-4 border-t border-border">
               <Link to="/admin/exams" className="flex items-center justify-between text-xs font-bold text-purple-600 dark:text-purple-400 hover:opacity-80 transition-opacity">
                 <span>{t.viewExams}</span>
                 <ChevronRight size={14} />
@@ -628,17 +625,17 @@ export default function AdminDashboard() {
         {/* ══════════════════════════════════════════════════════════════
             ANALYTICS SECTION
         ══════════════════════════════════════════════════════════════ */}
-        <div className="rounded-2xl p-6 bg-card dark:bg-card border border-slate-200/80 dark:border-border space-y-5">
+        <div className="rounded-2xl p-6 bg-card border border-slate-200/80 dark:border-border space-y-5">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-base font-bold text-foreground dark:text-foreground flex items-center gap-2">
+              <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                 <BarChart3 size={18} className="text-primary" />
                 {t.analyticsTitle}
               </h3>
               <p className="text-[11px] text-slate-400 font-medium mt-0.5">Métriques en temps réel · Base de données ENCG</p>
             </div>
 
-            <div className="flex items-center gap-1 p-1 rounded-xl bg-muted dark:bg-card border border-border dark:border-border self-start sm:self-auto">
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-muted dark:bg-card border border-border self-start sm:self-auto">
               {(['enrollment', 'attendance', 'filiere'] as const).map((tab) => (
                 <button
                   key={tab}
@@ -721,9 +718,9 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
           {/* Digital Trust Panel */}
-          <div className="rounded-2xl p-5 bg-card dark:bg-card border border-slate-200/80 dark:border-border space-y-4">
+          <div className="rounded-2xl p-5 bg-card border border-slate-200/80 dark:border-border space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-foreground dark:text-foreground flex items-center gap-2">
+              <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
                 <ShieldCheck size={16} className="text-emerald-500" />
                 {t.trustTitle}
               </h3>
@@ -757,7 +754,7 @@ export default function AdminDashboard() {
                 { label: t.averageGrade, value: `${avgGrade}/20`, color: 'text-emerald-600 dark:text-emerald-400', icon: <Award size={12} /> },
               ].map(({ label, value, color, icon }) => (
                 <div key={label} className="flex items-center justify-between p-2.5 rounded-xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-slate-700/50 text-xs font-bold">
-                  <span className="text-muted-foreground dark:text-muted-foreground flex items-center gap-1.5">{icon}{label}</span>
+                  <span className="text-muted-foreground flex items-center gap-1.5">{icon}{label}</span>
                   <span className={cn("font-bold", color)}>{value}</span>
                 </div>
               ))}
@@ -765,9 +762,9 @@ export default function AdminDashboard() {
           </div>
 
           {/* Live Activity Feed */}
-          <div className="rounded-2xl p-5 flex flex-col lg:col-span-2 bg-card dark:bg-card border border-slate-200/80 dark:border-border">
+          <div className="rounded-2xl p-5 flex flex-col lg:col-span-2 bg-card border border-slate-200/80 dark:border-border">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-foreground dark:text-foreground">{t.activityTitle}</h3>
+              <h3 className="text-sm font-bold text-foreground">{t.activityTitle}</h3>
               <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 <span>{t.liveBadge}</span>
@@ -793,7 +790,7 @@ export default function AdminDashboard() {
                         <Icon size={14} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs text-foreground dark:text-foreground font-bold leading-snug">{a.message}</p>
+                        <p className="text-xs text-foreground font-bold leading-snug">{a.message}</p>
                         <p className="text-[10px] text-slate-400 font-medium mt-0.5">{a.time}</p>
                       </div>
                     </div>
@@ -826,7 +823,7 @@ function KPICard({
   progress?: number;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl p-5 bg-card dark:bg-card border border-slate-200/80 dark:border-border hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 group">
+    <div className="relative overflow-hidden rounded-2xl p-5 bg-card border border-slate-200/80 dark:border-border hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 group">
       {/* Accent line at top */}
       <div className="absolute top-0 left-0 right-0 h-0.5 rounded-t-2xl" style={{ background: `linear-gradient(90deg, ${accent}80, ${accent}00)` }} />
 

@@ -35,7 +35,7 @@ export default function SemesterReadinessPanel({ data }: { data: SemesterReadine
       <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[#0f2863] to-blue-700 text-white shadow-xs">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[#1a3673] to-blue-700 text-white shadow-xs">
               <Sparkles className="h-4 w-4 text-amber-300" />
             </span>
             <h2 id="semester-readiness" className="text-lg font-black tracking-tight text-slate-900 dark:text-white">
@@ -60,7 +60,7 @@ export default function SemesterReadinessPanel({ data }: { data: SemesterReadine
         <div className="flex flex-wrap items-center gap-2.5">
           <Link
             to="/admin/professor-assignments"
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#0f2863] via-blue-700 to-indigo-800 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-900/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#1a3673] via-blue-700 to-indigo-800 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-900/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <BookOpen className="h-3.5 w-3.5 text-amber-300" />
             <span>Affecter les modules</span>

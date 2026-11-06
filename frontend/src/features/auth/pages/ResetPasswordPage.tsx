@@ -56,7 +56,7 @@ export default function ResetPasswordPage() {
         <div className="bg-card dark:bg-[#0f172a] p-8 rounded-2xl shadow-sm text-center max-w-md w-full border border-border dark:border-white/10">
           <div className="text-red-500 mb-4 text-5xl">⚠️</div>
           <h2 className="text-xl font-bold text-foreground dark:text-white mb-2">Lien invalide</h2>
-          <p className="text-muted-foreground dark:text-muted-foreground mb-6">Le lien de réinitialisation est incomplet ou expiré.</p>
+          <p className="text-muted-foreground mb-6">Le lien de réinitialisation est incomplet ou expiré.</p>
           <Link to="/forgot-password" className="text-[#A80A0B] hover:underline font-medium">Demander un nouveau lien</Link>
         </div>
       </div>
@@ -76,7 +76,7 @@ export default function ResetPasswordPage() {
             <ShieldCheck className="w-8 h-8 text-[#A80A0B]" />
           </div>
           <h1 className="text-foreground dark:text-white erp-page-title">Nouveau Mot de passe</h1>
-          <p className="text-muted-foreground dark:text-muted-foreground mt-2">Définissez un nouveau mot de passe pour {email}</p>
+          <p className="text-muted-foreground mt-2">Définissez un nouveau mot de passe pour {email}</p>
         </div>
 
         <div className="bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-xl border border-border dark:border-white/10 rounded-2xl shadow-sm p-8">
@@ -84,7 +84,7 @@ export default function ResetPasswordPage() {
             <div className="text-center py-6">
               <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto mb-4" />
               <h2 className="text-xl font-semibold text-foreground dark:text-white mb-2">Réinitialisation réussie !</h2>
-              <p className="text-muted-foreground dark:text-muted-foreground mb-8">Votre mot de passe a été mis à jour avec succès.</p>
+              <p className="text-muted-foreground mb-8">Votre mot de passe a été mis à jour avec succès.</p>
               <Link to="/login" className="inline-flex items-center justify-center w-full py-3 rounded-xl bg-gradient-to-r from-[#1F3A5F] to-[#0f172a] text-white font-medium hover:shadow-lg transition-all">
                 Se connecter maintenant
               </Link>
@@ -100,7 +100,7 @@ export default function ResetPasswordPage() {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="block text-sm font-medium text-slate-700 dark:text-foreground">Nouveau mot de passe</label>
-                  <p className="text-xs text-muted-foreground dark:text-muted-foreground">{PASSWORD_POLICY_HINT}</p>
+                  <p className="text-xs text-muted-foreground">{PASSWORD_POLICY_HINT}</p>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                     <input

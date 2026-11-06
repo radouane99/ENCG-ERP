@@ -52,7 +52,7 @@ export default function TextbooksPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 font-sans text-foreground dark:text-foreground pb-28">
+    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 font-sans text-foreground pb-28">
       
       {/* ── Executive Header Banner ── */}
       <div className="p-8 md:p-10 text-white border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden erp-page-banner">
@@ -84,7 +84,7 @@ export default function TextbooksPage() {
 
       {/* ── Metric Indicators ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-card dark:bg-card rounded-2xl p-6 border border-border dark:border-border shadow-sm flex items-center gap-4">
+        <div className="bg-card rounded-2xl p-6 border border-border shadow-sm flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-primary/5 dark:bg-blue-950 text-primary flex items-center justify-center shrink-0">
             <Layers className="w-6 h-6" />
           </div>
@@ -94,7 +94,7 @@ export default function TextbooksPage() {
           </div>
         </div>
 
-        <div className="bg-card dark:bg-card rounded-2xl p-6 border border-border dark:border-border shadow-sm flex items-center gap-4">
+        <div className="bg-card rounded-2xl p-6 border border-border shadow-sm flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950 text-amber-600 flex items-center justify-center shrink-0">
             <Clock className="w-6 h-6" />
           </div>
@@ -104,7 +104,7 @@ export default function TextbooksPage() {
           </div>
         </div>
 
-        <div className="bg-card dark:bg-card rounded-2xl p-6 border border-border dark:border-border shadow-sm flex items-center gap-4">
+        <div className="bg-card rounded-2xl p-6 border border-border shadow-sm flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center shrink-0">
             <CheckCircle2 className="w-6 h-6" />
           </div>
@@ -114,7 +114,7 @@ export default function TextbooksPage() {
           </div>
         </div>
 
-        <div className="bg-card dark:bg-card rounded-2xl p-6 border border-border dark:border-border shadow-sm flex items-center gap-4">
+        <div className="bg-card rounded-2xl p-6 border border-border shadow-sm flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-primary/5 dark:bg-indigo-950 text-primary flex items-center justify-center shrink-0">
             <Award className="w-6 h-6" />
           </div>
@@ -126,15 +126,15 @@ export default function TextbooksPage() {
       </div>
 
       {/* ── Filters & Search Bar ── */}
-      <div className="bg-card dark:bg-card rounded-2xl p-6 border border-border dark:border-border shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="bg-card rounded-2xl p-6 border border-border shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2 w-full md:w-auto">
           <button
             onClick={() => setStatusFilter('all')}
             className={cn(
               "px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer",
               statusFilter === 'all' 
-                ? "bg-[#001A4B] text-white shadow-md" 
-                : "bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground hover:bg-slate-200"
+                ? "bg-[#1a3673] text-white shadow-md" 
+                : "bg-muted dark:bg-card text-muted-foreground hover:bg-slate-200"
             )}
           >
             Toutes ({stats.total_sessions})
@@ -145,7 +145,7 @@ export default function TextbooksPage() {
               "px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer",
               statusFilter === 'submitted' 
                 ? "bg-amber-500 text-white shadow-md shadow-amber-500/20" 
-                : "bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground hover:bg-slate-200"
+                : "bg-muted dark:bg-card text-muted-foreground hover:bg-slate-200"
             )}
           >
             En Attente de Visa ({stats.submitted_count})
@@ -156,7 +156,7 @@ export default function TextbooksPage() {
               "px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer",
               statusFilter === 'validated' 
                 ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20" 
-                : "bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground hover:bg-slate-200"
+                : "bg-muted dark:bg-card text-muted-foreground hover:bg-slate-200"
             )}
           >
             Visées ({stats.validated_count})
@@ -170,13 +170,13 @@ export default function TextbooksPage() {
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             placeholder="Rechercher enseignant, module, chapitre..."
-            className="w-full pl-10 pr-4 py-2.5 bg-muted/50 dark:bg-slate-800/80 border border-border dark:border-border text-xs font-medium text-foreground dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
+            className="w-full pl-10 pr-4 py-2.5 bg-muted/50 dark:bg-slate-800/80 border border-border text-xs font-medium text-foreground dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
           />
         </div>
       </div>
 
       {/* ── Main Data Table ── */}
-      <div className="bg-card dark:bg-card rounded-2xl shadow-sm border border-border dark:border-border overflow-hidden">
+      <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
         {isLoading ? (
           <div className="py-20 text-center text-slate-400 font-bold flex flex-col items-center gap-3">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -191,7 +191,7 @@ export default function TextbooksPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-left">
-              <thead className="bg-muted/50 dark:bg-slate-800/80 text-muted-foreground font-bold uppercase text-[10px] border-b border-border dark:border-border">
+              <thead className="bg-muted/50 dark:bg-slate-800/80 text-muted-foreground font-bold uppercase text-[10px] border-b border-border">
                 <tr>
                   <th className="p-4">Séance &amp; Date</th>
                   <th className="p-4">Enseignant</th>
@@ -217,7 +217,7 @@ export default function TextbooksPage() {
                         </span>
                       </td>
 
-                      <td className="p-4 font-bold text-foreground dark:text-foreground whitespace-nowrap">
+                      <td className="p-4 font-bold text-foreground whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <div className="w-7 h-7 rounded-full bg-primary/10 dark:bg-blue-900/60 text-primary dark:text-blue-300 flex items-center justify-center text-[10px] font-bold">
                             {teacherName.charAt(4) || 'P'}
@@ -237,7 +237,7 @@ export default function TextbooksPage() {
                       </td>
 
                       <td className="p-4 max-w-xs">
-                        <div className="font-bold text-foreground dark:text-foreground truncate">{item.chapter_title}</div>
+                        <div className="font-bold text-foreground truncate">{item.chapter_title}</div>
                         {item.key_concepts && (
                           <div className="text-[10px] text-slate-400 truncate">{item.key_concepts}</div>
                         )}

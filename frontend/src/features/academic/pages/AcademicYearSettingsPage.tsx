@@ -52,7 +52,7 @@ function CustomSelect({ label, stepNumber, placeholder, value, onChange, options
 
   return (
     <div className="relative" ref={containerRef}>
-      <label className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground dark:text-muted-foreground mb-1.5 flex items-center justify-between">
+      <label className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center justify-between">
         <span className="flex items-center gap-1.5">
           <span className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-foreground text-[10px] font-bold flex items-center justify-center">
             {stepNumber}
@@ -73,10 +73,10 @@ function CustomSelect({ label, stepNumber, placeholder, value, onChange, options
         className={cn(
           "w-full px-3.5 py-2.5 bg-slate-50/80 dark:bg-slate-800/80 border rounded-xl text-xs font-semibold transition-all flex items-center justify-between gap-2 cursor-pointer shadow-xs text-left",
           isOpen
-            ? "border-primary ring-3 ring-indigo-500/10 bg-card dark:bg-card shadow-sm"
+            ? "border-primary ring-3 ring-indigo-500/10 bg-card shadow-sm"
             : value
-              ? "border-slate-300 dark:border-border text-foreground dark:text-white bg-card dark:bg-card"
-              : "border-border dark:border-border text-slate-400 dark:text-slate-500 hover:border-slate-300 dark:hover:border-slate-600"
+              ? "border-slate-300 dark:border-border text-foreground dark:text-white bg-card"
+              : "border-border text-slate-400 dark:text-slate-500 hover:border-slate-300 dark:hover:border-slate-600"
         )}
       >
         <div className="flex items-center gap-2.5 min-w-0">
@@ -98,9 +98,9 @@ function CustomSelect({ label, stepNumber, placeholder, value, onChange, options
 
       {/* Dropdown Popover Window */}
       {isOpen && (
-        <div className="absolute z-50 left-0 right-0 mt-1.5 bg-card dark:bg-card border border-border dark:border-border rounded-xl shadow-sm overflow-hidden animate-in fade-in-80 zoom-in-95">
+        <div className="absolute z-50 left-0 right-0 mt-1.5 bg-card border border-border rounded-xl shadow-sm overflow-hidden animate-in fade-in-80 zoom-in-95">
           {searchable && options.length > 4 && (
-            <div className="p-2 border-b border-border dark:border-border bg-slate-50/50 dark:bg-slate-900/50">
+            <div className="p-2 border-b border-border bg-slate-50/50 dark:bg-slate-900/50">
               <div className="relative">
                 <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
                 <input
@@ -109,7 +109,7 @@ function CustomSelect({ label, stepNumber, placeholder, value, onChange, options
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                   autoFocus
-                  className="w-full pl-9 pr-3 py-1.5 bg-card dark:bg-card border border-border dark:border-border text-xs font-medium text-foreground dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 rounded-[var(--control-radius)]"
+                  className="w-full pl-9 pr-3 py-1.5 bg-card border border-border text-xs font-medium text-foreground dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 rounded-[var(--control-radius)]"
                 />
               </div>
             </div>
@@ -132,8 +132,8 @@ function CustomSelect({ label, stepNumber, placeholder, value, onChange, options
                     className={cn(
                       "w-full px-3 py-2 text-left rounded-lg text-xs font-medium transition-all flex items-center justify-between cursor-pointer group",
                       isSelected
-                        ? "bg-[#0f2863] text-white font-bold shadow-xs"
-                        : "text-foreground dark:text-foreground hover:bg-primary/5 dark:hover:bg-slate-800 hover:text-primary dark:hover:text-indigo-300"
+                        ? "bg-[#1a3673] text-white font-bold shadow-xs"
+                        : "text-foreground hover:bg-primary/5 dark:hover:bg-slate-800 hover:text-primary dark:hover:text-indigo-300"
                     )}
                   >
                     <div className="min-w-0 pr-2">
@@ -209,7 +209,7 @@ function CustomMultiSelect({ label, stepNumber, placeholder, values, onChange, o
 
   return (
     <div className="relative" ref={containerRef}>
-      <label className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground dark:text-muted-foreground mb-1.5 flex items-center justify-between">
+      <label className="block text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5 flex items-center justify-between">
         <span className="flex items-center gap-1.5">
           <span className="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-foreground text-[10px] font-bold flex items-center justify-center">
             {stepNumber}
@@ -230,10 +230,10 @@ function CustomMultiSelect({ label, stepNumber, placeholder, values, onChange, o
         className={cn(
           "w-full px-3.5 py-2.5 bg-slate-50/80 dark:bg-slate-800/80 border rounded-xl text-xs font-semibold transition-all flex items-center justify-between gap-2 cursor-pointer shadow-xs text-left",
           isOpen
-            ? "border-primary ring-3 ring-indigo-500/10 bg-card dark:bg-card shadow-sm"
+            ? "border-primary ring-3 ring-indigo-500/10 bg-card shadow-sm"
             : values.length > 0
-              ? "border-primary/20 dark:border-primary text-foreground dark:text-white bg-card dark:bg-card"
-              : "border-border dark:border-border text-slate-400 dark:text-slate-500 hover:border-slate-300 dark:hover:border-slate-600"
+              ? "border-primary/20 dark:border-primary text-foreground dark:text-white bg-card"
+              : "border-border text-slate-400 dark:text-slate-500 hover:border-slate-300 dark:hover:border-slate-600"
         )}
       >
         <div className="flex items-center gap-2.5 min-w-0">
@@ -266,9 +266,9 @@ function CustomMultiSelect({ label, stepNumber, placeholder, values, onChange, o
 
       {/* Multi-Select Dropdown Popover */}
       {isOpen && (
-        <div className="absolute z-50 left-0 right-0 mt-1.5 bg-card dark:bg-card border border-border dark:border-border rounded-xl shadow-sm overflow-hidden animate-in fade-in-80 zoom-in-95">
+        <div className="absolute z-50 left-0 right-0 mt-1.5 bg-card border border-border rounded-xl shadow-sm overflow-hidden animate-in fade-in-80 zoom-in-95">
           {searchable && options.length > 3 && (
-            <div className="p-2 border-b border-border dark:border-border bg-slate-50/50 dark:bg-slate-900/50">
+            <div className="p-2 border-b border-border bg-slate-50/50 dark:bg-slate-900/50">
               <div className="relative">
                 <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
                 <input
@@ -277,14 +277,14 @@ function CustomMultiSelect({ label, stepNumber, placeholder, values, onChange, o
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                   autoFocus
-                  className="w-full pl-9 pr-3 py-1.5 bg-card dark:bg-card border border-border dark:border-border text-xs font-medium text-foreground dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 rounded-[var(--control-radius)]"
+                  className="w-full pl-9 pr-3 py-1.5 bg-card border border-border text-xs font-medium text-foreground dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 rounded-[var(--control-radius)]"
                 />
               </div>
             </div>
           )}
 
           {selectAllOption && options.length > 1 && (
-            <div className="p-1.5 border-b border-border dark:border-border bg-indigo-50/30 dark:bg-slate-800/40 flex items-center justify-between">
+            <div className="p-1.5 border-b border-border bg-indigo-50/30 dark:bg-slate-800/40 flex items-center justify-between">
               <button
                 type="button"
                 onClick={toggleSelectAll}
@@ -319,13 +319,13 @@ function CustomMultiSelect({ label, stepNumber, placeholder, values, onChange, o
                       "w-full px-3 py-2 text-left rounded-lg text-xs font-medium transition-all flex items-center justify-between cursor-pointer group",
                       isSelected
                         ? "bg-primary/5 dark:bg-indigo-950/40 text-primary dark:text-indigo-200 font-bold"
-                        : "text-foreground dark:text-foreground hover:bg-muted dark:hover:bg-slate-800"
+                        : "text-foreground hover:bg-muted dark:hover:bg-slate-800"
                     )}
                   >
                     <div className="flex items-center gap-2.5 min-w-0 pr-2">
                       <div className={cn(
                         "w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-colors",
-                        isSelected ? "bg-primary border-primary text-primary-foreground shadow-xs" : "border-slate-300 dark:border-border bg-card dark:bg-card"
+                        isSelected ? "bg-primary border-primary text-primary-foreground shadow-xs" : "border-slate-300 dark:border-border bg-card"
                       )}>
                         {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                       </div>
@@ -402,9 +402,9 @@ function FilterDropdown({ label, value, onChange, options, icon, searchable = fa
         className={cn(
           "h-9 px-3.5 rounded-xl text-xs font-semibold transition-all flex items-center justify-between gap-2 cursor-pointer shadow-2xs whitespace-nowrap border select-none",
           isOpen
-            ? "border-primary ring-2 ring-indigo-500/15 bg-card dark:bg-card text-primary dark:text-white"
+            ? "border-primary ring-2 ring-indigo-500/15 bg-card text-primary dark:text-white"
             : isFiltered
-              ? "border-primary/20 dark:border-primary bg-blue-50/80 dark:bg-blue-950/50 text-[#0f2863] dark:text-blue-300 font-bold"
+              ? "border-primary/20 dark:border-primary bg-blue-50/80 dark:bg-blue-950/50 text-[#1a3673] dark:text-blue-300 font-bold"
               : "border-border dark:border-slate-700/80 bg-slate-50/80 dark:bg-slate-800/80 text-slate-700 dark:text-foreground hover:bg-card dark:hover:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600"
         )}
       >
@@ -425,10 +425,10 @@ function FilterDropdown({ label, value, onChange, options, icon, searchable = fa
 
       {/* Popover Dropdown */}
       {isOpen && (
-        <div className="absolute z-50 right-0 sm:left-0 sm:right-auto mt-1.5 min-w-[240px] max-w-[320px] bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm overflow-hidden animate-in fade-in-80 zoom-in-95 backdrop-blur-md">
+        <div className="absolute z-50 right-0 sm:left-0 sm:right-auto mt-1.5 min-w-[240px] max-w-[320px] bg-card border border-border rounded-2xl shadow-sm overflow-hidden animate-in fade-in-80 zoom-in-95 backdrop-blur-md">
           {/* Optional Search */}
           {searchable && options.length > 5 && (
-            <div className="p-2 border-b border-border dark:border-border bg-slate-50/50 dark:bg-slate-900/50">
+            <div className="p-2 border-b border-border bg-slate-50/50 dark:bg-slate-900/50">
               <div className="relative">
                 <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400" />
                 <input
@@ -437,7 +437,7 @@ function FilterDropdown({ label, value, onChange, options, icon, searchable = fa
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                   autoFocus
-                  className="w-full pl-8 pr-3 py-1.5 bg-card dark:bg-card border border-border dark:border-border text-xs font-medium text-foreground dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 rounded-[var(--control-radius)]"
+                  className="w-full pl-8 pr-3 py-1.5 bg-card border border-border text-xs font-medium text-foreground dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 rounded-[var(--control-radius)]"
                 />
               </div>
             </div>
@@ -462,8 +462,8 @@ function FilterDropdown({ label, value, onChange, options, icon, searchable = fa
                     className={cn(
                       "w-full px-3 py-2 text-left rounded-xl text-xs font-medium transition-all flex items-center justify-between cursor-pointer group",
                       isSelected
-                        ? "bg-[#0f2863] text-white font-bold shadow-xs"
-                        : "text-foreground dark:text-foreground hover:bg-muted dark:hover:bg-slate-800 hover:text-primary dark:hover:text-indigo-300"
+                        ? "bg-[#1a3673] text-white font-bold shadow-xs"
+                        : "text-foreground hover:bg-muted dark:hover:bg-slate-800 hover:text-primary dark:hover:text-indigo-300"
                     )}
                   >
                     <div className="min-w-0 pr-2">
@@ -1051,7 +1051,7 @@ const { data: departmentsData } = useQuery({
     <div className="space-y-6 max-w-7xl mx-auto pb-24">
 
       {/* ─── 🏛️ INSTITUTIONAL HERO BANNER (EXECUTIVE COCKPIT) ────────────────────────── */}
-      <div className="relative overflow-hidden text-white rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-[#061433] via-[#0f2863] to-[#1a3a8a] border border-blue-500/20 shadow-xl shadow-blue-950/20 print:hidden">
+      <div className="relative overflow-hidden text-white rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-[#061433] via-[#1a3673] to-[#1a3a8a] border border-blue-500/20 shadow-xl shadow-blue-950/20 print:hidden">
         {/* Subtle background glow accents */}
         <div className="absolute -right-20 -top-20 w-96 h-96 bg-blue-400/15 rounded-full blur-3xl pointer-events-none animate-pulse duration-1000" />
         <div className="absolute right-1/3 -bottom-24 w-80 h-80 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
@@ -1079,7 +1079,7 @@ const { data: departmentsData } = useQuery({
           <div className="flex flex-wrap items-center gap-2.5 lg:justify-end">
             <button
               onClick={() => setShowResetDistributeModal(true)}
-              className="px-4 py-2.5 bg-gradient-to-r from-indigo-500 via-blue-600 to-[#0f2863] hover:from-indigo-600 hover:to-blue-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-indigo-950/40 hover:shadow-indigo-500/30 cursor-pointer border border-indigo-300/40 active:scale-95"
+              className="px-4 py-2.5 bg-gradient-to-r from-indigo-500 via-blue-600 to-[#1a3673] hover:from-indigo-600 hover:to-blue-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-lg shadow-indigo-950/40 hover:shadow-indigo-500/30 cursor-pointer border border-indigo-300/40 active:scale-95"
               title="Répartition automatique équitable par spécialité, département et statutaire (18h)"
             >
               <Sparkles className="w-4 h-4 text-amber-300 animate-spin-slow" />
@@ -1187,14 +1187,14 @@ const { data: departmentsData } = useQuery({
       </div>
 
       {/* ─── 🧭 LUXURY TAB NAVIGATION ────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between border-b border-border dark:border-border pb-3 gap-3 print:hidden">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between border-b border-border pb-3 gap-3 print:hidden">
         <div className="inline-flex p-1.5 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-2xs">
           <button
             onClick={() => setActiveTab('affectations')}
             className={cn(
               "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer select-none",
               activeTab === 'affectations'
-                ? "bg-card dark:bg-card text-[#0f2863] dark:text-blue-300 shadow-sm ring-1 ring-black/5"
+                ? "bg-card text-[#1a3673] dark:text-blue-300 shadow-sm ring-1 ring-black/5"
                 : "text-muted-foreground hover:text-foreground dark:hover:text-white"
             )}
           >
@@ -1203,7 +1203,7 @@ const { data: departmentsData } = useQuery({
             <span className={cn(
               "px-2 py-0.5 rounded-full text-[10px] font-bold font-mono",
               activeTab === 'affectations'
-                ? "bg-primary/10 text-[#0f2863] dark:bg-blue-950 dark:text-blue-300"
+                ? "bg-primary/10 text-[#1a3673] dark:bg-blue-950 dark:text-blue-300"
                 : "bg-slate-200/80 text-muted-foreground dark:bg-slate-700 dark:text-foreground"
             )}>
               {allProfessors.length}
@@ -1215,7 +1215,7 @@ const { data: departmentsData } = useQuery({
             className={cn(
               "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer select-none",
               activeTab === 'sessions'
-                ? "bg-card dark:bg-card text-[#0f2863] dark:text-blue-300 shadow-sm ring-1 ring-black/5"
+                ? "bg-card text-[#1a3673] dark:text-blue-300 shadow-sm ring-1 ring-black/5"
                 : "text-muted-foreground hover:text-foreground dark:hover:text-white"
             )}
           >
@@ -1224,7 +1224,7 @@ const { data: departmentsData } = useQuery({
             <span className={cn(
               "px-2 py-0.5 rounded-full text-[10px] font-bold font-mono",
               activeTab === 'sessions'
-                ? "bg-primary/10 text-[#0f2863] dark:bg-blue-950 dark:text-blue-300"
+                ? "bg-primary/10 text-[#1a3673] dark:bg-blue-950 dark:text-blue-300"
                 : "bg-slate-200/80 text-muted-foreground dark:bg-slate-700 dark:text-foreground"
             )}>
               {examSessions.length}
@@ -1236,7 +1236,7 @@ const { data: departmentsData } = useQuery({
             className={cn(
               "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer select-none",
               activeTab === 'annees'
-                ? "bg-card dark:bg-card text-[#0f2863] dark:text-blue-300 shadow-sm ring-1 ring-black/5"
+                ? "bg-card text-[#1a3673] dark:text-blue-300 shadow-sm ring-1 ring-black/5"
                 : "text-muted-foreground hover:text-foreground dark:hover:text-white"
             )}
           >
@@ -1245,7 +1245,7 @@ const { data: departmentsData } = useQuery({
             <span className={cn(
               "px-2 py-0.5 rounded-full text-[10px] font-bold font-mono",
               activeTab === 'annees'
-                ? "bg-primary/10 text-[#0f2863] dark:bg-blue-950 dark:text-blue-300"
+                ? "bg-primary/10 text-[#1a3673] dark:bg-blue-950 dark:text-blue-300"
                 : "bg-slate-200/80 text-muted-foreground dark:bg-slate-700 dark:text-foreground"
             )}>
               {years.length}
@@ -1284,10 +1284,10 @@ const { data: departmentsData } = useQuery({
           <AssignmentCarryForwardPanel years={years} />
 
           {/* Quick Assignment Creator Form Card */}
-          <div className="bg-card dark:bg-card border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-xs space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border dark:border-border pb-4 gap-3">
+          <div className="bg-card border border-slate-200/90 dark:border-slate-800 rounded-3xl p-5 sm:p-7 shadow-xs space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border pb-4 gap-3">
               <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0f2863] to-blue-700 text-white flex items-center justify-center font-bold shadow-xs shrink-0 ring-4 ring-blue-500/10">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#1a3673] to-blue-700 text-white flex items-center justify-center font-bold shadow-xs shrink-0 ring-4 ring-blue-500/10">
                   <Plus className="w-5 h-5 text-emerald-400 stroke-[3]" />
                 </div>
                 <div>
@@ -1295,7 +1295,7 @@ const { data: departmentsData } = useQuery({
                     <h3 className="text-base font-bold text-foreground dark:text-white tracking-tight">
                       Studio d'Affectation Pédagogique
                     </h3>
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-primary/10 text-[#0f2863] dark:bg-blue-950 dark:text-blue-300">
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-primary/10 text-[#1a3673] dark:bg-blue-950 dark:text-blue-300">
                       Générateur Rapide
                     </span>
                   </div>
@@ -1431,7 +1431,7 @@ const { data: departmentsData } = useQuery({
             {selectedProfDetails && (
               <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-slate-50 dark:from-slate-800/80 dark:to-slate-900/80 border border-primary/20 dark:border-border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in zoom-in-98 shadow-2xs">
                 <div className="flex items-center gap-3.5">
-                  <div className="w-11 h-11 rounded-2xl bg-[#0f2863] text-white font-bold text-sm flex items-center justify-center shadow-xs shrink-0 ring-4 ring-blue-500/10">
+                  <div className="w-11 h-11 rounded-2xl bg-[#1a3673] text-white font-bold text-sm flex items-center justify-center shadow-xs shrink-0 ring-4 ring-blue-500/10">
                     {selectedProfDetails.profGroup?.profName?.charAt(0).toUpperCase() || 'P'}
                   </div>
                   <div>
@@ -1439,7 +1439,7 @@ const { data: departmentsData } = useQuery({
                       <h4 className="font-bold text-sm text-foreground dark:text-white">
                         {selectedProfDetails.profGroup?.profName}
                       </h4>
-                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-primary/10 text-[#0f2863] dark:bg-blue-950 dark:text-blue-300">
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-primary/10 text-[#1a3673] dark:bg-blue-950 dark:text-blue-300">
                         {selectedProfDetails.profGroup?.grade || 'PES'}
                       </span>
                     </div>
@@ -1451,7 +1451,7 @@ const { data: departmentsData } = useQuery({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end pt-2 md:pt-0 border-t md:border-t-0 border-border dark:border-border">
+                <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end pt-2 md:pt-0 border-t md:border-t-0 border-border">
                   <div className="text-right">
                     <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Charge Enregistrée :</div>
                     <div className="flex items-center gap-2">
@@ -1492,14 +1492,14 @@ const { data: departmentsData } = useQuery({
                   <Sparkles className="w-3.5 h-3.5 text-primary dark:text-blue-400" />
                   <span>Format de séance :</span>
                 </span>
-                <div className="inline-flex rounded-xl bg-card dark:bg-card p-1 border border-border dark:border-border shadow-xs">
+                <div className="inline-flex rounded-xl bg-card p-1 border border-border shadow-xs">
                   <button
                     type="button"
                     onClick={() => setAssignmentForm(prev => ({ ...prev, session_type: 'cm' }))}
                     className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
                       assignmentForm.session_type === 'cm'
-                        ? 'bg-[#0f2863] text-white shadow-xs'
-                        : "text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-white"
+                        ? 'bg-[#1a3673] text-white shadow-xs'
+                        : "text-muted-foreground hover:text-foreground dark:hover:text-white"
                     }`}
                   >
                     <span>🏛️ Cours (CM)</span>
@@ -1511,7 +1511,7 @@ const { data: departmentsData } = useQuery({
                     className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
                       assignmentForm.session_type === 'td'
                         ? 'bg-emerald-600 text-white shadow-xs'
-                        : "text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-white"
+                        : "text-muted-foreground hover:text-foreground dark:hover:text-white"
                     }`}
                   >
                     <span>📝 TD (Travaux Dirigés)</span>
@@ -1523,7 +1523,7 @@ const { data: departmentsData } = useQuery({
                     className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
                       assignmentForm.session_type === 'both'
                         ? 'bg-purple-600 text-white shadow-xs'
-                        : "text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-white"
+                        : "text-muted-foreground hover:text-foreground dark:hover:text-white"
                     }`}
                   >
                     <span>✨ CM + TD (Les deux)</span>
@@ -1554,7 +1554,7 @@ const { data: departmentsData } = useQuery({
               <div className="flex flex-wrap items-center gap-2 text-xs">
                 <span className="font-bold text-muted-foreground uppercase text-[10px] tracking-wider">Simulation :</span>
                 {assignmentForm.professor_id ? (
-                  <span className="px-2 py-0.5 rounded-md bg-card dark:bg-slate-800 border font-semibold text-foreground dark:text-white">
+                  <span className="px-2 py-0.5 rounded-md bg-card border font-semibold text-foreground dark:text-white">
                     👤 {selectedProfDetails?.profGroup?.profName?.split(' ')[0] || 'Enseignant'}
                   </span>
                 ) : (
@@ -1562,7 +1562,7 @@ const { data: departmentsData } = useQuery({
                 )}
                 <span className="text-slate-400">➜</span>
                 {assignmentForm.module_ids.length > 0 ? (
-                  <span className="px-2 py-0.5 rounded-md bg-primary/10 text-[#0f2863] dark:bg-blue-950 dark:text-blue-300 font-bold border border-primary/20">
+                  <span className="px-2 py-0.5 rounded-md bg-primary/10 text-[#1a3673] dark:bg-blue-950 dark:text-blue-300 font-bold border border-primary/20">
                     📚 {assignmentForm.module_ids.length} Module{assignmentForm.module_ids.length > 1 ? 's' : ''}
                   </span>
                 ) : (
@@ -1579,7 +1579,7 @@ const { data: departmentsData } = useQuery({
               </div>
 
               {assignmentForm.module_ids.length > 0 && assignmentForm.group_ids.length > 0 && (
-                <div className="inline-flex items-center gap-2 bg-[#0f2863] text-white px-3 py-1.5 rounded-xl font-bold text-xs shadow-xs animate-in fade-in">
+                <div className="inline-flex items-center gap-2 bg-[#1a3673] text-white px-3 py-1.5 rounded-xl font-bold text-xs shadow-xs animate-in fade-in">
                   <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                   <span>
                     Total : {assignmentForm.module_ids.length * (assignmentForm.group_ids.includes('all') ? 1 : assignmentForm.group_ids.length) * (assignmentForm.session_type === 'both' ? 2 : 1)} affectation(s)
@@ -1592,7 +1592,7 @@ const { data: departmentsData } = useQuery({
             </div>
 
             {/* Form Actions */}
-            <div className="flex items-center justify-between pt-3 border-t border-border dark:border-border">
+            <div className="flex items-center justify-between pt-3 border-t border-border">
               <span className="text-xs text-muted-foreground">
                 {assignmentForm.professor_id && assignmentForm.module_ids.length > 0 && assignmentForm.group_ids.length > 0 ? (
                   <span className="text-emerald-600 dark:text-emerald-400 font-medium">
@@ -1610,7 +1610,7 @@ const { data: departmentsData } = useQuery({
                   "px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 shadow-md active:scale-98",
                   (!assignmentForm.professor_id || assignmentForm.module_ids.length === 0 || assignmentForm.group_ids.length === 0)
                     ? "bg-slate-300 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed opacity-60"
-                    : "bg-gradient-to-r from-emerald-600 via-teal-600 to-[#0f2863] hover:from-emerald-700 hover:to-[#1a3a8a] text-white shadow-emerald-900/20 hover:scale-102"
+                    : "bg-gradient-to-r from-emerald-600 via-teal-600 to-[#1a3673] hover:from-emerald-700 hover:to-[#1a3a8a] text-white shadow-emerald-900/20 hover:scale-102"
                 )}
               >
                 {createAssignmentMutation.isPending ? (
@@ -1630,7 +1630,7 @@ const { data: departmentsData } = useQuery({
           {/* ─── 🎓 SEMESTER PERIOD SWITCHER (AUTOMNE / PRINTEMPS / ANNUEL) ─────── */}
           <div className="bg-gradient-to-r from-blue-50/70 via-indigo-50/40 to-slate-50 dark:from-slate-800/80 dark:to-slate-900/90 p-3 sm:p-3.5 rounded-2xl border border-primary/20 dark:border-border flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 shadow-xs">
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-[#0f2863] text-white flex items-center justify-center font-bold text-xs">
+              <div className="w-7 h-7 rounded-lg bg-[#1a3673] text-white flex items-center justify-center font-bold text-xs">
                 S
               </div>
               <div>
@@ -1657,14 +1657,14 @@ const { data: departmentsData } = useQuery({
                 className={cn(
                   "px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs",
                   selectedSemesterPeriod === 'odd'
-                    ? "bg-[#0f2863] text-white shadow-blue-900/20"
-                    : "bg-card dark:bg-card text-slate-700 dark:text-foreground border border-border dark:border-border hover:bg-muted"
+                    ? "bg-[#1a3673] text-white shadow-blue-900/20"
+                    : "bg-card text-slate-700 dark:text-foreground border border-border hover:bg-muted"
                 )}
               >
                 <span>🍂 Automne / S1</span>
                 <span className={cn(
                   "px-1.5 py-0.2 rounded-full text-[9px] font-bold",
-                  selectedSemesterPeriod === 'odd' ? "bg-white/20 text-white" : "bg-primary/10 text-[#0f2863]"
+                  selectedSemesterPeriod === 'odd' ? "bg-white/20 text-white" : "bg-primary/10 text-[#1a3673]"
                 )}>
                   S1, S3, S5, S7
                 </span>
@@ -1676,8 +1676,8 @@ const { data: departmentsData } = useQuery({
                 className={cn(
                   "px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs",
                   selectedSemesterPeriod === 'even'
-                    ? "bg-[#0f2863] text-white shadow-blue-900/20"
-                    : "bg-card dark:bg-card text-slate-700 dark:text-foreground border border-border dark:border-border hover:bg-muted"
+                    ? "bg-[#1a3673] text-white shadow-blue-900/20"
+                    : "bg-card text-slate-700 dark:text-foreground border border-border hover:bg-muted"
                 )}
               >
                 <span>🌸 Printemps / S2</span>
@@ -1695,8 +1695,8 @@ const { data: departmentsData } = useQuery({
                 className={cn(
                   "px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs",
                   selectedSemesterPeriod === 'all'
-                    ? "bg-[#0f2863] text-white shadow-blue-900/20"
-                    : "bg-card dark:bg-card text-slate-700 dark:text-foreground border border-border dark:border-border hover:bg-muted"
+                    ? "bg-[#1a3673] text-white shadow-blue-900/20"
+                    : "bg-card text-slate-700 dark:text-foreground border border-border hover:bg-muted"
                 )}
               >
                 <span>🎓 Année Complète</span>
@@ -1705,7 +1705,7 @@ const { data: departmentsData } = useQuery({
           </div>
 
           {/* ─── 🔍 SEARCH & CUSTOM FILTER TOOLBAR ────────────────────────── */}
-          <div className="bg-card dark:bg-card p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-border shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
+          <div className="bg-card p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-border shadow-xs flex flex-col md:flex-row items-center justify-between gap-3">
             {/* Search Input */}
             <div className="relative flex-1 w-full">
               <Search className="w-4 h-4 absolute left-3.5 top-2.5 text-slate-400" />
@@ -1734,7 +1734,7 @@ const { data: departmentsData } = useQuery({
                 className={cn(
                   "px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer whitespace-nowrap",
                   workloadFilter === 'all'
-                    ? "bg-[#0f2863] text-white shadow-2xs"
+                    ? "bg-[#1a3673] text-white shadow-2xs"
                     : "bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-slate-700 dark:text-foreground"
                 )}
               >
@@ -1845,17 +1845,17 @@ const { data: departmentsData } = useQuery({
               )}
 
               {/* Results Count Badge */}
-              <div className="text-xs text-muted-foreground dark:text-muted-foreground font-bold px-2 py-1 bg-slate-100/80 dark:bg-slate-800/60 rounded-lg">
+              <div className="text-xs text-muted-foreground font-bold px-2 py-1 bg-slate-100/80 dark:bg-slate-800/60 rounded-lg">
                 {groupedProfessors.length} {groupedProfessors.length > 1 ? 'profs' : 'prof'}
               </div>
             </div>
           </div>
 
           {/* ─── PROFESSORS & ASSIGNMENTS TABLE ──────────────────────────── */}
-          <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl overflow-hidden shadow-xs">
+          <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl overflow-hidden shadow-xs">
             {assignmentsLoading ? (
               <div className="py-20 text-center text-slate-400">
-                <Spinner className="w-8 h-8 mx-auto mb-2 text-[#0f2863]" />
+                <Spinner className="w-8 h-8 mx-auto mb-2 text-[#1a3673]" />
                 <p className="text-xs font-bold">Chargement de la matrice des affectations...</p>
               </div>
             ) : groupedProfessors.length === 0 ? (
@@ -1880,7 +1880,7 @@ const { data: departmentsData } = useQuery({
                     <tr className="bg-gradient-to-r from-slate-100/90 via-slate-50/70 to-slate-100/90 dark:from-slate-800/90 dark:via-slate-900/70 dark:to-slate-800/90 text-slate-700 dark:text-slate-200 uppercase tracking-wider font-extrabold text-[10px] border-b border-border/80 dark:border-border">
                       <th className="py-3.5 px-4 font-bold">
                         <div className="flex items-center gap-1.5">
-                          <Users className="w-3.5 h-3.5 text-[#0f2863] dark:text-blue-400" />
+                          <Users className="w-3.5 h-3.5 text-[#1a3673] dark:text-blue-400" />
                           <span>Enseignant Chercheur</span>
                         </div>
                       </th>
@@ -1925,7 +1925,7 @@ const { data: departmentsData } = useQuery({
                                     : weeklyHours >= 14
                                       ? "bg-gradient-to-br from-emerald-500 to-teal-700 ring-emerald-400/30"
                                       : weeklyHours > 0
-                                        ? "bg-gradient-to-br from-[#0f2863] to-blue-700 ring-blue-400/30"
+                                        ? "bg-gradient-to-br from-[#1a3673] to-blue-700 ring-blue-400/30"
                                         : "bg-gradient-to-br from-slate-600 to-slate-800 ring-slate-400/20"
                                 )}>
                                   {profGroup.profName ? profGroup.profName.charAt(0).toUpperCase() : 'P'}
@@ -1940,7 +1940,7 @@ const { data: departmentsData } = useQuery({
                                   <span>{cleanUtf8Text(profGroup.profName)}</span>
                                 </div>
                                 <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 truncate mt-0.5">
-                                  <span className="font-bold text-[#0f2863] dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200/60 dark:border-blue-900 px-1.5 py-0.2 rounded shadow-2xs">
+                                  <span className="font-bold text-[#1a3673] dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200/60 dark:border-blue-900 px-1.5 py-0.2 rounded shadow-2xs">
                                     {profGroup.grade || 'PES'}
                                   </span>
                                   <span>•</span>
@@ -2013,13 +2013,13 @@ const { data: departmentsData } = useQuery({
                                         <span className={cn(
                                           "px-1.5 py-0.2 rounded-md text-[9px] font-black font-mono",
                                           Number(semNum) % 2 === 1
-                                            ? "bg-[#0f2863] text-white"
+                                            ? "bg-[#1a3673] text-white"
                                             : "bg-purple-700 text-white"
                                         )}>
                                           S{semNum}
                                         </span>
                                       )}
-                                      <span className="font-bold text-[#0f2863] dark:text-blue-400 font-mono text-[10px]">
+                                      <span className="font-bold text-[#1a3673] dark:text-blue-400 font-mono text-[10px]">
                                         {cleanUtf8Text(a.module?.split(' ')[0] || 'MOD')}
                                       </span>
                                       <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
@@ -2073,7 +2073,7 @@ const { data: departmentsData } = useQuery({
                                 <>
                                   <button
                                     onClick={() => setSelectedProfForModal(profGroup)}
-                                    className="p-2 text-slate-500 hover:text-[#0f2863] dark:text-slate-400 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition-all cursor-pointer shadow-2xs"
+                                    className="p-2 text-slate-500 hover:text-[#1a3673] dark:text-slate-400 dark:hover:text-white bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded-xl transition-all cursor-pointer shadow-2xs"
                                     title="Voir le détail complet des modules et groupes"
                                   >
                                     <Eye className="w-3.5 h-3.5" />
@@ -2104,7 +2104,7 @@ const { data: departmentsData } = useQuery({
                                       }))
                                       window.scrollTo({ top: 320, behavior: 'smooth' })
                                     }}
-                                    className="p-2 text-white bg-gradient-to-r from-[#0f2863] to-blue-700 hover:from-[#1a3a8a] hover:to-blue-800 rounded-xl transition-all cursor-pointer shadow-xs"
+                                    className="p-2 text-white bg-gradient-to-r from-[#1a3673] to-blue-700 hover:from-[#1a3a8a] hover:to-blue-800 rounded-xl transition-all cursor-pointer shadow-xs"
                                     title="Ajouter un autre module à cet enseignant"
                                   >
                                     <Plus className="w-3.5 h-3.5" />
@@ -2120,7 +2120,7 @@ const { data: departmentsData } = useQuery({
                                     }))
                                     window.scrollTo({ top: 320, behavior: 'smooth' })
                                   }}
-                                  className="px-3.5 py-1.5 bg-gradient-to-r from-[#0f2863] via-blue-700 to-indigo-800 hover:from-[#1a3a8a] hover:to-indigo-900 text-white rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-md hover:scale-102 active:scale-98"
+                                  className="px-3.5 py-1.5 bg-gradient-to-r from-[#1a3673] via-blue-700 to-indigo-800 hover:from-[#1a3a8a] hover:to-indigo-900 text-white rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-md hover:scale-102 active:scale-98"
                                 >
                                   <Plus className="w-3.5 h-3.5 text-emerald-400 stroke-[3]" />
                                   <span>Affecter</span>
@@ -2142,8 +2142,8 @@ const { data: departmentsData } = useQuery({
       {/* ─── TAB 2: SESSIONS & EXAMENS ────────────────────────────────────── */}
       {activeTab === 'sessions' && (
         <div className="space-y-6 print:hidden">
-          <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-xs space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border dark:border-border pb-4">
+          <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-xs space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
               <div>
                 <h3 className="text-sm font-bold text-foreground dark:text-white uppercase tracking-wider">
                   Périodes & Dates des Sessions d'Examens
@@ -2155,7 +2155,7 @@ const { data: departmentsData } = useQuery({
 
               <button
                 onClick={() => setShowNewSessionForm(!showNewSessionForm)}
-                className="px-4 py-2 bg-[#0f2863] text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-2 hover:bg-[#1a3a8a] cursor-pointer"
+                className="px-4 py-2 bg-[#1a3673] text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-2 hover:bg-[#1a3a8a] cursor-pointer"
               >
                 {showNewSessionForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
                 <span>Nouvelle Session</span>
@@ -2163,7 +2163,7 @@ const { data: departmentsData } = useQuery({
             </div>
 
             {showNewSessionForm && (
-              <div className="p-5 bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border rounded-xl space-y-4 animate-in zoom-in-95">
+              <div className="p-5 bg-muted/50 dark:bg-slate-800/50 border border-border rounded-xl space-y-4 animate-in zoom-in-95">
                 <h4 className="font-bold text-foreground dark:text-white text-xs uppercase tracking-wider">
                   Création d'une Session d'Examens
                 </h4>
@@ -2175,7 +2175,7 @@ const { data: departmentsData } = useQuery({
                       type="text"
                       value={newSessionForm.name}
                       onChange={(e) => setNewSessionForm({...newSessionForm, name: e.target.value})}
-                      className="w-full px-3.5 py-2 bg-card dark:bg-card border border-border dark:border-border text-xs font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
+                      className="w-full px-3.5 py-2 bg-card border border-border text-xs font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
                       placeholder="ex: Session Ordinaire Automne S1"
                     />
                   </div>
@@ -2185,7 +2185,7 @@ const { data: departmentsData } = useQuery({
                       type="text"
                       value={newSessionForm.type}
                       onChange={(e) => setNewSessionForm({...newSessionForm, type: e.target.value})}
-                      className="w-full px-3.5 py-2 bg-card dark:bg-card border border-border dark:border-border text-xs font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
+                      className="w-full px-3.5 py-2 bg-card border border-border text-xs font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
                       placeholder="ex: normale / rattrapage"
                     />
                   </div>
@@ -2194,7 +2194,7 @@ const { data: departmentsData } = useQuery({
                     <select
                       value={newSessionForm.academic_year_id}
                       onChange={(e) => setNewSessionForm({...newSessionForm, academic_year_id: e.target.value})}
-                      className="w-full px-3.5 py-2 bg-card dark:bg-card border border-border dark:border-border text-xs font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
+                      className="w-full px-3.5 py-2 bg-card border border-border text-xs font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
                     >
                       <option value="">Sélectionner</option>
                       {years.map((y: any) => <option key={y.id} value={y.id}>{y.label}</option>)}
@@ -2205,7 +2205,7 @@ const { data: departmentsData } = useQuery({
                     <select
                       value={newSessionForm.semester_id}
                       onChange={(e) => setNewSessionForm({...newSessionForm, semester_id: e.target.value})}
-                      className="w-full px-3.5 py-2 bg-card dark:bg-card border border-border dark:border-border text-xs font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
+                      className="w-full px-3.5 py-2 bg-card border border-border text-xs font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
                     >
                       <option value="">Sélectionner</option>
                       {semesters.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -2217,7 +2217,7 @@ const { data: departmentsData } = useQuery({
                       type="date"
                       value={newSessionForm.start_date}
                       onChange={(e) => setNewSessionForm({...newSessionForm, start_date: e.target.value})}
-                      className="w-full px-3.5 py-2 bg-card dark:bg-card border border-border dark:border-border text-xs font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
+                      className="w-full px-3.5 py-2 bg-card border border-border text-xs font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
                     />
                   </div>
                   <div>
@@ -2226,7 +2226,7 @@ const { data: departmentsData } = useQuery({
                       type="date"
                       value={newSessionForm.end_date}
                       onChange={(e) => setNewSessionForm({...newSessionForm, end_date: e.target.value})}
-                      className="w-full px-3.5 py-2 bg-card dark:bg-card border border-border dark:border-border text-xs font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
+                      className="w-full px-3.5 py-2 bg-card border border-border text-xs font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
                     />
                   </div>
                 </div>
@@ -2235,7 +2235,7 @@ const { data: departmentsData } = useQuery({
                   <button
                     onClick={handleCreateSession}
                     disabled={createSessionMutation.isPending}
-                    className="px-5 py-2 bg-[#0f2863] text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-xs hover:bg-[#1a3a8a] transition-all cursor-pointer"
+                    className="px-5 py-2 bg-[#1a3673] text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-xs hover:bg-[#1a3a8a] transition-all cursor-pointer"
                   >
                     {createSessionMutation.isPending ? 'Création...' : 'Valider la Session'}
                   </button>
@@ -2246,7 +2246,7 @@ const { data: departmentsData } = useQuery({
             {/* Sessions Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {examSessions.map((session: any) => (
-                <div key={session.id} className="p-5 border border-border dark:border-border rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 relative group space-y-4 shadow-xs">
+                <div key={session.id} className="p-5 border border-border rounded-2xl bg-slate-50/70 dark:bg-slate-800/40 relative group space-y-4 shadow-xs">
                   <button
                     onClick={() => handleDeleteSession(session.id)}
                     className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
@@ -2257,7 +2257,7 @@ const { data: departmentsData } = useQuery({
 
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-primary"></span>
-                    <span className="text-xs font-bold uppercase text-[#0f2863] dark:text-blue-400 tracking-wider">
+                    <span className="text-xs font-bold uppercase text-[#1a3673] dark:text-blue-400 tracking-wider">
                       {session.type || 'Session Officielle'}
                     </span>
                   </div>
@@ -2269,7 +2269,7 @@ const { data: departmentsData } = useQuery({
                         type="text"
                         value={sessionDates[session.id]?.name ?? session.name}
                         onChange={(e) => setSessionDates({...sessionDates, [session.id]: {...sessionDates[session.id], name: e.target.value}})}
-                        className="w-full px-3.5 py-2 bg-card dark:bg-card border border-border dark:border-border text-xs font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
+                        className="w-full px-3.5 py-2 bg-card border border-border text-xs font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
                       />
                     </div>
                     <div>
@@ -2278,7 +2278,7 @@ const { data: departmentsData } = useQuery({
                         type="date"
                         value={sessionDates[session.id]?.start_date || ''}
                         onChange={(e) => setSessionDates({...sessionDates, [session.id]: {...sessionDates[session.id], start_date: e.target.value}})}
-                        className="w-full px-3.5 py-2 bg-card dark:bg-card border border-border dark:border-border text-xs font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
+                        className="w-full px-3.5 py-2 bg-card border border-border text-xs font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
                       />
                     </div>
                     <div>
@@ -2287,7 +2287,7 @@ const { data: departmentsData } = useQuery({
                         type="date"
                         value={sessionDates[session.id]?.end_date || ''}
                         onChange={(e) => setSessionDates({...sessionDates, [session.id]: {...sessionDates[session.id], end_date: e.target.value}})}
-                        className="w-full px-3.5 py-2 bg-card dark:bg-card border border-border dark:border-border text-xs font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
+                        className="w-full px-3.5 py-2 bg-card border border-border text-xs font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
                       />
                     </div>
                   </div>
@@ -2295,14 +2295,14 @@ const { data: departmentsData } = useQuery({
               ))}
             </div>
 
-            <div className="flex items-center justify-between pt-4 border-t border-border dark:border-border">
+            <div className="flex items-center justify-between pt-4 border-t border-border">
               <p className="text-xs text-slate-400 italic">
                 N'oubliez pas d'enregistrer vos modifications après avoir ajusté les plages de dates.
               </p>
               <button
                 onClick={handleSaveSessions}
                 disabled={updateSessionMutation.isPending}
-                className="px-5 py-2.5 bg-[#0f2863] text-white font-bold rounded-xl hover:bg-[#1a3a8a] transition-colors text-xs uppercase tracking-wider shadow-xs cursor-pointer disabled:opacity-50"
+                className="px-5 py-2.5 bg-[#1a3673] text-white font-bold rounded-xl hover:bg-[#1a3a8a] transition-colors text-xs uppercase tracking-wider shadow-xs cursor-pointer disabled:opacity-50"
               >
                 {updateSessionMutation.isPending ? 'Enregistrement...' : 'Enregistrer les Périodes'}
               </button>
@@ -2315,7 +2315,7 @@ const { data: departmentsData } = useQuery({
       {activeTab === 'annees' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 print:hidden">
           {/* Années Universitaires Card */}
-          <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-xs space-y-5">
+          <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-xs space-y-5">
             <h3 className="text-sm font-bold text-foreground dark:text-white uppercase tracking-wider">
               Gestion des Années Académiques
             </h3>
@@ -2326,7 +2326,7 @@ const { data: departmentsData } = useQuery({
                 placeholder="Ex: 2026/2027"
                 value={newYearLabel}
                 onChange={(e) => setNewYearLabel(e.target.value)}
-                className="flex-1 w-full px-3.5 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
+                className="flex-1 w-full px-3.5 py-2 bg-muted/50 dark:bg-card border border-border text-xs font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
               />
               <label className="flex items-center gap-2 text-xs font-semibold text-muted-foreground dark:text-foreground cursor-pointer whitespace-nowrap">
                 <input
@@ -2340,7 +2340,7 @@ const { data: departmentsData } = useQuery({
               <button
                 onClick={handleCreateYear}
                 disabled={createYearMutation.isPending}
-                className="w-full sm:w-auto px-5 py-2 bg-[#0f2863] text-white font-bold rounded-xl text-xs uppercase tracking-wider hover:bg-[#1a3a8a] transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                className="w-full sm:w-auto px-5 py-2 bg-[#1a3673] text-white font-bold rounded-xl text-xs uppercase tracking-wider hover:bg-[#1a3a8a] transition-all shadow-xs cursor-pointer disabled:opacity-50"
               >
                 {createYearMutation.isPending ? 'En cours...' : 'Créer'}
               </button>
@@ -2348,12 +2348,12 @@ const { data: departmentsData } = useQuery({
 
             <div className="space-y-2 pt-2">
               {years.map((y: any) => (
-                <div key={y.id} className="flex items-center justify-between p-3.5 border border-border dark:border-border rounded-xl bg-slate-50/70 dark:bg-slate-800/40">
+                <div key={y.id} className="flex items-center justify-between p-3.5 border border-border rounded-xl bg-slate-50/70 dark:bg-slate-800/40">
                   <div className="flex items-center gap-3">
                     <Calendar className="w-4 h-4 text-primary dark:text-blue-400" />
-                    <span className="font-bold text-foreground dark:text-foreground text-sm">{y.label}</span>
+                    <span className="font-bold text-foreground text-sm">{y.label}</span>
                     {y.is_current && (
-                      <span className="px-2 py-0.5 bg-[#0f2863] text-white text-[9px] font-bold rounded-md tracking-wider uppercase">
+                      <span className="px-2 py-0.5 bg-[#1a3673] text-white text-[9px] font-bold rounded-md tracking-wider uppercase">
                         COURANTE
                       </span>
                     )}
@@ -2365,7 +2365,7 @@ const { data: departmentsData } = useQuery({
           </div>
 
           {/* Semestres Readonly Card */}
-          <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-xs space-y-5">
+          <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-xs space-y-5">
             <h3 className="text-sm font-bold text-foreground dark:text-white uppercase tracking-wider">
               Semestres Académiques (S1 à S10)
             </h3>
@@ -2380,7 +2380,7 @@ const { data: departmentsData } = useQuery({
                 { s: 'S6', nv: 'Niveau 3 (S6)', type: 'Printemps' },
               ].map((item, i) => (
                 <div key={i} className="p-3 bg-muted/50 dark:bg-slate-800/60 rounded-xl flex items-center justify-between border border-slate-200/80 dark:border-border">
-                  <span className="font-bold text-[#0f2863] dark:text-blue-400 text-sm">{item.s}</span>
+                  <span className="font-bold text-[#1a3673] dark:text-blue-400 text-sm">{item.s}</span>
                   <div className="text-right">
                     <span className="text-[10px] font-bold text-slate-700 dark:text-foreground block">{item.nv}</span>
                     <span className="text-[9px] text-slate-400 font-medium">{item.type}</span>
@@ -2399,10 +2399,10 @@ const { data: departmentsData } = useQuery({
       {/* ─── 👁️ PROFESSOR DETAILS MODAL ──────────────────────────────────── */}
       {selectedProfForModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-card dark:bg-card rounded-2xl shadow-sm w-full max-w-xl overflow-hidden border border-border dark:border-border animate-in zoom-in-95 space-y-5 p-6">
-            <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
+          <div className="bg-card rounded-2xl shadow-sm w-full max-w-xl overflow-hidden border border-border animate-in zoom-in-95 space-y-5 p-6">
+            <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#0f2863] text-white font-bold text-sm flex items-center justify-center shadow-xs">
+                <div className="w-10 h-10 rounded-xl bg-[#1a3673] text-white font-bold text-sm flex items-center justify-center shadow-xs">
                   {selectedProfForModal.profName.charAt(0).toUpperCase()}
                 </div>
                 <div>
@@ -2423,14 +2423,14 @@ const { data: departmentsData } = useQuery({
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 bg-muted/50 dark:bg-slate-800/50 p-3.5 rounded-xl border border-border dark:border-border text-xs">
+            <div className="grid grid-cols-2 gap-3 bg-muted/50 dark:bg-slate-800/50 p-3.5 rounded-xl border border-border text-xs">
               <div>
                 <span className="text-slate-400 font-bold uppercase text-[10px] block">Charges Actives :</span>
                 <span className="font-bold text-foreground dark:text-white text-sm">{selectedProfForModal.assignmentsList.length} cours</span>
               </div>
               <div>
                 <span className="text-slate-400 font-bold uppercase text-[10px] block">Volume Horaire :</span>
-                <span className="font-bold text-[#0f2863] dark:text-blue-400 text-sm">{selectedProfForModal.assignmentsList.length * 4}h / sem ({selectedProfForModal.assignmentsList.length * 48}h sem.)</span>
+                <span className="font-bold text-[#1a3673] dark:text-blue-400 text-sm">{selectedProfForModal.assignmentsList.length * 4}h / sem ({selectedProfForModal.assignmentsList.length * 48}h sem.)</span>
               </div>
             </div>
 
@@ -2461,7 +2461,7 @@ const { data: departmentsData } = useQuery({
                         {cleanUtf8Text(item.module?.split(' ')[0] || 'MOD')}
                       </span>
                       <div>
-                        <div className="font-bold text-foreground dark:text-foreground text-xs">
+                        <div className="font-bold text-foreground text-xs">
                           {cleanUtf8Text(item.module?.split(' ').slice(1).join(' ') || item.module)}
                         </div>
                         <div className="text-[10px] text-slate-400">
@@ -2482,10 +2482,10 @@ const { data: departmentsData } = useQuery({
               </div>
             </div>
 
-            <div className="flex items-center justify-between gap-3 pt-3 border-t border-border dark:border-border">
+            <div className="flex items-center justify-between gap-3 pt-3 border-t border-border">
               <button
                 onClick={() => setSelectedProfForModal(null)}
-                className="px-4 py-2 border border-border dark:border-border text-muted-foreground dark:text-foreground font-semibold rounded-xl hover:bg-muted/50 transition-colors text-xs cursor-pointer"
+                className="px-4 py-2 border border-border text-muted-foreground dark:text-foreground font-semibold rounded-xl hover:bg-muted/50 transition-colors text-xs cursor-pointer"
               >
                 Fermer
               </button>
@@ -2500,7 +2500,7 @@ const { data: departmentsData } = useQuery({
                 </button>
                 <button
                   onClick={() => handlePrintOrdreDeService(selectedProfForModal)}
-                  className="px-4 py-2 bg-[#0f2863] text-white font-bold rounded-xl text-xs hover:bg-[#1a3a8a] transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+                  className="px-4 py-2 bg-[#1a3673] text-white font-bold rounded-xl text-xs hover:bg-[#1a3a8a] transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
                 >
                   <Printer className="w-3.5 h-3.5 text-amber-300" />
                   <span>Ordre de Service PDF</span>
@@ -2514,8 +2514,8 @@ const { data: departmentsData } = useQuery({
       {/* ─── 📦 IMPORT MODAL ─────────────────────────────────────────────── */}
       {showImportModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-card dark:bg-card rounded-2xl shadow-sm w-full max-w-lg overflow-hidden border border-border dark:border-border animate-in zoom-in-95">
-            <div className="bg-gradient-to-r from-[#0f2863] to-blue-700 p-5 text-white relative">
+          <div className="bg-card rounded-2xl shadow-sm w-full max-w-lg overflow-hidden border border-border animate-in zoom-in-95">
+            <div className="bg-gradient-to-r from-[#1a3673] to-blue-700 p-5 text-white relative">
               <button
                 onClick={() => setShowImportModal(false)}
                 className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors cursor-pointer"
@@ -2534,7 +2534,7 @@ const { data: departmentsData } = useQuery({
                 <label className="block text-[10px] font-bold uppercase text-muted-foreground mb-1">
                   Année Universitaire de Destination
                 </label>
-                <select className="w-full px-3.5 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]">
+                <select className="w-full px-3.5 py-2 bg-muted/50 dark:bg-card border border-border text-xs font-semibold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]">
                   <option>2026/2027 (Année Courante)</option>
                 </select>
               </div>
@@ -2543,7 +2543,7 @@ const { data: departmentsData } = useQuery({
                 <label className="block text-[10px] font-bold uppercase text-muted-foreground mb-1">
                   Fichier Excel / CSV
                 </label>
-                <div className="border-2 border-dashed border-border dark:border-border rounded-xl p-6 text-center cursor-pointer hover:border-primary hover:bg-blue-50/30 dark:hover:bg-blue-950/20 transition-all">
+                <div className="border-2 border-dashed border-border rounded-xl p-6 text-center cursor-pointer hover:border-primary hover:bg-blue-50/30 dark:hover:bg-blue-950/20 transition-all">
                   <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
                   <p className="text-xs font-bold text-slate-700 dark:text-foreground">Glisser-déposer ou cliquer pour choisir le fichier</p>
                   <p className="text-[10px] text-slate-400 mt-1">Formats acceptés : .xlsx, .xls, .csv — Max 5MB</p>
@@ -2568,7 +2568,7 @@ const { data: departmentsData } = useQuery({
               <div className="flex items-center justify-between gap-3 pt-2">
                 <button
                   onClick={() => setShowImportModal(false)}
-                  className="px-4 py-2 border border-border dark:border-border text-muted-foreground dark:text-foreground font-semibold rounded-xl hover:bg-muted/50 transition-colors text-xs w-full cursor-pointer"
+                  className="px-4 py-2 border border-border text-muted-foreground dark:text-foreground font-semibold rounded-xl hover:bg-muted/50 transition-colors text-xs w-full cursor-pointer"
                 >
                   Annuler
                 </button>
@@ -2577,7 +2577,7 @@ const { data: departmentsData } = useQuery({
                     toast.success('🚀 Importation des affectations effectuée avec succès !')
                     setShowImportModal(false)
                   }}
-                  className="px-4 py-2 bg-[#0f2863] text-white font-bold rounded-xl text-xs uppercase tracking-wider hover:bg-[#1a3a8a] transition-all shadow-xs w-full cursor-pointer"
+                  className="px-4 py-2 bg-[#1a3673] text-white font-bold rounded-xl text-xs uppercase tracking-wider hover:bg-[#1a3a8a] transition-all shadow-xs w-full cursor-pointer"
                 >
                   Valider & Importer
                 </button>
@@ -2590,8 +2590,8 @@ const { data: departmentsData } = useQuery({
       {/* ─── 🤖 AI AUTO-MATCHING MODAL ───────────────────────────────────── */}
       {showAiMatchingModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-card dark:bg-card rounded-2xl shadow-sm w-full max-w-xl overflow-hidden border border-primary/20 dark:border-primary animate-in zoom-in-95">
-            <div className="bg-gradient-to-r from-indigo-700 to-[#0f2863] p-5 text-white relative">
+          <div className="bg-card rounded-2xl shadow-sm w-full max-w-xl overflow-hidden border border-primary/20 dark:border-primary animate-in zoom-in-95">
+            <div className="bg-gradient-to-r from-indigo-700 to-[#1a3673] p-5 text-white relative">
               <button
                 onClick={() => setShowAiMatchingModal(false)}
                 className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors cursor-pointer"
@@ -2640,7 +2640,7 @@ const { data: departmentsData } = useQuery({
 
                   <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1 custom-scrollbar">
                     {aiSuggestions.map((item: any, idx: number) => (
-                      <div key={idx} className="p-3 bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-border rounded-xl space-y-1.5">
+                      <div key={idx} className="p-3 bg-muted/50 dark:bg-slate-800/60 border border-border rounded-xl space-y-1.5">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <span className="px-1.5 py-0.5 bg-primary/10 dark:bg-indigo-900/60 text-primary dark:text-indigo-300 rounded text-[9px] font-bold">
@@ -2655,27 +2655,27 @@ const { data: departmentsData } = useQuery({
                           </span>
                         </div>
 
-                        <div className="text-xs font-semibold text-[#0f2863] dark:text-blue-300">
+                        <div className="text-xs font-semibold text-[#1a3673] dark:text-blue-300">
                           {item.module_name}
                         </div>
 
-                        <div className="text-[10px] text-muted-foreground italic bg-card dark:bg-card p-1.5 rounded-lg border border-border dark:border-border">
+                        <div className="text-[10px] text-muted-foreground italic bg-card p-1.5 rounded-lg border border-border">
                           💡 {item.reason}
                         </div>
                       </div>
                     ))}
                   </div>
 
-                  <div className="flex items-center justify-between gap-3 pt-2 border-t border-border dark:border-border">
+                  <div className="flex items-center justify-between gap-3 pt-2 border-t border-border">
                     <button
                       onClick={() => setShowAiMatchingModal(false)}
-                      className="px-4 py-2 border border-border dark:border-border text-muted-foreground dark:text-foreground font-semibold rounded-xl hover:bg-muted/50 transition-colors text-xs cursor-pointer"
+                      className="px-4 py-2 border border-border text-muted-foreground dark:text-foreground font-semibold rounded-xl hover:bg-muted/50 transition-colors text-xs cursor-pointer"
                     >
                       Fermer
                     </button>
                     <button
                       onClick={handleApplyAiSuggestions}
-                      className="px-5 py-2 bg-gradient-to-r from-indigo-600 to-[#0f2863] hover:from-indigo-700 hover:to-blue-900 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
+                      className="px-5 py-2 bg-gradient-to-r from-indigo-600 to-[#1a3673] hover:from-indigo-700 hover:to-blue-900 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
                     >
                       <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                       <span>Appliquer (1-Clic)</span>
@@ -2691,7 +2691,7 @@ const { data: departmentsData } = useQuery({
       {/* ─── 🔄 RESET / DISTRIBUTE CONFIRMATION MODAL ─────────────────────── */}
       {showResetDistributeModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 max-w-lg w-full shadow-sm space-y-5">
+          <div className="bg-card border border-border rounded-2xl p-6 max-w-lg w-full shadow-sm space-y-5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-400 flex items-center justify-center shrink-0 border border-primary/20 dark:border-primary">
                 <Sparkles className="w-5 h-5" />
@@ -2708,7 +2708,7 @@ const { data: departmentsData } = useQuery({
 
             {/* 🎓 Période Semestrielle Selector Cards */}
             <div className="space-y-2">
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground dark:text-muted-foreground">
+              <label className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                 1. Choisissez la période semestrielle à affecter :
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -2718,8 +2718,8 @@ const { data: departmentsData } = useQuery({
                   className={cn(
                     "p-3 rounded-xl border text-left transition-all cursor-pointer",
                     distributeSemesterPeriod === 'odd'
-                      ? "border-primary bg-blue-50/80 dark:bg-blue-950/50 text-[#0f2863] dark:text-blue-300 ring-2 ring-blue-500/20"
-                      : "border-border dark:border-border bg-card dark:bg-card hover:bg-muted/50 text-slate-700 dark:text-foreground"
+                      ? "border-primary bg-blue-50/80 dark:bg-blue-950/50 text-[#1a3673] dark:text-blue-300 ring-2 ring-blue-500/20"
+                      : "border-border bg-card hover:bg-muted/50 text-slate-700 dark:text-foreground"
                   )}
                 >
                   <div className="text-xs font-bold flex items-center gap-1">
@@ -2737,7 +2737,7 @@ const { data: departmentsData } = useQuery({
                     "p-3 rounded-xl border text-left transition-all cursor-pointer",
                     distributeSemesterPeriod === 'even'
                       ? "border-purple-600 bg-purple-50/80 dark:bg-purple-950/50 text-purple-900 dark:text-purple-300 ring-2 ring-purple-500/20"
-                      : "border-border dark:border-border bg-card dark:bg-card hover:bg-muted/50 text-slate-700 dark:text-foreground"
+                      : "border-border bg-card hover:bg-muted/50 text-slate-700 dark:text-foreground"
                   )}
                 >
                   <div className="text-xs font-bold flex items-center gap-1">
@@ -2755,7 +2755,7 @@ const { data: departmentsData } = useQuery({
                     "p-3 rounded-xl border text-left transition-all cursor-pointer",
                     distributeSemesterPeriod === 'all'
                       ? "border-primary bg-indigo-50/80 dark:bg-indigo-950/50 text-primary dark:text-indigo-300 ring-2 ring-indigo-500/20"
-                      : "border-border dark:border-border bg-card dark:bg-card hover:bg-muted/50 text-slate-700 dark:text-foreground"
+                      : "border-border bg-card hover:bg-muted/50 text-slate-700 dark:text-foreground"
                   )}
                 >
                   <div className="text-xs font-bold flex items-center gap-1">
@@ -2768,11 +2768,11 @@ const { data: departmentsData } = useQuery({
               </div>
             </div>
 
-            <div className="p-4 bg-muted/50 dark:bg-slate-800/60 rounded-xl border border-border dark:border-border text-xs text-muted-foreground dark:text-foreground space-y-2">
-              <p className="font-bold text-foreground dark:text-foreground">
+            <div className="p-4 bg-muted/50 dark:bg-slate-800/60 rounded-xl border border-border text-xs text-muted-foreground dark:text-foreground space-y-2">
+              <p className="font-bold text-foreground">
                 2. Mode d'exécution de la répartition :
               </p>
-              <ul className="space-y-1.5 text-muted-foreground dark:text-muted-foreground text-[11px]">
+              <ul className="space-y-1.5 text-muted-foreground text-[11px]">
                 <li className="flex items-start gap-1.5">
                   <span className="text-primary font-bold shrink-0">•</span>
                   <span><strong className="text-slate-700 dark:text-foreground">Mise à zéro & Répartition Équilibrée :</strong> Réinitialise les charges du semestre choisi puis répartit équitablement tous les modules sur les 18 enseignants sans surcharge (&le; 16h/4 cours).</span>
@@ -2787,7 +2787,7 @@ const { data: departmentsData } = useQuery({
                   autoDistributeMutation.mutate({ reset: true, semester_period: distributeSemesterPeriod })
                 }}
                 disabled={autoDistributeMutation.isPending}
-                className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 via-blue-700 to-[#0f2863] hover:from-indigo-700 hover:to-blue-800 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 via-blue-700 to-[#1a3673] hover:from-indigo-700 hover:to-blue-800 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition-all shadow-md cursor-pointer flex items-center justify-center gap-2"
               >
                 <Sparkles className="w-4 h-4 text-amber-300" />
                 <span>
@@ -2810,7 +2810,7 @@ const { data: departmentsData } = useQuery({
       {/* ─── 🔴 MODAL CONFIRMATION MISE À ZÉRO TOTALE ─────────────────────── */}
       {showUnassignAllModal && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-rose-200 dark:border-rose-900/60 rounded-2xl p-6 max-w-md w-full shadow-sm space-y-5">
+          <div className="bg-card border border-rose-200 dark:border-rose-900/60 rounded-2xl p-6 max-w-md w-full shadow-sm space-y-5">
             <div className="flex items-center gap-3.5">
               <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0 border border-rose-200 dark:border-rose-800">
                 <AlertTriangle className="w-6 h-6 text-rose-600 animate-pulse" />
@@ -2830,7 +2830,7 @@ const { data: departmentsData } = useQuery({
                 <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0" />
                 Attention : Cette action est irréversible.
               </p>
-              <p className="text-[11px] text-muted-foreground dark:text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground">
                 Vous vous apprêtez à réinitialiser les affectations pour : <strong className="text-rose-700 dark:text-rose-300">{selectedSemesterPeriod === 'odd' ? '🍂 Semestre 1 / Automne (S1, S3, S5, S7, S9)' : selectedSemesterPeriod === 'even' ? '🌸 Semestre 2 / Printemps (S2, S4, S6, S8, S10)' : '🎓 Toute l\'Année Universitaire'}</strong> ({assignments.length} cours concernés).
               </p>
             </div>

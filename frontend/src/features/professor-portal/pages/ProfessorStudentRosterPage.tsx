@@ -1592,17 +1592,17 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
   };
 
   return (
-    <div className="space-y-6 font-sans animate-in fade-in duration-500 text-foreground dark:text-foreground pb-20 max-w-[1600px] mx-auto p-2">
+    <div className="space-y-6 font-sans animate-in fade-in duration-500 text-foreground pb-20 max-w-[1600px] mx-auto p-2">
       {/* ── Top Role & Institution Header Pill ── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-card dark:bg-card p-3 rounded-2xl border border-border dark:border-border shadow-2xs">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-card p-3 rounded-2xl border border-border shadow-2xs">
         <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-foreground pl-1">
-          <GraduationCap className="w-4 h-4 text-[#001A4B] dark:text-blue-400 shrink-0" />
+          <GraduationCap className="w-4 h-4 text-[#1a3673] dark:text-blue-400 shrink-0" />
           <span>Espace Enseignant :</span>
           <span className="px-2.5 py-0.5 rounded-lg text-[11px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300/60">
             Listes d'Étudiants & Émargement Officiel
           </span>
           <span className="text-slate-300 dark:text-slate-700">•</span>
-          <span className="text-muted-foreground dark:text-muted-foreground">{profName || 'Professeur ENCG'}</span>
+          <span className="text-muted-foreground">{profName || 'Professeur ENCG'}</span>
           {isLocked && (
             <span className="flex items-center gap-1 text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 px-2 py-0.5 rounded-full ml-1">
               <Lock className="w-3 h-3 text-amber-500" /> Verrouillé
@@ -1643,7 +1643,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
               title="Vue Tableau Officiel"
               className={cn(
                 'p-2 rounded-lg transition-all',
-                viewMode === 'table' ? "bg-card text-[#001A4B] shadow font-bold" : 'text-slate-300 hover:text-white'
+                viewMode === 'table' ? "bg-card text-[#1a3673] shadow font-bold" : 'text-slate-300 hover:text-white'
               )}
             >
               <LayoutList className="w-4 h-4" />
@@ -1653,7 +1653,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
               title="Vue Cartes / Trombinoscope"
               className={cn(
                 'p-2 rounded-lg transition-all',
-                viewMode === 'cards' ? "bg-card text-[#001A4B] shadow font-bold" : 'text-slate-300 hover:text-white'
+                viewMode === 'cards' ? "bg-card text-[#1a3673] shadow font-bold" : 'text-slate-300 hover:text-white'
               )}
             >
               <LayoutGrid className="w-4 h-4" />
@@ -1786,7 +1786,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                     "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-md",
                     isLiveSessionNow
                       ? "bg-rose-500 text-white animate-pulse"
-                      : "bg-[#001A4B] text-amber-300 dark:bg-emerald-600 dark:text-white"
+                      : "bg-[#1a3673] text-amber-300 dark:bg-emerald-600 dark:text-white"
                   )}>
                     {isLiveSessionNow ? <Radio className="w-6 h-6" /> : <Zap className="w-6 h-6" />}
                   </div>
@@ -1810,14 +1810,14 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       )}
                     </div>
 
-                    <h2 className="text-sm sm:text-base font-bold text-[#001A4B] dark:text-white flex items-center gap-2">
+                    <h2 className="text-sm sm:text-base font-bold text-[#1a3673] dark:text-white flex items-center gap-2">
                       <span>{selectedModule?.module_name || 'Module Pédagogique'}</span>
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded-lg bg-card dark:bg-card border border-border dark:border-border text-muted-foreground dark:text-foreground">
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded-lg bg-card border border-border text-muted-foreground dark:text-foreground">
                         {selectedSection?.group_code || 'Filière'}
                       </span>
                     </h2>
 
-                    <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       Suggestion IA : <span className="font-bold text-emerald-600 dark:text-emerald-400">Séance {selectedSeance}</span> ({completedSeances.length} validée{completedSeances.length > 1 ? 's' : ''} sur 12 • {students.length} inscrits).
                     </p>
                   </div>
@@ -1869,7 +1869,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                   <button
                     onClick={() => setShowSaveModal(true)}
                     disabled={savingAttendance || !selectedGroupId}
-                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#001A4B] hover:bg-[#082663] text-white text-xs font-bold transition-all shadow-md disabled:opacity-50 cursor-pointer"
+                    className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#1a3673] hover:bg-[#082663] text-white text-xs font-bold transition-all shadow-md disabled:opacity-50 cursor-pointer"
                     title="Enregistrer la feuille de présence et synchroniser avec le Cahier de Texte"
                   >
                     {savingAttendance ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5 text-amber-300" />}
@@ -1880,16 +1880,16 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
             </div>
 
             {/* ─── Solution 2: Interactive Semester Timeline (Progression S1 → S12) ─── */}
-            <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
+            <div className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-xs space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-[#001A4B] dark:text-blue-400" />
+                    <Calendar className="w-4 h-4 text-[#1a3673] dark:text-blue-400" />
                     <h3 className="text-sm font-bold text-foreground dark:text-white">
                       Progression Pédagogique du Semestre (12 Séances)
                     </h3>
                   </div>
-                  <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     Cliquez sur une séance pour naviguer dans l'historique ou pointer le créneau actuel.
                   </p>
                 </div>
@@ -1897,14 +1897,14 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 {/* Progress Stats Badge */}
                 <div className="flex items-center gap-3">
                   <div className="text-right">
-                    <span className="text-xs font-bold text-[#001A4B] dark:text-white">
+                    <span className="text-xs font-bold text-[#1a3673] dark:text-white">
                       {completedSeances.length} / 12 validées
                     </span>
                     <span className="text-[11px] text-slate-400 ml-1">
                       ({Math.round((completedSeances.length / 12) * 100)}%)
                     </span>
                   </div>
-                  <div className="w-24 sm:w-32 bg-muted dark:bg-card h-2.5 rounded-full overflow-hidden border border-border dark:border-border">
+                  <div className="w-24 sm:w-32 bg-muted dark:bg-card h-2.5 rounded-full overflow-hidden border border-border">
                     <div
                       className="bg-gradient-to-r from-emerald-500 to-teal-500 h-full rounded-full transition-all duration-500"
                       style={{ width: `${Math.min(100, Math.round((completedSeances.length / 12) * 100))}%` }}
@@ -1930,10 +1930,10 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                         className={cn(
                           "flex-1 relative flex flex-col items-center p-2.5 rounded-xl border text-center transition-all cursor-pointer group",
                           isSelected
-                            ? "bg-[#001A4B] text-white border-[#001A4B] shadow-md ring-2 ring-blue-500/30 scale-[1.02]"
+                            ? "bg-[#1a3673] text-white border-[#1a3673] shadow-md ring-2 ring-blue-500/30 scale-[1.02]"
                             : isCompleted
                               ? "bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800 text-foreground dark:text-white hover:border-emerald-400"
-                              : "bg-muted/50 dark:bg-slate-800/50 border-border dark:border-slate-700/80 text-muted-foreground dark:text-muted-foreground hover:border-slate-300 dark:hover:border-slate-600"
+                              : "bg-muted/50 dark:bg-slate-800/50 border-border dark:border-slate-700/80 text-muted-foreground hover:border-slate-300 dark:hover:border-slate-600"
                         )}
                       >
                         {/* Status Icon Indicator */}
@@ -1979,13 +1979,13 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
               </div>
 
               {/* Date & Quick Status Controls Bar */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border dark:border-border">
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-xs font-bold text-slate-700 dark:text-foreground flex items-center gap-1.5">
                     <span>Date effective de {selectedSeance} :</span>
                   </span>
 
-                  <div className="flex items-center gap-2 bg-muted dark:bg-card border border-border dark:border-border rounded-xl px-2.5 py-1">
+                  <div className="flex items-center gap-2 bg-muted dark:bg-card border border-border rounded-xl px-2.5 py-1">
                     <input
                       type="date"
                       value={seanceDate}
@@ -2029,7 +2029,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
                 {/* Effectif Status Badge & Rattrapage Button */}
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs px-3 py-1 rounded-xl bg-muted dark:bg-card border border-border dark:border-border text-slate-700 dark:text-foreground font-mono">
+                  <span className="text-xs px-3 py-1 rounded-xl bg-muted dark:bg-card border border-border text-slate-700 dark:text-foreground font-mono">
                     {absentIds.size === 0 ? (
                       <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
                         <CheckCheck className="w-3.5 h-3.5" /> Plein effectif (0 absent)
@@ -2065,12 +2065,12 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
             </div>
 
             {/* ─── Schedule-based Group Selector ───────────────────────── */}
-            <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-5 shadow-xs">
+            <div className="bg-card border border-border rounded-2xl p-5 shadow-xs">
               <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
                 <div className="flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   <span className="text-sm font-bold text-foreground dark:text-white">Mes Créneaux d'Enseignement & Groupes</span>
-                  <span className="text-[10px] text-muted-foreground dark:text-foreground bg-muted dark:bg-card border border-border dark:border-border px-2.5 py-0.5 rounded-full font-mono font-bold">
+                  <span className="text-[10px] text-muted-foreground dark:text-foreground bg-muted dark:bg-card border border-border px-2.5 py-0.5 rounded-full font-mono font-bold">
                     {schedules.length} créneau{schedules.length > 1 ? 'x' : ''} officiel{schedules.length > 1 ? 's' : ''}
                   </span>
                 </div>
@@ -2090,37 +2090,37 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
               ) : schedules.length === 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
-                    <label className="block text-xs text-muted-foreground dark:text-muted-foreground mb-1.5 font-bold uppercase tracking-wider">Module / Matière</label>
+                    <label className="block text-xs text-muted-foreground mb-1.5 font-bold uppercase tracking-wider">Module / Matière</label>
                     <div className="relative">
                       <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <select value={selectedModuleId ?? ''} onChange={e => setSelectedModuleId(Number(e.target.value))} className="w-full bg-muted/50 dark:bg-card border border-border dark:border-border pl-9 pr-8 py-2.5 text-sm text-foreground dark:text-white font-medium appearance-none focus:outline-none focus:border-emerald-500 transition-colors rounded-[var(--control-radius)]">
+                      <select value={selectedModuleId ?? ''} onChange={e => setSelectedModuleId(Number(e.target.value))} className="w-full bg-muted/50 dark:bg-card border border-border pl-9 pr-8 py-2.5 text-sm text-foreground dark:text-white font-medium appearance-none focus:outline-none focus:border-emerald-500 transition-colors rounded-[var(--control-radius)]">
                         {options.modules.map(m => (<option key={m.module_id} value={m.module_id}>{m.module_code} -- {m.module_name}</option>))}
                       </select>
                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs text-muted-foreground dark:text-muted-foreground mb-1.5 font-bold uppercase tracking-wider">Section (Amphi / Filière)</label>
+                    <label className="block text-xs text-muted-foreground mb-1.5 font-bold uppercase tracking-wider">Section (Amphi / Filière)</label>
                     <div className="relative">
                       <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <select value={selectedGroupId ?? ''} onChange={e => setSelectedGroupId(Number(e.target.value))} className="w-full bg-muted/50 dark:bg-card border border-border dark:border-border pl-9 pr-8 py-2.5 text-sm text-foreground dark:text-white font-medium appearance-none focus:outline-none focus:border-emerald-500 transition-colors rounded-[var(--control-radius)]">
+                      <select value={selectedGroupId ?? ''} onChange={e => setSelectedGroupId(Number(e.target.value))} className="w-full bg-muted/50 dark:bg-card border border-border pl-9 pr-8 py-2.5 text-sm text-foreground dark:text-white font-medium appearance-none focus:outline-none focus:border-emerald-500 transition-colors rounded-[var(--control-radius)]">
                         {selectedModule?.sections.map(s => (<option key={s.group_id} value={s.group_id}>{s.group_code} -- {s.filiere_name} ({s.semester})</option>))}
                       </select>
                       <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs text-muted-foreground dark:text-muted-foreground mb-1.5 font-bold uppercase tracking-wider">Format</label>
-                    <div className="flex rounded-xl overflow-hidden border border-border dark:border-border bg-muted dark:bg-card p-0.5">
-                      <button onClick={() => setListMode('section')} className={cn('flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-bold rounded-lg transition-all', listMode === 'section' ? 'bg-[#001A4B] text-white shadow dark:bg-emerald-600' : "text-muted-foreground dark:text-muted-foreground hover:text-foreground")}><Layers className="w-3.5 h-3.5" /><span>CM</span></button>
-                      <button onClick={() => setListMode('subgroup')} disabled={availableSubGroups.length === 0} className={cn('flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-bold rounded-lg transition-all disabled:opacity-40', listMode === 'subgroup' ? 'bg-[#001A4B] text-white shadow dark:bg-violet-600' : "text-muted-foreground dark:text-muted-foreground hover:text-foreground")}><Users className="w-3.5 h-3.5" /><span>TD / TP</span></button>
+                    <label className="block text-xs text-muted-foreground mb-1.5 font-bold uppercase tracking-wider">Format</label>
+                    <div className="flex rounded-xl overflow-hidden border border-border bg-muted dark:bg-card p-0.5">
+                      <button onClick={() => setListMode('section')} className={cn('flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-bold rounded-lg transition-all', listMode === 'section' ? 'bg-[#1a3673] text-white shadow dark:bg-emerald-600' : "text-muted-foreground hover:text-foreground")}><Layers className="w-3.5 h-3.5" /><span>CM</span></button>
+                      <button onClick={() => setListMode('subgroup')} disabled={availableSubGroups.length === 0} className={cn('flex-1 flex items-center justify-center gap-1.5 py-2 text-sm font-bold rounded-lg transition-all disabled:opacity-40', listMode === 'subgroup' ? 'bg-[#1a3673] text-white shadow dark:bg-violet-600' : "text-muted-foreground hover:text-foreground")}><Users className="w-3.5 h-3.5" /><span>TD / TP</span></button>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs text-muted-foreground dark:text-muted-foreground mb-1.5 font-bold uppercase tracking-wider">Sous-groupe TD</label>
+                    <label className="block text-xs text-muted-foreground mb-1.5 font-bold uppercase tracking-wider">Sous-groupe TD</label>
                     {listMode === 'subgroup' && availableSubGroups.length > 0 ? (
                       <div className="flex gap-2 flex-wrap">
-                        {availableSubGroups.map(sg => (<button key={sg} onClick={() => setSelectedSubGroup(sg)} className={cn('px-3.5 py-1.5 rounded-lg text-sm font-bold border transition-all cursor-pointer', selectedSubGroup === sg ? 'bg-[#001A4B] border-[#001A4B] text-white dark:bg-violet-600 dark:border-violet-500' : "bg-muted dark:bg-card border-border dark:border-border text-slate-700 dark:text-foreground hover:border-[#001A4B]")}>{sg}</button>))}
+                        {availableSubGroups.map(sg => (<button key={sg} onClick={() => setSelectedSubGroup(sg)} className={cn('px-3.5 py-1.5 rounded-lg text-sm font-bold border transition-all cursor-pointer', selectedSubGroup === sg ? 'bg-[#1a3673] border-[#1a3673] text-white dark:bg-violet-600 dark:border-violet-500' : "bg-muted dark:bg-card border-border text-slate-700 dark:text-foreground hover:border-[#1a3673]")}>{sg}</button>))}
                       </div>
                     ) : (
                       <div className="h-10 flex items-center"><span className="text-slate-400 text-xs italic">{listMode === 'section' ? 'Section complète (Amphithéâtre)' : 'Aucun sous-groupe'}</span></div>
@@ -2149,35 +2149,35 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                         className={cn(
                           'relative text-left p-4 rounded-2xl border transition-all duration-200 hover:scale-[1.01] cursor-pointer overflow-hidden shadow-2xs',
                           isSelected
-                            ? 'bg-blue-50/80 dark:bg-emerald-950/30 border-2 border-[#001A4B] dark:border-emerald-500 shadow-md ring-2 ring-[#001A4B]/10'
+                            ? 'bg-blue-50/80 dark:bg-emerald-950/30 border-2 border-[#1a3673] dark:border-emerald-500 shadow-md ring-2 ring-[#1a3673]/10'
                             : "bg-slate-50/80 dark:bg-slate-800/40 border-border dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-100/70"
                         )}
                       >
-                        {isSelected && <div className="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full bg-[#001A4B] dark:bg-emerald-400 animate-pulse" />}
+                        {isSelected && <div className="absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full bg-[#1a3673] dark:bg-emerald-400 animate-pulse" />}
                         <div className="flex items-center gap-2 mb-2">
                           <span className={cn("text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border", isTd ? 'bg-violet-100 text-violet-800 border-violet-200 dark:bg-violet-950 dark:text-violet-300 dark:border-violet-800' : 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800')}>{sch.type || 'CM'}</span>
-                          <span className="text-[10px] text-muted-foreground dark:text-muted-foreground font-mono font-bold bg-card dark:bg-card px-1.5 py-0.5 rounded border border-border dark:border-border">{sch.module_code}</span>
+                          <span className="text-[10px] text-muted-foreground font-mono font-bold bg-card px-1.5 py-0.5 rounded border border-border">{sch.module_code}</span>
                         </div>
                         <div className="font-bold text-foreground dark:text-white text-sm leading-tight mb-1.5 truncate" title={sch.module_name}>{sch.module_name}</div>
                         <div className="flex items-center gap-1.5 mb-2.5">
                           <GraduationCap className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                          <span className="text-xs font-bold text-foreground dark:text-foreground">{sch.group_code}</span>
+                          <span className="text-xs font-bold text-foreground">{sch.group_code}</span>
                           {sch.filiere_name && <span className="text-[11px] text-muted-foreground truncate">• {sch.filiere_name}</span>}
                         </div>
-                        <div className={cn('flex items-center gap-2 text-xs rounded-xl px-2.5 py-1.5 flex-wrap border', isSelected ? "bg-card dark:bg-card border-[#001A4B]/20" : "bg-card dark:bg-slate-800/80 border-border dark:border-border")}>
-                          <span className={cn('font-bold', isSelected ? 'text-[#001A4B] dark:text-emerald-300' : "text-slate-700 dark:text-foreground")}>{sch.day_name}</span>
+                        <div className={cn('flex items-center gap-2 text-xs rounded-xl px-2.5 py-1.5 flex-wrap border', isSelected ? "bg-card border-[#1a3673]/20" : "bg-card dark:bg-slate-800/80 border-border")}>
+                          <span className={cn('font-bold', isSelected ? 'text-[#1a3673] dark:text-emerald-300' : "text-slate-700 dark:text-foreground")}>{sch.day_name}</span>
                           <span className="text-slate-300 dark:text-slate-600">|</span>
                           <span className="font-mono text-muted-foreground dark:text-foreground">{sch.start_time} - {sch.end_time}</span>
-                          {sch.room && <><span className="text-slate-300 dark:text-slate-600">|</span><span className="text-muted-foreground dark:text-muted-foreground font-medium truncate">📍 {sch.room}</span></>}
+                          {sch.room && <><span className="text-slate-300 dark:text-slate-600">|</span><span className="text-muted-foreground font-medium truncate">📍 {sch.room}</span></>}
                         </div>
                         <div className="mt-2 flex items-center gap-1.5">
                           <Calendar className="w-3 h-3 text-slate-400" />
-                          <span className="text-[11px] text-muted-foreground dark:text-muted-foreground capitalize">{dateLabel}</span>
+                          <span className="text-[11px] text-muted-foreground capitalize">{dateLabel}</span>
                         </div>
                         {isTd && sch.sub_groups && sch.sub_groups.length > 0 && (
                           <div className="mt-2.5 flex gap-1.5 flex-wrap">
                             {sch.sub_groups.map(sg => (
-                              <span key={sg} onClick={e => { e.stopPropagation(); if (isSelected) setSelectedSubGroup(sg); }} className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full border cursor-pointer transition-all', isSelected && selectedSubGroup === sg ? 'bg-[#001A4B] border-[#001A4B] text-white dark:bg-violet-600 dark:border-violet-500' : "bg-card dark:bg-card border-border dark:border-border text-muted-foreground dark:text-foreground hover:border-[#001A4B]")}>{sg}</span>
+                              <span key={sg} onClick={e => { e.stopPropagation(); if (isSelected) setSelectedSubGroup(sg); }} className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full border cursor-pointer transition-all', isSelected && selectedSubGroup === sg ? 'bg-[#1a3673] border-[#1a3673] text-white dark:bg-violet-600 dark:border-violet-500' : "bg-card border-border text-muted-foreground dark:text-foreground hover:border-[#1a3673]")}>{sg}</span>
                             ))}
                           </div>
                         )}
@@ -2203,14 +2203,14 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div className="flex items-center gap-2 flex-wrap">
                 {/* Quick Attendance Filter Buttons */}
-                <div className="flex rounded-xl overflow-hidden border border-border dark:border-border bg-muted dark:bg-card p-0.5 text-xs shadow-2xs">
+                <div className="flex rounded-xl overflow-hidden border border-border bg-muted dark:bg-card p-0.5 text-xs shadow-2xs">
                   <button
                     onClick={() => setAttendanceFilter('all')}
                     className={cn(
                       'px-3 py-1.5 font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer',
                       attendanceFilter === 'all'
                         ? "bg-card dark:bg-slate-700 text-foreground dark:text-white shadow-2xs"
-                        : "text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-white"
+                        : "text-muted-foreground hover:text-foreground dark:hover:text-white"
                     )}
                   >
                     <span>Tous</span>
@@ -2222,7 +2222,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       'px-3 py-1.5 font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer',
                       attendanceFilter === 'present'
                         ? 'bg-emerald-600 text-white shadow-2xs'
-                        : "text-muted-foreground dark:text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-300"
+                        : "text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-300"
                     )}
                   >
                     <span>✅ Présents</span>
@@ -2234,7 +2234,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       'px-3 py-1.5 font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer',
                       attendanceFilter === 'absent'
                         ? 'bg-rose-600 text-white shadow-2xs'
-                        : "text-muted-foreground dark:text-muted-foreground hover:text-rose-600 dark:hover:text-rose-300"
+                        : "text-muted-foreground hover:text-rose-600 dark:hover:text-rose-300"
                     )}
                   >
                     <span>❌ Absents</span>
@@ -2246,7 +2246,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       'px-3 py-1.5 font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer',
                       attendanceFilter === 'annotated'
                         ? 'bg-amber-600 text-white shadow-2xs'
-                        : "text-muted-foreground dark:text-muted-foreground hover:text-amber-600 dark:hover:text-amber-300"
+                        : "text-muted-foreground hover:text-amber-600 dark:hover:text-amber-300"
                     )}
                   >
                     <span>📝 Avec Note</span>
@@ -2275,7 +2275,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                     placeholder="Nom, Matricule, CNE…"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
-                    className="bg-card dark:bg-card border border-border dark:border-border pl-9 pr-8 py-2 text-xs text-foreground dark:text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition-colors w-48 shadow-2xs rounded-[var(--control-radius)]"
+                    className="bg-card border border-border pl-9 pr-8 py-2 text-xs text-foreground dark:text-white placeholder-slate-400 focus:outline-none focus:border-emerald-500 transition-colors w-48 shadow-2xs rounded-[var(--control-radius)]"
                   />
                   {searchQuery && (
                     <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-muted-foreground">
@@ -2287,7 +2287,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 <button
                   onClick={handleCopyList}
                   disabled={filteredStudents.length === 0}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-card dark:bg-card hover:bg-muted/50 dark:hover:bg-slate-700 border border-border dark:border-border text-slate-700 dark:text-foreground text-xs font-bold transition-all disabled:opacity-40 shadow-2xs cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-card hover:bg-muted/50 dark:hover:bg-slate-700 border border-border text-slate-700 dark:text-foreground text-xs font-bold transition-all disabled:opacity-40 shadow-2xs cursor-pointer"
                   title="Copier la liste filtrée dans le presse-papiers"
                 >
                   <Copy className="w-3.5 h-3.5 text-primary dark:text-sky-400" />
@@ -2297,7 +2297,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 <button
                   onClick={handleDownloadExcel}
                   disabled={downloadingExcel || students.length === 0}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-card dark:bg-card hover:bg-muted/50 dark:hover:bg-slate-700 border border-border dark:border-border text-slate-700 dark:text-foreground text-xs font-bold transition-all disabled:opacity-40 shadow-2xs cursor-pointer"
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-card hover:bg-muted/50 dark:hover:bg-slate-700 border border-border text-slate-700 dark:text-foreground text-xs font-bold transition-all disabled:opacity-40 shadow-2xs cursor-pointer"
                 >
                   {downloadingExcel ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
                   <span className="hidden sm:inline">Excel</span>
@@ -2306,7 +2306,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
             </div>
 
             {/* ─── Student List Section ────────────────────────────────── */}
-            <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl overflow-hidden shadow-xs">
+            <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-xs">
               {loadingStudents ? (
                 <div className="flex flex-col items-center justify-center py-24 gap-3">
                   <Loader2 className="w-8 h-8 text-emerald-600 dark:text-emerald-400 animate-spin" />
@@ -2315,7 +2315,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
               ) : filteredStudents.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 gap-3">
                   <UserCheck className="w-12 h-12 text-slate-300 dark:text-slate-700" />
-                  <p className="text-muted-foreground dark:text-muted-foreground text-sm font-medium">Aucun étudiant ne correspond aux filtres sélectionnés</p>
+                  <p className="text-muted-foreground text-sm font-medium">Aucun étudiant ne correspond aux filtres sélectionnés</p>
                   {(searchQuery || attendanceFilter !== 'all') && (
                     <button
                       onClick={() => { setSearchQuery(''); setAttendanceFilter('all'); }}
@@ -2369,7 +2369,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                                       ? "bg-primary/5 dark:bg-indigo-950/40 border-primary ring-2 ring-indigo-400/20 shadow-md"
                                       : isToday
                                         ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800 hover:border-emerald-500'
-                                        : "bg-card dark:bg-slate-800/50 border-border dark:border-border hover:border-primary/20"
+                                        : "bg-card dark:bg-slate-800/50 border-border hover:border-primary/20"
                                   )}>
                                   <div className="flex items-center justify-between">
                                     <span className="flex items-center gap-1 text-xs font-bold text-slate-700 dark:text-foreground">
@@ -2397,7 +2397,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                             })}
                         </div>
                       ) : (
-                        <div className="py-8 text-center rounded-2xl bg-muted/50 dark:bg-slate-800/30 border border-dashed border-border dark:border-border">
+                        <div className="py-8 text-center rounded-2xl bg-muted/50 dark:bg-slate-800/30 border border-dashed border-border">
                           <Clock className="w-8 h-8 mx-auto text-slate-300 dark:text-slate-600 mb-2" />
                           <p className="text-sm font-bold text-muted-foreground">Aucune séance trouvée pour ce filtre</p>
                           <p className="text-xs text-slate-400">Sélectionnez un autre jour ou choisissez un module manuellement ci-dessous</p>
@@ -2406,7 +2406,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       {/* Manual start */}
                       <div className="flex items-center justify-center pt-2">
                         <button onClick={() => handleStartLiveSession()} disabled={savingLive || !selectedGroupId || !selectedModuleId}
-                          className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#001A4B] hover:bg-secondary text-white font-bold text-sm shadow-lg transition-all disabled:opacity-40 cursor-pointer">
+                          className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#1a3673] hover:bg-secondary text-white font-bold text-sm shadow-lg transition-all disabled:opacity-40 cursor-pointer">
                           {savingLive ? <Loader2 size={16} className="animate-spin" /> : <Play size={16} className="text-amber-300" />}
                           Démarrer l'Appel (Sélection Manuelle)
                         </button>
@@ -2418,7 +2418,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                   {isSessionActive && (
                     <div className="space-y-0">
                       {/* Live stats bar */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-0 border-b border-border dark:border-border">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-0 border-b border-border">
                         {[
                           { label: 'Total', val: liveStudents.length, color: 'text-slate-900 dark:text-white', bg: '' },
                           { label: 'Présents', val: liveStudents.filter(s => s.status === 'present').length, color: 'text-emerald-700 dark:text-emerald-400', bg: 'bg-emerald-50/50 dark:bg-emerald-950/20' },
@@ -2433,7 +2433,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       </div>
 
                       {/* Tab selector + toolbar */}
-                      <div className="px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border dark:border-border">
+                      <div className="px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border">
                         <div className="flex gap-1 p-1 bg-muted dark:bg-card rounded-2xl text-xs font-bold">
                           {([['trombi', Users, 'Trombinoscope'], ['qr', QrCode, 'QR Projecteur'], ['voice', Mic, 'Appel Vocal IA']] as const).map(([tab, Icon, label]) => (
                             <button key={tab} onClick={() => setActiveVoiceTab(tab)}
@@ -2496,7 +2496,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                             <h3 className="text-lg font-bold text-foreground dark:text-white">QR Code Projecteur</h3>
                             <p className="text-xs text-muted-foreground mt-1">Les étudiants scannent ce QR depuis l'app ENCG pour s'enregistrer instantanément</p>
                           </div>
-                          <div className="relative p-6 bg-card dark:bg-card rounded-2xl border-2 border-dashed border-primary inline-block shadow-sm mx-auto">
+                          <div className="relative p-6 bg-card rounded-2xl border-2 border-dashed border-primary inline-block shadow-sm mx-auto">
                             {liveQrToken && liveQrCountdown > 0
                               ? <QRCodeSVG value={liveQrToken} size={220} className="mx-auto rounded-xl bg-card p-2" />
                               : <div className="w-[220px] h-[220px] flex items-center justify-center text-slate-400 text-xs font-bold">Token expiré — relancez la session</div>
@@ -2523,7 +2523,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                             <h3 className="text-xl font-bold text-foreground dark:text-white">
                               {isListening ? '🎙️ En écoute...' : 'Appel Vocal IA'}
                             </h3>
-                            <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1 max-w-sm mx-auto">
+                            <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
                               {isListening
                                 ? 'Prononcez clairement les noms de famille. L\'IA coche automatiquement les absences.'
                                 : 'Cliquez sur le micro et dictez les noms des absents. L\'IA les marque dans la liste.'}
@@ -2531,12 +2531,12 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                           </div>
                           <button onClick={handleVoiceLive}
                             className={cn("flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold transition-all shadow-lg cursor-pointer mx-auto",
-                              isListening ? 'bg-rose-600 hover:bg-rose-700 text-white' : "bg-[#001A4B] hover:bg-secondary text-white"
+                              isListening ? 'bg-rose-600 hover:bg-rose-700 text-white' : "bg-[#1a3673] hover:bg-secondary text-white"
                             )}>
                             {isListening ? <><MicOff size={18} /> Arrêter</> : <><Mic size={18} /> Démarrer</>}
                           </button>
                           {voiceTranscript && (
-                            <div className="p-4 bg-muted/50 dark:bg-card rounded-2xl border border-border dark:border-border text-left">
+                            <div className="p-4 bg-muted/50 dark:bg-card rounded-2xl border border-border text-left">
                               <p className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1 mb-1"><Volume2 size={11} /> Dictée :</p>
                               <p className="text-sm text-slate-700 dark:text-foreground italic">"{voiceTranscript}"</p>
                             </div>
@@ -2545,7 +2545,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       )}
 
                       {/* ── Sticky Save Bar ── */}
-                      <div className="sticky bottom-0 z-30 border-t border-border dark:border-border bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-5 py-3 flex items-center justify-between gap-3">
+                      <div className="sticky bottom-0 z-30 border-t border-border bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-5 py-3 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2 text-xs">
                           {window.navigator.onLine
                             ? <span className="flex items-center gap-1 text-emerald-600 font-bold"><Wifi size={13} /> En ligne</span>
@@ -2629,11 +2629,11 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                           <div className="grid grid-cols-2 gap-1.5 text-[11px] mb-2">
                             <div className="bg-muted/50 dark:bg-slate-900/60 rounded-xl p-2 border border-border dark:border-slate-700/60">
                               <p className="text-slate-400 text-[9px] uppercase font-bold">CNE / Massar</p>
-                              <p className="text-foreground dark:text-foreground font-mono font-medium truncate">{s.cne || s.massar_code || '—'}</p>
+                              <p className="text-foreground font-mono font-medium truncate">{s.cne || s.massar_code || '—'}</p>
                             </div>
                             <div className="bg-muted/50 dark:bg-slate-900/60 rounded-xl p-2 border border-border dark:border-slate-700/60">
                               <p className="text-slate-400 text-[9px] uppercase font-bold">CIN</p>
-                              <p className="text-foreground dark:text-foreground font-mono font-medium truncate">{s.cin || '—'}</p>
+                              <p className="text-foreground font-mono font-medium truncate">{s.cin || '—'}</p>
                             </div>
                           </div>
 
@@ -2705,7 +2705,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-border dark:border-border bg-muted/50 dark:bg-slate-800/80">
+                      <tr className="border-b border-border bg-muted/50 dark:bg-slate-800/80">
                         <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground dark:text-foreground uppercase tracking-wider w-10">N°</th>
                         <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground dark:text-foreground uppercase tracking-wider">Matricule</th>
                         <th className="text-left px-4 py-3 text-xs font-bold text-muted-foreground dark:text-foreground uppercase tracking-wider">CNE / Massar</th>
@@ -2733,24 +2733,24 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                               'border-b transition-colors',
                               isAbsent
                                 ? 'bg-rose-50/60 dark:bg-rose-950/20 text-rose-950 dark:text-rose-200 border-rose-100 dark:border-rose-900/40 hover:bg-rose-100/60'
-                                : "border-border dark:border-slate-800/60 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 text-foreground dark:text-foreground"
+                                : "border-border dark:border-slate-800/60 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 text-foreground"
                             )}
                           >
                             <td className="px-4 py-3 text-slate-400 font-mono text-xs">{idx + 1}</td>
                             <td className="px-4 py-3">
-                              <span className="font-mono text-xs bg-muted dark:bg-card border border-border dark:border-border rounded-lg px-2 py-0.5 text-slate-700 dark:text-foreground font-bold">
+                              <span className="font-mono text-xs bg-muted dark:bg-card border border-border rounded-lg px-2 py-0.5 text-slate-700 dark:text-foreground font-bold">
                                 {s.matricule || '—'}
                               </span>
                             </td>
                             <td className="px-4 py-3">
                               <div className="flex flex-col gap-0.5">
-                                <span className="text-foreground dark:text-foreground text-xs font-mono font-medium">{s.cne || '—'}</span>
+                                <span className="text-foreground text-xs font-mono font-medium">{s.cne || '—'}</span>
                                 {s.massar_code && s.massar_code !== s.cne && (
                                   <span className="text-slate-400 text-[10px] font-mono">{s.massar_code}</span>
                                 )}
                               </div>
                             </td>
-                            <td className="px-4 py-3 text-muted-foreground dark:text-muted-foreground text-xs font-mono">{s.cin || '—'}</td>
+                            <td className="px-4 py-3 text-muted-foreground text-xs font-mono">{s.cin || '—'}</td>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2.5">
                                 <div
@@ -2811,7 +2811,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                                   onClick={() => openAnnotationEditor(s)}
                                   className={cn(
                                     'inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full border text-xs font-semibold transition-all max-w-[130px] truncate cursor-pointer',
-                                    tagStyle ? `${tagStyle.bg} ${tagStyle.text} ${tagStyle.border}` : "bg-muted dark:bg-card border-border dark:border-border text-slate-700 dark:text-foreground"
+                                    tagStyle ? `${tagStyle.bg} ${tagStyle.text} ${tagStyle.border}` : "bg-muted dark:bg-card border-border text-slate-700 dark:text-foreground"
                                   )}
                                   title={`${tagStyle?.label || 'Note'} : ${ann.text || ''}`}
                                 >
@@ -2881,8 +2881,8 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                   </table>
 
                   {/* Table Footer */}
-                  <div className="px-4 py-3 border-t border-border dark:border-border bg-muted/50 dark:bg-slate-800/50 flex items-center justify-between flex-wrap gap-2 text-xs">
-                    <p className="text-muted-foreground dark:text-muted-foreground font-medium">
+                  <div className="px-4 py-3 border-t border-border bg-muted/50 dark:bg-slate-800/50 flex items-center justify-between flex-wrap gap-2 text-xs">
+                    <p className="text-muted-foreground font-medium">
                       Affichage de <span className="text-foreground dark:text-white font-bold">{filteredStudents.length}</span> étudiant{filteredStudents.length !== 1 ? 's' : ''}
                       {searchQuery && ` (sur un total de ${students.length})`}
                       {listMode === 'subgroup' && selectedSubGroup ? ` — Sous-groupe officiel ${selectedSubGroup}` : ' — Section Complète (Amphithéâtre)'}
@@ -2905,15 +2905,15 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
       {/* ─── 5. PDF Modal (Config & Options) ─────────────────────────── */}
       {showPdfModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-lg shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between p-5 border-b border-border dark:border-border">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-lg shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between p-5 border-b border-border">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400">
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
                   <h2 className="text-foreground dark:text-white font-bold text-base">Fiche d'Émargement Officielle</h2>
-                  <p className="text-muted-foreground dark:text-muted-foreground text-xs">Format PDF A4 conforme — ENCG Fès / USMBA</p>
+                  <p className="text-muted-foreground text-xs">Format PDF A4 conforme — ENCG Fès / USMBA</p>
                 </div>
               </div>
               <button onClick={() => setShowPdfModal(false)} className="p-1 rounded-lg text-slate-400 hover:text-muted-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-slate-800 transition-colors">
@@ -2925,20 +2925,20 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
               {/* Summary info */}
               <div className="bg-muted/50 dark:bg-slate-800/60 rounded-xl p-4 space-y-2 border border-border dark:border-slate-700/60">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground dark:text-muted-foreground text-xs">Section / Groupe</span>
+                  <span className="text-muted-foreground text-xs">Section / Groupe</span>
                   <span className="text-foreground dark:text-white font-semibold text-xs">{selectedSection?.group_code} — {selectedSection?.filiere_name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground dark:text-muted-foreground text-xs">Format d'enseignement</span>
+                  <span className="text-muted-foreground text-xs">Format d'enseignement</span>
                   <span className="text-foreground dark:text-white font-semibold text-xs">{listMode === 'section' ? 'Cours Magistral (Amphi)' : `TD — Sous-groupe ${selectedSubGroup}`}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground dark:text-muted-foreground text-xs">Effectif à exporter</span>
+                  <span className="text-muted-foreground text-xs">Effectif à exporter</span>
                   <span className="text-emerald-600 dark:text-emerald-400 font-bold text-xs">{students.length} étudiants</span>
                 </div>
                 {absentIds.size > 0 && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground dark:text-muted-foreground text-xs">Absents actuels ({selectedSeance})</span>
+                    <span className="text-muted-foreground text-xs">Absents actuels ({selectedSeance})</span>
                     <span className="text-rose-600 dark:text-rose-400 font-bold text-xs">{absentIds.size} absent(s) marqués</span>
                   </div>
                 )}
@@ -2946,7 +2946,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
               {/* Mode picker */}
               <div>
-                <p className="text-xs text-muted-foreground dark:text-muted-foreground uppercase font-bold tracking-wider mb-2.5">Type de document</p>
+                <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-2.5">Type de document</p>
                 <div className="grid grid-cols-2 gap-3">
                   <PdfModeCard
                     active={pdfMode === 'emargement'}
@@ -2967,20 +2967,20 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
               {/* Orientation picker */}
               <div>
-                <p className="text-xs text-muted-foreground dark:text-muted-foreground uppercase font-bold tracking-wider mb-2.5">Orientation A4</p>
+                <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-2.5">Orientation A4</p>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => setPdfOrientation('portrait')}
                     className={cn(
                       'flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer',
                       pdfOrientation === 'portrait'
-                        ? 'bg-blue-50/80 dark:bg-emerald-600/15 border-[#001A4B] dark:border-emerald-500/60 ring-1 ring-[#001A4B]/20 dark:ring-emerald-500/40'
-                        : "bg-card dark:bg-slate-800/60 border-border dark:border-border hover:border-slate-300"
+                        ? 'bg-blue-50/80 dark:bg-emerald-600/15 border-[#1a3673] dark:border-emerald-500/60 ring-1 ring-[#1a3673]/20 dark:ring-emerald-500/40'
+                        : "bg-card dark:bg-slate-800/60 border-border hover:border-slate-300"
                     )}
                   >
-                    <div className={cn('w-6 h-8 rounded border-2 flex-shrink-0', pdfOrientation === 'portrait' ? 'border-[#001A4B] dark:border-emerald-400' : "border-slate-400 dark:border-border")} />
+                    <div className={cn('w-6 h-8 rounded border-2 flex-shrink-0', pdfOrientation === 'portrait' ? 'border-[#1a3673] dark:border-emerald-400' : "border-slate-400 dark:border-border")} />
                     <div className="text-left">
-                      <p className={cn('text-xs font-bold', pdfOrientation === 'portrait' ? 'text-[#001A4B] dark:text-white' : "text-slate-700 dark:text-foreground")}>Portrait</p>
+                      <p className={cn('text-xs font-bold', pdfOrientation === 'portrait' ? 'text-[#1a3673] dark:text-white' : "text-slate-700 dark:text-foreground")}>Portrait</p>
                       <p className="text-[11px] text-muted-foreground">Vertical (Standard)</p>
                     </div>
                   </button>
@@ -2990,13 +2990,13 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                     className={cn(
                       'flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer',
                       pdfOrientation === 'paysage'
-                        ? 'bg-blue-50/80 dark:bg-emerald-600/15 border-[#001A4B] dark:border-emerald-500/60 ring-1 ring-[#001A4B]/20 dark:ring-emerald-500/40'
-                        : "bg-card dark:bg-slate-800/60 border-border dark:border-border hover:border-slate-300"
+                        ? 'bg-blue-50/80 dark:bg-emerald-600/15 border-[#1a3673] dark:border-emerald-500/60 ring-1 ring-[#1a3673]/20 dark:ring-emerald-500/40'
+                        : "bg-card dark:bg-slate-800/60 border-border hover:border-slate-300"
                     )}
                   >
-                    <div className={cn('w-8 h-6 rounded border-2 flex-shrink-0', pdfOrientation === 'paysage' ? 'border-[#001A4B] dark:border-emerald-400' : "border-slate-400 dark:border-border")} />
+                    <div className={cn('w-8 h-6 rounded border-2 flex-shrink-0', pdfOrientation === 'paysage' ? 'border-[#1a3673] dark:border-emerald-400' : "border-slate-400 dark:border-border")} />
                     <div className="text-left">
-                      <p className={cn('text-xs font-bold', pdfOrientation === 'paysage' ? 'text-[#001A4B] dark:text-white' : "text-slate-700 dark:text-foreground")}>Paysage</p>
+                      <p className={cn('text-xs font-bold', pdfOrientation === 'paysage' ? 'text-[#1a3673] dark:text-white' : "text-slate-700 dark:text-foreground")}>Paysage</p>
                       <p className="text-[11px] text-muted-foreground">Horizontal (Idéal grille)</p>
                     </div>
                   </button>
@@ -3004,7 +3004,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
               </div>
             </div>
 
-            <div className="flex items-center justify-between p-5 border-t border-border dark:border-border bg-slate-50/50 dark:bg-slate-900/90">
+            <div className="flex items-center justify-between p-5 border-t border-border bg-slate-50/50 dark:bg-slate-900/90">
               <button
                 onClick={() => {
                   setShowPdfModal(false);
@@ -3026,7 +3026,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 <button
                   onClick={handleDownloadPdf}
                   disabled={downloadingPdf}
-                  className="flex items-center gap-2 px-5 py-2 rounded-xl bg-[#001A4B] hover:bg-[#082663] dark:bg-gradient-to-r dark:from-emerald-600 dark:to-teal-600 text-white text-xs font-bold transition-all shadow-md disabled:opacity-60 cursor-pointer"
+                  className="flex items-center gap-2 px-5 py-2 rounded-xl bg-[#1a3673] hover:bg-[#082663] dark:bg-gradient-to-r dark:from-emerald-600 dark:to-teal-600 text-white text-xs font-bold transition-all shadow-md disabled:opacity-60 cursor-pointer"
                 >
                   {downloadingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 text-amber-300" />}
                   <span>Télécharger PDF</span>
@@ -3102,15 +3102,15 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
       {/* ─── 6. WhatsApp Share Modal ─────────────────────────────────── */}
       {showWhatsAppModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-lg shadow-sm overflow-hidden">
-            <div className="flex items-center justify-between p-5 border-b border-border dark:border-border">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-lg shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between p-5 border-b border-border">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
                   <MessageCircle className="w-5 h-5" />
                 </div>
                 <div>
                   <h2 className="text-foreground dark:text-white font-bold text-base">Partage Rapport WhatsApp</h2>
-                  <p className="text-muted-foreground dark:text-muted-foreground text-xs">Transmission immédiate aux délégués ou à la scolarité</p>
+                  <p className="text-muted-foreground text-xs">Transmission immédiate aux délégués ou à la scolarité</p>
                 </div>
               </div>
               <button onClick={() => setShowWhatsAppModal(false)} className="p-1 rounded-lg text-slate-400 hover:text-muted-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-slate-800 transition-colors">
@@ -3121,7 +3121,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
             <div className="p-5 space-y-4 text-sm">
               {/* Format selection */}
               <div>
-                <label className="block text-xs text-muted-foreground dark:text-muted-foreground uppercase font-bold tracking-wider mb-2">
+                <label className="block text-xs text-muted-foreground uppercase font-bold tracking-wider mb-2">
                   Format du rapport
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -3131,7 +3131,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       'p-3.5 rounded-xl border text-left transition-all cursor-pointer',
                       whatsAppType === 'absents_only'
                         ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-500 text-emerald-950 dark:text-white ring-1 ring-emerald-500/40'
-                        : "bg-card dark:bg-slate-800/60 border-border dark:border-border text-muted-foreground dark:text-muted-foreground hover:border-slate-300"
+                        : "bg-card dark:bg-slate-800/60 border-border text-muted-foreground hover:border-slate-300"
                     )}
                   >
                     <p className="font-bold text-xs text-foreground dark:text-white">Rapport des Absents</p>
@@ -3144,7 +3144,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       'p-3.5 rounded-xl border text-left transition-all cursor-pointer',
                       whatsAppType === 'full_roster'
                         ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-500 text-emerald-950 dark:text-white ring-1 ring-emerald-500/40'
-                        : "bg-card dark:bg-slate-800/60 border-border dark:border-border text-muted-foreground dark:text-muted-foreground hover:border-slate-300"
+                        : "bg-card dark:bg-slate-800/60 border-border text-muted-foreground hover:border-slate-300"
                     )}
                   >
                     <p className="font-bold text-xs text-foreground dark:text-white">Appel Complet</p>
@@ -3155,19 +3155,19 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
               {/* Message preview */}
               <div>
-                <label className="block text-xs text-muted-foreground dark:text-muted-foreground uppercase font-bold tracking-wider mb-1.5">
+                <label className="block text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1.5">
                   Aperçu du message formaté
                 </label>
-                <div className="bg-muted/50 dark:bg-background border border-border dark:border-border rounded-xl p-3 text-xs font-mono text-foreground dark:text-foreground max-h-52 overflow-y-auto whitespace-pre-wrap select-all">
+                <div className="bg-muted/50 dark:bg-background border border-border rounded-xl p-3 text-xs font-mono text-foreground max-h-52 overflow-y-auto whitespace-pre-wrap select-all">
                   {generatedWhatsAppText}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-between p-5 border-t border-border dark:border-border bg-slate-50/50 dark:bg-slate-900/90">
+            <div className="flex items-center justify-between p-5 border-t border-border bg-slate-50/50 dark:bg-slate-900/90">
               <button
                 onClick={handleCopyWhatsApp}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-card dark:bg-card hover:bg-muted dark:hover:bg-slate-700 border border-border dark:border-border text-slate-700 dark:text-foreground text-xs font-bold transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-card hover:bg-muted dark:hover:bg-slate-700 border border-border text-slate-700 dark:text-foreground text-xs font-bold transition-colors cursor-pointer"
               >
                 <Copy className="w-3.5 h-3.5 text-primary dark:text-sky-400" />
                 <span>Copier le texte</span>
@@ -3196,15 +3196,15 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
       {/* ─── 3. Annotation Editor Modal ─────────────────────────────── */}
       {editingStudentId !== null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-md shadow-sm p-5 space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-border dark:border-border">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-md shadow-sm p-5 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
                   <Tag className="w-4 h-4" />
                 </div>
                 <div>
                   <h3 className="text-foreground dark:text-white font-bold text-sm">Annotation Étudiant</h3>
-                  <p className="text-muted-foreground dark:text-muted-foreground text-xs">Séance {selectedSeance} — {seanceDate}</p>
+                  <p className="text-muted-foreground text-xs">Séance {selectedSeance} — {seanceDate}</p>
                 </div>
               </div>
               <button onClick={() => setEditingStudentId(null)} className="p-1 rounded-lg text-slate-400 hover:text-muted-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-slate-800">
@@ -3214,7 +3214,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
             {/* Tag Quick Select */}
             <div>
-              <label className="block text-xs text-muted-foreground dark:text-muted-foreground uppercase font-bold tracking-wider mb-2">
+              <label className="block text-xs text-muted-foreground uppercase font-bold tracking-wider mb-2">
                 Catégorie rapide
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -3227,7 +3227,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       'px-2.5 py-1.5 rounded-lg border text-xs font-bold transition-all text-center cursor-pointer',
                       editNoteTag === t
                         ? `${cfg.bg} ${cfg.text} ${cfg.border} ring-1 ring-amber-500/40`
-                        : "bg-card dark:bg-card border-border dark:border-border text-muted-foreground dark:text-muted-foreground hover:border-slate-300"
+                        : "bg-card border-border text-muted-foreground hover:border-slate-300"
                     )}
                   >
                     {cfg.label}
@@ -3238,7 +3238,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
             {/* Note text */}
             <div>
-              <label className="block text-xs text-muted-foreground dark:text-muted-foreground uppercase font-bold tracking-wider mb-1.5">
+              <label className="block text-xs text-muted-foreground uppercase font-bold tracking-wider mb-1.5">
                 Remarque ou motif (justificatif, retard…)
               </label>
               <textarea
@@ -3246,12 +3246,12 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 value={editNoteText}
                 onChange={e => setEditNoteText(e.target.value)}
                 placeholder="Ex: Certificat médical déposé, retard de 20min autorisé, dispense exceptionnelle…"
-                className="w-full bg-muted/50 dark:bg-card border border-border dark:border-border p-3 text-xs text-foreground dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-amber-500 rounded-[var(--control-radius)]"
+                className="w-full bg-muted/50 dark:bg-card border border-border p-3 text-xs text-foreground dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-amber-500 rounded-[var(--control-radius)]"
               />
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-between pt-2 border-t border-border dark:border-border">
+            <div className="flex items-center justify-between pt-2 border-t border-border">
               {annotations[editingStudentId] ? (
                 <button
                   type="button"
@@ -3286,8 +3286,8 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
       {/* ─── 7. Individual Student Sheet Modal (Export Individuel) ───── */}
       {individualStudent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-2xl shadow-sm overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between p-5 border-b border-border dark:border-border bg-card dark:bg-card">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-2xl shadow-sm overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between p-5 border-b border-border bg-card">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400">
                   <FileText className="w-5 h-5" />
@@ -3296,7 +3296,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                   <h2 className="text-foreground dark:text-white font-bold text-sm">
                     Fiche Individuelle d'Émargement & Rattrapage
                   </h2>
-                  <p className="text-muted-foreground dark:text-muted-foreground text-xs">
+                  <p className="text-muted-foreground text-xs">
                     {(individualStudent.last_name || '').toUpperCase()} {individualStudent.first_name} — Matricule: {individualStudent.matricule || '—'}
                   </p>
                 </div>
@@ -3320,42 +3320,42 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
             </div>
 
             {/* Printable Document Area */}
-            <div id="individual-printable-sheet" className="p-6 overflow-y-auto bg-muted/50 dark:bg-slate-950/60 text-foreground dark:text-foreground space-y-5">
+            <div id="individual-printable-sheet" className="p-6 overflow-y-auto bg-muted/50 dark:bg-slate-950/60 text-foreground space-y-5">
               {/* Document Header (ENCG Fès Style) */}
-              <div className="text-center pb-4 border-b border-border dark:border-border">
-                <p className="text-xs uppercase tracking-widest text-muted-foreground dark:text-muted-foreground font-bold">Royaume du Maroc</p>
+              <div className="text-center pb-4 border-b border-border">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground font-bold">Royaume du Maroc</p>
                 <p className="text-xs text-muted-foreground dark:text-foreground font-medium">Université Sidi Mohamed Ben Abdellah — Fès</p>
-                <h3 className="text-sm font-bold text-[#001A4B] dark:text-emerald-400 mt-1">
+                <h3 className="text-sm font-bold text-[#1a3673] dark:text-emerald-400 mt-1">
                   École Nationale de Commerce et de Gestion de Fès
                 </h3>
-                <div className="inline-block mt-2 px-3 py-1 rounded-full bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-[#001A4B] dark:text-white uppercase tracking-wider shadow-2xs">
+                <div className="inline-block mt-2 px-3 py-1 rounded-full bg-card border border-border text-xs font-bold text-[#1a3673] dark:text-white uppercase tracking-wider shadow-2xs">
                   Fiche Individuelle de Présence & d'Émargement
                 </div>
               </div>
 
               {/* Student & Course Details */}
               <div className="grid grid-cols-2 gap-4 text-xs">
-                <div className="bg-card dark:bg-slate-900/90 border border-border dark:border-border rounded-xl p-3.5 space-y-2 shadow-2xs">
+                <div className="bg-card dark:bg-slate-900/90 border border-border rounded-xl p-3.5 space-y-2 shadow-2xs">
                   <p className="text-[11px] uppercase tracking-wider font-bold text-emerald-600 dark:text-emerald-400 mb-1">Identité Étudiant</p>
-                  <div><span className="text-muted-foreground dark:text-muted-foreground">Nom & Prénom :</span> <span className="text-foreground dark:text-white font-bold">{(individualStudent.last_name || '').toUpperCase()} {individualStudent.first_name}</span></div>
-                  <div><span className="text-muted-foreground dark:text-muted-foreground">Matricule :</span> <span className="text-foreground dark:text-white font-mono font-bold">{individualStudent.matricule || '—'}</span></div>
-                  <div><span className="text-muted-foreground dark:text-muted-foreground">CNE / Massar :</span> <span className="text-foreground dark:text-white font-mono">{individualStudent.cne || individualStudent.massar_code || '—'}</span></div>
-                  <div><span className="text-muted-foreground dark:text-muted-foreground">CIN :</span> <span className="text-foreground dark:text-white font-mono">{individualStudent.cin || '—'}</span></div>
+                  <div><span className="text-muted-foreground">Nom & Prénom :</span> <span className="text-foreground dark:text-white font-bold">{(individualStudent.last_name || '').toUpperCase()} {individualStudent.first_name}</span></div>
+                  <div><span className="text-muted-foreground">Matricule :</span> <span className="text-foreground dark:text-white font-mono font-bold">{individualStudent.matricule || '—'}</span></div>
+                  <div><span className="text-muted-foreground">CNE / Massar :</span> <span className="text-foreground dark:text-white font-mono">{individualStudent.cne || individualStudent.massar_code || '—'}</span></div>
+                  <div><span className="text-muted-foreground">CIN :</span> <span className="text-foreground dark:text-white font-mono">{individualStudent.cin || '—'}</span></div>
                 </div>
 
-                <div className="bg-card dark:bg-slate-900/90 border border-border dark:border-border rounded-xl p-3.5 space-y-2 shadow-2xs">
+                <div className="bg-card dark:bg-slate-900/90 border border-border rounded-xl p-3.5 space-y-2 shadow-2xs">
                   <p className="text-[11px] uppercase tracking-wider font-bold text-emerald-600 dark:text-emerald-400 mb-1">Affectation Pédagogique</p>
-                  <div><span className="text-muted-foreground dark:text-muted-foreground">Module :</span> <span className="text-foreground dark:text-white font-semibold">{selectedModule?.module_code} — {selectedModule?.module_name}</span></div>
-                  <div><span className="text-muted-foreground dark:text-muted-foreground">Section :</span> <span className="text-foreground dark:text-white font-medium">{selectedSection?.group_code} ({selectedSection?.filiere_name})</span></div>
-                  <div><span className="text-muted-foreground dark:text-muted-foreground">Sous-groupe TD :</span> <span className="text-foreground dark:text-white font-medium">{individualStudent.sub_group || selectedSubGroup || 'Section Complète'}</span></div>
-                  <div><span className="text-muted-foreground dark:text-muted-foreground">Enseignant :</span> <span className="text-foreground dark:text-white font-medium">Pr. {profName || 'ENCG Fès'}</span></div>
+                  <div><span className="text-muted-foreground">Module :</span> <span className="text-foreground dark:text-white font-semibold">{selectedModule?.module_code} — {selectedModule?.module_name}</span></div>
+                  <div><span className="text-muted-foreground">Section :</span> <span className="text-foreground dark:text-white font-medium">{selectedSection?.group_code} ({selectedSection?.filiere_name})</span></div>
+                  <div><span className="text-muted-foreground">Sous-groupe TD :</span> <span className="text-foreground dark:text-white font-medium">{individualStudent.sub_group || selectedSubGroup || 'Section Complète'}</span></div>
+                  <div><span className="text-muted-foreground">Enseignant :</span> <span className="text-foreground dark:text-white font-medium">Pr. {profName || 'ENCG Fès'}</span></div>
                 </div>
               </div>
 
               {/* Status on current session */}
-              <div className="bg-card dark:bg-slate-900/70 border border-border dark:border-border rounded-xl p-4 flex items-center justify-between shadow-2xs">
+              <div className="bg-card dark:bg-slate-900/70 border border-border rounded-xl p-4 flex items-center justify-between shadow-2xs">
                 <div>
-                  <p className="text-xs text-muted-foreground dark:text-muted-foreground">Statut actuel ({selectedSeance} — {seanceDate}) :</p>
+                  <p className="text-xs text-muted-foreground">Statut actuel ({selectedSeance} — {seanceDate}) :</p>
                   <p className="text-sm font-bold mt-0.5">
                     {absentIds.has(individualStudent.id) ? (
                       <span className="text-rose-600 dark:text-rose-400">❌ Absent non justifié</span>
@@ -3382,7 +3382,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                     const isPassed = !!seanceData;
 
                     return (
-                      <div key={s} className="border border-border dark:border-border bg-card dark:bg-slate-900/80 rounded-xl p-2 flex flex-col justify-between h-20 shadow-2xs">
+                      <div key={s} className="border border-border bg-card dark:bg-slate-900/80 rounded-xl p-2 flex flex-col justify-between h-20 shadow-2xs">
                         <span className="font-bold text-slate-700 dark:text-foreground">{s}</span>
                         <div className="text-[10px]">
                           {isPassed ? (
@@ -3401,19 +3401,19 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
               </div>
 
               {/* Signatures & Seal Zone */}
-              <div className="pt-4 border-t border-border dark:border-border grid grid-cols-2 gap-8 text-xs text-center">
+              <div className="pt-4 border-t border-border grid grid-cols-2 gap-8 text-xs text-center">
                 <div>
-                  <p className="font-bold text-muted-foreground dark:text-muted-foreground mb-10">Signature de l'Étudiant(e)</p>
+                  <p className="font-bold text-muted-foreground mb-10">Signature de l'Étudiant(e)</p>
                   <p className="text-[10px] text-slate-400 dark:text-slate-500">Précédé de la mention « Lu et approuvé »</p>
                 </div>
                 <div>
-                  <p className="font-bold text-muted-foreground dark:text-muted-foreground mb-10">Visa & Cachet de l'Enseignant</p>
+                  <p className="font-bold text-muted-foreground mb-10">Visa & Cachet de l'Enseignant</p>
                   <p className="text-[10px] text-slate-400 dark:text-slate-500">Fait à Fès, le {seanceDate}</p>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 border-t border-border dark:border-border bg-slate-50/50 dark:bg-slate-900/90 flex justify-end">
+            <div className="p-4 border-t border-border bg-slate-50/50 dark:bg-slate-900/90 flex justify-end">
               <button
                 onClick={() => setIndividualStudent(null)}
                 className="px-4 py-2 rounded-xl bg-muted hover:bg-slate-200 dark:bg-card dark:hover:bg-slate-700 text-slate-700 dark:text-foreground text-xs font-bold transition-colors cursor-pointer"
@@ -3428,16 +3428,16 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
       {/* ─── Modal: Save to DB & Sync Textbook ─────────────────────────── */}
       {showSaveModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="relative w-full max-w-xl bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
+          <div className="relative w-full max-w-xl bg-card border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
             {/* Header */}
-            <div className="p-5 border-b border-border dark:border-border bg-card dark:bg-slate-900/90 flex items-center justify-between">
+            <div className="p-5 border-b border-border bg-card dark:bg-slate-900/90 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
                   <BookOpen className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-foreground dark:text-white">Enregistrement & Synergie Pédagogique</h3>
-                  <p className="text-xs text-muted-foreground dark:text-muted-foreground">Sauvegarde de la présence et liaison avec le Cahier de Texte</p>
+                  <p className="text-xs text-muted-foreground">Sauvegarde de la présence et liaison avec le Cahier de Texte</p>
                 </div>
               </div>
               <button
@@ -3451,27 +3451,27 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
             {/* Body */}
             <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
               {/* Session Recap */}
-              <div className="bg-muted/50 dark:bg-slate-950/60 border border-border dark:border-border rounded-xl p-4 space-y-2">
+              <div className="bg-muted/50 dark:bg-slate-950/60 border border-border rounded-xl p-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground dark:text-muted-foreground">Séance & Date :</span>
+                  <span className="text-xs text-muted-foreground">Séance & Date :</span>
                   <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2 py-0.5 rounded">
                     {selectedSeance} • {seanceDate}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground dark:text-muted-foreground">Module :</span>
+                  <span className="text-xs text-muted-foreground">Module :</span>
                   <span className="text-xs font-bold text-foreground dark:text-white truncate max-w-[280px]">
                     {selectedModule?.module_code} - {selectedModule?.module_name}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground dark:text-muted-foreground">Groupe / Section :</span>
+                  <span className="text-xs text-muted-foreground">Groupe / Section :</span>
                   <span className="text-xs font-semibold text-slate-700 dark:text-foreground">
                     {selectedSection?.group_code} {listMode === 'subgroup' && selectedSubGroup ? `(${selectedSubGroup})` : ''}
                   </span>
                 </div>
                 <div className="flex items-center justify-between pt-1 border-t border-border dark:border-slate-800/80">
-                  <span className="text-xs text-muted-foreground dark:text-muted-foreground">Effectif présent :</span>
+                  <span className="text-xs text-muted-foreground">Effectif présent :</span>
                   <span className="text-xs font-bold text-foreground dark:text-white">
                     {students.length - absentIds.size} / {students.length} ({absentIds.size} absent{absentIds.size > 1 ? 's' : ''})
                   </span>
@@ -3483,20 +3483,20 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 'rounded-xl border p-4 transition-all',
                 syncTextbook
                   ? 'bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-500/40 ring-1 ring-emerald-500/20'
-                  : "bg-muted/50 dark:bg-slate-950/40 border-border dark:border-border"
+                  : "bg-muted/50 dark:bg-slate-950/40 border-border"
               )}>
                 <label className="flex items-start gap-3 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={syncTextbook}
                     onChange={(e) => setSyncTextbook(e.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-slate-300 dark:border-border bg-card dark:bg-card text-emerald-600 focus:ring-emerald-400 cursor-pointer"
+                    className="mt-1 h-4 w-4 rounded border-slate-300 dark:border-border bg-card text-emerald-600 focus:ring-emerald-400 cursor-pointer"
                   />
                   <div className="flex-1">
                     <p className="text-sm font-bold text-foreground dark:text-white">
                       Enregistrer en même temps dans le Cahier de Texte Numérique
                     </p>
-                    <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5 leading-relaxed">
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
                       Crée automatiquement une séance de 2.0h avec statut « Réalisé » dans votre cahier de texte officiel ENCG Fès.
                     </p>
                   </div>
@@ -3530,7 +3530,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                         value={customChapterTitle}
                         onChange={(e) => setCustomChapterTitle(e.target.value)}
                         placeholder={`Ex: Séance ${selectedSeance} — Concepts fondamentaux & Études de cas`}
-                        className="w-full bg-card dark:bg-card border border-border dark:border-border px-3 py-2 text-xs text-foreground dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-[var(--control-radius)]"
+                        className="w-full bg-card border border-border px-3 py-2 text-xs text-foreground dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-[var(--control-radius)]"
                       />
                     </div>
 
@@ -3543,7 +3543,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                         value={customKeyConcepts}
                         onChange={(e) => setCustomKeyConcepts(e.target.value)}
                         placeholder="Ex: Présentation du cours magistral, exercices d'application en sous-groupes..."
-                        className="w-full bg-card dark:bg-card border border-border dark:border-border px-3 py-2 text-xs text-foreground dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 resize-none rounded-[var(--control-radius)]"
+                        className="w-full bg-card border border-border px-3 py-2 text-xs text-foreground dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 resize-none rounded-[var(--control-radius)]"
                       />
                     </div>
                   </div>
@@ -3552,7 +3552,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-border dark:border-border bg-slate-50/50 dark:bg-slate-900/90 flex items-center justify-end gap-3">
+            <div className="p-4 border-t border-border bg-slate-50/50 dark:bg-slate-900/90 flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setShowSaveModal(false)}
@@ -3578,9 +3578,9 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
       {/* ─── Modal: AI Attendance Risk & Early Warning ─────────────────── */}
       {showRiskModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="relative w-full max-w-2xl bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm overflow-hidden flex flex-col max-h-[85vh]">
+          <div className="relative w-full max-w-2xl bg-card border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col max-h-[85vh]">
             {/* Header */}
-            <div className="p-5 border-b border-border dark:border-border bg-card dark:bg-slate-900/90 flex items-center justify-between">
+            <div className="p-5 border-b border-border bg-card dark:bg-slate-900/90 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
                   <Sparkles className="w-5 h-5" />
@@ -3590,7 +3590,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                     <span>Détection Prédictive Décrochage & Risque d'Absence (IA)</span>
                     <span className="text-[10px] bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-300 dark:border-amber-500/30 px-2 py-0.5 rounded-full font-bold">Art. 14 ENCG Fès</span>
                   </h3>
-                  <p className="text-xs text-muted-foreground dark:text-muted-foreground">Analyse de conformité réglementaire LMD & Alerte d'assiduité précoce</p>
+                  <p className="text-xs text-muted-foreground">Analyse de conformité réglementaire LMD & Alerte d'assiduité précoce</p>
                 </div>
               </div>
               <button
@@ -3663,9 +3663,9 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                         ✅ Aucun étudiant en situation critique d'exclusion pour ce groupe.
                       </div>
                     ) : (
-                      <div className="border border-border dark:border-border rounded-xl overflow-hidden shadow-2xs">
+                      <div className="border border-border rounded-xl overflow-hidden shadow-2xs">
                         <table className="w-full text-left text-xs">
-                          <thead className="bg-muted/50 dark:bg-slate-800/80 text-muted-foreground dark:text-muted-foreground font-bold uppercase text-[10px]">
+                          <thead className="bg-muted/50 dark:bg-slate-800/80 text-muted-foreground font-bold uppercase text-[10px]">
                             <tr>
                               <th className="p-2.5">Étudiant(e)</th>
                               <th className="p-2.5">Matricule / CNE</th>
@@ -3678,7 +3678,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                             {riskData.critical_students.map((st: any) => (
                               <tr key={st.id} className="hover:bg-muted/50 dark:hover:bg-slate-800/40 transition-colors">
                                 <td className="p-2.5 font-bold text-foreground dark:text-white">{st.name}</td>
-                                <td className="p-2.5 text-muted-foreground dark:text-muted-foreground font-mono text-[11px]">{st.matricule} • {st.cne}</td>
+                                <td className="p-2.5 text-muted-foreground font-mono text-[11px]">{st.matricule} • {st.cne}</td>
                                 <td className="p-2.5 text-center font-bold text-rose-600 dark:text-rose-400">{st.unexcused_absences} séance{st.unexcused_absences > 1 ? 's' : ''}</td>
                                 <td className="p-2.5 text-center font-bold text-foreground dark:text-white">{st.attendance_rate}%</td>
                                 <td className="p-2.5">
@@ -3696,7 +3696,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
                   {/* AI Recommendations */}
                   {riskData.ai_recommendations?.length > 0 && (
-                    <div className="bg-muted/50 dark:bg-slate-950/60 border border-border dark:border-border rounded-xl p-4 space-y-2">
+                    <div className="bg-muted/50 dark:bg-slate-950/60 border border-border rounded-xl p-4 space-y-2">
                       <div className="text-xs font-bold text-amber-600 dark:text-amber-300 uppercase tracking-wider">
                         💡 Recommandations Opérationnelles du Modèle IA :
                       </div>
@@ -3716,7 +3716,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-border dark:border-border bg-slate-50/50 dark:bg-slate-900/90 flex items-center justify-between">
+            <div className="p-4 border-t border-border bg-slate-50/50 dark:bg-slate-900/90 flex items-center justify-between">
               <span className="text-[11px] text-slate-400 font-medium">Conforme à la Charte des Études ENCG Fès</span>
               <button
                 type="button"
@@ -3733,9 +3733,9 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
       {/* ─── Solution 3: Dynamic Live QR Code Check-in Modal (Amphi & Salle) ───── */}
       {showLiveQrModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in">
-          <div className="relative w-full max-w-3xl bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm overflow-hidden flex flex-col max-h-[92vh]">
+          <div className="relative w-full max-w-3xl bg-card border border-border rounded-2xl shadow-sm overflow-hidden flex flex-col max-h-[92vh]">
             {/* Modal Header */}
-            <div className="p-5 border-b border-border dark:border-border bg-card dark:bg-card flex items-center justify-between">
+            <div className="p-5 border-b border-border bg-card flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-md shadow-emerald-500/20">
                   <Smartphone className="w-5 h-5" />
@@ -3749,7 +3749,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       Séance {selectedSeance}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground dark:text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     Les étudiants scannent ce QR Code avec leur smartphone pour pointer leur présence en direct.
                   </p>
                 </div>
@@ -3788,7 +3788,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
               {/* Dynamic QR Display & Live Metrics */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                 {/* QR Code Centerpiece */}
-                <div className="flex flex-col items-center justify-center p-6 bg-muted/50 dark:bg-background border border-border dark:border-border rounded-2xl relative shadow-inner">
+                <div className="flex flex-col items-center justify-center p-6 bg-muted/50 dark:bg-background border border-border rounded-2xl relative shadow-inner">
                   <div className="p-4 bg-card rounded-2xl shadow-lg border border-border">
                     <QRCodeSVG
                       value={qrPayloadUrl}
@@ -3821,7 +3821,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       <span className="text-3xl font-bold text-foreground dark:text-white">
                         {students.length - absentIds.size + qrCheckedInIds.size}
                       </span>
-                      <span className="text-sm font-semibold text-muted-foreground dark:text-muted-foreground">
+                      <span className="text-sm font-semibold text-muted-foreground">
                         / {students.length} étudiants ({Math.round(((students.length - absentIds.size + qrCheckedInIds.size) / Math.max(1, students.length)) * 100)}%)
                       </span>
                     </div>
@@ -3867,8 +3867,8 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-border dark:border-border bg-slate-50/50 dark:bg-slate-900/90 flex items-center justify-between">
-              <span className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">
+            <div className="p-4 border-t border-border bg-slate-50/50 dark:bg-slate-900/90 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground font-medium">
                 {qrCheckedInIds.size} pointage(s) live effectué(s) pendant cette session
               </span>
 
@@ -3897,7 +3897,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
       {/* ─── Modal: Séance de Rattrapage & Appel des Absents ──────────── */}
       {showRattrapageModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
-          <div className="relative w-full max-w-4xl bg-card dark:bg-card border border-purple-200 dark:border-purple-900/60 rounded-2xl shadow-sm overflow-hidden flex flex-col max-h-[92vh]">
+          <div className="relative w-full max-w-4xl bg-card border border-purple-200 dark:border-purple-900/60 rounded-2xl shadow-sm overflow-hidden flex flex-col max-h-[92vh]">
 
             {/* Header */}
             <div className="p-5 border-b border-purple-100 dark:border-purple-950/60 bg-gradient-to-r from-purple-50 via-indigo-50/50 to-white dark:from-purple-950/30 dark:via-slate-900 dark:to-slate-900 flex items-center justify-between gap-3">
@@ -3914,7 +3914,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       Régularisation Officielle
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5">
+                  <p className="text-xs text-muted-foreground mt-0.5">
                     Séance d'origine : <strong className="text-purple-700 dark:text-purple-300">{rattrapageTargetSeance}</strong> • {selectedModule?.module_name || 'Module'} ({selectedSection?.group_code || 'Groupe'})
                   </p>
                 </div>
@@ -3922,7 +3922,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
               {/* Quick Séance Selector & Close */}
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1.5 bg-card dark:bg-card border border-border dark:border-border rounded-xl px-2 py-1 text-xs font-bold">
+                <div className="flex items-center gap-1.5 bg-card border border-border rounded-xl px-2 py-1 text-xs font-bold">
                   <span className="text-slate-400 text-[11px]">Cible :</span>
                   <select
                     value={rattrapageTargetSeance}
@@ -3930,7 +3930,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                     className="bg-transparent text-purple-700 dark:text-purple-300 font-bold focus:outline-none cursor-pointer rounded-[var(--control-radius)]"
                   >
                     {SEANCES.map(s => (
-                      <option key={s} value={s} className="bg-card dark:bg-card text-foreground dark:text-white">
+                      <option key={s} value={s} className="bg-card text-foreground dark:text-white">
                         {s} ({seanceStore[s]?.absentIds?.length ?? 0} abs.)
                       </option>
                     ))}
@@ -3948,21 +3948,21 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
             </div>
 
             {/* Sub-Header & Metadata Configuration Ribbon */}
-            <div className="p-4 bg-slate-50/80 dark:bg-slate-900/60 border-b border-border dark:border-border grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="p-4 bg-slate-50/80 dark:bg-slate-900/60 border-b border-border grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <div>
-                <label className="block text-[11px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
                   Date du Rattrapage
                 </label>
                 <input
                   type="date"
                   value={rattrapageDate}
                   onChange={e => setRattrapageDate(e.target.value)}
-                  className="w-full bg-card dark:bg-card border border-border dark:border-border px-3 py-1.5 text-xs text-foreground dark:text-white font-bold focus:outline-none focus:border-purple-500 rounded-[var(--control-radius)]"
+                  className="w-full bg-card border border-border px-3 py-1.5 text-xs text-foreground dark:text-white font-bold focus:outline-none focus:border-purple-500 rounded-[var(--control-radius)]"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
                   Créneau Horaire
                 </label>
                 <input
@@ -3970,12 +3970,12 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                   value={rattrapageTime}
                   onChange={e => setRattrapageTime(e.target.value)}
                   placeholder="ex: 14:00 - 16:00"
-                  className="w-full bg-card dark:bg-card border border-border dark:border-border px-3 py-1.5 text-xs text-foreground dark:text-white font-bold focus:outline-none focus:border-purple-500 rounded-[var(--control-radius)]"
+                  className="w-full bg-card border border-border px-3 py-1.5 text-xs text-foreground dark:text-white font-bold focus:outline-none focus:border-purple-500 rounded-[var(--control-radius)]"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
                   Salle / Local
                 </label>
                 <input
@@ -3983,12 +3983,12 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                   value={rattrapageRoom}
                   onChange={e => setRattrapageRoom(e.target.value)}
                   placeholder="ex: Salle 14 ou Amphi 2"
-                  className="w-full bg-card dark:bg-card border border-border dark:border-border px-3 py-1.5 text-xs text-foreground dark:text-white font-bold focus:outline-none focus:border-purple-500 rounded-[var(--control-radius)]"
+                  className="w-full bg-card border border-border px-3 py-1.5 text-xs text-foreground dark:text-white font-bold focus:outline-none focus:border-purple-500 rounded-[var(--control-radius)]"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
                   Intitulé / Motif
                 </label>
                 <input
@@ -3996,13 +3996,13 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                   value={rattrapageTitle}
                   onChange={e => setRattrapageTitle(e.target.value)}
                   placeholder="ex: Rattrapage TD / Chapitre 3"
-                  className="w-full bg-card dark:bg-card border border-border dark:border-border px-3 py-1.5 text-xs text-foreground dark:text-white font-bold focus:outline-none focus:border-purple-500 rounded-[var(--control-radius)]"
+                  className="w-full bg-card border border-border px-3 py-1.5 text-xs text-foreground dark:text-white font-bold focus:outline-none focus:border-purple-500 rounded-[var(--control-radius)]"
                 />
               </div>
             </div>
 
             {/* Mode Tabs (Feuille d'Appel / QR Code Flash / Historique) */}
-            <div className="flex items-center gap-2 px-5 pt-3 border-b border-border dark:border-border bg-card dark:bg-card">
+            <div className="flex items-center gap-2 px-5 pt-3 border-b border-border bg-card">
               <button
                 type="button"
                 onClick={() => setRattrapageTab('call')}
@@ -4088,8 +4088,8 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
                   {/* KPI Summary Cards */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div className="p-3 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-border">
-                      <span className="text-[10px] font-bold text-muted-foreground dark:text-muted-foreground uppercase">Convoqués</span>
+                    <div className="p-3 rounded-2xl bg-muted/50 dark:bg-slate-800/60 border border-border">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase">Convoqués</span>
                       <p className="text-xl font-bold text-foreground dark:text-white mt-0.5">{rattrapageStudents.length}</p>
                     </div>
 
@@ -4152,7 +4152,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       </button>
 
                       {/* Status Filter */}
-                      <div className="flex items-center bg-card dark:bg-card border border-border dark:border-border rounded-xl p-0.5 text-xs font-bold">
+                      <div className="flex items-center bg-card border border-border rounded-xl p-0.5 text-xs font-bold">
                         <button
                           type="button"
                           onClick={() => setRattrapageStatusFilter('all')}
@@ -4186,7 +4186,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                           value={rattrapageSearchQuery}
                           onChange={e => setRattrapageSearchQuery(e.target.value)}
                           placeholder="Rechercher étudiant..."
-                          className="w-full bg-card dark:bg-card border border-border dark:border-border pl-8 pr-3 py-1.5 text-xs text-foreground dark:text-white focus:outline-none focus:border-purple-500 rounded-[var(--control-radius)]"
+                          className="w-full bg-card border border-border pl-8 pr-3 py-1.5 text-xs text-foreground dark:text-white focus:outline-none focus:border-purple-500 rounded-[var(--control-radius)]"
                         />
                       </div>
 
@@ -4215,10 +4215,10 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
                   {/* Student List */}
                   {rattrapageStudents.length === 0 ? (
-                    <div className="text-center py-12 border-2 border-dashed border-border dark:border-border rounded-2xl p-6">
+                    <div className="text-center py-12 border-2 border-dashed border-border rounded-2xl p-6">
                       <UserCheck className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
                       <h4 className="text-sm font-bold text-foreground dark:text-white">Aucun absent sur la séance {rattrapageTargetSeance}</h4>
-                      <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1 max-w-md mx-auto">
+                      <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
                         Tous les étudiants étaient présents lors de cette séance principale. Vous pouvez néanmoins ajouter manuellement un étudiant qui souhaite rattraper un cours.
                       </p>
                     </div>
@@ -4249,7 +4249,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                                   ? "bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-300 dark:border-emerald-800/80"
                                   : isAbs
                                     ? "bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/60"
-                                    : "bg-muted/50 dark:bg-slate-800/50 border-border dark:border-border"
+                                    : "bg-muted/50 dark:bg-slate-800/50 border-border"
                               )}
                             >
                               {/* Student Info */}
@@ -4320,7 +4320,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                                     "px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1",
                                     isPres
                                       ? "bg-emerald-600 text-white shadow-xs font-bold ring-2 ring-emerald-500/30"
-                                      : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border border-border dark:border-border hover:border-emerald-400"
+                                      : "bg-card text-muted-foreground dark:text-foreground border border-border hover:border-emerald-400"
                                   )}
                                 >
                                   <Check className="w-3.5 h-3.5" />
@@ -4334,7 +4334,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                                     "px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1",
                                     isAbs
                                       ? "bg-rose-600 text-white shadow-xs font-bold ring-2 ring-rose-500/30"
-                                      : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border border-border dark:border-border hover:border-rose-400"
+                                      : "bg-card text-muted-foreground dark:text-foreground border border-border hover:border-rose-400"
                                   )}
                                 >
                                   <UserX className="w-3.5 h-3.5" />
@@ -4348,7 +4348,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                                     "px-2 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer",
                                     isRet
                                       ? "bg-amber-500 text-white shadow-xs font-bold"
-                                      : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border border-border dark:border-border hover:border-amber-400"
+                                      : "bg-card text-muted-foreground dark:text-foreground border border-border hover:border-amber-400"
                                   )}
                                 >
                                   Retard
@@ -4361,7 +4361,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                                     "px-2 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer",
                                     isExc
                                       ? "bg-sky-600 text-white shadow-xs font-bold"
-                                      : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border border-border dark:border-border hover:border-sky-400"
+                                      : "bg-card text-muted-foreground dark:text-foreground border border-border hover:border-sky-400"
                                   )}
                                 >
                                   Excusé
@@ -4373,7 +4373,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                                   value={item.note}
                                   onChange={e => handleUpdateRattrapageNote(item.student.id, e.target.value)}
                                   placeholder="Note / Observation..."
-                                  className="bg-card dark:bg-card border border-border dark:border-border px-2.5 py-1 text-xs text-foreground dark:text-white max-w-[140px] focus:outline-none focus:border-purple-500 rounded-[var(--control-radius)]"
+                                  className="bg-card border border-border px-2.5 py-1 text-xs text-foreground dark:text-white max-w-[140px] focus:outline-none focus:border-purple-500 rounded-[var(--control-radius)]"
                                 />
 
                                 {/* Remove Button */}
@@ -4393,7 +4393,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                   )}
 
                   {/* Regularization & Textbook Options Checkboxes */}
-                  <div className="pt-2 border-t border-border dark:border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="pt-2 border-t border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 dark:text-foreground">
                       <input
                         type="checkbox"
@@ -4454,13 +4454,13 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                         <span className="text-3xl font-bold text-foreground dark:text-white">
                           {rattrapageStudents.filter(s => s.status === 'present').length}
                         </span>
-                        <span className="text-sm font-semibold text-muted-foreground dark:text-muted-foreground">
+                        <span className="text-sm font-semibold text-muted-foreground">
                           / {rattrapageStudents.length} étudiants convoqués
                         </span>
                       </div>
                     </div>
 
-                    <div className="bg-muted/50 dark:bg-slate-800/60 border border-border dark:border-border rounded-2xl p-4 text-xs space-y-2">
+                    <div className="bg-muted/50 dark:bg-slate-800/60 border border-border rounded-2xl p-4 text-xs space-y-2">
                       <p className="font-bold text-foreground dark:text-white flex items-center gap-1.5">
                         <Info className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                         <span>Consignes pour les étudiants en rattrapage :</span>
@@ -4486,10 +4486,10 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
               {rattrapageTab === 'history' && (
                 <div className="space-y-3">
                   {(!seanceStore[rattrapageTargetSeance]?.rattrapages || seanceStore[rattrapageTargetSeance]?.rattrapages?.length === 0) ? (
-                    <div className="text-center py-12 border-2 border-dashed border-border dark:border-border rounded-2xl p-6">
+                    <div className="text-center py-12 border-2 border-dashed border-border rounded-2xl p-6">
                       <History className="w-10 h-10 text-slate-400 mx-auto mb-2" />
                       <h4 className="text-sm font-bold text-foreground dark:text-white">Aucun rattrapage enregistré pour {rattrapageTargetSeance}</h4>
-                      <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         Les séances de rattrapage effectuées pour cette séance seront archivées ici avec la liste des étudiants régularisés.
                       </p>
                     </div>
@@ -4499,7 +4499,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       return (
                         <div
                           key={rat.id || idx}
-                          className="p-4 rounded-2xl bg-card dark:bg-slate-800/80 border border-border dark:border-border space-y-2 shadow-2xs"
+                          className="p-4 rounded-2xl bg-card dark:bg-slate-800/80 border border-border space-y-2 shadow-2xs"
                         >
                           <div className="flex items-center justify-between gap-2 flex-wrap">
                             <div className="flex items-center gap-2">
@@ -4511,7 +4511,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                               </span>
                             </div>
 
-                            <span className="text-xs font-bold text-muted-foreground dark:text-muted-foreground font-mono">
+                            <span className="text-xs font-bold text-muted-foreground font-mono">
                               Date : {rat.date} • {rat.timeSlot} • {rat.room}
                             </span>
                           </div>
@@ -4546,7 +4546,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
             {/* Modal Footer */}
             <div className="p-4 border-t border-purple-100 dark:border-purple-950/60 bg-slate-50/50 dark:bg-slate-900/90 flex items-center justify-between flex-wrap gap-2">
-              <span className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">
+              <span className="text-xs text-muted-foreground font-medium">
                 {rattrapageStudents.filter(s => s.status === 'present').length} présence(s) à régulariser
               </span>
 
@@ -4615,7 +4615,7 @@ function StatCard({ label, value, icon, color }: {
   return (
     <div className={cn('border rounded-2xl p-4 flex flex-col gap-2 shadow-2xs transition-all', colorMap[color])}>
       <div className="flex items-center justify-between">
-        <span className="text-muted-foreground dark:text-muted-foreground text-xs uppercase tracking-wider font-bold">{label}</span>
+        <span className="text-muted-foreground text-xs uppercase tracking-wider font-bold">{label}</span>
         <span className="text-base">{icon}</span>
       </div>
       <p className="text-2xl font-bold">{value}</p>
@@ -4636,14 +4636,14 @@ function PdfModeCard({ active, onClick, icon, title, subtitle }: {
       className={cn(
         'relative flex flex-col items-start gap-2 p-3.5 rounded-2xl border text-left transition-all cursor-pointer',
         active
-          ? 'bg-blue-50/80 dark:bg-emerald-950/30 border-[#001A4B] dark:border-emerald-500 ring-2 ring-[#001A4B]/20 dark:ring-emerald-500/40 shadow-sm'
-          : "bg-card dark:bg-card border-border dark:border-border hover:border-slate-300"
+          ? 'bg-blue-50/80 dark:bg-emerald-950/30 border-[#1a3673] dark:border-emerald-500 ring-2 ring-[#1a3673]/20 dark:ring-emerald-500/40 shadow-sm'
+          : "bg-card border-border hover:border-slate-300"
       )}
     >
-      {active && <CheckCircle2 className="absolute top-2.5 right-2.5 w-4 h-4 text-[#001A4B] dark:text-emerald-400" />}
-      <div className={cn('p-1.5 rounded-lg', active ? 'text-[#001A4B] dark:text-emerald-400' : 'text-slate-400')}>{icon}</div>
+      {active && <CheckCircle2 className="absolute top-2.5 right-2.5 w-4 h-4 text-[#1a3673] dark:text-emerald-400" />}
+      <div className={cn('p-1.5 rounded-lg', active ? 'text-[#1a3673] dark:text-emerald-400' : 'text-slate-400')}>{icon}</div>
       <div>
-        <p className={cn('text-sm font-bold', active ? 'text-[#001A4B] dark:text-white' : "text-slate-700 dark:text-foreground")}>{title}</p>
+        <p className={cn('text-sm font-bold', active ? 'text-[#1a3673] dark:text-white' : "text-slate-700 dark:text-foreground")}>{title}</p>
         <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{subtitle}</p>
       </div>
     </button>
@@ -4658,7 +4658,7 @@ function NoModulesPlaceholder() {
       </div>
       <div className="text-center max-w-md">
         <h3 className="text-foreground dark:text-white font-bold text-lg mb-2">Aucun module affecté</h3>
-        <p className="text-muted-foreground dark:text-muted-foreground text-sm leading-relaxed">
+        <p className="text-muted-foreground text-sm leading-relaxed">
           Vous n'avez pas encore de modules pédagogiques affectés pour cette année universitaire. Veuillez contacter la direction des études de l'ENCG Fès.
         </p>
       </div>

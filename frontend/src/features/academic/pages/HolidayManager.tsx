@@ -74,7 +74,7 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, placeholder
           "w-full px-4 py-2.5 bg-muted/50 dark:bg-card border rounded-2xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer shadow-xs text-left",
           open 
             ? "border-primary ring-4 ring-indigo-500/15 text-primary dark:text-indigo-200"
-            : "border-border dark:border-slate-700/80 hover:border-indigo-400 dark:hover:border-primary text-foreground dark:text-foreground"
+            : "border-border dark:border-slate-700/80 hover:border-indigo-400 dark:hover:border-primary text-foreground"
         )}
       >
         <span className={cn("truncate font-bold", !selectedOption && "text-slate-400 font-medium")}>
@@ -84,7 +84,7 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, placeholder
       </button>
 
       {open && (
-        <div className="absolute z-[9999] top-full left-0 mt-2 w-full bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm py-2 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150 backdrop-blur-2xl">
+        <div className="absolute z-[9999] top-full left-0 mt-2 w-full bg-card border border-border rounded-2xl shadow-sm py-2 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150 backdrop-blur-2xl">
           {options.map((opt) => {
             const isSelected = String(opt.value) === String(value)
             return (
@@ -306,8 +306,8 @@ export default function HolidayManager() {
       </div>
 
       {/* Main Content List Card */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-6 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border dark:border-border pb-4">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
           <div className="flex items-center gap-3">
             <h3 className="text-base font-bold text-foreground dark:text-white">Périodes de Suspension des Cours</h3>
             <span className="px-3.5 py-1 bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 text-[10px] font-bold uppercase tracking-wider rounded-full shadow-xs flex items-center gap-1">
@@ -327,7 +327,7 @@ export default function HolidayManager() {
             <button onClick={openCreate} className="mt-4 text-xs font-bold text-primary dark:text-indigo-400 hover:underline cursor-pointer">+ Ajouter la première période</button>
           </div>
         ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-border dark:border-border rounded-2xl overflow-hidden">
+          <div className="divide-y divide-slate-100 dark:divide-slate-800 border border-border rounded-2xl overflow-hidden">
             {holidays.map(h => (
               <div key={h.id} className="flex items-center justify-between p-5 hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors group">
                 <div className="flex items-center gap-4">
@@ -342,7 +342,7 @@ export default function HolidayManager() {
                     <p className="text-xs font-bold text-slate-400 mt-1">
                       {formatDate(h.start_date)} → {formatDate(h.end_date)} &nbsp;·&nbsp; <span className="font-bold text-primary dark:text-indigo-400">{getDuration(h.start_date, h.end_date)}</span>
                     </p>
-                    {h.description && <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5 italic">{h.description}</p>}
+                    {h.description && <p className="text-xs text-muted-foreground mt-0.5 italic">{h.description}</p>}
                   </div>
                 </div>
 
@@ -363,15 +363,15 @@ export default function HolidayManager() {
       {/* Modal CRUD */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-md shadow-sm overflow-hidden">
-            <div className="p-6 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white flex items-center justify-between">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-md shadow-sm overflow-hidden">
+            <div className="p-6 bg-gradient-to-r from-[#1a3673] to-blue-900 text-white flex items-center justify-between">
               <h3 className="font-bold text-lg">{editingId ? 'Modifier la période' : 'Nouvelle Période'}</h3>
               <button onClick={() => setShowModal(false)} className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"><X className="w-5 h-5" /></button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-400 tracking-wider mb-1.5">Intitulé / Nom *</label>
-                <input required value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} className="w-full px-4 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none transition-all rounded-[var(--control-radius)]" placeholder="Ex: Fête du Trône / Vacances d'Hiver" />
+                <input required value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} className="w-full px-4 py-2.5 border border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none transition-all rounded-[var(--control-radius)]" placeholder="Ex: Fête du Trône / Vacances d'Hiver" />
               </div>
 
               <div>
@@ -388,17 +388,17 @@ export default function HolidayManager() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold uppercase text-slate-400 tracking-wider mb-1.5">Date de Début *</label>
-                  <input required type="date" value={form.start_date} onChange={e => setForm(p => ({ ...p, start_date: e.target.value }))} className="w-full px-4 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none transition-all rounded-[var(--control-radius)]" />
+                  <input required type="date" value={form.start_date} onChange={e => setForm(p => ({ ...p, start_date: e.target.value }))} className="w-full px-4 py-2.5 border border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none transition-all rounded-[var(--control-radius)]" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold uppercase text-slate-400 tracking-wider mb-1.5">Date de Fin *</label>
-                  <input required type="date" value={form.end_date} min={form.start_date} onChange={e => setForm(p => ({ ...p, end_date: e.target.value }))} className="w-full px-4 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none transition-all rounded-[var(--control-radius)]" />
+                  <input required type="date" value={form.end_date} min={form.start_date} onChange={e => setForm(p => ({ ...p, end_date: e.target.value }))} className="w-full px-4 py-2.5 border border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none transition-all rounded-[var(--control-radius)]" />
                 </div>
               </div>
 
               <div>
                 <label className="block text-xs font-bold uppercase text-slate-400 tracking-wider mb-1.5">Description (Optionnel)</label>
-                <textarea rows={2} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} className="w-full px-4 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none transition-all resize-none rounded-[var(--control-radius)]" placeholder="Notes ou précisions..." />
+                <textarea rows={2} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} className="w-full px-4 py-2.5 border border-border bg-muted/50 dark:bg-card text-xs font-bold focus:ring-4 focus:ring-indigo-500/15 outline-none transition-all resize-none rounded-[var(--control-radius)]" placeholder="Notes ou précisions..." />
               </div>
 
               {form.start_date && form.end_date && form.start_date <= form.end_date && (
@@ -408,9 +408,9 @@ export default function HolidayManager() {
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-border dark:border-border">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
                 <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2.5 text-xs font-bold text-muted-foreground hover:bg-muted rounded-xl transition-colors cursor-pointer">ANNULER</button>
-                <button type="submit" className="px-6 py-2.5 text-xs font-bold bg-[#0f2863] text-white hover:bg-secondary rounded-xl shadow-md transition-colors cursor-pointer">{editingId ? 'METTRE À JOUR' : 'ENREGISTRER'}</button>
+                <button type="submit" className="px-6 py-2.5 text-xs font-bold bg-[#1a3673] text-white hover:bg-secondary rounded-xl shadow-md transition-colors cursor-pointer">{editingId ? 'METTRE À JOUR' : 'ENREGISTRER'}</button>
               </div>
             </form>
           </div>

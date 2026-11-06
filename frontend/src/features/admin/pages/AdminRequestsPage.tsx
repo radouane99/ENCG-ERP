@@ -160,14 +160,14 @@ const [activeDropColumn, setActiveDropColumn] = useState<string | null>(null);
   return (
     <div className="space-y-8 animate-in max-w-[1400px] mx-auto pb-20">
       <div className="flex flex-col items-center justify-center text-center space-y-2 mb-4">
-        <h1 className="text-[#0f2863] erp-page-title">{t('requests.title') || 'Gestion des Demandes Administratives'}</h1>
+        <h1 className="text-[#1a3673] erp-page-title">{t('requests.title') || 'Gestion des Demandes Administratives'}</h1>
         <p className="text-muted-foreground font-medium text-sm max-w-xl">
           Consultez, validez ou rejetez les demandes de documents. Glissez-déposez les cartes pour changer leur statut !
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-        <div className="lg:col-span-2 bg-gradient-to-br from-[#0f2863] via-[#1a387e] to-[#0b1f4f] p-8 text-white rounded-2xl shadow-sm relative overflow-hidden flex flex-col justify-between">
+        <div className="lg:col-span-2 bg-gradient-to-br from-[#1a3673] via-[#1a387e] to-[#0b1f4f] p-8 text-white rounded-2xl shadow-sm relative overflow-hidden flex flex-col justify-between">
           <div className="relative z-10 space-y-2">
             <span className="bg-amber-400/20 text-amber-300 text-[10px] font-bold px-3 py-1 rounded-full border border-amber-300/30 uppercase tracking-widest">
               Guichet Unique & Signature Numérique
@@ -364,7 +364,7 @@ function RequestCard({ request, onPreview, onApprove, onReject, onSendEmail, onD
       className="bg-card rounded-2xl p-4 shadow-sm border border-border flex flex-col transition-all hover:shadow-md cursor-grab active:cursor-grabbing hover:border-primary/20 relative group"
     >
       <div className="flex items-start justify-between mb-3">
-        <span className="px-2.5 py-0.5 bg-[#0f2863] text-amber-300 text-[9px] font-bold uppercase tracking-wider rounded-lg shadow-2xs">
+        <span className="px-2.5 py-0.5 bg-[#1a3673] text-amber-300 text-[9px] font-bold uppercase tracking-wider rounded-lg shadow-2xs">
           {request.type}
         </span>
         <span className="text-[9px] font-bold text-slate-400 bg-muted px-2 py-0.5 rounded-full">

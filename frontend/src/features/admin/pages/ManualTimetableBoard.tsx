@@ -376,7 +376,7 @@ export default function ManualTimetableBoard({ versionId, filiereLabel, onBack, 
             <ArrowLeft className="w-3.5 h-3.5" /> Retour au Générateur IA
           </button>
           <h2 className="text-xl font-bold text-foreground dark:text-white">Édition Manuelle — {filiereLabel}</h2>
-          <p className="text-xs text-muted-foreground dark:text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             {blocks.length} séance{blocks.length > 1 ? 's' : ''} — glissez une carte pour déplacer ou permuter. 
             {activeSubject && <strong className="ml-1 text-primary dark:text-indigo-400">⚡ Radar anti-conflits actif : Observez les indicateurs vert / rouge sur chaque case.</strong>}
           </p>
@@ -385,7 +385,7 @@ export default function ManualTimetableBoard({ versionId, filiereLabel, onBack, 
           <button
             type="button"
             onClick={() => setShowAdd(true)}
-            className="px-4 py-2.5 rounded-xl bg-[#0f2863] hover:bg-secondary text-white text-xs font-bold uppercase tracking-wider inline-flex items-center gap-2 cursor-pointer shadow-sm transition-all"
+            className="px-4 py-2.5 rounded-xl bg-[#1a3673] hover:bg-secondary text-white text-xs font-bold uppercase tracking-wider inline-flex items-center gap-2 cursor-pointer shadow-sm transition-all"
           >
             <Plus className="w-4 h-4 text-amber-300" /> Ajouter une séance
           </button>
@@ -393,7 +393,7 @@ export default function ManualTimetableBoard({ versionId, filiereLabel, onBack, 
       </div>
 
       {/* 🔍 Filters Bar: Filière, Semestre, Groupe */}
-      <div className="p-3.5 rounded-2xl bg-card dark:bg-card border border-slate-200/80 dark:border-border flex flex-wrap items-center justify-between gap-3 shadow-xs">
+      <div className="p-3.5 rounded-2xl bg-card border border-slate-200/80 dark:border-border flex flex-wrap items-center justify-between gap-3 shadow-xs">
         <div className="flex items-center gap-3 flex-wrap">
           {/* Filiere Selector */}
           <CustomSelect
@@ -427,7 +427,7 @@ export default function ManualTimetableBoard({ versionId, filiereLabel, onBack, 
         </div>
 
         <div className="text-xs font-bold text-muted-foreground">
-          <span className="px-3 py-1.5 rounded-xl bg-muted dark:bg-card text-slate-700 dark:text-foreground font-bold text-[11px] border border-border dark:border-border">
+          <span className="px-3 py-1.5 rounded-xl bg-muted dark:bg-card text-slate-700 dark:text-foreground font-bold text-[11px] border border-border">
             ⚡ {blocks.length} séance{blocks.length > 1 ? 's' : ''} sur la grille
           </span>
         </div>
@@ -525,8 +525,8 @@ export default function ManualTimetableBoard({ versionId, filiereLabel, onBack, 
 
       <div className="grid grid-cols-1 xl:grid-cols-[260px_1fr] gap-4">
         {/* Unplaced Pile */}
-        <div className="bg-card dark:bg-card rounded-2xl border border-dashed border-slate-300 dark:border-border p-4 space-y-3 min-h-[200px]">
-          <h3 className="text-xs font-bold uppercase text-muted-foreground dark:text-muted-foreground">À placer ({unplaced.length})</h3>
+        <div className="bg-card rounded-2xl border border-dashed border-slate-300 dark:border-border p-4 space-y-3 min-h-[200px]">
+          <h3 className="text-xs font-bold uppercase text-muted-foreground">À placer ({unplaced.length})</h3>
           <p className="text-[11px] text-slate-400">Déposez ici pour retirer une séance de la semaine.</p>
           <div
             onDragOver={(e) => {
@@ -564,20 +564,20 @@ export default function ManualTimetableBoard({ versionId, filiereLabel, onBack, 
         </div>
 
         {/* 🗓️ The Interactive Weekly Grid */}
-        <div className="bg-card dark:bg-card rounded-2xl border border-border dark:border-border overflow-x-auto shadow-xs">
+        <div className="bg-card rounded-2xl border border-border overflow-x-auto shadow-xs">
           <table className="w-full min-w-[760px] border-collapse">
             <thead>
               <tr className="bg-muted/50 dark:bg-slate-800/60">
-                <th className="p-3.5 text-left text-[10px] font-bold uppercase text-muted-foreground dark:text-muted-foreground w-28 border-b border-border dark:border-border">Créneau</th>
+                <th className="p-3.5 text-left text-[10px] font-bold uppercase text-muted-foreground w-28 border-b border-border">Créneau</th>
                 {DAYS.map((day) => (
-                  <th key={day.id} className="p-3.5 text-center text-xs font-bold text-foreground dark:text-foreground border-b border-l border-border dark:border-border">{day.label}</th>
+                  <th key={day.id} className="p-3.5 text-center text-xs font-bold text-foreground border-b border-l border-border">{day.label}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {slots.map((slot) => (
-                <tr key={slot.slot_index} className="border-t border-border dark:border-border">
-                  <td className="p-3 text-[11px] font-bold text-muted-foreground dark:text-muted-foreground whitespace-nowrap bg-slate-50/50 dark:bg-slate-800/30">
+                <tr key={slot.slot_index} className="border-t border-border">
+                  <td className="p-3 text-[11px] font-bold text-muted-foreground whitespace-nowrap bg-slate-50/50 dark:bg-slate-800/30">
                     {hhmm(slot.start)}–{hhmm(slot.end)}
                   </td>
                   {DAYS.map((day) => {
@@ -597,7 +597,7 @@ export default function ManualTimetableBoard({ versionId, filiereLabel, onBack, 
                         onDrop={(e) => onDropCell(e, day.id, slot)}
                         onClick={() => picked && placeBlock(picked, day.id, slot)}
                         className={cn(
-                          "p-2 align-top min-h-[96px] h-28 border-l border-border dark:border-border transition-all relative",
+                          "p-2 align-top min-h-[96px] h-28 border-l border-border transition-all relative",
                           // Feasibility Visual Feedback
                           feasibility?.status === 'free' && 'bg-emerald-50/70 dark:bg-emerald-950/20 border-2 border-dashed border-emerald-400/80',
                           feasibility?.status === 'conflict' && 'bg-rose-50/80 dark:bg-rose-950/30 border-2 border-dashed border-rose-400/80',
@@ -642,15 +642,15 @@ export default function ManualTimetableBoard({ versionId, filiereLabel, onBack, 
 
       {showAdd && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <form onSubmit={submitAdd} className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-lg p-6 space-y-4 shadow-sm animate-in zoom-in-95">
-            <div className="flex items-center justify-between pb-3 border-b border-border dark:border-border">
+          <form onSubmit={submitAdd} className="bg-card border border-border rounded-2xl w-full max-w-lg p-6 space-y-4 shadow-sm animate-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
               <h3 className="font-bold text-base text-foreground dark:text-white">Créer une nouvelle séance manuelle</h3>
               <button type="button" onClick={() => setShowAdd(false)} className="w-8 h-8 rounded-full bg-muted dark:bg-card flex items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"><X className="w-4 h-4" /></button>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-[11px] font-bold text-muted-foreground dark:text-muted-foreground mb-1">Module :</label>
+                <label className="block text-[11px] font-bold text-muted-foreground mb-1">Module :</label>
                 <CustomSelect
                   value={form.module_id}
                   onChange={(val) => setForm({ ...form, module_id: String(val) })}
@@ -666,7 +666,7 @@ export default function ManualTimetableBoard({ versionId, filiereLabel, onBack, 
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-muted-foreground dark:text-muted-foreground mb-1">Enseignant Chercheur :</label>
+                <label className="block text-[11px] font-bold text-muted-foreground mb-1">Enseignant Chercheur :</label>
                 <CustomSelect
                   value={form.professor_id}
                   onChange={(val) => setForm({ ...form, professor_id: String(val) })}
@@ -682,7 +682,7 @@ export default function ManualTimetableBoard({ versionId, filiereLabel, onBack, 
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-muted-foreground dark:text-muted-foreground mb-1">Salle d'enseignement :</label>
+                <label className="block text-[11px] font-bold text-muted-foreground mb-1">Salle d'enseignement :</label>
                 <CustomSelect
                   value={form.room_id}
                   onChange={(val) => setForm({ ...form, room_id: String(val) })}
@@ -699,7 +699,7 @@ export default function ManualTimetableBoard({ versionId, filiereLabel, onBack, 
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-bold text-muted-foreground dark:text-muted-foreground mb-1">Type de séance :</label>
+                  <label className="block text-[11px] font-bold text-muted-foreground mb-1">Type de séance :</label>
                   <CustomSelect
                     value={form.session_type}
                     onChange={(val) => setForm({ ...form, session_type: String(val) })}
@@ -713,7 +713,7 @@ export default function ManualTimetableBoard({ versionId, filiereLabel, onBack, 
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-muted-foreground dark:text-muted-foreground mb-1">Groupe ciblé :</label>
+                  <label className="block text-[11px] font-bold text-muted-foreground mb-1">Groupe ciblé :</label>
                   <CustomSelect
                     value={form.group_id}
                     onChange={(val) => setForm({ ...form, group_id: String(val) })}
@@ -732,7 +732,7 @@ export default function ManualTimetableBoard({ versionId, filiereLabel, onBack, 
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-bold text-muted-foreground dark:text-muted-foreground mb-1">Jour :</label>
+                  <label className="block text-[11px] font-bold text-muted-foreground mb-1">Jour :</label>
                   <CustomSelect
                     value={form.day_of_week}
                     onChange={(val) => setForm({ ...form, day_of_week: String(val) })}
@@ -745,7 +745,7 @@ export default function ManualTimetableBoard({ versionId, filiereLabel, onBack, 
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold text-muted-foreground dark:text-muted-foreground mb-1">Créneau horaire :</label>
+                  <label className="block text-[11px] font-bold text-muted-foreground mb-1">Créneau horaire :</label>
                   <CustomSelect
                     value={form.slot}
                     onChange={(val) => setForm({ ...form, slot: String(val) })}
@@ -760,11 +760,11 @@ export default function ManualTimetableBoard({ versionId, filiereLabel, onBack, 
               </div>
             </div>
 
-            <div className="pt-3 border-t border-border dark:border-border flex justify-end gap-2">
+            <div className="pt-3 border-t border-border flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setShowAdd(false)}
-                className="px-4 py-2.5 rounded-xl border border-border dark:border-border text-xs font-bold text-muted-foreground dark:text-muted-foreground cursor-pointer"
+                className="px-4 py-2.5 rounded-xl border border-border text-xs font-bold text-muted-foreground cursor-pointer"
               >
                 Annuler
               </button>

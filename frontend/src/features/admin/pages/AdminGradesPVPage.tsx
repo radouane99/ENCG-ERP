@@ -1042,7 +1042,7 @@ const { data: aiAuditData } = useQuery({
       return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
           {renderSelectorBar()}
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-10 text-center max-w-xl mx-auto shadow-sm space-y-4">
+          <div className="bg-card border border-border rounded-2xl p-10 text-center max-w-xl mx-auto shadow-sm space-y-4">
             <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 flex items-center justify-center text-3xl mx-auto">
               📚
             </div>
@@ -1059,12 +1059,12 @@ const { data: aiAuditData } = useQuery({
       return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6">
           {renderSelectorBar()}
-          <div className="bg-card dark:bg-card border border-rose-200 dark:border-rose-900/60 rounded-2xl p-10 text-center max-w-xl mx-auto shadow-sm space-y-4">
+          <div className="bg-card border border-rose-200 dark:border-rose-900/60 rounded-2xl p-10 text-center max-w-xl mx-auto shadow-sm space-y-4">
             <div className="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 flex items-center justify-center text-3xl mx-auto font-bold">
               ⛔
             </div>
             <h3 className="text-lg font-bold text-foreground dark:text-white">Accès Restreint au Procès-Verbal</h3>
-            <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">
+            <p className="text-xs text-muted-foreground font-medium">
               Vous n’êtes pas affecté(e) à ce module. Conformément aux règles pédagogiques de l'ENCG, chaque enseignant n'a accès qu'aux procès-verbaux de ses propres modules. La consultation générale ou inter-modules est réservée à l’Administration.
             </p>
             {myModulesList.length > 0 && (
@@ -1105,16 +1105,16 @@ const { data: aiAuditData } = useQuery({
           {renderSelectorBar()}
 
           {/* Executive Control Header: Replaces the electric blue banner with a sleek, unified card */}
-          <div className="bg-card dark:bg-card rounded-2xl p-6 border border-slate-200/90 dark:border-border shadow-sm space-y-5 print:hidden">
+          <div className="bg-card rounded-2xl p-6 border border-slate-200/90 dark:border-border shadow-sm space-y-5 print:hidden">
             {/* Top Row: Semester Identity + Juridical Signature & Lock Actions */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-border dark:border-border">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-border">
               {/* Left Identity */}
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="px-2.5 py-0.5 bg-[#0f2863]/10 text-[#0f2863] dark:bg-blue-900/40 dark:text-blue-300 font-bold text-[10px] rounded-lg border border-[#0f2863]/20 uppercase tracking-wider">
                     {semesterPvData.filiere?.name || 'Tronc Commun ENCG'}
                   </span>
-                  <span className="px-2.5 py-0.5 bg-muted dark:bg-card text-slate-700 dark:text-foreground font-bold text-[10px] rounded-lg border border-border dark:border-border uppercase tracking-wider">
+                  <span className="px-2.5 py-0.5 bg-muted dark:bg-card text-slate-700 dark:text-foreground font-bold text-[10px] rounded-lg border border-border uppercase tracking-wider">
                     Semestre {semesterPvData.semester || selectedSemester} • {semesterPvData.modules?.length || 7} Modules
                   </span>
                   <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 font-bold text-[10px] rounded-lg border border-emerald-200 dark:border-emerald-800 uppercase tracking-wider">
@@ -1125,7 +1125,7 @@ const { data: aiAuditData } = useQuery({
                 <h2 className="text-xl md:text-2xl font-bold text-[#0f2863] dark:text-white tracking-tight">
                   Procès-Verbal Semestriel Consolidé
                 </h2>
-                <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium max-w-2xl">
+                <p className="text-xs text-muted-foreground font-medium max-w-2xl">
                   Matrice officielle de délibération des {semesterPvData.modules?.length || 7} modules avec calcul automatique des compensations (≥ 10/20) et éliminations APOGEE.
                 </p>
               </div>
@@ -1392,7 +1392,7 @@ const { data: aiAuditData } = useQuery({
 
               <div className="flex items-center gap-4">
                 {signatureDataUrl && (
-                  <div className="bg-card dark:bg-card p-2 rounded-xl border border-emerald-300 dark:border-emerald-800 shadow-inner">
+                  <div className="bg-card p-2 rounded-xl border border-emerald-300 dark:border-emerald-800 shadow-inner">
                     <img src={signatureDataUrl} alt="Signature Manuelle" className="h-10 object-contain" />
                   </div>
                 )}
@@ -1407,7 +1407,7 @@ const { data: aiAuditData } = useQuery({
 
           {/* KPI Analytics Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-card dark:bg-card border border-border dark:border-border p-5 rounded-2xl shadow-sm">
+            <div className="bg-card border border-border p-5 rounded-2xl shadow-sm">
               <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Effectif Total</span>
               <div className="text-2xl font-bold text-foreground dark:text-white mt-1">
                 {semesterPvData.stats?.total_students || 0} <span className="text-xs font-bold text-slate-400">Étudiants</span>
@@ -1452,7 +1452,7 @@ const { data: aiAuditData } = useQuery({
             ]
             const moduleBarData = moduleSuccessRates(semesterPvData?.modules || [], students)
             return (
-              <div className="bg-card dark:bg-card border border-violet-200 dark:border-violet-900/50 rounded-2xl p-6 shadow-sm space-y-6 animate-in slide-in-from-top-2 duration-300">
+              <div className="bg-card border border-violet-200 dark:border-violet-900/50 rounded-2xl p-6 shadow-sm space-y-6 animate-in slide-in-from-top-2 duration-300">
                 <div className="flex items-center justify-between">
                   <h3 className="text-base font-bold text-foreground dark:text-white flex items-center gap-2">
                     <BarChart2 className="w-5 h-5 text-violet-500" />
@@ -1515,7 +1515,7 @@ const { data: aiAuditData } = useQuery({
                         </div>
                       ))}
                     </div>
-                    <div className="pt-3 border-t border-border dark:border-border space-y-1.5">
+                    <div className="pt-3 border-t border-border space-y-1.5">
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">Moyenne Promo</span>
                         <span className="font-bold text-primary">{avgMoy}/20</span>
@@ -1612,9 +1612,9 @@ const { data: aiAuditData } = useQuery({
             const fraudBlockedCandidates = studentsList.filter((s: any) => checkFraud(s))
 
             return (
-              <div className="bg-card dark:bg-card rounded-2xl p-6 border border-slate-200/90 dark:border-border shadow-sm space-y-5">
+              <div className="bg-card rounded-2xl p-6 border border-slate-200/90 dark:border-border shadow-sm space-y-5">
                 {/* Header Row: Title + Status Pills + Toggle */}
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border dark:border-border">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-[#0f2863]/10 dark:bg-blue-900/30 text-[#0f2863] dark:text-blue-300 flex items-center justify-center shadow-xs shrink-0">
                       <Sparkles className="w-5 h-5" />
@@ -1628,7 +1628,7 @@ const { data: aiAuditData } = useQuery({
                           Analyse Prédictive
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">
+                      <p className="text-xs text-muted-foreground font-medium">
                         Détection automatique des candidats au rachat jury (9.50–9.99), blocages éliminatoires et exclusions réglementaires.
                       </p>
                     </div>
@@ -1641,7 +1641,7 @@ const { data: aiAuditData } = useQuery({
                     <span className="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-300 text-xs font-bold rounded-xl">
                       {eliminatoireBlockers.length} Note &lt; 6
                     </span>
-                    <span className="px-2.5 py-1 bg-muted dark:bg-card border border-border dark:border-border text-slate-700 dark:text-foreground text-xs font-bold rounded-xl">
+                    <span className="px-2.5 py-1 bg-muted dark:bg-card border border-border text-slate-700 dark:text-foreground text-xs font-bold rounded-xl">
                       {fraudBlockedCandidates.length} Fraude
                     </span>
 
@@ -1649,7 +1649,7 @@ const { data: aiAuditData } = useQuery({
                       variant="outline"
                       size="sm"
                       onClick={() => setShowAiAnalysis(v => !v)}
-                      className="rounded-xl text-xs font-bold gap-1.5 h-8 border-border dark:border-border text-slate-700 dark:text-foreground hover:bg-muted/50 dark:hover:bg-slate-800"
+                      className="rounded-xl text-xs font-bold gap-1.5 h-8 border-border text-slate-700 dark:text-foreground hover:bg-muted/50 dark:hover:bg-slate-800"
                     >
                       {showAiAnalysis ? (
                         <>
@@ -1692,13 +1692,13 @@ const { data: aiAuditData } = useQuery({
                             return (
                               <div
                                 key={s.student_id}
-                                className="p-3 bg-card dark:bg-card rounded-xl border border-amber-200/70 dark:border-border shadow-2xs flex items-center justify-between gap-2"
+                                className="p-3 bg-card rounded-xl border border-amber-200/70 dark:border-border shadow-2xs flex items-center justify-between gap-2"
                               >
                                 <div className="space-y-0.5">
                                   <div className="font-bold text-foreground dark:text-white text-xs">
                                     {s.last_name?.toUpperCase()} {s.first_name}
                                   </div>
-                                  <div className="text-[10px] text-muted-foreground dark:text-muted-foreground">
+                                  <div className="text-[10px] text-muted-foreground">
                                     Apogée: {s.apogee} • Moyenne: <span className="font-mono text-amber-700 dark:text-amber-300 font-bold">{Number(s.moyenne_semestrielle).toFixed(2)}/20</span>
                                   </div>
                                 </div>
@@ -1758,13 +1758,13 @@ const { data: aiAuditData } = useQuery({
                             return (
                               <div
                                 key={s.student_id}
-                                className="p-3 bg-card dark:bg-card rounded-xl border border-rose-200/70 dark:border-border shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                                className="p-3 bg-card rounded-xl border border-rose-200/70 dark:border-border shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                               >
                                 <div className="space-y-0.5">
                                   <div className="font-bold text-foreground dark:text-white text-xs">
                                     {s.last_name?.toUpperCase()} {s.first_name}
                                   </div>
-                                  <div className="text-[10px] text-muted-foreground dark:text-muted-foreground">
+                                  <div className="text-[10px] text-muted-foreground">
                                     Moyenne: <span className="font-mono text-emerald-700 dark:text-emerald-400 font-bold">{Number(s.moyenne_semestrielle).toFixed(2)}/20</span>
                                     {failingModuleEntry && (
                                       <> • <span className="font-bold">{failingModuleEntry.module_code}</span>: <span className="font-mono text-rose-600 font-bold">{failingNote?.toFixed(2)}/20</span></>
@@ -1812,17 +1812,17 @@ const { data: aiAuditData } = useQuery({
                     {/* Category 3: Fraud Exclusion */}
                     <div className="bg-muted/50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-border rounded-2xl p-4 space-y-3">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-foreground dark:text-foreground flex items-center gap-1.5">
-                          <ShieldAlert className="w-3.5 h-3.5 text-muted-foreground dark:text-muted-foreground" />
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                          <ShieldAlert className="w-3.5 h-3.5 text-muted-foreground" />
                           <span>Exclus du Rachat ({fraudBlockedCandidates.length})</span>
                         </h4>
-                        <span className="text-[10px] text-muted-foreground dark:text-muted-foreground font-bold bg-slate-200/60 dark:bg-slate-700 px-2 py-0.5 rounded-md">
+                        <span className="text-[10px] text-muted-foreground font-bold bg-slate-200/60 dark:bg-slate-700 px-2 py-0.5 rounded-md">
                           Discipline & Fraude
                         </span>
                       </div>
 
                       {fraudBlockedCandidates.length === 0 ? (
-                        <p className="text-xs text-slate-400 dark:text-slate-500 italic p-3 bg-white/60 dark:bg-slate-800/60 rounded-xl border border-dashed border-border dark:border-border text-center">
+                        <p className="text-xs text-slate-400 dark:text-slate-500 italic p-3 bg-white/60 dark:bg-slate-800/60 rounded-xl border border-dashed border-border text-center">
                           Aucun dossier disciplinaire ou de fraude dans cette promotion.
                         </p>
                       ) : (
@@ -1830,7 +1830,7 @@ const { data: aiAuditData } = useQuery({
                           {fraudBlockedCandidates.map((s: any) => (
                             <div
                               key={s.student_id}
-                              className="p-3 bg-card dark:bg-card rounded-xl border border-border dark:border-border shadow-2xs flex items-center justify-between gap-2"
+                              className="p-3 bg-card rounded-xl border border-border shadow-2xs flex items-center justify-between gap-2"
                             >
                               <div className="space-y-0.5">
                                 <div className="font-bold text-foreground dark:text-white text-xs">
@@ -1840,7 +1840,7 @@ const { data: aiAuditData } = useQuery({
                                   Dossier: FRAUDE (Note 0.00)
                                 </div>
                               </div>
-                              <span className="px-2.5 py-1 bg-muted dark:bg-slate-700 text-muted-foreground dark:text-foreground border border-border dark:border-border rounded-lg text-[9px] font-bold uppercase tracking-wider shrink-0">
+                              <span className="px-2.5 py-1 bg-muted dark:bg-slate-700 text-muted-foreground dark:text-foreground border border-border rounded-lg text-[9px] font-bold uppercase tracking-wider shrink-0">
                                 Inéligible Rachat
                               </span>
                             </div>
@@ -1857,12 +1857,12 @@ const { data: aiAuditData } = useQuery({
 
           {/* GRAND MATRIX TABLE FOR ALL 7 MODULES */}
           <div className={cn(
-            "bg-card dark:bg-card border border-slate-200/90 dark:border-border rounded-2xl overflow-hidden shadow-sm space-y-0 transition-all",
+            "bg-card border border-slate-200/90 dark:border-border rounded-2xl overflow-hidden shadow-sm space-y-0 transition-all",
             isFullscreenTable && "fixed inset-0 z-50 rounded-none border-0 p-4 md:p-6 flex flex-col h-screen w-screen bg-card dark:bg-background overflow-hidden"
           )}>
 
             {/* Header Toolbar: Search & Filters + View Switcher + Fullscreen */}
-            <div className="p-4 md:p-5 border-b border-border dark:border-border flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 bg-slate-50/70 dark:bg-card shrink-0">
+            <div className="p-4 md:p-5 border-b border-border flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 bg-slate-50/70 dark:bg-card shrink-0">
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="text-base font-bold text-[#0f2863] dark:text-white flex items-center gap-2">
@@ -1873,7 +1873,7 @@ const { data: aiAuditData } = useQuery({
                     Compensation APOGEE
                   </span>
                 </div>
-                <p className="text-xs text-muted-foreground dark:text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   Moyenne semestrielle ≥ 10/20 • Max 2 modules &lt; 10/20 pour compensation (Code VPC) • Note éliminatoire &lt; 6.00/20.
                 </p>
               </div>
@@ -1887,12 +1887,12 @@ const { data: aiAuditData } = useQuery({
                     placeholder="Rechercher nom, Apogée, CIN..."
                     value={matrixSearchQuery}
                     onChange={(e) => setMatrixSearchQuery(e.target.value)}
-                    className="pl-8.5 pr-3 py-1.5 bg-card dark:bg-card border border-border dark:border-border text-xs font-medium text-foreground dark:text-foreground focus:ring-2 focus:ring-[#0f2863] w-full rounded-[var(--control-radius)]"
+                    className="pl-8.5 pr-3 py-1.5 bg-card border border-border text-xs font-medium text-foreground focus:ring-2 focus:ring-[#0f2863] w-full rounded-[var(--control-radius)]"
                   />
                 </div>
 
                 {/* Filter Tabs */}
-                <div className="flex items-center gap-1 bg-card dark:bg-card p-1 border border-border dark:border-border rounded-xl text-xs">
+                <div className="flex items-center gap-1 bg-card p-1 border border-border rounded-xl text-xs">
                   {(() => {
                     const allStudents = semesterPvData.students || []
                     const valCleanCount = allStudents.filter((s: any) => s.decision_global === 'V' || s.decision_global === 'VAR').length
@@ -1951,7 +1951,7 @@ const { data: aiAuditData } = useQuery({
                 </div>
 
                 {/* Mode Switcher: Compact vs Detailed */}
-                <div className="flex items-center gap-1 bg-card dark:bg-card p-1 border border-border dark:border-border rounded-xl text-xs">
+                <div className="flex items-center gap-1 bg-card p-1 border border-border rounded-xl text-xs">
                   <button
                     onClick={() => setMatrixViewMode('compact')}
                     title="Affichage compact : 1 colonne par module avec note et décision (Recommandé)"
@@ -1985,7 +1985,7 @@ const { data: aiAuditData } = useQuery({
                   variant="outline"
                   size="sm"
                   onClick={() => setIsFullscreenTable(v => !v)}
-                  className="rounded-xl font-bold text-xs gap-1.5 h-8 border-border dark:border-border text-slate-700 dark:text-foreground hover:bg-muted dark:hover:bg-slate-800"
+                  className="rounded-xl font-bold text-xs gap-1.5 h-8 border-border text-slate-700 dark:text-foreground hover:bg-muted dark:hover:bg-slate-800"
                 >
                   {isFullscreenTable ? (
                     <>
@@ -2022,7 +2022,7 @@ const { data: aiAuditData } = useQuery({
 
               return (
                 <div className={cn(
-                  "overflow-x-auto bg-card dark:bg-card",
+                  "overflow-x-auto bg-card",
                   isFullscreenTable ? "flex-1 overflow-y-auto" : "max-h-[680px] overflow-y-auto"
                 )}>
                   <table className="w-full text-xs text-left border-collapse">
@@ -2140,7 +2140,7 @@ const { data: aiAuditData } = useQuery({
                             <tr key={s.student_id} className={cn("transition-colors", rowOpaqueBg, rowHoverBg)}>
                               {/* Apogee: 100% Solid background to completely prevent bleed-through */}
                               <td className={cn(
-                                "py-2 px-2 font-mono font-bold text-xs text-foreground dark:text-foreground border-r border-b border-border dark:border-border sm:sticky sm:left-0 z-20 text-center shadow-xs min-w-[85px] w-[85px]",
+                                "py-2 px-2 font-mono font-bold text-xs text-foreground border-r border-b border-border sm:sticky sm:left-0 z-20 text-center shadow-xs min-w-[85px] w-[85px]",
                                 rowOpaqueBg
                               )}>
                                 {s.apogee}
@@ -2148,7 +2148,7 @@ const { data: aiAuditData } = useQuery({
 
                               {/* CIN: Dedicated column */}
                               <td className={cn(
-                                "py-2 px-2 font-mono font-bold text-xs text-indigo-950 dark:text-indigo-200 border-r border-b border-border dark:border-border sm:sticky sm:left-[85px] z-20 text-center shadow-xs min-w-[75px] w-[75px]",
+                                "py-2 px-2 font-mono font-bold text-xs text-indigo-950 dark:text-indigo-200 border-r border-b border-border sm:sticky sm:left-[85px] z-20 text-center shadow-xs min-w-[75px] w-[75px]",
                                 rowOpaqueBg
                               )}>
                                 {s.cin || '–'}
@@ -2201,7 +2201,7 @@ const { data: aiAuditData } = useQuery({
                                   return (
                                     <td
                                       key={m.id}
-                                      className={cn("py-2 px-1.5 text-center border-r border-b border-border dark:border-border", noteBg)}
+                                      className={cn("py-2 px-1.5 text-center border-r border-b border-border", noteBg)}
                                     >
                                       <div className="flex flex-col items-center justify-center gap-0.5">
                                         <span className={cn("font-mono text-xs font-bold", noteColor)}>
@@ -2228,20 +2228,20 @@ const { data: aiAuditData } = useQuery({
                                 // Detailed Mode (3 Columns per Module)
                                 return (
                                   <React.Fragment key={m.id}>
-                                    <td className={cn("py-2 px-2 text-center border-r border-b border-border dark:border-border font-mono text-xs font-bold", noteColor, noteBg)}>
+                                    <td className={cn("py-2 px-2 text-center border-r border-b border-border font-mono text-xs font-bold", noteColor, noteBg)}>
                                       {isFraud ? '0.00' : (note !== null && note !== undefined ? Number(note).toFixed(2) : '–')}
                                     </td>
-                                    <td className="py-2 px-1.5 text-center border-r border-b border-border dark:border-border">
+                                    <td className="py-2 px-1.5 text-center border-r border-b border-border">
                                       <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider border", decBadgeClass)}>
                                         {isFraud ? 'FRAUDE' : (dec || 'NV')}
                                       </span>
                                     </td>
-                                    <td className="py-2 px-1.5 text-center border-r-2 border-b border-border dark:border-border">
+                                    <td className="py-2 px-1.5 text-center border-r-2 border-b border-border">
                                       <span className={cn(
                                         "text-[9px] px-1.5 py-0.5 rounded font-mono font-medium whitespace-nowrap",
                                         mInfo?.is_historical
                                           ? "bg-purple-100 text-purple-900 font-bold dark:bg-purple-950 dark:text-purple-300"
-                                          : "text-muted-foreground dark:text-muted-foreground"
+                                          : "text-muted-foreground"
                                       )}>
                                         {mInfo?.is_historical ? `🏛️ ${mInfo?.validation_year || '25-26'}` : (mInfo?.validation_year || '26-27')}
                                       </span>
@@ -2251,7 +2251,7 @@ const { data: aiAuditData } = useQuery({
                               })}
 
                               {/* Moyenne Semestrielle Cell */}
-                              <td className="py-2.5 px-3 text-center border-r border-b border-border dark:border-border font-mono font-bold text-sm bg-blue-50/40 dark:bg-blue-950/20 text-[#0f2863] dark:text-blue-300">
+                              <td className="py-2.5 px-3 text-center border-r border-b border-border font-mono font-bold text-sm bg-blue-50/40 dark:bg-blue-950/20 text-[#0f2863] dark:text-blue-300">
                                 {hasStudentFraud ? (
                                   <span className="px-2 py-0.5 rounded-lg text-xs font-bold font-mono bg-rose-600 text-white">
                                     0.00
@@ -2266,14 +2266,14 @@ const { data: aiAuditData } = useQuery({
                               </td>
 
                               {/* Credits Cell */}
-                              <td className="py-2.5 px-2 text-center border-r border-b border-border dark:border-border font-bold text-xs">
+                              <td className="py-2.5 px-2 text-center border-r border-b border-border font-bold text-xs">
                                 <span className="px-2 py-0.5 bg-muted dark:bg-card rounded-md text-slate-700 dark:text-foreground font-mono font-bold">
                                   {hasStudentFraud ? '0' : s.credits}/{semesterPvData.modules?.length || 7}
                                 </span>
                               </td>
 
                               {/* Décision Semestrielle Cell */}
-                              <td className="py-2.5 px-3 text-center border-b border-border dark:border-border">
+                              <td className="py-2.5 px-3 text-center border-b border-border">
                                 <span className={cn(
                                   "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border inline-block",
                                   hasStudentFraud ? "bg-rose-600 text-white border-rose-700 shadow-xs" :
@@ -2302,8 +2302,8 @@ const { data: aiAuditData } = useQuery({
 
           {/* JURY COMMITTEE STATUS HUB (Commission Jury Semestrielle) */}
           {juryStatus && (
-            <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-md space-y-5 print:hidden">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border dark:border-border pb-4">
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-md space-y-5 print:hidden">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4">
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="px-3 py-1 bg-primary/10 dark:bg-indigo-900/50 text-primary dark:text-indigo-200 rounded-full text-[10px] font-bold uppercase tracking-wider">
@@ -2364,7 +2364,7 @@ const { data: aiAuditData } = useQuery({
                           {member.role === 'chef_filiere' ? 'Président' : 'Professeur'}
                         </span>
                       </div>
-                      <h4 className="text-xs font-bold text-foreground dark:text-foreground mt-1 line-clamp-1">
+                      <h4 className="text-xs font-bold text-foreground mt-1 line-clamp-1">
                         {member.user_name}
                       </h4>
                       <p className="text-[11px] text-muted-foreground font-medium line-clamp-1 mt-0.5">
@@ -2398,8 +2398,8 @@ const { data: aiAuditData } = useQuery({
           {/* RACHAT CONFIRMATION MODAL WITH LEGAL TRACEABILITY */}
           {selectedRachatStudent && (
             <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-              <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 md:p-8 max-w-md w-full shadow-sm space-y-6 animate-in zoom-in-95 duration-200 text-left">
-                <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
+              <div className="bg-card border border-border rounded-2xl p-6 md:p-8 max-w-md w-full shadow-sm space-y-6 animate-in zoom-in-95 duration-200 text-left">
+                <div className="flex items-center justify-between border-b border-border pb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-2xl bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-300 flex items-center justify-center">
                       <Sparkles className="w-5 h-5" />
@@ -2430,7 +2430,7 @@ const { data: aiAuditData } = useQuery({
                     <span className="text-muted-foreground font-medium">Moyenne Actuelle :</span>
                     <span className="font-mono font-bold text-amber-600">{selectedRachatStudent.current_note}/20</span>
                   </div>
-                  <div className="flex justify-between border-t border-border dark:border-border pt-2 font-bold">
+                  <div className="flex justify-between border-t border-border pt-2 font-bold">
                     <span className="text-muted-foreground dark:text-foreground">Rachat Accordé :</span>
                     <span className="font-mono font-bold text-emerald-600">+ {selectedRachatStudent.needed_points} pt</span>
                   </div>
@@ -2448,7 +2448,7 @@ const { data: aiAuditData } = useQuery({
                     value={rachatReason}
                     onChange={(e) => setRachatReason(e.target.value)}
                     placeholder="Ex: Rachat accordé par le Chef de Filière et le Président du Jury..."
-                    className="w-full px-3.5 py-2.5 bg-card dark:bg-card border border-border dark:border-border text-xs text-foreground dark:text-foreground focus:ring-2 focus:ring-amber-500 min-h-[70px] rounded-[var(--control-radius)]"
+                    className="w-full px-3.5 py-2.5 bg-card border border-border text-xs text-foreground focus:ring-2 focus:ring-amber-500 min-h-[70px] rounded-[var(--control-radius)]"
                   />
                   <p className="text-[10px] text-slate-400 italic">
                     🔒 Enregistrement légal dans l'historique d'audit avec IP, horodatage et identité de l'utilisateur.
@@ -2675,14 +2675,14 @@ const { data: aiAuditData } = useQuery({
         </div>
 
         {/* Year Level Selector Tabs */}
-        <div className="bg-card dark:bg-card border border-slate-200/90 dark:border-border p-2.5 rounded-2xl flex items-center justify-between gap-3 flex-wrap shadow-xs print:hidden">
+        <div className="bg-card border border-slate-200/90 dark:border-border p-2.5 rounded-2xl flex items-center justify-between gap-3 flex-wrap shadow-xs print:hidden">
           <div className="flex items-center gap-2.5 ps-2">
             <div className="w-8 h-8 rounded-xl bg-[#0f2863]/10 dark:bg-blue-900/30 text-[#0f2863] dark:text-blue-300 flex items-center justify-center font-bold">
               <Calendar className="w-4 h-4 text-[#0f2863] dark:text-blue-300" />
             </div>
             <div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block leading-none">Palier Académique</span>
-              <span className="text-xs font-bold text-foreground dark:text-foreground">Niveau d'Études LMD</span>
+              <span className="text-xs font-bold text-foreground">Niveau d'Études LMD</span>
             </div>
           </div>
 
@@ -2711,16 +2711,16 @@ const { data: aiAuditData } = useQuery({
         </div>
 
         {/* Executive Control Header: Replaces the electric blue banner with a sleek, unified card */}
-        <div className="bg-card dark:bg-card rounded-2xl p-6 border border-slate-200/90 dark:border-border shadow-sm space-y-5 print:hidden">
+        <div className="bg-card rounded-2xl p-6 border border-slate-200/90 dark:border-border shadow-sm space-y-5 print:hidden">
           {/* Top Row: Annual Identity + Juridical Signature & Actions */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-border dark:border-border">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-border">
             {/* Left Identity */}
             <div className="space-y-1.5">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="px-2.5 py-0.5 bg-[#0f2863]/10 text-[#0f2863] dark:bg-blue-900/40 dark:text-blue-300 font-bold text-[10px] rounded-lg border border-[#0f2863]/20 uppercase tracking-wider">
                   {filiereName}
                 </span>
-                <span className="px-2.5 py-0.5 bg-muted dark:bg-card text-slate-700 dark:text-foreground font-bold text-[10px] rounded-lg border border-border dark:border-border uppercase tracking-wider">
+                <span className="px-2.5 py-0.5 bg-muted dark:bg-card text-slate-700 dark:text-foreground font-bold text-[10px] rounded-lg border border-border uppercase tracking-wider">
                   {oddSemLabel} + {evenSemLabel} • 14 Modules
                 </span>
                 <span className="px-2.5 py-0.5 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 font-bold text-[10px] rounded-lg border border-amber-200 dark:border-amber-800 uppercase tracking-wider">
@@ -2731,7 +2731,7 @@ const { data: aiAuditData } = useQuery({
               <h2 className="text-xl md:text-2xl font-bold text-[#0f2863] dark:text-white tracking-tight">
                 Matrice Consolidée d'Année ({filiereName} — {oddSemLabel} + {evenSemLabel})
               </h2>
-              <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium max-w-3xl">
+              <p className="text-xs text-muted-foreground font-medium max-w-3xl">
                 Fusion complète des notes des 14 modules, moyennes semestrielles et délibération annuelle finale selon le règlement des études ENCG.
               </p>
             </div>
@@ -2849,8 +2849,8 @@ const { data: aiAuditData } = useQuery({
 
         {/* AI DELIBERATION ADVISOR WIDGET (Copilote IA) */}
         {showAiAnalysis && (
-          <div className="bg-card dark:bg-card rounded-2xl p-6 border border-slate-200/90 dark:border-border shadow-sm space-y-5 animate-in fade-in duration-300 print:hidden">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border dark:border-border">
+          <div className="bg-card rounded-2xl p-6 border border-slate-200/90 dark:border-border shadow-sm space-y-5 animate-in fade-in duration-300 print:hidden">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-amber-500/10 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center shadow-xs shrink-0">
                   <Sparkles className="w-5 h-5" />
@@ -2864,7 +2864,7 @@ const { data: aiAuditData } = useQuery({
                       {aiSuggestions.length} Éligibles au Rachat
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">
+                  <p className="text-xs text-muted-foreground font-medium">
                     Détection automatique des seuils de compensation (6.00/20), validation de modules et moyennes annuelles selon le règlement ENCG.
                   </p>
                 </div>
@@ -2876,13 +2876,13 @@ const { data: aiAuditData } = useQuery({
             </div>
 
             {aiSuggestions.length === 0 ? (
-              <div className="p-6 text-center text-slate-400 dark:text-slate-500 italic text-xs bg-muted/50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-border dark:border-border">
+              <div className="p-6 text-center text-slate-400 dark:text-slate-500 italic text-xs bg-muted/50 dark:bg-slate-800/40 rounded-2xl border border-dashed border-border">
                 ✨ Aucune opportunité de rachat critique détectée pour cette promotion. Tous les dossiers sont en règle selon la réglementation ENCG !
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {aiSuggestions.map((sug: any, idx: number) => (
-                  <div key={idx} className="bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border dark:border-border space-y-3 flex flex-col justify-between hover:border-amber-300 transition-all shadow-xs">
+                  <div key={idx} className="bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border space-y-3 flex flex-col justify-between hover:border-amber-300 transition-all shadow-xs">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between gap-2 flex-wrap">
                         <span className="text-xs font-bold text-foreground dark:text-white flex items-center gap-1.5">
@@ -2892,12 +2892,12 @@ const { data: aiAuditData } = useQuery({
                           {sug.impact}
                         </span>
                       </div>
-                      <p className="text-xs font-medium text-muted-foreground dark:text-foreground leading-relaxed bg-card dark:bg-card p-3 rounded-xl border border-border dark:border-border">
+                      <p className="text-xs font-medium text-muted-foreground dark:text-foreground leading-relaxed bg-card p-3 rounded-xl border border-border">
                         {sug.text}
                       </p>
                     </div>
 
-                    <div className="flex items-center justify-between pt-3 border-t border-border dark:border-border">
+                    <div className="flex items-center justify-between pt-3 border-t border-border">
                       <span className="text-[11px] font-mono text-primary dark:text-indigo-300 font-bold bg-primary/5 dark:bg-indigo-950/60 px-2.5 py-1 rounded-lg border border-primary/20 dark:border-primary">
                         Rachat conseillé : +{sug.needed_points} pt sur {sug.module_code}
                       </span>
@@ -2921,7 +2921,7 @@ const { data: aiAuditData } = useQuery({
 
         {/* Annual KPI Dashboard */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 print:hidden">
-          <div className="bg-card dark:bg-card border border-border dark:border-border p-5 rounded-2xl shadow-sm">
+          <div className="bg-card border border-border p-5 rounded-2xl shadow-sm">
             <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Moyenne Promotion</span>
             <div className="text-2xl font-bold text-[#0f2863] dark:text-blue-300 mt-1">
               {avgAnn} <span className="text-xs font-bold text-slate-400">/20</span>
@@ -2964,11 +2964,11 @@ const { data: aiAuditData } = useQuery({
 
         {/* GRAND MATRIX TABLE FOR ALL 14 MODULES */}
         <div className={cn(
-          "bg-card dark:bg-card border border-slate-200/90 dark:border-border rounded-2xl overflow-hidden shadow-sm space-y-0 transition-all",
+          "bg-card border border-slate-200/90 dark:border-border rounded-2xl overflow-hidden shadow-sm space-y-0 transition-all",
           isFullscreenTable && "fixed inset-0 z-50 rounded-none border-0 p-4 md:p-6 flex flex-col h-screen w-screen bg-card dark:bg-background overflow-hidden"
         )}>
           {/* Header Toolbar: Search & Filters + Fullscreen */}
-          <div className="p-4 md:p-5 border-b border-border dark:border-border flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 bg-slate-50/70 dark:bg-card shrink-0">
+          <div className="p-4 md:p-5 border-b border-border flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 bg-slate-50/70 dark:bg-card shrink-0">
             <div className="space-y-0.5">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-base font-bold text-[#0f2863] dark:text-white flex items-center gap-2">
@@ -2979,7 +2979,7 @@ const { data: aiAuditData } = useQuery({
                   Compensation Annuelle APOGEE
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground dark:text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Moyenne annuelle ≥ 10.00/20 • Max 1 module &lt; 10.00 pour passage avec dettes • Note éliminatoire &lt; 6.00/20.
               </p>
             </div>
@@ -2993,12 +2993,12 @@ const { data: aiAuditData } = useQuery({
                   placeholder="Rechercher nom, Apogée, CIN..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8.5 pr-3 py-1.5 bg-card dark:bg-card border border-border dark:border-border text-xs font-medium text-foreground dark:text-foreground focus:ring-2 focus:ring-[#0f2863] w-full rounded-[var(--control-radius)]"
+                  className="pl-8.5 pr-3 py-1.5 bg-card border border-border text-xs font-medium text-foreground focus:ring-2 focus:ring-[#0f2863] w-full rounded-[var(--control-radius)]"
                 />
               </div>
 
               {/* Filter Tabs */}
-              <div className="flex items-center gap-1 bg-card dark:bg-card p-1 border border-border dark:border-border rounded-xl text-xs">
+              <div className="flex items-center gap-1 bg-card p-1 border border-border rounded-xl text-xs">
                 <button
                   onClick={() => setStatusFilter('all')}
                   className={cn("px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer", statusFilter === 'all' ? "bg-[#0f2863] text-white shadow-xs" : "text-muted-foreground dark:text-foreground hover:bg-muted dark:hover:bg-slate-700")}
@@ -3030,7 +3030,7 @@ const { data: aiAuditData } = useQuery({
                 variant="outline"
                 size="sm"
                 onClick={() => setIsFullscreenTable(v => !v)}
-                className="rounded-xl font-bold text-xs gap-1.5 h-8 border-border dark:border-border text-slate-700 dark:text-foreground hover:bg-muted dark:hover:bg-slate-800"
+                className="rounded-xl font-bold text-xs gap-1.5 h-8 border-border text-slate-700 dark:text-foreground hover:bg-muted dark:hover:bg-slate-800"
               >
                 {isFullscreenTable ? (
                   <>
@@ -3049,7 +3049,7 @@ const { data: aiAuditData } = useQuery({
 
           {/* Filtered Students Table */}
           <div className={cn(
-            "overflow-x-auto bg-card dark:bg-card",
+            "overflow-x-auto bg-card",
             isFullscreenTable ? "flex-1 overflow-y-auto" : "max-h-[680px] overflow-y-auto"
           )}>
             <table className="w-full text-xs text-left border-collapse">
@@ -3172,7 +3172,7 @@ const { data: aiAuditData } = useQuery({
                       <tr key={row.student_id} className={cn("transition-colors", rowOpaqueBg, rowHoverBg)}>
                         {/* Apogee: 100% Solid background to completely prevent bleed-through */}
                         <td className={cn(
-                          "py-2 px-2 font-mono font-bold text-xs text-foreground dark:text-foreground border-r border-b border-border dark:border-border sm:sticky sm:left-0 z-20 text-center shadow-xs min-w-[85px] w-[85px]",
+                          "py-2 px-2 font-mono font-bold text-xs text-foreground border-r border-b border-border sm:sticky sm:left-0 z-20 text-center shadow-xs min-w-[85px] w-[85px]",
                           rowOpaqueBg
                         )}>
                           {row.cne}
@@ -3180,7 +3180,7 @@ const { data: aiAuditData } = useQuery({
 
                         {/* CIN: Dedicated column */}
                         <td className={cn(
-                          "py-2 px-2 font-mono font-bold text-xs text-indigo-950 dark:text-indigo-200 border-r border-b border-border dark:border-border sm:sticky sm:left-[85px] z-20 text-center shadow-xs min-w-[75px] w-[75px]",
+                          "py-2 px-2 font-mono font-bold text-xs text-indigo-950 dark:text-indigo-200 border-r border-b border-border sm:sticky sm:left-[85px] z-20 text-center shadow-xs min-w-[75px] w-[75px]",
                           rowOpaqueBg
                         )}>
                           {row.cin || '–'}
@@ -3236,13 +3236,13 @@ const { data: aiAuditData } = useQuery({
 
                               return (
                                 <React.Fragment key={m.id}>
-                                  <td className={cn("py-1.5 px-1 text-center border-r border-b border-border dark:border-border font-mono text-xs", bgElim, noteColor)}>
+                                  <td className={cn("py-1.5 px-1 text-center border-r border-b border-border font-mono text-xs", bgElim, noteColor)}>
                                     {gradeVal !== null && !isNaN(gradeVal) ? Number(gradeVal).toFixed(2) : '–'}
                                   </td>
-                                  <td className={cn("py-1.5 px-1 text-center border-r border-b border-border dark:border-border font-mono text-[11px]", bgElim, decColor)}>
+                                  <td className={cn("py-1.5 px-1 text-center border-r border-b border-border font-mono text-[11px]", bgElim, decColor)}>
                                     {decText}
                                   </td>
-                                  <td className={cn("py-1.5 px-1 text-center border-r-2 border-b border-slate-300 dark:border-border font-mono text-[10px] text-muted-foreground dark:text-muted-foreground font-bold", bgElim)}>
+                                  <td className={cn("py-1.5 px-1 text-center border-r-2 border-b border-slate-300 dark:border-border font-mono text-[10px] text-muted-foreground font-bold", bgElim)}>
                                     {shortYear}
                                   </td>
                                 </React.Fragment>
@@ -3250,12 +3250,12 @@ const { data: aiAuditData } = useQuery({
                             })}
 
                             {/* Odd Sem Average */}
-                            <td className="py-2.5 px-2 text-center border-r border-b border-border dark:border-border font-mono font-bold text-xs bg-blue-50/40 dark:bg-blue-950/20 text-[#0f2863] dark:text-blue-300">
+                            <td className="py-2.5 px-2 text-center border-r border-b border-border font-mono font-bold text-xs bg-blue-50/40 dark:bg-blue-950/20 text-[#0f2863] dark:text-blue-300">
                               {row.odd_semester_avg !== null && row.odd_semester_avg !== undefined ? Number(row.odd_semester_avg).toFixed(2) : '–'}
                             </td>
 
                             {/* Odd Sem Decision */}
-                            <td className="py-2.5 px-2 text-center border-r-2 border-b border-border dark:border-border">
+                            <td className="py-2.5 px-2 text-center border-r-2 border-b border-border">
                               <span className={cn(
                                 "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider border",
                                 row.odd_semester_decision === 'V' ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800" :
@@ -3298,13 +3298,13 @@ const { data: aiAuditData } = useQuery({
 
                               return (
                                 <React.Fragment key={m.id}>
-                                  <td className={cn("py-1.5 px-1 text-center border-r border-b border-border dark:border-border font-mono text-xs", bgElim, noteColor)}>
+                                  <td className={cn("py-1.5 px-1 text-center border-r border-b border-border font-mono text-xs", bgElim, noteColor)}>
                                     {gradeVal !== null && !isNaN(gradeVal) ? Number(gradeVal).toFixed(2) : '–'}
                                   </td>
-                                  <td className={cn("py-1.5 px-1 text-center border-r border-b border-border dark:border-border font-mono text-[11px]", bgElim, decColor)}>
+                                  <td className={cn("py-1.5 px-1 text-center border-r border-b border-border font-mono text-[11px]", bgElim, decColor)}>
                                     {decText}
                                   </td>
-                                  <td className={cn("py-1.5 px-1 text-center border-r-2 border-b border-slate-300 dark:border-border font-mono text-[10px] text-muted-foreground dark:text-muted-foreground font-bold", bgElim)}>
+                                  <td className={cn("py-1.5 px-1 text-center border-r-2 border-b border-slate-300 dark:border-border font-mono text-[10px] text-muted-foreground font-bold", bgElim)}>
                                     {shortYear}
                                   </td>
                                 </React.Fragment>
@@ -3312,12 +3312,12 @@ const { data: aiAuditData } = useQuery({
                             })}
 
                             {/* Even Sem Average */}
-                            <td className="py-2.5 px-2 text-center border-r border-b border-border dark:border-border font-mono font-bold text-xs bg-blue-50/40 dark:bg-blue-950/20 text-[#0f2863] dark:text-blue-300">
+                            <td className="py-2.5 px-2 text-center border-r border-b border-border font-mono font-bold text-xs bg-blue-50/40 dark:bg-blue-950/20 text-[#0f2863] dark:text-blue-300">
                               {row.even_semester_avg !== null && row.even_semester_avg !== undefined ? Number(row.even_semester_avg).toFixed(2) : '–'}
                             </td>
 
                             {/* Even Sem Decision */}
-                            <td className="py-2.5 px-2 text-center border-r-2 border-b border-border dark:border-border">
+                            <td className="py-2.5 px-2 text-center border-r-2 border-b border-border">
                               <span className={cn(
                                 "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider border",
                                 row.even_semester_decision === 'V' ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800" :
@@ -3331,22 +3331,22 @@ const { data: aiAuditData } = useQuery({
                           </>
                         ) : (
                           <>
-                            <td className="py-2.5 px-3 text-center border-r border-b border-border dark:border-border font-mono font-bold text-xs">
+                            <td className="py-2.5 px-3 text-center border-r border-b border-border font-mono font-bold text-xs">
                               {row.odd_semester_avg} /20
                             </td>
-                            <td className="py-2.5 px-3 text-center border-r border-b border-border dark:border-border font-mono font-bold text-xs">
+                            <td className="py-2.5 px-3 text-center border-r border-b border-border font-mono font-bold text-xs">
                               {row.even_semester_avg} /20
                             </td>
                           </>
                         )}
 
                         {/* Annual Average */}
-                        <td className="py-2.5 px-3 text-center border-r border-b border-border dark:border-border font-mono font-bold text-sm bg-blue-50/40 dark:bg-blue-950/20 text-[#0f2863] dark:text-blue-300">
+                        <td className="py-2.5 px-3 text-center border-r border-b border-border font-mono font-bold text-sm bg-blue-50/40 dark:bg-blue-950/20 text-[#0f2863] dark:text-blue-300">
                           {row.annual_average !== null && row.annual_average !== undefined ? Number(row.annual_average).toFixed(2) : '–'}
                         </td>
 
                         {/* Annual Decision */}
-                        <td className="py-2.5 px-3 text-center border-b border-border dark:border-border">
+                        <td className="py-2.5 px-3 text-center border-b border-border">
                           <div className="flex flex-col items-center justify-center gap-1">
                             <span className={cn(
                               "px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border inline-block shadow-xs",
@@ -3385,8 +3385,8 @@ const { data: aiAuditData } = useQuery({
 
         {/* JURY COMMITTEE STATUS HUB (Commission Jury Annuelle) */}
         {juryStatus && (
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-md space-y-5 print:hidden">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border dark:border-border pb-4">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-md space-y-5 print:hidden">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="px-3 py-1 bg-primary/10 dark:bg-indigo-900/50 text-primary dark:text-indigo-200 rounded-full text-[10px] font-bold uppercase tracking-wider">
@@ -3447,7 +3447,7 @@ const { data: aiAuditData } = useQuery({
                         {member.role === 'chef_filiere' ? 'Président' : 'Professeur'}
                       </span>
                     </div>
-                    <h4 className="text-xs font-bold text-foreground dark:text-foreground mt-1 line-clamp-1">
+                    <h4 className="text-xs font-bold text-foreground mt-1 line-clamp-1">
                       {member.user_name}
                     </h4>
                     <p className="text-[11px] text-muted-foreground font-medium line-clamp-1 mt-0.5">
@@ -3492,7 +3492,7 @@ const { data: aiAuditData } = useQuery({
     return (
       <div className="p-6 max-w-7xl mx-auto space-y-6">
         {renderSelectorBar()}
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-12 text-center space-y-4 shadow-sm">
+        <div className="bg-card border border-border rounded-2xl p-12 text-center space-y-4 shadow-sm">
           <div className="w-16 h-16 rounded-2xl bg-primary/5 dark:bg-indigo-900/30 text-primary dark:text-indigo-400 flex items-center justify-center mx-auto">
             <FileText className="w-8 h-8" />
           </div>
@@ -3605,9 +3605,9 @@ const { data: aiAuditData } = useQuery({
       </div>
 
       {/* Module PV Header & Action Card: Hidden during print */}
-      <div className="bg-card dark:bg-card rounded-2xl p-5 md:p-6 border border-slate-200/90 dark:border-border shadow-sm space-y-4 print:hidden">
+      <div className="bg-card rounded-2xl p-5 md:p-6 border border-slate-200/90 dark:border-border shadow-sm space-y-4 print:hidden">
         {/* Top Row: Module Identity + Signature Status + Sign Action */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border dark:border-border">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border">
           {/* Left: Back button + Title & Module Identity */}
           <div className="flex items-center gap-3.5">
             <Link
@@ -3626,7 +3626,7 @@ const { data: aiAuditData } = useQuery({
                   {pvData.module.code}
                 </span>
               </div>
-              <p className="text-muted-foreground dark:text-muted-foreground text-xs font-bold mt-0.5">
+              <p className="text-muted-foreground text-xs font-bold mt-0.5">
                 {pvData.module.name}
               </p>
             </div>
@@ -3758,7 +3758,7 @@ const { data: aiAuditData } = useQuery({
       {!showAnalytics && (
         <div
           onClick={() => setShowAnalytics(true)}
-          className="cursor-pointer bg-card dark:bg-card border border-slate-200/90 dark:border-border hover:border-purple-300 dark:hover:border-purple-800 rounded-2xl px-4 py-3 flex items-center justify-between transition-all shadow-xs group print:hidden hover:shadow-sm"
+          className="cursor-pointer bg-card border border-slate-200/90 dark:border-border hover:border-purple-300 dark:hover:border-purple-800 rounded-2xl px-4 py-3 flex items-center justify-between transition-all shadow-xs group print:hidden hover:shadow-sm"
         >
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/50 border border-purple-200/60 dark:border-purple-800/60 text-purple-700 dark:text-purple-300 flex items-center justify-center font-bold text-sm shrink-0">
@@ -3769,11 +3769,11 @@ const { data: aiAuditData } = useQuery({
                 Statistiques Promo & Copilote IA
               </span>
               <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
-              <span className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">
+              <span className="text-xs text-muted-foreground font-medium">
                 Moyenne : <strong className="text-primary dark:text-blue-400 font-bold">{avgGrade}</strong>/20
               </span>
               <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
-              <span className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">
+              <span className="text-xs text-muted-foreground font-medium">
                 Réussite : <strong className="text-emerald-700 dark:text-emerald-400 font-bold">{passRate}%</strong> ({valCount}/{totalStudents})
               </span>
               {aiAuditData && (
@@ -3858,7 +3858,7 @@ const { data: aiAuditData } = useQuery({
           {/* Analytics Dashboard (Jury Analytics 5 KPI Cards) */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
             {/* Card 1: Moyenne */}
-            <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group">
+            <div className="bg-card border border-slate-200/80 dark:border-border p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group">
               <div className="absolute top-0 left-0 right-0 h-1 bg-primary rounded-t-2xl" />
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Moyenne Générale</span>
@@ -3874,7 +3874,7 @@ const { data: aiAuditData } = useQuery({
             </div>
 
             {/* Card 2: Médiane */}
-            <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group">
+            <div className="bg-card border border-slate-200/80 dark:border-border p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group">
               <div className="absolute top-0 left-0 right-0 h-1 bg-violet-600 rounded-t-2xl" />
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Médiane Promo</span>
@@ -3884,11 +3884,11 @@ const { data: aiAuditData } = useQuery({
                 <span className="text-2xl lg:text-3xl font-bold text-violet-600 dark:text-violet-400 tracking-tight">{medianGrade}</span>
                 <span className="text-xs text-slate-400 font-semibold ms-1">/20</span>
               </div>
-              <span className="text-[10px] text-muted-foreground dark:text-muted-foreground font-semibold">Note médiane de la promo</span>
+              <span className="text-[10px] text-muted-foreground font-semibold">Note médiane de la promo</span>
             </div>
 
             {/* Card 3: Taux de Réussite */}
-            <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group">
+            <div className="bg-card border border-slate-200/80 dark:border-border p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group">
               <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-600 rounded-t-2xl" />
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Taux de Réussite</span>
@@ -3901,7 +3901,7 @@ const { data: aiAuditData } = useQuery({
             </div>
 
             {/* Card 4: Rattrapage */}
-            <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group">
+            <div className="bg-card border border-slate-200/80 dark:border-border p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group">
               <div className="absolute top-0 left-0 right-0 h-1 bg-amber-500 rounded-t-2xl" />
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Au Rattrapage</span>
@@ -3914,7 +3914,7 @@ const { data: aiAuditData } = useQuery({
             </div>
 
             {/* Card 5: Non Validés */}
-            <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group col-span-2 sm:col-span-1">
+            <div className="bg-card border border-slate-200/80 dark:border-border p-4 rounded-2xl shadow-xs flex flex-col justify-between hover:-translate-y-0.5 hover:shadow-md transition-all relative overflow-hidden group col-span-2 sm:col-span-1">
               <div className="absolute top-0 left-0 right-0 h-1 bg-rose-500 rounded-t-2xl" />
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Non Validés (Exclus)</span>
@@ -3930,7 +3930,7 @@ const { data: aiAuditData } = useQuery({
           {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {/* Decisions breakdown */}
-            <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-xs flex flex-col justify-between h-[280px]">
+            <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-xs flex flex-col justify-between h-[280px]">
               <div>
                 <h3 className="text-xs font-bold text-[#0f2863] dark:text-blue-300 uppercase tracking-wider flex items-center gap-1.5">
                   <span>Statut des Décisions</span>
@@ -3967,7 +3967,7 @@ const { data: aiAuditData } = useQuery({
                   </>
                 )}
               </div>
-              <div className="flex justify-center gap-3 text-[10px] font-bold text-muted-foreground dark:text-foreground pt-1 border-t border-border dark:border-border">
+              <div className="flex justify-center gap-3 text-[10px] font-bold text-muted-foreground dark:text-foreground pt-1 border-t border-border">
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Validés ({valCount})</span>
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> Rattrapage ({ratCount})</span>
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-500" /> Éliminés ({nvCount})</span>
@@ -3975,7 +3975,7 @@ const { data: aiAuditData } = useQuery({
             </div>
 
             {/* Gauss Distribution curve */}
-            <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-xs col-span-1 lg:col-span-2 flex flex-col justify-between h-[280px]">
+            <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-5 shadow-xs col-span-1 lg:col-span-2 flex flex-col justify-between h-[280px]">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-xs font-bold text-[#0f2863] dark:text-blue-300 uppercase tracking-wider">Distribution des Moyennes</h3>
@@ -4004,7 +4004,7 @@ const { data: aiAuditData } = useQuery({
       )}
 
       {/* Session Navigation & Scope Toolbar: Hidden during print */}
-      <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3 bg-card dark:bg-card p-2 rounded-2xl border border-slate-200/90 dark:border-border shadow-xs print:hidden">
+      <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3 bg-card p-2 rounded-2xl border border-slate-200/90 dark:border-border shadow-xs print:hidden">
         {/* Left: Session Tabs */}
         <div className="flex items-center gap-1.5 p-1 bg-muted dark:bg-slate-800/80 rounded-xl overflow-x-auto">
           <button
@@ -4091,7 +4091,7 @@ const { data: aiAuditData } = useQuery({
 
         {/* Right: View Scope Toggle */}
         <div className="flex items-center gap-2.5 px-2 self-end lg:self-center shrink-0">
-          <span className="text-[11px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5">
+          <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5">
             <Users className="w-3.5 h-3.5 text-primary" />
             Périmètre :
           </span>
@@ -4572,8 +4572,8 @@ const { data: aiAuditData } = useQuery({
         const projectedPassed = eligibleCandidates.filter((s: any) => parseFloat(s.moyenne_semestrielle) + simBonusPoints >= 10.0)
         return (
           <div className="fixed inset-0 z-[9999] bg-slate-950/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-            <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 max-w-lg w-full shadow-sm space-y-5">
-              <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
+            <div className="bg-card border border-border rounded-2xl p-6 max-w-lg w-full shadow-sm space-y-5">
+              <div className="flex items-center justify-between border-b border-border pb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
                     <Sparkles className="w-5 h-5" />
@@ -4613,7 +4613,7 @@ const { data: aiAuditData } = useQuery({
 
               {/* Projected Results */}
               <div className="grid grid-cols-2 gap-3 text-center">
-                <div className="p-3 bg-muted/50 dark:bg-card rounded-2xl border border-border dark:border-border">
+                <div className="p-3 bg-muted/50 dark:bg-card rounded-2xl border border-border">
                   <span className="text-[10px] text-slate-400 uppercase font-bold">Candidats Éligibles (9.0–9.99)</span>
                   <div className="text-xl font-bold text-foreground dark:text-white mt-1">{eligibleCandidates.length}</div>
                 </div>
@@ -4638,7 +4638,7 @@ const { data: aiAuditData } = useQuery({
                 )}
               </div>
 
-              <div className="pt-3 border-t border-border dark:border-border flex justify-between items-center">
+              <div className="pt-3 border-t border-border flex justify-between items-center">
                 <span className="text-[10px] text-slate-400 italic">Simulations sans modification de la base de données</span>
                 <Button onClick={() => setShowSimulatorModal(false)} className="rounded-xl font-bold bg-amber-600 hover:bg-amber-700 text-white text-xs">
                   Fermer Simulation
@@ -4662,8 +4662,8 @@ const { data: aiAuditData } = useQuery({
         const validatedStudents = students.filter((s: any) => s.decision_global === 'V' || s.decision_global === 'VAR' || s.decision_global === 'VPC')
         return (
           <div className="fixed inset-0 z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-            <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 max-w-lg w-full shadow-sm space-y-5">
-              <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
+            <div className="bg-card border border-border rounded-2xl p-6 max-w-lg w-full shadow-sm space-y-5">
+              <div className="flex items-center justify-between border-b border-border pb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-600 text-white flex items-center justify-center">
                     <Trophy className="w-5 h-5" />
@@ -4694,7 +4694,7 @@ const { data: aiAuditData } = useQuery({
                 {validatedStudents.length === 0 && <p className="text-xs text-muted-foreground text-center italic py-2">Aucun étudiant validé pour ce semestre.</p>}
               </div>
 
-              <div className="flex justify-end gap-3 border-t border-border dark:border-border pt-4">
+              <div className="flex justify-end gap-3 border-t border-border pt-4">
                 <Button variant="outline" onClick={() => setShowAttestationModal(false)} className="rounded-xl font-bold text-xs">Annuler</Button>
                 <Button
                   onClick={handleGenerateBatchAttestations}
@@ -4721,8 +4721,8 @@ const { data: aiAuditData } = useQuery({
         const nvCount = _students.filter((s: any) => s.decision_global === 'NV').length
         return (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 w-full max-w-lg shadow-sm relative space-y-6">
-            <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
+          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-lg shadow-sm relative space-y-6">
+            <div className="flex items-center justify-between border-b border-border pb-4">
               <h3 className="text-xl font-bold text-foreground dark:text-white flex items-center gap-2">
                 🚀 Diffusion des Résultats par Email
               </h3>
@@ -4775,7 +4775,7 @@ const { data: aiAuditData } = useQuery({
               </div>
             </div>
 
-            <div className="pt-4 border-t border-border dark:border-border flex items-center justify-end gap-3">
+            <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
               <Button variant="outline" onClick={() => setShowBulkEmailModal(false)} className="rounded-xl font-bold text-xs">
                 Annuler
               </Button>
@@ -4792,7 +4792,7 @@ const { data: aiAuditData } = useQuery({
       {/* 📋 PV de Rachat Confirmation & Export Modal */}
       {selectedRachatStudent && (
         <div className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-card dark:bg-card border-4 border-slate-950 dark:border-border rounded-2xl p-6 max-w-lg w-full shadow-sm space-y-4">
+          <div className="bg-card border-4 border-slate-950 dark:border-border rounded-2xl p-6 max-w-lg w-full shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b-2 border-slate-950 dark:border-border pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-500 border-2 border-amber-400 flex items-center justify-center font-bold text-2xl shadow-md">
@@ -4809,23 +4809,23 @@ const { data: aiAuditData } = useQuery({
             </div>
 
             <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-400 dark:border-amber-800 rounded-2xl space-y-2">
-              <div className="flex justify-between text-xs font-bold text-foreground dark:text-foreground">
+              <div className="flex justify-between text-xs font-bold text-foreground">
                 <span>Étudiant :</span>
                 <span className="text-amber-900 dark:text-amber-300 font-bold">{selectedRachatStudent.student_name} ({selectedRachatStudent.cne})</span>
               </div>
-              <div className="flex justify-between text-xs font-bold text-foreground dark:text-foreground">
+              <div className="flex justify-between text-xs font-bold text-foreground">
                 <span>CIN :</span>
                 <span className="font-mono text-primary dark:text-indigo-300 font-bold">{selectedRachatStudent.cin || '-'}</span>
               </div>
-              <div className="flex justify-between text-xs font-bold text-foreground dark:text-foreground">
+              <div className="flex justify-between text-xs font-bold text-foreground">
                 <span>Module Concerné :</span>
                 <span className="font-mono">{selectedRachatStudent.module_code}</span>
               </div>
-              <div className="flex justify-between text-xs font-bold text-foreground dark:text-foreground">
+              <div className="flex justify-between text-xs font-bold text-foreground">
                 <span>Points de Rachat Accordés :</span>
                 <span className="text-amber-700 dark:text-amber-400 font-bold text-sm">+{selectedRachatStudent.needed_points} pt</span>
               </div>
-              <div className="flex justify-between text-xs font-bold text-foreground dark:text-foreground">
+              <div className="flex justify-between text-xs font-bold text-foreground">
                 <span>Nouvelle Note Module :</span>
                 <span className="text-emerald-600 font-mono font-bold text-sm">{selectedRachatStudent.target_grade} / 20</span>
               </div>
@@ -4836,14 +4836,14 @@ const { data: aiAuditData } = useQuery({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground dark:text-foreground uppercase tracking-wider">
+              <label className="text-xs font-bold text-foreground uppercase tracking-wider">
                 Motif & Justification Officielle du Jury :
               </label>
               <textarea
                 value={selectedRachatReason}
                 onChange={(e) => setSelectedRachatReason(e.target.value)}
                 rows={3}
-                className="w-full p-3 text-xs font-bold border-2 border-slate-950 bg-muted/50 dark:bg-card text-foreground dark:text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500 rounded-[var(--control-radius)]"
+                className="w-full p-3 text-xs font-bold border-2 border-slate-950 bg-muted/50 dark:bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-amber-500 rounded-[var(--control-radius)]"
               />
             </div>
 
@@ -4886,8 +4886,8 @@ const { data: aiAuditData } = useQuery({
       {showAuditModal && (
 
         <div className="fixed inset-0 z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 max-w-2xl w-full shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
+          <div className="bg-card border border-border rounded-2xl p-6 max-w-2xl w-full shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
                   <History className="w-5 h-5" />
@@ -4913,7 +4913,7 @@ const { data: aiAuditData } = useQuery({
                   <div className="flex items-center gap-3">
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                     <div>
-                      <div className="font-bold text-foreground dark:text-foreground">{log.action}</div>
+                      <div className="font-bold text-foreground">{log.action}</div>
                       <div className="text-[10px] text-muted-foreground">Par {log.user} • IP: {log.ip}</div>
                     </div>
                   </div>
@@ -4922,7 +4922,7 @@ const { data: aiAuditData } = useQuery({
               ))}
             </div>
 
-            <div className="pt-3 border-t border-border dark:border-border flex justify-between items-center text-xs">
+            <div className="pt-3 border-t border-border flex justify-between items-center text-xs">
               <span className="text-[10px] text-slate-400 font-mono">Registre Cryptographique Verrouillé (Immutable Audit)</span>
               <Button onClick={() => setShowAuditModal(false)} className="rounded-xl font-bold bg-slate-900 text-white hover:bg-slate-800">
                 Fermer

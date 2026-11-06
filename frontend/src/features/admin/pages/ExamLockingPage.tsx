@@ -105,8 +105,8 @@ export default function ExamLockingPage() {
     return (
       <div className="flex flex-col items-center justify-center h-96 space-y-4">
         <div className="relative">
-          <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-[#0f2863] animate-spin"></div>
-          <Lock className="w-6 h-6 text-[#0f2863] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+          <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-[#1a3673] animate-spin"></div>
+          <Lock className="w-6 h-6 text-[#1a3673] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
         </div>
         <p className="text-muted-foreground font-bold text-xs tracking-wider uppercase">Chargement de la matrice de sécurité...</p>
       </div>
@@ -264,7 +264,7 @@ export default function ExamLockingPage() {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-              <ShieldAlert className="w-5 h-5 text-[#0f2863]" />
+              <ShieldAlert className="w-5 h-5 text-[#1a3673]" />
               Matrice des Saisons (Déverrouiller une phase)
             </h3>
             <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sélectionnez la saison à ouvrir</span>
@@ -316,7 +316,7 @@ export default function ExamLockingPage() {
                   "w-full flex items-center justify-center gap-2.5 py-4 font-bold text-xs uppercase tracking-wider rounded-2xl transition-all shadow-md cursor-pointer active:scale-95",
                   currentPhase === 'Ordinaire Automne' 
                     ? "bg-amber-100 text-amber-900 border border-amber-300 shadow-none cursor-default" 
-                    : "bg-[#0f2863] text-white hover:bg-[#193a86] shadow-blue-900/20 hover:shadow-blue-900/30"
+                    : "bg-[#1a3673] text-white hover:bg-[#193a86] shadow-blue-900/20 hover:shadow-blue-900/30"
                 )}
               >
                 {updatingPhase === 'Ordinaire Automne' ? <Loader2 className="w-4 h-4 animate-spin" /> : currentPhase === 'Ordinaire Automne' ? <CheckCircle2 className="w-4 h-4 text-amber-600" /> : <Unlock className="w-4 h-4" />}
@@ -368,7 +368,7 @@ export default function ExamLockingPage() {
                   "w-full flex items-center justify-center gap-2.5 py-4 font-bold text-xs uppercase tracking-wider rounded-2xl transition-all shadow-md cursor-pointer active:scale-95",
                   currentPhase === 'Rattrapage Automne' 
                     ? "bg-primary/10 text-primary border border-primary/20 shadow-none cursor-default"
-                    : "bg-[#0f2863] text-white hover:bg-[#193a86] shadow-blue-900/20 hover:shadow-blue-900/30"
+                    : "bg-[#1a3673] text-white hover:bg-[#193a86] shadow-blue-900/20 hover:shadow-blue-900/30"
                 )}
               >
                 {updatingPhase === 'Rattrapage Automne' ? <Loader2 className="w-4 h-4 animate-spin" /> : currentPhase === 'Rattrapage Automne' ? <CheckCircle2 className="w-4 h-4 text-primary" /> : <Unlock className="w-4 h-4" />}
@@ -420,7 +420,7 @@ export default function ExamLockingPage() {
                   "w-full flex items-center justify-center gap-2.5 py-4 font-bold text-xs uppercase tracking-wider rounded-2xl transition-all shadow-md cursor-pointer active:scale-95",
                   currentPhase === 'Ordinaire Printemps' 
                     ? "bg-emerald-100 text-emerald-900 border border-emerald-300 shadow-none cursor-default" 
-                    : "bg-[#0f2863] text-white hover:bg-[#193a86] shadow-blue-900/20 hover:shadow-blue-900/30"
+                    : "bg-[#1a3673] text-white hover:bg-[#193a86] shadow-blue-900/20 hover:shadow-blue-900/30"
                 )}
               >
                 {updatingPhase === 'Ordinaire Printemps' ? <Loader2 className="w-4 h-4 animate-spin" /> : currentPhase === 'Ordinaire Printemps' ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <Unlock className="w-4 h-4" />}
@@ -472,7 +472,7 @@ export default function ExamLockingPage() {
                   "w-full flex items-center justify-center gap-2.5 py-4 font-bold text-xs uppercase tracking-wider rounded-2xl transition-all shadow-md cursor-pointer active:scale-95",
                   currentPhase === 'Rattrapage Printemps' 
                     ? "bg-purple-100 text-purple-900 border border-purple-300 shadow-none cursor-default" 
-                    : "bg-[#0f2863] text-white hover:bg-[#193a86] shadow-blue-900/20 hover:shadow-blue-900/30"
+                    : "bg-[#1a3673] text-white hover:bg-[#193a86] shadow-blue-900/20 hover:shadow-blue-900/30"
                 )}
               >
                 {updatingPhase === 'Rattrapage Printemps' ? <Loader2 className="w-4 h-4 animate-spin" /> : currentPhase === 'Rattrapage Printemps' ? <CheckCircle2 className="w-4 h-4 text-purple-600" /> : <Unlock className="w-4 h-4" />}
@@ -487,7 +487,7 @@ export default function ExamLockingPage() {
         <div className="space-y-4 pt-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-              <History className="w-5 h-5 text-[#0f2863]" />
+              <History className="w-5 h-5 text-[#1a3673]" />
               Historique de Verrouillage (Journal d'Audit Avancé)
             </h3>
             <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Tracé en temps réel</span>
@@ -555,7 +555,7 @@ export default function ExamLockingPage() {
             
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-[#0f2863]/10 text-[#0f2863] flex items-center justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-[#1a3673]/10 text-[#1a3673] flex items-center justify-center">
                   <ShieldAlert className="w-6 h-6" />
                 </div>
                 <div>
@@ -573,7 +573,7 @@ export default function ExamLockingPage() {
 
             <div className="bg-muted/50 p-4 rounded-2xl border border-slate-200/80 space-y-1">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">NOUVELLE PHASE CIBLÉE</span>
-              <p className="text-lg font-bold text-[#0f2863]">{pendingPhase}</p>
+              <p className="text-lg font-bold text-[#1a3673]">{pendingPhase}</p>
             </div>
 
             <div className="space-y-2">
@@ -585,7 +585,7 @@ export default function ExamLockingPage() {
                 value={reasonText}
                 onChange={(e) => setReasonText(e.target.value)}
                 placeholder="Ex: Délibération du Jury, Ouverture exceptionnelle Rattrapage S3..."
-                className="w-full bg-muted/50 border border-border p-4 text-xs font-semibold text-foreground focus:ring-2 focus:ring-[#0f2863] outline-hidden shadow-inner resize-none rounded-[var(--control-radius)]"
+                className="w-full bg-muted/50 border border-border p-4 text-xs font-semibold text-foreground focus:ring-2 focus:ring-[#1a3673] outline-hidden shadow-inner resize-none rounded-[var(--control-radius)]"
               />
               
               {/* Reason Presets */}
@@ -619,7 +619,7 @@ export default function ExamLockingPage() {
               <button
                 type="button"
                 onClick={confirmPhaseChange}
-                className="flex-1 py-3.5 px-4 font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-[#0f2863] to-[#1d429b] hover:from-[#15347d] hover:to-[#224cb0] rounded-2xl shadow-lg active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="flex-1 py-3.5 px-4 font-bold text-xs uppercase tracking-wider text-white bg-gradient-to-r from-[#1a3673] to-[#1d429b] hover:from-[#15347d] hover:to-[#224cb0] rounded-2xl shadow-lg active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 Confirmer & Enregistrer

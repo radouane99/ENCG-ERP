@@ -131,8 +131,8 @@ export default function AdminClubsRoomRequestsPage() {
       </div>
 
       {/* Main Table Card */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border dark:border-border pb-4">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
           <h3 className="text-base font-bold text-foreground dark:text-white">Réservations d'Espaces Événementiels</h3>
           
           <div className="flex items-center gap-2">
@@ -142,7 +142,7 @@ export default function AdminClubsRoomRequestsPage() {
                 onClick={() => setFilter(st as any)}
                 className={cn(
                   "px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer",
-                  filter === st ? "bg-[#0f2863] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground hover:bg-slate-200"
+                  filter === st ? "bg-[#1a3673] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground hover:bg-slate-200"
                 )}
               >
                 {st === 'pending' ? `En attente (${counts.pending})` : st === 'approved' ? `Approuvées (${counts.approved})` : st === 'rejected' ? `Refusées (${counts.rejected})` : 'Toutes'}
@@ -151,9 +151,9 @@ export default function AdminClubsRoomRequestsPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto min-h-[300px] border border-border dark:border-border rounded-2xl">
+        <div className="overflow-x-auto min-h-[300px] border border-border rounded-2xl">
           <table className="w-full text-sm text-left">
-            <thead className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-muted/50 dark:bg-slate-800/80 border-b border-border dark:border-border">
+            <thead className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-muted/50 dark:bg-slate-800/80 border-b border-border">
               <tr>
                 <th className="px-6 py-4">SALLE / ESPACE</th>
                 <th className="px-6 py-4">CLUB DEMANDEUR</th>
@@ -178,7 +178,7 @@ export default function AdminClubsRoomRequestsPage() {
                   <tr key={req.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0f2863] to-blue-600 flex items-center justify-center text-amber-300 font-bold text-xs shrink-0 shadow-md">
+                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#1a3673] to-blue-600 flex items-center justify-center text-amber-300 font-bold text-xs shrink-0 shadow-md">
                           <Building className="w-5 h-5 text-amber-300" />
                         </div>
                         <div>
@@ -193,7 +193,7 @@ export default function AdminClubsRoomRequestsPage() {
                     </td>
 
                     <td className="px-6 py-4">
-                      <div className="font-bold text-foreground dark:text-foreground text-xs capitalize">
+                      <div className="font-bold text-foreground text-xs capitalize">
                         {format(startDate, 'EEEE d MMM yyyy', { locale: fr })}
                       </div>
                       <div className="text-[10px] text-slate-400 font-bold flex items-center gap-1 mt-0.5">
@@ -261,8 +261,8 @@ export default function AdminClubsRoomRequestsPage() {
       {/* Modal Pass QR Clés Salle Club */}
       {selectedPassModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl w-full max-w-md shadow-sm overflow-hidden text-center">
-            <div className="p-6 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white flex items-center justify-between">
+          <div className="bg-card border border-border rounded-2xl w-full max-w-md shadow-sm overflow-hidden text-center">
+            <div className="p-6 bg-gradient-to-r from-[#1a3673] to-blue-900 text-white flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-blue-200">Pass Matériel & Clés Salle</span>
                 <h2 className="text-base font-bold">Accès Événement Club</h2>
@@ -289,7 +289,7 @@ export default function AdminClubsRoomRequestsPage() {
               <p className="text-[11px] text-muted-foreground font-medium">À présenter à l'agent de sécurité au poste central d'accueil pour la remise des micros, vidéoprojecteur et trousseau de clés.</p>
             </div>
 
-            <div className="p-4 border-t border-border dark:border-border bg-muted/50 dark:bg-card flex justify-end">
+            <div className="p-4 border-t border-border bg-muted/50 dark:bg-card flex justify-end">
               <button 
                 onClick={() => setSelectedPassModal(null)}
                 className="px-6 py-2.5 bg-slate-900 text-white font-bold rounded-xl text-xs hover:bg-slate-800 transition-colors cursor-pointer"

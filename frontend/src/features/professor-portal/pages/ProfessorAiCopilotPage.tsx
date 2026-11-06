@@ -178,7 +178,7 @@ export default function ProfessorAiCopilotPage() {
         <div className="grid lg:grid-cols-3 gap-8">
           
           {/* Form Panel */}
-          <div className="bg-card dark:bg-card rounded-2xl p-6 md:p-8 shadow-sm border border-border dark:border-border space-y-6 h-fit">
+          <div className="bg-card rounded-2xl p-6 md:p-8 shadow-sm border border-border space-y-6 h-fit">
             <div>
               <h3 className="font-bold text-lg text-foreground dark:text-white flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-primary" /> Paramètres du Cahier de Texte
@@ -194,7 +194,7 @@ export default function ProfessorAiCopilotPage() {
                 <select
                   value={selectedModuleOutline}
                   onChange={e => setSelectedModuleOutline(e.target.value)}
-                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold rounded-[var(--control-radius)]"
+                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border text-xs font-bold rounded-[var(--control-radius)]"
                   required
                 >
                   <option value="">-- Choisir un module ENCG --</option>
@@ -214,7 +214,7 @@ export default function ProfessorAiCopilotPage() {
                   onChange={e => setSessionCount(Number(e.target.value))}
                   min={4}
                   max={24}
-                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold rounded-[var(--control-radius)]"
+                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border text-xs font-bold rounded-[var(--control-radius)]"
                 />
               </div>
 
@@ -242,7 +242,7 @@ export default function ProfessorAiCopilotPage() {
 
                 <div className="space-y-4">
                   {textbookResult.map((sess: any, idx: number) => (
-                    <div key={idx} className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all space-y-2">
+                    <div key={idx} className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all space-y-2">
                       <div className="flex items-center justify-between">
                         <span className="px-3 py-1 bg-primary/5 dark:bg-indigo-950/40 text-primary dark:text-indigo-300 rounded-lg text-[10px] font-bold uppercase tracking-wider">
                           SÉANCE {sess.session_number || idx + 1} ({sess.duration_hours || 3}H)
@@ -256,9 +256,9 @@ export default function ProfessorAiCopilotPage() {
                 </div>
               </div>
             ) : (
-              <div className="bg-muted/50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-border dark:border-border p-16 text-center space-y-3">
+              <div className="bg-muted/50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-border p-16 text-center space-y-3">
                 <BrainCircuit className="w-12 h-12 text-indigo-300 mx-auto" />
-                <h4 className="font-bold text-foreground dark:text-foreground">Prêt à générer la trame pédagogique</h4>
+                <h4 className="font-bold text-foreground">Prêt à générer la trame pédagogique</h4>
                 <p className="text-xs text-slate-400 max-w-sm mx-auto">
                   Sélectionnez un module pour créer un déroulement complet de cours adapté aux exigences ENCG.
                 </p>
@@ -273,7 +273,7 @@ export default function ProfessorAiCopilotPage() {
         <div className="grid lg:grid-cols-3 gap-8">
           
           {/* Form Panel */}
-          <div className="bg-card dark:bg-card rounded-2xl p-6 md:p-8 shadow-sm border border-border dark:border-border space-y-6 h-fit">
+          <div className="bg-card rounded-2xl p-6 md:p-8 shadow-sm border border-border space-y-6 h-fit">
             <div>
               <h3 className="font-bold text-lg text-foreground dark:text-white flex items-center gap-2">
                 <FileText className="w-5 h-5 text-purple-600" /> Concepteur d'Examens
@@ -289,7 +289,7 @@ export default function ProfessorAiCopilotPage() {
                 <select
                   value={selectedModuleExam}
                   onChange={e => setSelectedModuleExam(e.target.value)}
-                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold rounded-[var(--control-radius)]"
+                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border text-xs font-bold rounded-[var(--control-radius)]"
                   required
                 >
                   <option value="">-- Choisir le module --</option>
@@ -306,7 +306,7 @@ export default function ProfessorAiCopilotPage() {
                 <select
                   value={examType}
                   onChange={e => setExamType(e.target.value as any)}
-                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold rounded-[var(--control-radius)]"
+                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border text-xs font-bold rounded-[var(--control-radius)]"
                 >
                   <option value="case_study">Étude de Cas Réelle (Analyse Stratégique ENCG)</option>
                   <option value="qcm">QCM Rigoureux (20 Questions)</option>
@@ -320,7 +320,7 @@ export default function ProfessorAiCopilotPage() {
                 <select
                   value={difficulty}
                   onChange={e => setDifficulty(e.target.value as any)}
-                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold rounded-[var(--control-radius)]"
+                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border text-xs font-bold rounded-[var(--control-radius)]"
                 >
                   <option value="standard">Standard (Tronc Commun ENCG)</option>
                   <option value="advanced">Avancé (Spécialité Semestre 7/8)</option>
@@ -334,7 +334,7 @@ export default function ProfessorAiCopilotPage() {
                   value={instructions}
                   onChange={e => setInstructions(e.target.value)}
                   rows={2}
-                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-semibold rounded-[var(--control-radius)]"
+                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border text-xs font-semibold rounded-[var(--control-radius)]"
                 />
                 <label className="mt-2 flex items-center gap-2 text-xs font-bold text-muted-foreground">
                   <input type="checkbox" checked={localeFes} onChange={(e) => setLocaleFes(e.target.checked)} />
@@ -356,10 +356,10 @@ export default function ProfessorAiCopilotPage() {
           {/* Exam Result Display */}
           <div className="lg:col-span-2 space-y-6">
             {examResult ? (
-              <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-8 shadow-md space-y-6 print:shadow-none print:border-none">
+              <div className="bg-card border border-border rounded-2xl p-8 shadow-md space-y-6 print:shadow-none print:border-none">
                 
                 {/* Print action header */}
-                <div className="flex items-center justify-between border-b border-border dark:border-border pb-4 print:hidden">
+                <div className="flex items-center justify-between border-b border-border pb-4 print:hidden">
                   <span className="px-3 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold uppercase">
                     Sujet Officiel d'Examen sur 20 Points
                   </span>
@@ -389,7 +389,7 @@ export default function ProfessorAiCopilotPage() {
                     <span className="text-xs font-bold text-primary">Durée : 2h00 — Barème Officiel : 20 / 20</span>
                   </div>
 
-                  <div className="bg-muted/50 dark:bg-slate-800/50 p-6 rounded-2xl border border-border dark:border-border text-xs text-slate-700 dark:text-foreground space-y-2">
+                  <div className="bg-muted/50 dark:bg-slate-800/50 p-6 rounded-2xl border border-border text-xs text-slate-700 dark:text-foreground space-y-2">
                     <span className="font-bold uppercase text-slate-400 text-[10px] block">Mise en Situation / Contexte Entreprise :</span>
                     <p className="leading-relaxed italic">{examResult.context}</p>
                   </div>
@@ -398,12 +398,12 @@ export default function ProfessorAiCopilotPage() {
                 {/* Sections & Questions */}
                 <div className="space-y-6">
                   {examResult.sections?.map((sec: any, idx: number) => (
-                    <div key={idx} className="space-y-3 border-t border-border dark:border-border pt-4">
+                    <div key={idx} className="space-y-3 border-t border-border pt-4">
                       <h4 className="font-bold text-primary dark:text-indigo-300 text-base">{sec.section_title}</h4>
                       
                       <div className="space-y-3">
                         {sec.questions?.map((q: any, qIdx: number) => (
-                          <div key={qIdx} className="p-4 bg-slate-50/70 dark:bg-slate-800/40 rounded-2xl space-y-1 border border-border dark:border-border">
+                          <div key={qIdx} className="p-4 bg-slate-50/70 dark:bg-slate-800/40 rounded-2xl space-y-1 border border-border">
                             <div className="flex items-center justify-between">
                               <span className="font-bold text-xs text-foreground dark:text-white">Question {q.num || qIdx + 1}</span>
                               <span className="text-[11px] font-bold text-primary bg-primary/5 px-2 py-0.5 rounded-md">({q.points} Pts)</span>
@@ -423,13 +423,13 @@ export default function ProfessorAiCopilotPage() {
 
                 {/* Evaluation Rubric */}
                 {examResult.rubric && (
-                  <div className="space-y-3 border-t border-border dark:border-border pt-6">
+                  <div className="space-y-3 border-t border-border pt-6">
                     <h4 className="font-bold text-foreground dark:text-white text-sm uppercase tracking-wider">Grille d'Évaluation & Barème Détaillé</h4>
-                    <div className="border border-border dark:border-border rounded-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                    <div className="border border-border rounded-2xl overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                       {examResult.rubric.map((r: any, rIdx: number) => (
                         <div key={rIdx} className="p-3 flex items-center justify-between hover:bg-muted/50 transition-colors">
                           <div>
-                            <span className="font-bold text-foreground dark:text-foreground">{r.criteria}</span>
+                            <span className="font-bold text-foreground">{r.criteria}</span>
                             <p className="text-[10px] text-slate-400">{r.description}</p>
                           </div>
                           <span className="font-bold text-primary shrink-0 ms-4">{r.points} Pts</span>
@@ -441,9 +441,9 @@ export default function ProfessorAiCopilotPage() {
 
               </div>
             ) : (
-              <div className="bg-muted/50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-border dark:border-border p-16 text-center space-y-3">
+              <div className="bg-muted/50 dark:bg-slate-900/50 rounded-2xl border border-dashed border-border p-16 text-center space-y-3">
                 <FileText className="w-12 h-12 text-purple-300 mx-auto" />
-                <h4 className="font-bold text-foreground dark:text-foreground">Aucun sujet généré</h4>
+                <h4 className="font-bold text-foreground">Aucun sujet généré</h4>
                 <p className="text-xs text-slate-400 max-w-sm mx-auto">
                   Remplissez le formulaire de gauche pour concevoir une épreuve complète sur 20 points.
                 </p>

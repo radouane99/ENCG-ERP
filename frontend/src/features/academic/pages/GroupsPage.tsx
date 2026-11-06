@@ -239,7 +239,7 @@ export default function GroupsPage() {
 
       {/* Analytics KPI Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-md flex items-center justify-between">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-md flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">TOTAL GROUPES & SECTIONS</span>
             <h3 className="text-3xl font-bold text-foreground dark:text-white mt-1">{groups.length} Groupes</h3>
@@ -250,7 +250,7 @@ export default function GroupsPage() {
           </div>
         </div>
 
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-md flex items-center justify-between">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-md flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">CAPACITÉ TOTALE D'ACCUEIL</span>
             <h3 className="text-3xl font-bold text-emerald-600 mt-1">{groups.reduce((acc, g) => acc + (g.capacity || 35), 0)} Places</h3>
@@ -261,13 +261,13 @@ export default function GroupsPage() {
           </div>
         </div>
 
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-md flex flex-col justify-between">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-md flex flex-col justify-between">
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">FILTRAGE PAR SEMESTRE</span>
           <div className="relative mt-2">
             <select 
               value={semesterFilter}
               onChange={(e) => setSemesterFilter(e.target.value)}
-              className="w-full px-3.5 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-slate-700 dark:text-foreground outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
+              className="w-full px-3.5 py-2 bg-muted/50 dark:bg-card border border-border text-xs font-bold text-slate-700 dark:text-foreground outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
             >
               <option value="">Tous les Semestres (S1 - S10)</option>
               <option value="1">Semestre S1 (Tronc Commun)</option>
@@ -282,7 +282,7 @@ export default function GroupsPage() {
       </div>
 
       {/* Filter & Search Bar with Quick Filiere Tabs */}
-      <div className="bg-card dark:bg-card rounded-2xl shadow-sm border border-border dark:border-border p-4 space-y-4">
+      <div className="bg-card rounded-2xl shadow-sm border border-border p-4 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           {/* Quick Filiere Filter Tabs */}
           <div className="flex items-center gap-2 flex-wrap">
@@ -290,7 +290,7 @@ export default function GroupsPage() {
               onClick={() => { setFiliereFilter(''); setSemesterFilter(''); }}
               className={cn(
                 "px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
-                !filiereFilter && !semesterFilter ? "bg-[#0f2863] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground dark:text-foreground hover:bg-slate-200"
+                !filiereFilter && !semesterFilter ? "bg-[#1a3673] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground dark:text-foreground hover:bg-slate-200"
               )}
             >
               Tous ({groups.length})
@@ -299,7 +299,7 @@ export default function GroupsPage() {
               onClick={() => setFiliereFilter('TC')}
               className={cn(
                 "px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
-                filiereFilter === 'TC' ? "bg-[#0f2863] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground dark:text-foreground hover:bg-slate-200"
+                filiereFilter === 'TC' ? "bg-[#1a3673] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground dark:text-foreground hover:bg-slate-200"
               )}
             >
               Tronc Commun (TC)
@@ -308,7 +308,7 @@ export default function GroupsPage() {
               onClick={() => setFiliereFilter('GFC')}
               className={cn(
                 "px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
-                filiereFilter === 'GFC' ? "bg-[#0f2863] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground dark:text-foreground hover:bg-slate-200"
+                filiereFilter === 'GFC' ? "bg-[#1a3673] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground dark:text-foreground hover:bg-slate-200"
               )}
             >
               Finance (GFC)
@@ -317,7 +317,7 @@ export default function GroupsPage() {
               onClick={() => setFiliereFilter('MCM')}
               className={cn(
                 "px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
-                filiereFilter === 'MCM' ? "bg-[#0f2863] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground dark:text-foreground hover:bg-slate-200"
+                filiereFilter === 'MCM' ? "bg-[#1a3673] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground dark:text-foreground hover:bg-slate-200"
               )}
             >
               Marketing (MCM)
@@ -330,7 +330,7 @@ export default function GroupsPage() {
         </div>
 
         {/* Search and Semestre Filter Bar */}
-        <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-border dark:border-border">
+        <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-border">
           <div className="relative flex-1 min-w-[280px]">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
@@ -338,14 +338,14 @@ export default function GroupsPage() {
               placeholder="Rechercher par nom de groupe (ex: TC-S2-G1)..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-semibold text-foreground dark:text-foreground placeholder-slate-400 outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
+              className="w-full pl-10 pr-4 py-2 bg-muted/50 dark:bg-card border border-border text-xs font-semibold text-foreground placeholder-slate-400 outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
             />
           </div>
 
           <select 
             value={semesterFilter}
             onChange={(e) => setSemesterFilter(e.target.value)}
-            className="px-4 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-slate-700 dark:text-foreground outline-none focus:ring-2 focus:ring-ring cursor-pointer rounded-[var(--control-radius)]"
+            className="px-4 py-2 bg-muted/50 dark:bg-card border border-border text-xs font-bold text-slate-700 dark:text-foreground outline-none focus:ring-2 focus:ring-ring cursor-pointer rounded-[var(--control-radius)]"
           >
             <option value="">Tous les Semestres</option>
             <option value="1">Semestre S1</option>
@@ -357,15 +357,15 @@ export default function GroupsPage() {
 
       {/* Table Section */}
 
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto min-h-[350px]">
           {loading ? (
             <div className="flex justify-center items-center py-24 text-slate-400">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0f2863]"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1a3673]"></div>
             </div>
           ) : (
             <table className="w-full text-sm text-left">
-              <thead className="text-xs text-slate-400 uppercase tracking-wider bg-slate-50/80 dark:bg-slate-800/50 border-b border-border dark:border-border">
+              <thead className="text-xs text-slate-400 uppercase tracking-wider bg-slate-50/80 dark:bg-slate-800/50 border-b border-border">
                 <tr>
                   <th scope="col" className="px-6 py-4 font-bold">Désignation Groupe</th>
                   <th scope="col" className="px-6 py-4 font-bold">Filière & Semestre</th>
@@ -386,10 +386,10 @@ export default function GroupsPage() {
                     const pct = maxCap > 0 ? Math.min(100, Math.round((currentCount / maxCap) * 100)) : 0;
 
                     return (
-                      <tr key={g.id} className="bg-card dark:bg-card hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
+                      <tr key={g.id} className="bg-card hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors group">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-2xl bg-primary/5 dark:bg-blue-950/60 text-[#0f2863] dark:text-blue-300 border border-primary/20 dark:border-primary flex items-center justify-center font-bold text-xs font-mono shrink-0 shadow-xs">
+                            <div className="w-9 h-9 rounded-2xl bg-primary/5 dark:bg-blue-950/60 text-[#1a3673] dark:text-blue-300 border border-primary/20 dark:border-primary flex items-center justify-center font-bold text-xs font-mono shrink-0 shadow-xs">
                               {g.name.charAt(0).toUpperCase()}
                             </div>
                             <span className="font-bold text-foreground dark:text-white font-mono text-sm">
@@ -401,7 +401,7 @@ export default function GroupsPage() {
                         <td className="px-6 py-4">
                           <span className="font-bold text-foreground dark:text-white text-xs block">{g.filiere || g.filiere_name || 'Grande École ENCG'}</span>
                           <div className="flex items-center gap-1.5 mt-1">
-                            <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-muted-foreground dark:text-muted-foreground bg-muted dark:bg-card px-2 py-0.5 rounded-md border border-border dark:border-border">
+                            <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted dark:bg-card px-2 py-0.5 rounded-md border border-border">
                               Semestre S{g.semester_number || 1}
                             </span>
                             {g.name.includes('TC') && (
@@ -447,7 +447,7 @@ export default function GroupsPage() {
                                 {pct}%
                               </span>
                             </div>
-                            <div className="h-2 w-full bg-muted dark:bg-card rounded-full overflow-hidden border border-border dark:border-border">
+                            <div className="h-2 w-full bg-muted dark:bg-card rounded-full overflow-hidden border border-border">
                               <div 
                                 style={{ width: `${pct}%` }} 
                                 className={cn(
@@ -499,8 +499,8 @@ export default function GroupsPage() {
       {/* Modal Add / Edit */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] border-b border-blue-800/40 flex items-center justify-between text-white">
+          <div className="bg-card border border-border rounded-2xl shadow-sm w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 bg-gradient-to-r from-[#1a3673] via-[#1a387e] to-[#09193d] border-b border-blue-800/40 flex items-center justify-between text-white">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center font-bold text-amber-300 shadow-lg">
                   <Users className="w-5 h-5 text-amber-400" />
@@ -518,7 +518,7 @@ export default function GroupsPage() {
             <form onSubmit={handleSubmit} className="p-6 space-y-6">
               <div>
                 <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Filière d'Appartenance (Requis)</label>
-                <select value={form.filiere_id} onChange={set('filiere_id')} className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-sm font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]">
+                <select value={form.filiere_id} onChange={set('filiere_id')} className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border text-sm font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]">
                   <option value="">-- Sélectionner la Filière --</option>
                   {filieres.map(f => <option key={f.id} value={f.id}>{f.code} - {f.name}</option>)}
                 </select>
@@ -526,26 +526,26 @@ export default function GroupsPage() {
 
               <div>
                 <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Désignation Officielle du Groupe</label>
-                <input required value={form.name} onChange={set('name')} className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-sm font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]" placeholder="ex: GFC-S5-G1, TC-S1-G2" />
+                <input required value={form.name} onChange={set('name')} className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border text-sm font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]" placeholder="ex: GFC-S5-G1, TC-S1-G2" />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Numéro de Semestre (1-10)</label>
-                  <input required type="number" min={1} max={10} value={form.semester_number} onChange={set('semester_number')} className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-sm font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]" placeholder="ex: 5" />
+                  <input required type="number" min={1} max={10} value={form.semester_number} onChange={set('semester_number')} className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border text-sm font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]" placeholder="ex: 5" />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Capacité Maximale</label>
-                  <input required type="number" min={1} value={form.capacity} onChange={set('capacity')} className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-sm font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]" placeholder="ex: 30, 60, 150..." />
+                  <input required type="number" min={1} value={form.capacity} onChange={set('capacity')} className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border text-sm font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]" placeholder="ex: 30, 60, 150..." />
                 </div>
               </div>
 
               
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-border dark:border-border">
-                <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2.5 rounded-xl border border-border dark:border-border text-slate-700 dark:text-foreground font-bold text-xs uppercase tracking-wider hover:bg-muted/50 dark:hover:bg-slate-800 transition-colors">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
+                <button type="button" onClick={() => setShowModal(false)} className="px-5 py-2.5 rounded-xl border border-border text-slate-700 dark:text-foreground font-bold text-xs uppercase tracking-wider hover:bg-muted/50 dark:hover:bg-slate-800 transition-colors">
                   Annuler
                 </button>
-                <button type="submit" className="px-6 py-2.5 font-bold bg-[#0f2863] text-white hover:bg-[#1a387e] rounded-xl shadow-md transition-colors uppercase text-xs tracking-wider">
+                <button type="submit" className="px-6 py-2.5 font-bold bg-[#1a3673] text-white hover:bg-[#1a387e] rounded-xl shadow-md transition-colors uppercase text-xs tracking-wider">
                   {editingId ? 'Mettre à jour' : 'Créer le Groupe'}
                 </button>
               </div>
@@ -558,8 +558,8 @@ export default function GroupsPage() {
       {selectedGroupForDelegate && (
 
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] text-white flex items-center justify-between">
+          <div className="bg-card border border-border rounded-2xl shadow-sm w-full max-w-xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 bg-gradient-to-r from-[#1a3673] via-[#1a387e] to-[#09193d] text-white flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center font-bold text-amber-300 shadow-lg">
                   <UserCheck className="w-5 h-5 text-amber-400" />
@@ -577,7 +577,7 @@ export default function GroupsPage() {
             <div className="p-6 max-h-[400px] overflow-y-auto space-y-3">
               {loadingStudents ? (
                 <div className="flex justify-center items-center py-12 text-slate-400">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0f2863]"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1a3673]"></div>
                 </div>
               ) : groupStudents.length === 0 ? (
                 <div className="text-center py-10 text-slate-400 font-bold">Aucun étudiant inscrit dans ce groupe.</div>
@@ -587,9 +587,9 @@ export default function GroupsPage() {
                   const isCurrent = delegatesMap[selectedGroupForDelegate.id] === fullName || (selectedGroupForDelegate as any).delegate_name === fullName;
 
                   return (
-                    <div key={st.id} className="p-4 rounded-2xl border border-border dark:border-border bg-muted/50 dark:bg-slate-800/60 flex items-center justify-between hover:bg-card dark:hover:bg-slate-800 transition-colors">
+                    <div key={st.id} className="p-4 rounded-2xl border border-border bg-muted/50 dark:bg-slate-800/60 flex items-center justify-between hover:bg-card dark:hover:bg-slate-800 transition-colors">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-primary/10 dark:bg-blue-900/60 text-[#0f2863] dark:text-blue-200 font-bold flex items-center justify-center text-xs border border-primary/20 dark:border-primary">
+                        <div className="w-10 h-10 rounded-2xl bg-primary/10 dark:bg-blue-900/60 text-[#1a3673] dark:text-blue-200 font-bold flex items-center justify-center text-xs border border-primary/20 dark:border-primary">
                           {st.first_name.charAt(0)}{st.last_name.charAt(0)}
                         </div>
                         <div>
@@ -606,7 +606,7 @@ export default function GroupsPage() {
                           "px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-xs",
                           isCurrent
                             ? "bg-emerald-600 text-white shadow-md"
-                            : "bg-[#0f2863] hover:bg-[#1a387e] text-white"
+                            : "bg-[#1a3673] hover:bg-[#1a387e] text-white"
                         )}
                       >
                         {isCurrent ? '👑 Délégué Actuel' : 'Nommer Délégué'}
@@ -617,7 +617,7 @@ export default function GroupsPage() {
               )}
             </div>
 
-            <div className="p-4 bg-muted/50 dark:bg-card border-t border-border dark:border-border flex justify-end">
+            <div className="p-4 bg-muted/50 dark:bg-card border-t border-border flex justify-end">
               <button
                 onClick={() => setSelectedGroupForDelegate(null)}
                 className="px-6 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-foreground rounded-xl font-bold text-xs uppercase tracking-wider cursor-pointer"

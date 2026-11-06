@@ -45,10 +45,10 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, placeholder
         disabled={disabled}
         onClick={() => setOpen(!open)}
         className={cn(
-          "w-full px-4 py-3 bg-card dark:bg-card border rounded-2xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer shadow-xs text-left",
+          "w-full px-4 py-3 bg-card border rounded-2xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer shadow-xs text-left",
           open 
             ? "border-primary ring-4 ring-indigo-500/15 text-primary dark:text-indigo-200"
-            : "border-border dark:border-slate-700/80 hover:border-indigo-400 dark:hover:border-primary text-foreground dark:text-foreground",
+            : "border-border dark:border-slate-700/80 hover:border-indigo-400 dark:hover:border-primary text-foreground",
           disabled && "opacity-40 cursor-not-allowed"
         )}
       >
@@ -59,7 +59,7 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, placeholder
       </button>
 
       {open && !disabled && (
-        <div className="absolute z-[9999] top-full left-0 mt-2 w-full bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm py-2 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150 backdrop-blur-2xl">
+        <div className="absolute z-[9999] top-full left-0 mt-2 w-full bg-card border border-border rounded-2xl shadow-sm py-2 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150 backdrop-blur-2xl">
           <div
             onClick={() => {
               onChange('')
@@ -280,14 +280,14 @@ export default function VacataireList() {
           <title>Bordereau de Réglement Vacations - ${safeLastName} ${safeFirstName}</title>
           <style>
             body { font-family: 'Segoe UI', Arial, sans-serif; padding: 40px; color: #1e293b; max-width: 800px; margin: 0 auto; }
-            .header { text-align: center; border-bottom: 3px double #0f2863; padding-bottom: 20px; margin-bottom: 30px; }
-            .title { font-size: 18px; font-weight: 900; color: #0f2863; text-transform: uppercase; margin-top: 10px; }
+            .header { text-align: center; border-bottom: 3px double #1a3673; padding-bottom: 20px; margin-bottom: 30px; }
+            .title { font-size: 18px; font-weight: 900; color: #1a3673; text-transform: uppercase; margin-top: 10px; }
             .subtitle { font-size: 11px; color: #64748b; font-weight: 700; }
             .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
             .info-item { font-size: 13px; }
-            .info-item strong { color: #0f2863; }
+            .info-item strong { color: #1a3673; }
             table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
-            th { background: #0f2863; color: white; padding: 12px; text-align: left; font-size: 11px; text-transform: uppercase; }
+            th { background: #1a3673; color: white; padding: 12px; text-align: left; font-size: 11px; text-transform: uppercase; }
             td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
             .total-row { font-weight: bold; font-size: 14px; background: #f1f5f9; }
             .net-box { background: #ecfdf5; border: 2px solid #10b981; color: #065f46; padding: 18px; border-radius: 16px; text-align: center; margin-top: 25px; font-size: 20px; font-weight: 900; }
@@ -297,7 +297,7 @@ export default function VacataireList() {
         </head>
         <body>
           <div class="header">
-            <div style="font-size: 15px; font-weight: 900; color: #0f2863;">ROYAUME DU MAROC</div>
+            <div style="font-size: 15px; font-weight: 900; color: #1a3673;">ROYAUME DU MAROC</div>
             <div class="subtitle">UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH — FÈS</div>
             <div class="subtitle">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION (ENCG FÈS)</div>
             <div class="title">BORDEREAU DÉTAILLÉ DE RÈGLEMENT DES VACATIONS</div>

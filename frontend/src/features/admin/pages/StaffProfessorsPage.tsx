@@ -145,7 +145,7 @@ export default function StaffProfessorsPage() {
       </div>
 
       {/* Control & Search Bar */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-sm space-y-6">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-sm space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           
           {/* Filter Tabs */}
@@ -157,7 +157,7 @@ export default function StaffProfessorsPage() {
                 className={cn(
                   "px-6 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap tracking-wider cursor-pointer uppercase",
                   activeTab === tab 
-                    ? "bg-[#0f2863] text-white shadow-md" 
+                    ? "bg-[#1a3673] text-white shadow-md" 
                     : "text-muted-foreground hover:text-foreground dark:hover:text-white"
                 )}
               >
@@ -174,15 +174,15 @@ export default function StaffProfessorsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Rechercher par nom, email..."
-              className="w-full pl-11 pr-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-ring transition-all rounded-[var(--control-radius)]"
+              className="w-full pl-11 pr-4 py-3 bg-muted/50 dark:bg-card border border-border text-xs font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-ring transition-all rounded-[var(--control-radius)]"
             />
           </div>
         </div>
 
         {/* Main Users Table */}
-        <div className="overflow-x-auto border border-border dark:border-border rounded-2xl">
+        <div className="overflow-x-auto border border-border rounded-2xl">
           <table className="w-full text-sm text-left">
-            <thead className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-muted/50 dark:bg-slate-800/80 border-b border-border dark:border-border">
+            <thead className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-muted/50 dark:bg-slate-800/80 border-b border-border">
               <tr>
                 <th className="px-8 py-5">Utilisateur & Identifiants</th>
                 <th className="px-8 py-5">Type de Compte</th>
@@ -208,7 +208,7 @@ export default function StaffProfessorsPage() {
                 <tr key={u.id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors group">
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-4">
-                      <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#0f2863] to-blue-600 text-white font-bold text-base flex items-center justify-center shadow-md shrink-0">
+                      <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#1a3673] to-blue-600 text-white font-bold text-base flex items-center justify-center shadow-md shrink-0">
                         {(u.first_name || u.name || '?').charAt(0).toUpperCase()}
                       </div>
                       <div>
@@ -236,7 +236,7 @@ export default function StaffProfessorsPage() {
                   </td>
 
                   <td className="px-8 py-5">
-                    <div className="font-bold text-foreground dark:text-foreground text-xs">{getPrimaryRole(u)}</div>
+                    <div className="font-bold text-foreground text-xs">{getPrimaryRole(u)}</div>
                     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
                       {isAdmin(u) ? 'Département Admin / RH' : 'Corps Enseignant Chercheur'}
                     </div>
@@ -246,7 +246,7 @@ export default function StaffProfessorsPage() {
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => handleSendResetPassword(u)}
-                        className="p-2.5 rounded-xl bg-muted dark:bg-card hover:bg-primary/5 hover:text-primary text-muted-foreground dark:text-muted-foreground transition-all cursor-pointer"
+                        className="p-2.5 rounded-xl bg-muted dark:bg-card hover:bg-primary/5 hover:text-primary text-muted-foreground transition-all cursor-pointer"
                         title="Réinitialiser le mot de passe (Email Resend)"
                       >
                         <Lock className="w-4 h-4" />
@@ -254,7 +254,7 @@ export default function StaffProfessorsPage() {
 
                       <Link 
                         to={`/admin/users/${u.id}`} 
-                        className="p-2.5 rounded-xl bg-muted dark:bg-card hover:bg-primary/5 hover:text-primary text-muted-foreground dark:text-muted-foreground transition-all cursor-pointer"
+                        className="p-2.5 rounded-xl bg-muted dark:bg-card hover:bg-primary/5 hover:text-primary text-muted-foreground transition-all cursor-pointer"
                         title="Consulter la fiche compte"
                       >
                         <Eye className="w-4 h-4" />
@@ -262,7 +262,7 @@ export default function StaffProfessorsPage() {
 
                       <Link 
                         to={`/admin/users/${u.id}/edit`} 
-                        className="p-2.5 rounded-xl bg-muted dark:bg-card hover:bg-amber-50 hover:text-amber-600 text-muted-foreground dark:text-muted-foreground transition-all cursor-pointer"
+                        className="p-2.5 rounded-xl bg-muted dark:bg-card hover:bg-amber-50 hover:text-amber-600 text-muted-foreground transition-all cursor-pointer"
                         title="Modifier les habilitations"
                       >
                         <Edit className="w-4 h-4" />
@@ -270,7 +270,7 @@ export default function StaffProfessorsPage() {
 
                       <button 
                         onClick={() => handleDelete(u.id)} 
-                        className="p-2.5 rounded-xl bg-muted dark:bg-card hover:bg-rose-50 hover:text-rose-600 text-muted-foreground dark:text-muted-foreground transition-all cursor-pointer"
+                        className="p-2.5 rounded-xl bg-muted dark:bg-card hover:bg-rose-50 hover:text-rose-600 text-muted-foreground transition-all cursor-pointer"
                         title="Supprimer le compte"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -287,8 +287,8 @@ export default function StaffProfessorsPage() {
       {/* CSV Import Modal */}
       {showImportModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d] text-white flex items-center justify-between">
+          <div className="bg-card border border-border rounded-2xl shadow-sm w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 bg-gradient-to-r from-[#1a3673] via-[#1a387e] to-[#09193d] text-white flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center font-bold text-amber-300 shadow-lg">
                   <FileSpreadsheet className="w-5 h-5 text-amber-400" />
@@ -321,7 +321,7 @@ export default function StaffProfessorsPage() {
               </div>
             </div>
 
-            <div className="p-4 bg-muted/50 dark:bg-card border-t border-border dark:border-border flex justify-end gap-2">
+            <div className="p-4 bg-muted/50 dark:bg-card border-t border-border flex justify-end gap-2">
               <button
                 onClick={() => setShowImportModal(false)}
                 className="px-5 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-foreground rounded-xl font-bold text-xs uppercase tracking-wider cursor-pointer"
@@ -333,7 +333,7 @@ export default function StaffProfessorsPage() {
                   toast.success("✅ Importation de 42 comptes effectuée avec succès !");
                   setShowImportModal(false);
                 }}
-                className="px-6 py-2.5 bg-[#0f2863] text-white rounded-xl font-bold text-xs uppercase tracking-wider shadow-md cursor-pointer"
+                className="px-6 py-2.5 bg-[#1a3673] text-white rounded-xl font-bold text-xs uppercase tracking-wider shadow-md cursor-pointer"
               >
                 Lancer l'Importation
               </button>

@@ -68,23 +68,23 @@ function CustomSelect({ value, onChange, options, placeholder, icon: Icon, disab
           disabled 
             ? "opacity-50 cursor-not-allowed bg-muted dark:bg-card border-border"
             : isOpen 
-              ? "border-[#0f2863] ring-4 ring-[#0f2863]/10 bg-card dark:bg-card text-foreground dark:text-white"
+              ? "border-[#1a3673] ring-4 ring-[#1a3673]/10 bg-card text-foreground dark:text-white"
               : value 
-                ? "bg-indigo-50/50 dark:bg-indigo-950/20 border-primary/20 dark:border-primary text-[#0f2863] dark:text-indigo-300"
-                : "bg-card dark:bg-card border-border dark:border-border text-slate-700 dark:text-foreground hover:border-slate-300"
+                ? "bg-indigo-50/50 dark:bg-indigo-950/20 border-primary/20 dark:border-primary text-[#1a3673] dark:text-indigo-300"
+                : "bg-card border-border text-slate-700 dark:text-foreground hover:border-slate-300"
         )}
       >
         <div className="flex items-center gap-3 line-clamp-1 pr-2">
-          {Icon && <Icon className={cn("w-4 h-4 shrink-0", value ? "text-[#0f2863] dark:text-indigo-400" : "text-slate-400")} />}
+          {Icon && <Icon className={cn("w-4 h-4 shrink-0", value ? "text-[#1a3673] dark:text-indigo-400" : "text-slate-400")} />}
           <span className={cn("line-clamp-1", !value && "text-slate-400 font-medium")}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
         </div>
-        <ChevronDown className={cn("w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200", isOpen && "rotate-180 text-[#0f2863]")} />
+        <ChevronDown className={cn("w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200", isOpen && "rotate-180 text-[#1a3673]")} />
       </button>
 
       {isOpen && !disabled && (
-        <div className="absolute z-50 left-0 right-0 mt-2 bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm p-2 space-y-1 max-h-64 overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute z-50 left-0 right-0 mt-2 bg-card border border-border rounded-2xl shadow-sm p-2 space-y-1 max-h-64 overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
           {options.length === 0 ? (
             <div className="p-3 text-center text-xs text-slate-400 font-bold italic">
               Aucune option disponible
@@ -103,8 +103,8 @@ function CustomSelect({ value, onChange, options, placeholder, icon: Icon, disab
                   className={cn(
                     "w-full px-3 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between text-left cursor-pointer",
                     isSelected 
-                      ? "bg-[#0f2863] text-white shadow-md" 
-                      : "text-foreground dark:text-foreground hover:bg-muted dark:hover:bg-slate-800"
+                      ? "bg-[#1a3673] text-white shadow-md" 
+                      : "text-foreground hover:bg-muted dark:hover:bg-slate-800"
                   )}
                 >
                   <div className="flex items-center gap-2 line-clamp-1">
@@ -245,7 +245,7 @@ export default function AdminGradesPage() {
     <div className="space-y-8 max-w-[1400px] mx-auto animate-in fade-in duration-500 pb-32 font-sans">
       
       {/* Hero Premium Glassmorphism Header */}
-      <div className="bg-gradient-to-r from-[#001035] via-[#0f2863] to-[#1e40af] rounded-2xl p-8 md:p-12 relative overflow-hidden shadow-sm border border-blue-900/40">
+      <div className="bg-gradient-to-r from-[#001035] via-[#1a3673] to-[#1e40af] rounded-2xl p-8 md:p-12 relative overflow-hidden shadow-sm border border-blue-900/40">
         <div className="absolute inset-0 opacity-15 pointer-events-none" 
              style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }}>
         </div>
@@ -285,7 +285,7 @@ export default function AdminGradesPage() {
                 className={cn(
                   "px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 uppercase tracking-wider",
                   selectedSession === 'normale'
-                    ? "bg-card text-[#0f2863] shadow-md"
+                    ? "bg-card text-[#1a3673] shadow-md"
                     : "text-blue-200 hover:text-white"
                 )}
               >
@@ -320,7 +320,7 @@ export default function AdminGradesPage() {
       {/* Analytics KPI Row (Admin Only) */}
       {!isTeacherOnly && (
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-md flex items-center justify-between">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-md flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">FILIÈRES ACTIVES</span>
             <h3 className="text-3xl font-bold text-foreground dark:text-white mt-1">{filieres.length}</h3>
@@ -331,7 +331,7 @@ export default function AdminGradesPage() {
           </div>
         </div>
 
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-md flex items-center justify-between">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-md flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">SEMESTRES EN COURS</span>
             <h3 className="text-3xl font-bold text-primary mt-1">S1 — S10</h3>
@@ -342,7 +342,7 @@ export default function AdminGradesPage() {
           </div>
         </div>
 
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-md flex items-center justify-between">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-md flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">MODULES CHARGÉS</span>
             <h3 className="text-3xl font-bold text-emerald-600 mt-1">{modules.length > 0 ? modules.length : '–'}</h3>
@@ -353,7 +353,7 @@ export default function AdminGradesPage() {
           </div>
         </div>
 
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-md flex items-center justify-between">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-md flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">STATUT FORMULAIRE</span>
             <h3 className="text-sm font-bold text-foreground dark:text-white mt-2">
@@ -450,7 +450,7 @@ export default function AdminGradesPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground dark:text-muted-foreground bg-muted dark:bg-slate-800/80 px-4 py-2 rounded-2xl border border-border dark:border-border">
+          <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground bg-muted dark:bg-slate-800/80 px-4 py-2 rounded-2xl border border-border">
             <span>Session active :</span>
             <span className={cn(
               "font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg text-[11px]",
@@ -468,7 +468,7 @@ export default function AdminGradesPage() {
             <span className="text-xs font-bold text-slate-400">Chargement de vos modules affectés...</span>
           </div>
         ) : myModules.length === 0 ? (
-          <div className="p-8 text-center bg-card dark:bg-card rounded-2xl border border-border dark:border-border space-y-3">
+          <div className="p-8 text-center bg-card rounded-2xl border border-border space-y-3">
             <BookOpen className="w-12 h-12 text-slate-300 mx-auto" />
             <h4 className="text-sm font-bold text-slate-700 dark:text-foreground">Aucun module directement affecté à votre profil</h4>
             <p className="text-xs text-slate-400 max-w-md mx-auto">
@@ -523,7 +523,7 @@ export default function AdminGradesPage() {
                     </div>
 
                     {/* Schedule & Groups Details */}
-                    <div className="space-y-1.5 pt-2 border-t border-border dark:border-border text-xs">
+                    <div className="space-y-1.5 pt-2 border-t border-border text-xs">
                       <div className="flex items-center justify-between text-[11px]">
                         <span className="text-slate-400 font-medium">Groupes :</span>
                         <span className="font-bold text-slate-700 dark:text-foreground truncate max-w-[170px]">
@@ -547,7 +547,7 @@ export default function AdminGradesPage() {
                     </div>
 
                     {/* Progress Bar & Signature */}
-                    <div className="pt-2 border-t border-border dark:border-border space-y-1.5">
+                    <div className="pt-2 border-t border-border space-y-1.5">
                       <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider">
                         <span className="text-slate-400">Complétude des notes</span>
                         <span className={cn(
@@ -582,7 +582,7 @@ export default function AdminGradesPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="pt-3 border-t border-border dark:border-border flex items-center gap-2">
+                  <div className="pt-3 border-t border-border flex items-center gap-2">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -593,7 +593,7 @@ export default function AdminGradesPage() {
                         "flex-1 py-3 px-4 text-white rounded-2xl text-xs font-bold uppercase tracking-wider shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95",
                         selectedSession === 'rattrapage'
                           ? "bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700"
-                          : "bg-gradient-to-r from-[#0f2863] to-[#1e40af] hover:from-[#15347d] hover:to-[#254cb6]"
+                          : "bg-gradient-to-r from-[#1a3673] to-[#1e40af] hover:from-[#15347d] hover:to-[#254cb6]"
                       )}
                     >
                       <Edit3 className="w-3.5 h-3.5 text-amber-300" />
@@ -621,7 +621,7 @@ export default function AdminGradesPage() {
 
       {/* Professor Collapsible Accordion Drawer for Global Cohort Selector */}
       {isTeacherOnly ? (
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="bg-card border border-border rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
             <h4 className="text-xs font-bold text-slate-700 dark:text-foreground uppercase tracking-wider flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-primary" />
@@ -634,7 +634,7 @@ export default function AdminGradesPage() {
           <button
             type="button"
             onClick={() => setShowAdminCohortSelector(prev => !prev)}
-            className="px-4 py-2.5 rounded-xl text-xs font-bold border border-border dark:border-border bg-muted/50 dark:bg-card hover:bg-muted text-slate-700 dark:text-foreground transition-all flex items-center gap-2 cursor-pointer shadow-xs shrink-0"
+            className="px-4 py-2.5 rounded-xl text-xs font-bold border border-border bg-muted/50 dark:bg-card hover:bg-muted text-slate-700 dark:text-foreground transition-all flex items-center gap-2 cursor-pointer shadow-xs shrink-0"
           >
             <span>{showAdminCohortSelector ? "Masquer le Sélecteur 4 Étapes" : "🔍 Ouvrir le Sélecteur Global (4 Étapes)"}</span>
             <ChevronDown className={cn("w-4 h-4 transition-transform duration-200", showAdminCohortSelector && "rotate-180")} />
@@ -642,7 +642,7 @@ export default function AdminGradesPage() {
         </div>
       ) : (
         /* Quick Filière Chips Selection Bar (Admin Only) */
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-md space-y-3">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-md space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-primary" /> Raccourcis Rapides Filières ENCG
@@ -667,8 +667,8 @@ export default function AdminGradesPage() {
                 className={cn(
                   "px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border flex items-center gap-2 shadow-xs",
                   String(filiere) === String(f.id)
-                    ? "bg-[#0f2863] text-white border-[#0f2863] shadow-md scale-105"
-                    : "bg-muted/50 dark:bg-card text-slate-700 dark:text-foreground border-border dark:border-border hover:bg-muted"
+                    ? "bg-[#1a3673] text-white border-[#1a3673] shadow-md scale-105"
+                    : "bg-muted/50 dark:bg-card text-slate-700 dark:text-foreground border-border hover:bg-muted"
                 )}
               >
                 <Building2 className="w-3.5 h-3.5 text-indigo-400" />
@@ -681,8 +681,8 @@ export default function AdminGradesPage() {
 
       {/* Main 4-Step Selector Panel (Collapsible) */}
       {showAdminCohortSelector && (
-      <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-8 md:p-12 shadow-sm space-y-8 relative animate-in fade-in duration-200">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-border dark:border-border pb-6 gap-4">
+      <div className="bg-card border border-border rounded-2xl p-8 md:p-12 shadow-sm space-y-8 relative animate-in fade-in duration-200">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between border-b border-border pb-6 gap-4">
           <div>
             <h2 className="text-xl font-bold text-foreground dark:text-white flex items-center gap-3">
               <Target className="w-6 h-6 text-primary" />
@@ -694,15 +694,15 @@ export default function AdminGradesPage() {
           </div>
 
           {/* Session Type Toggle */}
-          <div className="flex items-center gap-2 p-1.5 bg-muted dark:bg-card rounded-2xl border border-border dark:border-border">
+          <div className="flex items-center gap-2 p-1.5 bg-muted dark:bg-card rounded-2xl border border-border">
             <button
               type="button"
               onClick={() => setSelectedSession('normale')}
               className={cn(
                 "px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
                 selectedSession === 'normale'
-                  ? "bg-[#0f2863] text-white shadow-md"
-                  : "text-muted-foreground dark:text-muted-foreground hover:text-foreground"
+                  ? "bg-[#1a3673] text-white shadow-md"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Zap className="w-3.5 h-3.5 text-blue-300" />
@@ -715,7 +715,7 @@ export default function AdminGradesPage() {
                 "px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 uppercase tracking-wider",
                 selectedSession === 'rattrapage'
                   ? "bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md"
-                  : "text-muted-foreground dark:text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
@@ -735,7 +735,7 @@ export default function AdminGradesPage() {
               <div className="flex items-center gap-3">
                 <span className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-md transition-colors",
-                  filiere ? "bg-[#0f2863] text-white" : "bg-slate-300 text-slate-700"
+                  filiere ? "bg-[#1a3673] text-white" : "bg-slate-300 text-slate-700"
                 )}>
                   1
                 </span>
@@ -768,7 +768,7 @@ export default function AdminGradesPage() {
               <div className="flex items-center gap-3">
                 <span className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-md transition-colors",
-                  semestre ? "bg-[#0f2863] text-white" : "bg-slate-300 text-slate-700"
+                  semestre ? "bg-[#1a3673] text-white" : "bg-slate-300 text-slate-700"
                 )}>
                   2
                 </span>
@@ -802,7 +802,7 @@ export default function AdminGradesPage() {
               <div className="flex items-center gap-3">
                 <span className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-md transition-colors",
-                  groupe ? "bg-[#0f2863] text-white" : "bg-slate-300 text-slate-700"
+                  groupe ? "bg-[#1a3673] text-white" : "bg-slate-300 text-slate-700"
                 )}>
                   3
                 </span>
@@ -840,7 +840,7 @@ export default function AdminGradesPage() {
               <div className="flex items-center gap-3">
                 <span className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shadow-md transition-colors",
-                  module ? "bg-[#0f2863] text-white" : "bg-slate-300 text-slate-700"
+                  module ? "bg-[#1a3673] text-white" : "bg-slate-300 text-slate-700"
                 )}>
                   4
                 </span>
@@ -893,7 +893,7 @@ export default function AdminGradesPage() {
               <button
                 type="button"
                 onClick={() => navigate(`/admin/grades/pv?session=${selectedSession}&filiere_id=${filiere}&semester=${semestre}&module_id=${module}`)}
-                className="px-5 py-3 bg-card dark:bg-card hover:bg-muted text-foreground dark:text-foreground border border-slate-300 dark:border-border rounded-2xl text-xs font-bold shadow-sm transition-all cursor-pointer flex items-center gap-2"
+                className="px-5 py-3 bg-card hover:bg-muted text-foreground border border-slate-300 dark:border-border rounded-2xl text-xs font-bold shadow-sm transition-all cursor-pointer flex items-center gap-2"
               >
                 <FileText className="w-4 h-4 text-primary" /> Consulter le PV ({selectedSession === 'normale' ? 'Ordinaire' : 'Rattrapage'})
               </button>
@@ -910,7 +910,7 @@ export default function AdminGradesPage() {
                 <button
                   type="button"
                   onClick={handleOpenRegistry}
-                  className="px-6 py-3.5 bg-gradient-to-r from-[#0f2863] to-[#1e40af] hover:from-[#15347d] hover:to-[#254cb6] text-white rounded-2xl text-xs font-bold uppercase tracking-wider shadow-sm hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-2"
+                  className="px-6 py-3.5 bg-gradient-to-r from-[#1a3673] to-[#1e40af] hover:from-[#15347d] hover:to-[#254cb6] text-white rounded-2xl text-xs font-bold uppercase tracking-wider shadow-sm hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-2"
                 >
                   <Edit3 className="w-4 h-4 text-amber-300" /> Open Registre des Notes <ArrowRight className="w-4 h-4" />
                 </button>

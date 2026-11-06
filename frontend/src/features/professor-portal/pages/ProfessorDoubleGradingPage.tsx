@@ -89,7 +89,7 @@ export default function ProfessorDoubleGradingPage() {
   const conforming = totalCopies - discrepancies;
 
   return (
-    <div className="space-y-8 font-sans animate-in fade-in duration-500 text-foreground dark:text-foreground pb-28">
+    <div className="space-y-8 font-sans animate-in fade-in duration-500 text-foreground pb-28">
       
       {/* ── Executive Header Banner ── */}
       <div className="p-8 md:p-10 text-white border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden erp-page-banner">
@@ -113,7 +113,7 @@ export default function ProfessorDoubleGradingPage() {
 
         <button
           onClick={handleSaveAll}
-          className="px-6 py-3.5 bg-amber-400 hover:bg-amber-300 text-[#001A4B] rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shrink-0 cursor-pointer"
+          className="px-6 py-3.5 bg-amber-400 hover:bg-amber-300 text-[#1a3673] rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shrink-0 cursor-pointer"
         >
           <Save className="w-4 h-4" /> Enregistrer le PV de Correction
         </button>
@@ -121,7 +121,7 @@ export default function ProfessorDoubleGradingPage() {
 
       {/* KPI Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border flex items-center gap-4">
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-border flex items-center gap-4">
           <div className="w-14 h-14 rounded-2xl bg-primary/5 dark:bg-blue-950 text-primary dark:text-blue-400 flex items-center justify-center font-bold shrink-0">
             <FileText className="w-7 h-7" />
           </div>
@@ -132,7 +132,7 @@ export default function ProfessorDoubleGradingPage() {
           </div>
         </div>
 
-        <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border flex items-center gap-4">
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-border flex items-center gap-4">
           <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold shrink-0">
             <CheckCircle2 className="w-7 h-7" />
           </div>
@@ -143,7 +143,7 @@ export default function ProfessorDoubleGradingPage() {
           </div>
         </div>
 
-        <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border flex items-center gap-4">
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-border flex items-center gap-4">
           <div className="w-14 h-14 rounded-2xl bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 flex items-center justify-center font-bold shrink-0">
             <AlertTriangle className="w-7 h-7" />
           </div>
@@ -156,8 +156,8 @@ export default function ProfessorDoubleGradingPage() {
       </div>
 
       {/* Copies Reconciliation Table */}
-      <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border dark:border-border space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border dark:border-border pb-4">
+      <div className="bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
           <div>
             <h2 className="text-base font-bold text-foreground dark:text-white uppercase tracking-wide flex items-center gap-2">
               <Scale className="w-5 h-5 text-primary" /> Grille de Concordance des Notes Anonymes
@@ -172,7 +172,7 @@ export default function ProfessorDoubleGradingPage() {
               placeholder="Rechercher code copie / anonymat..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs text-foreground dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
+              className="w-full pl-9 pr-4 py-2 bg-muted/50 dark:bg-card border border-border text-xs text-foreground dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-ring rounded-[var(--control-radius)]"
             />
           </div>
         </div>
@@ -180,7 +180,7 @@ export default function ProfessorDoubleGradingPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-border dark:border-border text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <tr className="border-b border-border text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 <th className="pb-3 pl-2">N° Copie</th>
                 <th className="pb-3">Code Anonymat</th>
                 <th className="pb-3 text-center">Correcteur 1</th>
@@ -235,7 +235,7 @@ export default function ProfessorDoubleGradingPage() {
                           />
                         </div>
                       ) : (
-                        <span className="font-mono font-bold text-base text-[#001A4B] dark:text-blue-300">
+                        <span className="font-mono font-bold text-base text-[#1a3673] dark:text-blue-300">
                           {Number(row.final_grade).toFixed(2)} / 20
                         </span>
                       )}

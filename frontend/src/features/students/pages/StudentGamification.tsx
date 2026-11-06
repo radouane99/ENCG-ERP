@@ -33,7 +33,7 @@ export default function StudentGamification() {
         
         {/* Digital ENCG Card */}
         <div className="md:col-span-1">
-          <div className="w-full aspect-[1.586/1] rounded-2xl bg-gradient-to-br from-[#001A4B] via-[#003a8c] to-[#e6007e] p-6 text-white shadow-sm relative overflow-hidden flex flex-col justify-between group cursor-pointer hover:scale-[1.02] transition-transform">
+          <div className="w-full aspect-[1.586/1] rounded-2xl bg-gradient-to-br from-[#1a3673] via-[#003a8c] to-[#e6007e] p-6 text-white shadow-sm relative overflow-hidden flex flex-col justify-between group cursor-pointer hover:scale-[1.02] transition-transform">
             
             {/* Holographic effect */}
             <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/20 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity transform -translate-x-full group-hover:translate-x-full duration-1000"></div>

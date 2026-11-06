@@ -7,7 +7,7 @@ export default function AdminMessagesPage() {
   return (
     <div className="space-y-6 animate-in max-w-7xl mx-auto pb-20">
       <div className="flex items-center justify-center mb-8">
-        <h1 className="text-[#0f2863] text-center erp-page-title">Boîte de Réception (Contact)</h1>
+        <h1 className="text-[#1a3673] text-center erp-page-title">Boîte de Réception (Contact)</h1>
       </div>
 
       <div className="bg-card rounded-xl shadow-sm border border-border overflow-hidden">

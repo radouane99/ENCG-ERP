@@ -75,7 +75,7 @@ const dict = {
     madeBy: 'Made with passion in Morocco',
   },
   ar: {
-    font: "font-['Cairo']",
+    font: 'font-sans',
     navVision: 'الرؤية', navEco: 'فضاءات المستخدمين', navAi: 'الذكاء الاصطناعي',
     navDash: 'لوحة التحكم', navLogin: 'تسجيل الدخول',
     badge1: 'ولوج آمن', badge2: 'خدمات رقمية',
@@ -165,14 +165,14 @@ export default function LandingPage() {
     <div
       dir={isRTL ? 'rtl' : 'ltr'}
       className={cn(
-        'public-portal min-h-screen transition-colors duration-500 overflow-x-hidden selection:bg-[#0f2863] selection:text-white',
+        'public-portal min-h-screen transition-colors duration-500 overflow-x-hidden selection:bg-[#1a3673] selection:text-white',
         'bg-slate-50 dark:bg-[#02060D] text-slate-900 dark:text-slate-200',
         t.font
       )}
     >
       {/* ── Fixed Background ── */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-0 right-0 w-[70vw] h-[70vw] rounded-full bg-[#0f2863]/15 blur-[150px] opacity-60 dark:opacity-40" />
+        <div className="absolute top-0 right-0 w-[70vw] h-[70vw] rounded-full bg-[#1a3673]/15 blur-[150px] opacity-60 dark:opacity-40" />
         <div className="absolute bottom-0 left-0 w-[60vw] h-[60vw] rounded-full bg-blue-400/15 dark:bg-[#1F3A5F]/20 blur-[150px] opacity-70" />
         <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.02] portal-grain" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[20vw] font-black text-slate-900/[0.02] dark:text-white/[0.015] whitespace-nowrap pointer-events-none select-none">
@@ -207,12 +207,12 @@ export default function LandingPage() {
                 <Award className="w-4 h-4 text-amber-500" />
                 <span>{isRTL ? 'القبول والتسجيل' : lang === 'en' ? 'Admissions' : 'Admissions & calendrier'}</span>
               </a>
-              <a href="#vision" className="text-slate-600 dark:text-slate-300 hover:text-[#0f2863] dark:hover:text-white transition-colors">{t.navVision}</a>
-              <a href="#ecosystem" className="text-slate-600 dark:text-slate-300 hover:text-[#0f2863] dark:hover:text-white transition-colors">{t.navEco}</a>
-              <a href="#ia" className="text-[#0f2863] dark:text-blue-400 font-bold flex items-center gap-1 hover:text-[#162e74] transition-colors">
+              <a href="#vision" className="text-slate-600 dark:text-slate-300 hover:text-[#1a3673] dark:hover:text-white transition-colors">{t.navVision}</a>
+              <a href="#ecosystem" className="text-slate-600 dark:text-slate-300 hover:text-[#1a3673] dark:hover:text-white transition-colors">{t.navEco}</a>
+              <a href="#ia" className="text-[#1a3673] dark:text-blue-400 font-bold flex items-center gap-1 hover:text-[#162e74] transition-colors">
                 <BrainCircuit className="w-4 h-4" />{t.navAi}
               </a>
-              <a href="#contact" className="text-slate-600 dark:text-slate-300 hover:text-[#0f2863] dark:hover:text-white transition-colors">Contact</a>
+              <a href="#contact" className="text-slate-600 dark:text-slate-300 hover:text-[#1a3673] dark:hover:text-white transition-colors">Contact</a>
             </div>
 
             {/* Actions */}
@@ -253,7 +253,7 @@ export default function LandingPage() {
               ) : (
                 <button
                   onClick={() => navigate('/login')}
-                  className="bg-gradient-to-r from-[#0f2863] via-[#162e74] to-[#1e3a8a] text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg shadow-[#0f2863]/20 hover:shadow-[#0f2863]/40 transition-all hover:scale-105 flex items-center gap-2 border border-blue-400/30"
+                  className="bg-gradient-to-r from-[#1a3673] via-[#162e74] to-[#1e3a8a] text-white px-5 py-2 rounded-xl text-sm font-bold shadow-lg shadow-[#1a3673]/20 hover:shadow-[#1a3673]/40 transition-all hover:scale-105 flex items-center gap-2 border border-blue-400/30"
                 >
                   <LogIn className={cn('w-4 h-4', isRTL && 'rotate-180')} />
                   {t.navLogin}
@@ -288,7 +288,7 @@ export default function LandingPage() {
             </div>
             <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-slate-900 dark:text-white mb-6 leading-[1.1]">
               {t.heroTitle1} <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0f2863] via-[#162e74] to-amber-500 dark:from-blue-400 dark:to-amber-400">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1a3673] via-[#162e74] to-amber-500 dark:from-blue-400 dark:to-amber-400">
                 {t.heroTitle2}
               </span>
             </h1>
@@ -298,7 +298,7 @@ export default function LandingPage() {
             <div className={cn('flex flex-col sm:flex-row items-center gap-4', isRTL ? 'justify-center lg:justify-end' : 'justify-center lg:justify-start')}>
               <button
                 onClick={() => navigate('/login')}
-                className="w-full sm:w-auto bg-[#0f2863] hover:bg-[#162e74] text-white px-8 py-4 rounded-2xl font-black shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2 group cursor-pointer"
+                className="w-full sm:w-auto bg-[#1a3673] hover:bg-[#162e74] text-white px-8 py-4 rounded-2xl font-black shadow-xl hover:-translate-y-1 transition-all flex items-center justify-center gap-2 group cursor-pointer"
               >
                 {t.btnExplore}
                 <ArrowRight className={cn('w-5 h-5 transition-transform', isRTL ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1')} />
@@ -314,7 +314,7 @@ export default function LandingPage() {
 
           {/* Dashboard Mockup Visual */}
           <div className="flex-1 relative w-full aspect-square max-w-[480px]">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] bg-[#0f2863]/15 rounded-full blur-[60px] animate-pulse" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] bg-[#1a3673]/15 rounded-full blur-[60px] animate-pulse" />
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[300px] bg-white dark:bg-[#111827]/80 backdrop-blur-2xl border border-slate-200 dark:border-white/10 rounded-3xl shadow-2xl p-6 transform rotate-0 transition-transform duration-700 shadow-slate-200/80 dark:shadow-none">
               <div className="flex justify-between items-center mb-5">
                 <div className="flex gap-1.5">
@@ -346,7 +346,7 @@ export default function LandingPage() {
                 <span className="text-sm font-bold text-slate-900 dark:text-white">Assistance numérique</span>
               </div>
               <div className="h-1.5 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
-                <div className="h-full w-3/4 bg-gradient-to-r from-[#0f2863] to-amber-500" />
+                <div className="h-full w-3/4 bg-gradient-to-r from-[#1a3673] to-amber-500" />
               </div>
             </div>
             <div className="absolute bottom-[5%] left-[-5%] bg-white dark:bg-[#0A1220]/90 backdrop-blur-xl border border-blue-200 dark:border-blue-500/30 p-4 rounded-2xl shadow-xl transform -rotate-3 animate-bounce [animation-duration:5s]">
@@ -375,16 +375,16 @@ export default function LandingPage() {
       <div id="ia" className="relative z-10 bg-white dark:bg-[#0A1220] py-32 border-y border-slate-200 dark:border-white/5">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
           <div>
-            <div className="inline-flex items-center gap-2 bg-indigo-50 dark:bg-[#0f2863]/30 border border-indigo-200 dark:border-indigo-800 rounded-full px-4 py-1.5 mb-8">
-              <BrainCircuit className="w-4 h-4 text-[#0f2863] dark:text-amber-400 animate-pulse" />
-              <span className="text-xs font-bold text-[#0f2863] dark:text-amber-400 tracking-wider">{t.aiBadge}</span>
+            <div className="inline-flex items-center gap-2 bg-indigo-50 dark:bg-[#1a3673]/30 border border-indigo-200 dark:border-indigo-800 rounded-full px-4 py-1.5 mb-8">
+              <BrainCircuit className="w-4 h-4 text-[#1a3673] dark:text-amber-400 animate-pulse" />
+              <span className="text-xs font-bold text-[#1a3673] dark:text-amber-400 tracking-wider">{t.aiBadge}</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-6 leading-tight">
-              {t.aiTitle1} <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0f2863] via-[#162e74] to-amber-500 dark:from-blue-400 dark:to-amber-400">{t.aiTitle2}</span><br />
+              {t.aiTitle1} <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1a3673] via-[#162e74] to-amber-500 dark:from-blue-400 dark:to-amber-400">{t.aiTitle2}</span><br />
               <span className="text-slate-400 font-light">{t.aiTitle3}.</span>
             </h2>
             <p className="text-slate-500 dark:text-slate-400 text-lg mb-10 leading-relaxed font-light">{t.aiDesc}</p>
-            <button onClick={() => navigate('/login')} className="bg-[#0f2863] hover:bg-[#162e74] text-white px-8 py-4 rounded-xl font-bold transition-colors flex items-center gap-2 shadow-lg shadow-[#0f2863]/20 cursor-pointer">
+            <button onClick={() => navigate('/login')} className="bg-[#1a3673] hover:bg-[#162e74] text-white px-8 py-4 rounded-xl font-bold transition-colors flex items-center gap-2 shadow-lg shadow-[#1a3673]/20 cursor-pointer">
               {t.aiBtn} <ArrowRight className={cn('w-5 h-5', isRTL && 'rotate-180')} />
             </button>
           </div>
@@ -426,9 +426,9 @@ export default function LandingPage() {
       <div id="contact" className="relative z-10 py-32 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 bg-indigo-50 dark:bg-[#0f2863]/30 border border-indigo-200 dark:border-indigo-800 rounded-full px-4 py-1.5 mb-6">
-              <Mail className="w-4 h-4 text-[#0f2863] dark:text-amber-400" />
-              <span className="text-xs font-bold text-[#0f2863] dark:text-amber-400 tracking-wider uppercase">Contact</span>
+            <div className="inline-flex items-center gap-2 bg-indigo-50 dark:bg-[#1a3673]/30 border border-indigo-200 dark:border-indigo-800 rounded-full px-4 py-1.5 mb-6">
+              <Mail className="w-4 h-4 text-[#1a3673] dark:text-amber-400" />
+              <span className="text-xs font-bold text-[#1a3673] dark:text-amber-400 tracking-wider uppercase">Contact</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">{t.contactTitle}</h2>
             <p className="text-slate-500 dark:text-slate-400 text-lg max-w-xl mx-auto">{t.contactSubtitle}</p>
@@ -442,8 +442,8 @@ export default function LandingPage() {
                 {publicContact?.hours && <p className="mb-5 whitespace-pre-line text-sm text-muted-foreground"><strong>Horaires d’accueil</strong><br />{publicContact.hours}</p>}
                 <div className="space-y-5">
                   <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-[#0f2863]/30 flex items-center justify-center border border-indigo-200 dark:border-indigo-800 shrink-0">
-                      <MapPin className="w-5 h-5 text-[#0f2863] dark:text-amber-400" />
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-[#1a3673]/30 flex items-center justify-center border border-indigo-200 dark:border-indigo-800 shrink-0">
+                      <MapPin className="w-5 h-5 text-[#1a3673] dark:text-amber-400" />
                     </div>
                     <div>
                       <div className="font-bold text-slate-900 dark:text-white text-sm mb-1">Adresse</div>
@@ -480,7 +480,7 @@ export default function LandingPage() {
                     <CheckCircle2 className="w-10 h-10 text-emerald-500" />
                   </div>
                   <h3 className="text-2xl font-black text-slate-900 dark:text-white">Demande enregistrée</h3><p role="status" className="text-sm">Conservez votre référence : <strong>{contactReference}</strong>. Le service concerné pourra retrouver votre demande.</p>
-                  <button onClick={() => setFormSent(false)} className="text-sm text-slate-500 dark:text-slate-400 hover:text-[#0f2863] transition-colors underline underline-offset-2">
+                  <button onClick={() => setFormSent(false)} className="text-sm text-slate-500 dark:text-slate-400 hover:text-[#1a3673] transition-colors underline underline-offset-2">
                     Envoyer un autre message
                   </button>
                 </div>
@@ -493,7 +493,7 @@ export default function LandingPage() {
                         id="public-contact-name" type="text" required maxLength={255} value={formState.name}
                         onChange={e => setFormState(s => ({ ...s, name: e.target.value }))}
                         placeholder="Mohammed Alaoui"
-                        className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#0f2863]/30 focus:border-[#0f2863] transition-all"
+                        className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#1a3673]/30 focus:border-[#1a3673] transition-all"
                       />
                     </div>
                     <div>
@@ -502,7 +502,7 @@ export default function LandingPage() {
                         id="public-contact-email" type="email" required maxLength={255} value={formState.email}
                         onChange={e => setFormState(s => ({ ...s, email: e.target.value }))}
                         placeholder="votre.email@exemple.ma"
-                        className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#0f2863]/30 focus:border-[#0f2863] transition-all"
+                        className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#1a3673]/30 focus:border-[#1a3673] transition-all"
                       />
                     </div>
                   </div>
@@ -511,7 +511,7 @@ export default function LandingPage() {
                     <select
                       id="public-contact-subject" value={formState.subject}
                       onChange={e => setFormState(s => ({ ...s, subject: e.target.value }))}
-                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#0f2863]/30 focus:border-[#0f2863] transition-all"
+                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1a3673]/30 focus:border-[#1a3673] transition-all"
                     >
                       <option value="">— Sélectionner un sujet —</option>
                       <option value="admission">Admission & Inscription</option>
@@ -526,13 +526,13 @@ export default function LandingPage() {
                       rows={5} required value={formState.message}
                       onChange={e => setFormState(s => ({ ...s, message: e.target.value }))}
                       placeholder={t.formMsg}
-                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#0f2863]/30 focus:border-[#0f2863] transition-all resize-none"
+                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-[#1a3673]/30 focus:border-[#1a3673] transition-all resize-none"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={formSending}
-                    className="w-full bg-gradient-to-r from-[#0f2863] via-[#162e74] to-[#1e3a8a] text-white py-4 rounded-xl font-bold shadow-lg shadow-[#0f2863]/20 hover:shadow-[#0f2863]/40 transition-all hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full bg-gradient-to-r from-[#1a3673] via-[#162e74] to-[#1e3a8a] text-white py-4 rounded-xl font-bold shadow-lg shadow-[#1a3673]/20 hover:shadow-[#1a3673]/40 transition-all hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                   >
                     {formSending ? (
                       <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Envoi en cours...</>
@@ -548,7 +548,7 @@ export default function LandingPage() {
       </div>
 
       {/* ── FOOTER ── */}
-      <footer className="relative z-10 bg-[#0f2863] dark:bg-[#030712] border-t border-[#162e74] dark:border-white/5 text-slate-300">
+      <footer className="relative z-10 bg-[#1a3673] dark:bg-[#030712] border-t border-[#162e74] dark:border-white/5 text-slate-300">
         <div className="max-w-7xl mx-auto px-6 pt-16 pb-6">
           {/* Top grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
@@ -625,7 +625,7 @@ export default function LandingPage() {
         </div>
 
         {/* Navy & Gold accent bottom line */}
-        <div className="h-1 bg-gradient-to-r from-[#0f2863] via-amber-400 to-[#162e74]" />
+        <div className="h-1 bg-gradient-to-r from-[#1a3673] via-amber-400 to-[#162e74]" />
       </footer>
     </div>
   );

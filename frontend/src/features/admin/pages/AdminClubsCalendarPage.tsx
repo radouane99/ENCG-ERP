@@ -10,8 +10,8 @@ export default function AdminClubsCalendarPage() {
         </Link>
         <div className="flex flex-col items-center">
           <div className="flex items-center gap-3 mb-1">
-            <Calendar className="w-6 h-6 text-[#0f2863]" />
-            <h1 className="text-[#0f2863] italic erp-page-title">Calendrier des Salles — Clubs</h1>
+            <Calendar className="w-6 h-6 text-[#1a3673]" />
+            <h1 className="text-[#1a3673] italic erp-page-title">Calendrier des Salles — Clubs</h1>
           </div>
           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">
             VUE GLOBALE DES RÉSERVATIONS

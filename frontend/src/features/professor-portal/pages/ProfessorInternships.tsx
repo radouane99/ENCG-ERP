@@ -4,10 +4,10 @@ export default function ProfessorInternships() {
   return (
     <div className="max-w-6xl mx-auto space-y-8 font-sans animate-in fade-in zoom-in duration-500">
       
-      <h1 className="text-[#001A4B] italic mb-6 erp-page-title">Mes Encadrements & Tutorats (Stages)</h1>
+      <h1 className="text-[#1a3673] italic mb-6 erp-page-title">Mes Encadrements & Tutorats (Stages)</h1>
 
       {/* Banner */}
-      <div className="bg-[#001A4B] rounded-2xl p-8 text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-sm relative overflow-hidden">
+      <div className="bg-[#1a3673] rounded-2xl p-8 text-white flex flex-col md:flex-row items-center justify-between gap-8 shadow-sm relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
         <div className="relative z-10 max-w-2xl">
           <span className="bg-white/20 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-4 inline-block border border-white/20">

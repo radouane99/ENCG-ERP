@@ -204,7 +204,7 @@ export default function ProfessorAvailability() {
             type="button"
             onClick={() => saveMutation.mutate()}
             disabled={saveMutation.isPending || isPending || isError}
-            className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-[#001A4B] to-indigo-900 hover:opacity-95 text-white rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-950/20 disabled:opacity-50 cursor-pointer"
+            className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-[#1a3673] to-indigo-900 hover:opacity-95 text-white rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-950/20 disabled:opacity-50 cursor-pointer"
           >
             {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin text-white" /> : <Save className="w-4 h-4 text-amber-400" />}
             Enregistrer mes Disponibilités

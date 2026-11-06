@@ -70,7 +70,7 @@ export default function AdminExamAnalyticsPage() {
           <div className="flex items-center gap-3">
             <Button
               onClick={() => window.print()}
-              className="bg-amber-400 hover:bg-amber-500 text-[#0f2863] font-bold rounded-xl text-xs px-4 shadow-lg hover:scale-105 transition-all"
+              className="bg-amber-400 hover:bg-amber-500 text-[#1a3673] font-bold rounded-xl text-xs px-4 shadow-lg hover:scale-105 transition-all"
             >
               📜 Générer Bilan Consolidé A4 (Présidence USMBA)
             </Button>
@@ -111,7 +111,7 @@ export default function AdminExamAnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* Chart 1: Attendance Rate by Filière */}
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-sm space-y-4">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-foreground dark:text-white flex items-center gap-2">
               <BarChart2 className="w-5 h-5 text-primary" />
@@ -133,7 +133,7 @@ export default function AdminExamAnalyticsPage() {
         </div>
 
         {/* Chart 2: Absence & Retard by Time Slot */}
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-sm space-y-4">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-foreground dark:text-white flex items-center gap-2">
               <Clock className="w-5 h-5 text-amber-500" />
@@ -157,7 +157,7 @@ export default function AdminExamAnalyticsPage() {
       </div>
 
       {/* Cartographie par Salle d'Examen */}
-      <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-sm space-y-4">
+      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-base font-bold text-foreground dark:text-white flex items-center gap-2">
             <Building className="w-5 h-5 text-primary" />
@@ -247,18 +247,18 @@ export default function AdminExamAnalyticsPage() {
 
       <div id="executive-bilan-printable-doc" className="hidden print:block text-black bg-card text-[9.5pt] leading-snug">
         {/* Header */}
-        <div className="border-b-2 border-[#0f2863] pb-3 mb-4 flex justify-between items-center">
+        <div className="border-b-2 border-[#1a3673] pb-3 mb-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <img src="/logo-encg.png" alt="Logo ENCG Fès" className="h-16 w-auto object-contain" />
             <div>
-              <div className="text-[10pt] font-bold uppercase text-[#0f2863]">Royaume du Maroc</div>
+              <div className="text-[10pt] font-bold uppercase text-[#1a3673]">Royaume du Maroc</div>
               <div className="text-[8.5pt] font-bold text-foreground">Université Sidi Mohamed Ben Abdellah — Fès</div>
-              <div className="text-[9.5pt] font-bold text-[#0f2863]">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION</div>
+              <div className="text-[9.5pt] font-bold text-[#1a3673]">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION</div>
               <div className="text-[8pt] font-bold text-muted-foreground uppercase">Direction & Présidence — Année Académique 2025/2026</div>
             </div>
           </div>
           <div className="text-right space-y-1">
-            <div className="px-3 py-1 bg-[#0f2863] text-white font-bold text-[8.5pt] rounded uppercase inline-block">
+            <div className="px-3 py-1 bg-[#1a3673] text-white font-bold text-[8.5pt] rounded uppercase inline-block">
               RAPPORT EXÉCUTIF A4
             </div>
             <div className="text-[8pt] font-mono text-slate-700">Réf: USMBA-ENCG-2026/BILAN</div>
@@ -268,7 +268,7 @@ export default function AdminExamAnalyticsPage() {
 
         {/* Document Title */}
         <div className="text-center bg-muted/50 border border-slate-300 p-3 rounded-xl mb-4">
-          <h1 className="text-[12pt] text-[#0f2863] erp-page-title">
+          <h1 className="text-[12pt] text-[#1a3673] erp-page-title">
             BILAN SYNTHÉTIQUE ET ANALYTIQUE DE LA SESSION D'EXAMENS
           </h1>
           <p className="text-[8.5pt] font-bold text-muted-foreground">
@@ -280,7 +280,7 @@ export default function AdminExamAnalyticsPage() {
         <div className="grid grid-cols-4 gap-2 mb-4 text-center">
           <div className="p-2 border border-slate-300 rounded-lg bg-muted/50">
             <div className="text-[7.5pt] uppercase font-bold text-muted-foreground">Épreuves Organisées</div>
-            <div className="text-[11pt] font-bold text-[#0f2863]">{stats.total_exams} Épreuves</div>
+            <div className="text-[11pt] font-bold text-[#1a3673]">{stats.total_exams} Épreuves</div>
           </div>
           <div className="p-2 border border-slate-300 rounded-lg bg-muted/50">
             <div className="text-[7.5pt] uppercase font-bold text-muted-foreground">Taux Moyen d'Assiduité</div>
@@ -298,12 +298,12 @@ export default function AdminExamAnalyticsPage() {
 
         {/* Table 1: Filières */}
         <div className="space-y-1 mb-4">
-          <h2 className="text-[9pt] font-bold uppercase text-[#0f2863] border-b border-slate-300 pb-1">
+          <h2 className="text-[9pt] font-bold uppercase text-[#1a3673] border-b border-slate-300 pb-1">
             1. Taux d'Assiduité et de Présence par Filières
           </h2>
           <table className="w-full text-[8.5pt] border-collapse border border-slate-300">
             <thead>
-              <tr className="bg-muted font-bold text-[#0f2863]">
+              <tr className="bg-muted font-bold text-[#1a3673]">
                 <th className="border border-slate-300 p-1.5 text-left">Filière / Spécialité</th>
                 <th className="border border-slate-300 p-1.5 text-center">Taux Présence</th>
                 <th className="border border-slate-300 p-1.5 text-center">Taux Absence</th>
@@ -325,12 +325,12 @@ export default function AdminExamAnalyticsPage() {
 
         {/* Table 2: Fraud Heatmap */}
         <div className="space-y-1 mb-6">
-          <h2 className="text-[9pt] font-bold uppercase text-[#0f2863] border-b border-slate-300 pb-1">
+          <h2 className="text-[9pt] font-bold uppercase text-[#1a3673] border-b border-slate-300 pb-1">
             2. Cartographie des Incidents par Amphi & Salle d'Épreuve
           </h2>
           <table className="w-full text-[8.5pt] border-collapse border border-slate-300">
             <thead>
-              <tr className="bg-muted font-bold text-[#0f2863]">
+              <tr className="bg-muted font-bold text-[#1a3673]">
                 <th className="border border-slate-300 p-1.5 text-left">Espace d'Épreuve</th>
                 <th className="border border-slate-300 p-1.5 text-center">Convocation Total</th>
                 <th className="border border-slate-300 p-1.5 text-center">Absences</th>

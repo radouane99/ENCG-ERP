@@ -185,13 +185,13 @@ export default function StudentAiTutorPage() {
       </div>
 
       {/* ── Main Chat Area ────────────────────────────────────────────────────── */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm flex flex-col h-[650px] overflow-hidden">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm flex flex-col h-[650px] overflow-hidden">
         
         {/* Module Sub-bar */}
-        <div className="p-4 bg-muted/50 dark:bg-slate-800/50 border-b border-border dark:border-border flex items-center justify-between px-6">
+        <div className="p-4 bg-muted/50 dark:bg-slate-800/50 border-b border-border flex items-center justify-between px-6">
           <div className="flex items-center gap-2 text-xs">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-bold text-foreground dark:text-foreground">{selectedModule?.name || 'Aucun module'}</span>
+            <span className="font-bold text-foreground">{selectedModule?.name || 'Aucun module'}</span>
             <span className="text-slate-400">{selectedModule?.prof ? `(${selectedModule.prof})` : ''}</span>
           </div>
           <button
@@ -218,7 +218,7 @@ export default function StudentAiTutorPage() {
               <div className={cn(
                 "w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 shadow-xs font-bold text-xs",
                 msg.sender === 'user'
-                  ? "bg-[#0f2863] text-white"
+                  ? "bg-[#1a3673] text-white"
                   : "bg-gradient-to-br from-indigo-500 to-purple-600 text-white"
               )}>
                 {msg.sender === 'user' ? 'ME' : <Bot className="w-5 h-5" />}
@@ -229,8 +229,8 @@ export default function StudentAiTutorPage() {
                 <div className={cn(
                   "p-5 rounded-2xl text-xs sm:text-sm leading-relaxed",
                   msg.sender === 'user'
-                    ? "bg-[#0f2863] text-white rounded-tr-xs shadow-md"
-                    : "bg-muted dark:bg-card text-foreground dark:text-foreground rounded-tl-xs border border-slate-200/60 dark:border-slate-700/60 shadow-xs whitespace-pre-wrap"
+                    ? "bg-[#1a3673] text-white rounded-tr-xs shadow-md"
+                    : "bg-muted dark:bg-card text-foreground rounded-tl-xs border border-slate-200/60 dark:border-slate-700/60 shadow-xs whitespace-pre-wrap"
                 )}>
                   {msg.text}
                 </div>
@@ -280,7 +280,7 @@ export default function StudentAiTutorPage() {
             <button
               key={idx}
               onClick={() => handleSendMessage(prompt)}
-              className="shrink-0 px-3 py-1 bg-card dark:bg-card border border-border dark:border-border hover:border-indigo-400 dark:hover:border-primary text-[11px] font-medium text-slate-700 dark:text-foreground rounded-full transition-colors cursor-pointer"
+              className="shrink-0 px-3 py-1 bg-card border border-border hover:border-indigo-400 dark:hover:border-primary text-[11px] font-medium text-slate-700 dark:text-foreground rounded-full transition-colors cursor-pointer"
             >
               {prompt}
             </button>
@@ -288,7 +288,7 @@ export default function StudentAiTutorPage() {
         </div>
 
         {/* ── Input Bar ──────────────────────────────────────────────────────── */}
-        <div className="p-4 bg-card dark:bg-card border-t border-border dark:border-border flex items-center gap-3 px-6">
+        <div className="p-4 bg-card border-t border-border flex items-center gap-3 px-6">
           <input
             type="text"
             placeholder={`Posez votre question sur ${selectedModule?.name || 'votre module'}...`}
@@ -300,7 +300,7 @@ export default function StudentAiTutorPage() {
           <button
             onClick={() => handleSendMessage()}
             disabled={!inputQuery.trim() || isLoading}
-            className="p-3.5 bg-[#0f2863] hover:bg-[#15347d] text-white rounded-2xl shadow-md transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+            className="p-3.5 bg-[#1a3673] hover:bg-[#15347d] text-white rounded-2xl shadow-md transition-all active:scale-95 cursor-pointer disabled:opacity-50"
           >
             <Send className="w-4 h-4" />
           </button>
@@ -311,7 +311,7 @@ export default function StudentAiTutorPage() {
       {/* ── Interactive Quiz Modal ────────────────────────────────────────────── */}
       {activeQuiz && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-card dark:bg-card text-foreground dark:text-white rounded-2xl shadow-sm w-full max-w-xl overflow-hidden border border-border dark:border-border">
+          <div className="bg-card text-foreground dark:text-white rounded-2xl shadow-sm w-full max-w-xl overflow-hidden border border-border">
             
             <div className="p-6 bg-gradient-to-r from-amber-500 to-amber-600 text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -344,7 +344,7 @@ export default function StudentAiTutorPage() {
                       className={cn(
                         "p-4 rounded-2xl border text-xs font-bold cursor-pointer transition-all flex items-center justify-between",
                         !isAnswerSubmitted && isChosen && "border-amber-500 bg-amber-50 dark:bg-amber-950/50 text-amber-900 dark:text-amber-200",
-                        !isAnswerSubmitted && !isChosen && "border-border dark:border-border hover:bg-muted/50 dark:hover:bg-slate-800",
+                        !isAnswerSubmitted && !isChosen && "border-border hover:bg-muted/50 dark:hover:bg-slate-800",
                         isAnswerSubmitted && isCorrect && "border-emerald-500 bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200",
                         isAnswerSubmitted && isChosen && !isCorrect && "border-rose-500 bg-rose-50 dark:bg-rose-950 text-rose-800 dark:text-rose-200"
                       )}
@@ -375,7 +375,7 @@ export default function StudentAiTutorPage() {
                 ) : (
                   <button
                     onClick={() => setActiveQuiz(null)}
-                    className="px-5 py-2.5 bg-[#0f2863] text-white rounded-xl text-xs font-bold uppercase transition-all shadow-md cursor-pointer"
+                    className="px-5 py-2.5 bg-[#1a3673] text-white rounded-xl text-xs font-bold uppercase transition-all shadow-md cursor-pointer"
                   >
                     Terminer le Quiz
                   </button>

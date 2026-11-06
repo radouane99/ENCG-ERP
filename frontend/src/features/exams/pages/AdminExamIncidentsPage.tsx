@@ -20,7 +20,7 @@ export default function AdminExamIncidentsPage() {
             <AlertCircle className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-[#0f2863] italic erp-page-title">Registre des Incidents</h1>
+            <h1 className="text-[#1a3673] italic erp-page-title">Registre des Incidents</h1>
             <p className="text-xs text-muted-foreground">
               Gestion des cas de fraude, retards et absences injustifiées
             </p>
@@ -28,7 +28,7 @@ export default function AdminExamIncidentsPage() {
         </div>
         
         <div className="flex items-center gap-3">
-          <button className="h-10 px-4 rounded-xl bg-[#0f2863] hover:bg-[#1a387e] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors shadow-sm">
+          <button className="h-10 px-4 rounded-xl bg-[#1a3673] hover:bg-[#1a387e] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors shadow-sm">
             <Download className="w-4 h-4" /> EXPORTER LE REGISTRE
           </button>
         </div>

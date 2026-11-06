@@ -198,11 +198,11 @@ export default function AdminPredictiveAnalytics() {
             </div>
 
             <div>
-              <div className="text-3xl font-bold text-foreground dark:text-foreground tracking-tight leading-none mb-1">
+              <div className="text-3xl font-bold text-foreground tracking-tight leading-none mb-1">
                 {pred.value}
               </div>
-              <p className="text-sm font-bold text-foreground dark:text-foreground mb-1">{pred.label}</p>
-              <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">{pred.subtext}</p>
+              <p className="text-sm font-bold text-foreground mb-1">{pred.label}</p>
+              <p className="text-xs text-muted-foreground font-medium">{pred.subtext}</p>
             </div>
           </div>
         ))}
@@ -212,7 +212,7 @@ export default function AdminPredictiveAnalytics() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
         {/* Dropout Risk Alerts Card */}
-        <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+        <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
@@ -220,8 +220,8 @@ export default function AdminPredictiveAnalytics() {
                   <AlertTriangle className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-foreground dark:text-foreground">Alertes Décrochage IA</h2>
-                  <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">Algorithme de calcul : (Notes CC + Absences cumulées)</p>
+                  <h2 className="text-lg font-bold text-foreground">Alertes Décrochage IA</h2>
+                  <p className="text-xs text-muted-foreground font-medium">Algorithme de calcul : (Notes CC + Absences cumulées)</p>
                 </div>
               </div>
 
@@ -236,7 +236,7 @@ export default function AdminPredictiveAnalytics() {
                 return (
                   <div
                     key={idx}
-                    className="p-4 rounded-2xl border border-border dark:border-border bg-slate-50/60 dark:bg-slate-800/40 hover:border-slate-300 dark:hover:border-slate-700 transition-all space-y-3"
+                    className="p-4 rounded-2xl border border-border bg-slate-50/60 dark:bg-slate-800/40 hover:border-slate-300 dark:hover:border-slate-700 transition-all space-y-3"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
@@ -245,15 +245,15 @@ export default function AdminPredictiveAnalytics() {
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-sm text-foreground dark:text-foreground">{student.name}</h4>
+                            <h4 className="font-bold text-sm text-foreground">{student.name}</h4>
                             {student.filiere && (
                               <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-primary/10 dark:bg-indigo-950 text-primary dark:text-indigo-300">
                                 {student.filiere}
                               </span>
                             )}
                           </div>
-                          <p className="text-xs font-bold text-muted-foreground dark:text-muted-foreground mt-0.5">
-                            Moyenne : <span className="text-foreground dark:text-foreground font-bold">{student.avg_grade}/20</span> · Absences : <span className="text-rose-500 font-bold">{student.absences}h</span>
+                          <p className="text-xs font-bold text-muted-foreground mt-0.5">
+                            Moyenne : <span className="text-foreground font-bold">{student.avg_grade}/20</span> · Absences : <span className="text-rose-500 font-bold">{student.absences}h</span>
                           </p>
                         </div>
                       </div>
@@ -288,7 +288,7 @@ export default function AdminPredictiveAnalytics() {
                       </button>
                       <button
                         onClick={() => handleAlertTutor(student.name)}
-                        className="flex-1 py-2 px-3 rounded-xl bg-muted dark:bg-card hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-foreground border border-border dark:border-border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                        className="flex-1 py-2 px-3 rounded-xl bg-muted dark:bg-card hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-foreground border border-border text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
                       >
                         <BellRing className="w-3.5 h-3.5 text-amber-500" />
                         <span>Alerter Tuteur</span>
@@ -302,15 +302,15 @@ export default function AdminPredictiveAnalytics() {
         </div>
 
         {/* Model Architecture & Sources Card */}
-        <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-6">
+        <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all flex flex-col justify-between space-y-6">
           <div>
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2.5 rounded-2xl bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-400">
                 <BrainCircuit className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-foreground dark:text-foreground">Modèle Prédictif ENCG</h2>
-                <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium">Hybride : Algorithme Heuristique + LLM Gemini 1.5</p>
+                <h2 className="text-lg font-bold text-foreground">Modèle Prédictif ENCG</h2>
+                <p className="text-xs text-muted-foreground font-medium">Hybride : Algorithme Heuristique + LLM Gemini 1.5</p>
               </div>
             </div>
 
@@ -339,7 +339,7 @@ export default function AdminPredictiveAnalytics() {
                 <div className="font-mono text-xs text-primary dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/40 p-3 rounded-xl border border-primary/20 dark:border-indigo-800/60 leading-relaxed font-bold">
                   Score = max(0, (10 - Moyenne_CC) × 6) <br />
                   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ min(40, Absences_Non_Justifiées × 4) <br />
-                  <span className="text-[10px] text-muted-foreground dark:text-muted-foreground font-sans font-medium mt-1 block">
+                  <span className="text-[10px] text-muted-foreground font-sans font-medium mt-1 block">
                     • Seuil Risque Élevé : ≥ 70% | • Seuil Risque Modéré : ≥ 40%
                   </span>
                 </div>

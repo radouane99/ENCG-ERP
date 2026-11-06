@@ -136,7 +136,7 @@ const { data: modules = [] } = useQuery({
       ) : substitutions.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {substitutions.map((sub: any) => (
-            <div key={sub.id} className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all space-y-4 relative overflow-hidden group">
+            <div key={sub.id} className="bg-card border border-border rounded-2xl p-6 shadow-sm hover:shadow-md transition-all space-y-4 relative overflow-hidden group">
               <div className="flex items-center justify-between">
                 <span className={cn(
                   "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border",
@@ -154,7 +154,7 @@ const { data: modules = [] } = useQuery({
                 <p className="text-xs text-muted-foreground font-semibold mt-0.5">{sub.filiere_name}</p>
               </div>
 
-              <div className="space-y-2 bg-muted/50 dark:bg-slate-800/50 p-4 rounded-2xl border border-border dark:border-border text-xs">
+              <div className="space-y-2 bg-muted/50 dark:bg-slate-800/50 p-4 rounded-2xl border border-border text-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400 font-medium">Titulaire absent :</span>
                   <span className="font-bold text-slate-700 dark:text-foreground">{sub.original_professor_name}</span>
@@ -165,7 +165,7 @@ const { data: modules = [] } = useQuery({
                 </div>
                 <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 dark:border-border">
                   <span className="text-slate-400 font-medium">Période :</span>
-                  <span className="font-bold text-foreground dark:text-foreground">{sub.start_date} → {sub.end_date}</span>
+                  <span className="font-bold text-foreground">{sub.start_date} → {sub.end_date}</span>
                 </div>
               </div>
 
@@ -187,9 +187,9 @@ const { data: modules = [] } = useQuery({
           ))}
         </div>
       ) : (
-        <div className="p-16 text-center bg-muted/50 dark:bg-card rounded-2xl border border-dashed border-border dark:border-border space-y-3">
+        <div className="p-16 text-center bg-muted/50 dark:bg-card rounded-2xl border border-dashed border-border space-y-3">
           <UserCheck className="w-12 h-12 text-slate-300 mx-auto" />
-          <h3 className="text-lg font-bold text-foreground dark:text-foreground">Aucune suppléance active pour le moment</h3>
+          <h3 className="text-lg font-bold text-foreground">Aucune suppléance active pour le moment</h3>
           <p className="text-xs text-slate-400 max-w-md mx-auto">
             Toutes les séances de votre département sont assurées par leurs enseignants titulaires.
           </p>
@@ -199,8 +199,8 @@ const { data: modules = [] } = useQuery({
       {/* Modal Grant Substitution */}
       {showModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-card dark:bg-card rounded-2xl p-8 max-w-xl w-full shadow-sm border border-border dark:border-border space-y-6 animate-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
+          <div className="bg-card rounded-2xl p-8 max-w-xl w-full shadow-sm border border-border space-y-6 animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-border pb-4">
               <div>
                 <h3 className="text-xl font-bold text-foreground dark:text-white">Attribution de Suppléance</h3>
                 <p className="text-xs text-slate-400 font-semibold mt-0.5">Délégation temporaire d'urgence pour cours & notes</p>
@@ -216,7 +216,7 @@ const { data: modules = [] } = useQuery({
                 <select
                   value={originalProf}
                   onChange={e => setOriginalProf(e.target.value)}
-                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold rounded-[var(--control-radius)]"
+                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border text-xs font-bold rounded-[var(--control-radius)]"
                   required
                 >
                   <option value="">-- Sélectionner l'enseignant titulaire --</option>
@@ -233,7 +233,7 @@ const { data: modules = [] } = useQuery({
                 <select
                   value={substituteProf}
                   onChange={e => setSubstituteProf(e.target.value)}
-                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-primary dark:text-indigo-400 rounded-[var(--control-radius)]"
+                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border text-xs font-bold text-primary dark:text-indigo-400 rounded-[var(--control-radius)]"
                   required
                 >
                   <option value="">-- Sélectionner le professeur remplaçant --</option>
@@ -250,7 +250,7 @@ const { data: modules = [] } = useQuery({
                 <select
                   value={selectedModule}
                   onChange={e => setSelectedModule(e.target.value)}
-                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold rounded-[var(--control-radius)]"
+                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border text-xs font-bold rounded-[var(--control-radius)]"
                   required
                 >
                   <option value="">-- Sélectionner le module --</option>
@@ -269,7 +269,7 @@ const { data: modules = [] } = useQuery({
                     type="date"
                     value={startDate}
                     onChange={e => setStartDate(e.target.value)}
-                    className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold rounded-[var(--control-radius)]"
+                    className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border text-xs font-bold rounded-[var(--control-radius)]"
                     required
                   />
                 </div>
@@ -279,7 +279,7 @@ const { data: modules = [] } = useQuery({
                     type="date"
                     value={endDate}
                     onChange={e => setEndDate(e.target.value)}
-                    className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold rounded-[var(--control-radius)]"
+                    className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border text-xs font-bold rounded-[var(--control-radius)]"
                     required
                   />
                 </div>
@@ -292,11 +292,11 @@ const { data: modules = [] } = useQuery({
                   onChange={e => setReason(e.target.value)}
                   placeholder="Ex: Congé maladie / Mission officielle à l'étranger"
                   rows={2}
-                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-semibold rounded-[var(--control-radius)]"
+                  className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border text-xs font-semibold rounded-[var(--control-radius)]"
                 />
               </div>
 
-              <div className="flex items-center gap-3 pt-4 border-t border-border dark:border-border">
+              <div className="flex items-center gap-3 pt-4 border-t border-border">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}

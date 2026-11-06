@@ -153,7 +153,7 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, placeholder
           "w-full px-3.5 py-2.5 bg-card dark:bg-slate-800/90 border rounded-xl text-xs font-bold flex items-center justify-between transition-all cursor-pointer shadow-xs text-left",
           open 
             ? "border-primary ring-4 ring-indigo-500/15 text-primary dark:text-indigo-200"
-            : "border-border dark:border-border hover:border-indigo-400 dark:hover:border-primary text-foreground dark:text-foreground",
+            : "border-border hover:border-indigo-400 dark:hover:border-primary text-foreground",
           disabled && "opacity-40 cursor-not-allowed"
         )}
       >
@@ -164,7 +164,7 @@ function CustomSelect({ label, icon: Icon, value, onChange, options, placeholder
       </button>
 
       {open && !disabled && (
-        <div className="absolute z-[9999] top-full left-0 mt-1.5 w-full bg-card dark:bg-card border border-border dark:border-slate-700/80 rounded-xl shadow-sm py-1.5 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150 backdrop-blur-2xl">
+        <div className="absolute z-[9999] top-full left-0 mt-1.5 w-full bg-card border border-border dark:border-slate-700/80 rounded-xl shadow-sm py-1.5 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150 backdrop-blur-2xl">
           <div
             onClick={() => {
               onChange('')
@@ -494,7 +494,7 @@ export default function ProfessorsListPage() {
             "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 border",
             activeDeptTab === 'all'
               ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 border-transparent shadow-sm"
-              : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border-border dark:border-border hover:border-indigo-400"
+              : "bg-card text-muted-foreground dark:text-foreground border-border hover:border-indigo-400"
           )}
         >
           <Building2 className="w-3.5 h-3.5" />
@@ -522,7 +522,7 @@ export default function ProfessorsListPage() {
                 "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 border",
                 isSelected
                   ? "bg-primary text-primary-foreground border-primary shadow-sm"
-                  : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border-border dark:border-border hover:border-indigo-400"
+                  : "bg-card text-muted-foreground dark:text-foreground border-border hover:border-indigo-400"
               )}
             >
               <span className={cn("w-2 h-2 rounded-full shrink-0", isSelected ? "bg-card" : theme.dot)} />
@@ -541,7 +541,7 @@ export default function ProfessorsListPage() {
       {/* ══════════════════════════════════════════════════════════════
           3. SEARCH, ADVANCED FILTERS & VIEW TOGGLE
       ══════════════════════════════════════════════════════════════ */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-xs p-3.5 sm:p-4 space-y-3">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-xs p-3.5 sm:p-4 space-y-3">
         <div className="flex flex-col lg:flex-row gap-3 items-center justify-between">
           
           {/* Search Bar */}
@@ -552,7 +552,7 @@ export default function ProfessorsListPage() {
               placeholder="Rechercher par nom (FR / AR), email, matricule, spécialité..." 
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-10 pr-9 py-2 bg-muted/50 dark:bg-slate-800/80 border border-border dark:border-border text-xs font-semibold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-primary transition-all placeholder:text-slate-400 rounded-[var(--control-radius)]"
+              className="w-full pl-10 pr-9 py-2 bg-muted/50 dark:bg-slate-800/80 border border-border text-xs font-semibold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-primary transition-all placeholder:text-slate-400 rounded-[var(--control-radius)]"
             />
             {search && (
               <button 
@@ -583,7 +583,7 @@ export default function ProfessorsListPage() {
             </div>
 
             {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 bg-muted dark:bg-card p-1 rounded-xl border border-border dark:border-border shrink-0">
+            <div className="flex items-center gap-1 bg-muted dark:bg-card p-1 rounded-xl border border-border shrink-0">
               <button
                 onClick={() => setViewMode('table')}
                 title="Vue Tableau Liste"
@@ -616,7 +616,7 @@ export default function ProfessorsListPage() {
             <button
               onClick={() => refetch()}
               title="Rafraîchir les données"
-              className="p-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border rounded-xl text-muted-foreground dark:text-foreground hover:text-primary dark:hover:text-white hover:border-primary/20 transition-all cursor-pointer shrink-0"
+              className="p-2.5 bg-muted/50 dark:bg-card border border-border rounded-xl text-muted-foreground dark:text-foreground hover:text-primary dark:hover:text-white hover:border-primary/20 transition-all cursor-pointer shrink-0"
             >
               <RefreshCw className={cn("w-3.5 h-3.5", isRefetching && "animate-spin text-primary")} />
             </button>
@@ -625,7 +625,7 @@ export default function ProfessorsListPage() {
         </div>
 
         {/* Counter and Active Tag Strip */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground dark:text-muted-foreground pt-2 border-t border-border dark:border-slate-800/80">
+        <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border dark:border-slate-800/80">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-bold text-foreground dark:text-white">
               {filtered.length} {filtered.length > 1 ? 'enseignants trouvés' : 'enseignant trouvé'}
@@ -654,12 +654,12 @@ export default function ProfessorsListPage() {
           4. MAIN VIEW: TABLE OR GRID
       ══════════════════════════════════════════════════════════════ */}
       {isLoading ? (
-        <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-16 text-center shadow-xs">
+        <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-16 text-center shadow-xs">
           <Spinner size="lg" className="text-primary mx-auto mb-3" />
           <p className="text-xs font-bold text-muted-foreground">Chargement de l'annuaire professoral...</p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl p-16 text-center shadow-xs">
+        <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl p-16 text-center shadow-xs">
           <div className="w-14 h-14 bg-primary/5 dark:bg-card rounded-2xl flex items-center justify-center mx-auto mb-3 text-primary">
             <GraduationCap className="w-7 h-7" />
           </div>
@@ -673,11 +673,11 @@ export default function ProfessorsListPage() {
         </div>
       ) : viewMode === 'table' ? (
         /* ── LUXURY TABLE VIEW ────────────────────────────────────── */
-        <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-xs overflow-hidden">
+        <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-xs text-start border-collapse">
               <thead>
-                <tr className="bg-slate-50/90 dark:bg-slate-800/80 border-b border-slate-200/70 dark:border-border text-[10px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider">
+                <tr className="bg-slate-50/90 dark:bg-slate-800/80 border-b border-slate-200/70 dark:border-border text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                   <th className="px-5 py-3.5 text-start">Enseignant / Identité</th>
                   <th className="px-4 py-3.5 text-start">Grade & Spécialité</th>
                   <th className="px-4 py-3.5 text-start">Département d'Attache</th>
@@ -754,7 +754,7 @@ export default function ProfessorsListPage() {
                             <Award className="w-3 h-3 text-amber-500" />
                             {gradeInfo.label}
                           </span>
-                          <p className="text-[11px] font-medium text-muted-foreground dark:text-muted-foreground truncate max-w-[180px]">
+                          <p className="text-[11px] font-medium text-muted-foreground truncate max-w-[180px]">
                             {prof.specialty || 'Finance & Gestion'}
                           </p>
                         </div>
@@ -798,7 +798,7 @@ export default function ProfessorsListPage() {
                           "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide",
                           prof.is_active
                             ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
-                            : "bg-muted dark:bg-card text-muted-foreground border border-border dark:border-border"
+                            : "bg-muted dark:bg-card text-muted-foreground border border-border"
                         )}>
                           <span className={cn("w-1.5 h-1.5 rounded-full", prof.is_active ? "bg-emerald-500 animate-pulse" : "bg-slate-400")} />
                           {prof.is_active ? 'Actif' : 'Inactif'}
@@ -857,7 +857,7 @@ export default function ProfessorsListPage() {
               <div 
                 key={prof.id}
                 onClick={() => setSelectedProfForView(prof)}
-                className="group relative bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl overflow-hidden shadow-xs hover:shadow-xl hover:border-indigo-500/40 dark:hover:border-indigo-500/40 transition-all flex flex-col justify-between cursor-pointer"
+                className="group relative bg-card border border-slate-200/80 dark:border-border rounded-2xl overflow-hidden shadow-xs hover:shadow-xl hover:border-indigo-500/40 dark:hover:border-indigo-500/40 transition-all flex flex-col justify-between cursor-pointer"
               >
                 {/* Department Accent Bar */}
                 <div className={cn("h-2 w-full bg-gradient-to-r", deptTheme.lightBg)} />
@@ -889,7 +889,7 @@ export default function ProfessorsListPage() {
                       Pr. {prof.last_name} {prof.first_name}
                     </h3>
                     {prof.name_ar && (
-                      <p dir="rtl" className="text-xs font-serif font-bold text-muted-foreground dark:text-muted-foreground mt-0.5">
+                      <p dir="rtl" className="text-xs font-serif font-bold text-muted-foreground mt-0.5">
                         {prof.name_ar}
                       </p>
                     )}
@@ -899,19 +899,19 @@ export default function ProfessorsListPage() {
                   </div>
 
                   {/* Metadata Chips */}
-                  <div className="space-y-2 pt-2 border-t border-border dark:border-border text-xs">
+                  <div className="space-y-2 pt-2 border-t border-border text-xs">
                     <div className="flex items-center gap-2 text-muted-foreground dark:text-foreground">
                       <Building2 className="w-3.5 h-3.5 text-primary shrink-0" />
                       <span className="truncate text-[11px] font-semibold">{prof.department || 'Sciences de Gestion'}</span>
                     </div>
 
-                    <div className="flex items-center gap-2 text-muted-foreground dark:text-muted-foreground">
+                    <div className="flex items-center gap-2 text-muted-foreground">
                       <Mail className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                       <span className="truncate text-[11px]">{prof.email}</span>
                     </div>
 
                     {prof.phone && (
-                      <div className="flex items-center gap-2 text-muted-foreground dark:text-muted-foreground">
+                      <div className="flex items-center gap-2 text-muted-foreground">
                         <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                         <span className="text-[11px]">{prof.phone}</span>
                       </div>
@@ -921,7 +921,7 @@ export default function ProfessorsListPage() {
 
                 {/* Card Footer Actions */}
                 <div 
-                  className="px-5 py-3 bg-slate-50/80 dark:bg-slate-800/50 border-t border-border dark:border-border flex items-center justify-between"
+                  className="px-5 py-3 bg-slate-50/80 dark:bg-slate-800/50 border-t border-border flex items-center justify-between"
                   onClick={e => e.stopPropagation()}
                 >
                   <span className={cn(
@@ -974,7 +974,7 @@ export default function ProfessorsListPage() {
           />
 
           {/* Drawer Panel */}
-          <div className="relative w-full max-w-lg bg-card dark:bg-card h-full shadow-sm z-10 overflow-y-auto flex flex-col justify-between animate-in slide-in-from-right duration-250 border-s border-border dark:border-border">
+          <div className="relative w-full max-w-lg bg-card h-full shadow-sm z-10 overflow-y-auto flex flex-col justify-between animate-in slide-in-from-right duration-250 border-s border-border">
             
             {/* Drawer Header */}
             <div>
@@ -1054,7 +1054,7 @@ export default function ProfessorsListPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-card dark:bg-card border border-slate-200/70 dark:border-slate-700/70 text-xs">
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-card border border-slate-200/70 dark:border-slate-700/70 text-xs">
                       <span className="text-slate-400 flex items-center gap-2">
                         <Mail className="w-3.5 h-3.5 text-primary" /> Email Académique
                       </span>
@@ -1064,7 +1064,7 @@ export default function ProfessorsListPage() {
                     </div>
 
                     {selectedProfForView.phone && (
-                      <div className="flex items-center justify-between p-3 rounded-xl bg-card dark:bg-card border border-slate-200/70 dark:border-slate-700/70 text-xs">
+                      <div className="flex items-center justify-between p-3 rounded-xl bg-card border border-slate-200/70 dark:border-slate-700/70 text-xs">
                         <span className="text-slate-400 flex items-center gap-2">
                           <Phone className="w-3.5 h-3.5 text-emerald-500" /> Téléphone
                         </span>
@@ -1075,7 +1075,7 @@ export default function ProfessorsListPage() {
                     )}
 
                     {selectedProfForView.employee_number && (
-                      <div className="flex items-center justify-between p-3 rounded-xl bg-card dark:bg-card border border-slate-200/70 dark:border-slate-700/70 text-xs">
+                      <div className="flex items-center justify-between p-3 rounded-xl bg-card border border-slate-200/70 dark:border-slate-700/70 text-xs">
                         <span className="text-slate-400 flex items-center gap-2">
                           <Hash className="w-3.5 h-3.5 text-amber-500" /> Matricule PPR / SOM
                         </span>
@@ -1086,7 +1086,7 @@ export default function ProfessorsListPage() {
                     )}
 
                     {selectedProfForView.cin && (
-                      <div className="flex items-center justify-between p-3 rounded-xl bg-card dark:bg-card border border-slate-200/70 dark:border-slate-700/70 text-xs">
+                      <div className="flex items-center justify-between p-3 rounded-xl bg-card border border-slate-200/70 dark:border-slate-700/70 text-xs">
                         <span className="text-slate-400 flex items-center gap-2">
                           <Award className="w-3.5 h-3.5 text-primary" /> Carte Nationale (CIN)
                         </span>
@@ -1115,7 +1115,7 @@ export default function ProfessorsListPage() {
             </div>
 
             {/* Drawer Footer Actions */}
-            <div className="p-6 bg-muted/50 dark:bg-slate-800/80 border-t border-border dark:border-border flex items-center justify-between gap-3">
+            <div className="p-6 bg-muted/50 dark:bg-slate-800/80 border-t border-border flex items-center justify-between gap-3">
               <Button
                 variant="outline"
                 onClick={() => {
@@ -1252,12 +1252,12 @@ export default function ProfessorsListPage() {
               onChange={e => setForm(prev => ({ ...prev, is_active: e.target.checked }))}
               className="w-4 h-4 rounded text-primary focus:ring-ring cursor-pointer"
             />
-            <label htmlFor="is_active" className="text-xs font-bold text-foreground dark:text-foreground cursor-pointer">
+            <label htmlFor="is_active" className="text-xs font-bold text-foreground cursor-pointer">
               Enseignant Actif & Autorisé à accéder aux relevés et fiches de notes
             </label>
           </div>
 
-          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border dark:border-border">
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border">
             <Button type="button" variant="ghost" onClick={() => setShowModal(false)}>
               Annuler
             </Button>

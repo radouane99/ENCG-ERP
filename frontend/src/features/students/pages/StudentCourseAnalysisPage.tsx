@@ -63,7 +63,7 @@ export default function StudentCourseAnalysisPage() {
       <div className="grid lg:grid-cols-2 gap-6">
         
         {/* Input Pane */}
-        <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border space-y-4">
+        <div className="bg-card rounded-2xl p-6 shadow-sm border border-border space-y-4">
           <h2 className="font-bold text-base text-foreground dark:text-white flex items-center gap-2">
             <FileText className="w-5 h-5 text-primary" /> Support de Cours
           </h2>
@@ -75,7 +75,7 @@ export default function StudentCourseAnalysisPage() {
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="Ex: Finance d'Entreprise — Chapitre 3 : Diagnostic Financier"
-              className="w-full px-4 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold rounded-[var(--control-radius)]"
+              className="w-full px-4 py-2.5 bg-muted/50 dark:bg-card border border-border text-xs font-bold rounded-[var(--control-radius)]"
             />
           </div>
 
@@ -86,14 +86,14 @@ export default function StudentCourseAnalysisPage() {
               value={content}
               onChange={e => setContent(e.target.value)}
               placeholder="Collez ici le cours déposé par votre professeur dans Classroom ou le LMS..."
-              className="w-full p-4 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-medium resize-none outline-none focus:ring-2 focus:ring-indigo-500/30 rounded-[var(--control-radius)]"
+              className="w-full p-4 bg-muted/50 dark:bg-card border border-border text-xs font-medium resize-none outline-none focus:ring-2 focus:ring-indigo-500/30 rounded-[var(--control-radius)]"
             />
           </div>
 
           <button
             onClick={handleAnalyze}
             disabled={isAnalyzing || !content.trim()}
-            className="w-full py-4 bg-gradient-to-r from-[#0f2863] to-indigo-700 hover:opacity-90 text-white font-bold rounded-2xl transition-all shadow-lg cursor-pointer flex items-center justify-center gap-2 text-xs uppercase tracking-wider disabled:opacity-40"
+            className="w-full py-4 bg-gradient-to-r from-[#1a3673] to-indigo-700 hover:opacity-90 text-white font-bold rounded-2xl transition-all shadow-lg cursor-pointer flex items-center justify-center gap-2 text-xs uppercase tracking-wider disabled:opacity-40"
           >
             {isAnalyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-amber-400" />}
             {isAnalyzing ? 'Analyse Gemini en cours...' : 'Générer l\'Analyse & la Carte Mentale'}
@@ -111,7 +111,7 @@ export default function StudentCourseAnalysisPage() {
           )}
 
           {isAnalyzing && (
-            <div className="bg-card dark:bg-card rounded-2xl border border-border dark:border-border p-12 text-center space-y-4">
+            <div className="bg-card rounded-2xl border border-border p-12 text-center space-y-4">
               <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto" />
               <p className="font-bold text-sm text-foreground dark:text-white">Google Gemini résume le cours...</p>
               <p className="text-xs text-slate-400">Extraction des concepts clés et construction de la carte mentale Mermaid.</p>
@@ -119,14 +119,14 @@ export default function StudentCourseAnalysisPage() {
           )}
 
           {analysis && !isAnalyzing && (
-            <div className="bg-card dark:bg-card rounded-2xl border border-border dark:border-border p-6 space-y-6 shadow-sm">
+            <div className="bg-card rounded-2xl border border-border p-6 space-y-6 shadow-sm">
               
               {/* Executive Summary */}
               <div className="space-y-2">
                 <h3 className="font-bold text-xs uppercase text-primary flex items-center gap-1.5">
                   <FileText className="w-4 h-4" /> Résumé Exécutif
                 </h3>
-                <p className="text-xs font-medium text-slate-700 dark:text-foreground leading-relaxed bg-muted/50 dark:bg-card p-4 rounded-2xl border border-border dark:border-border">
+                <p className="text-xs font-medium text-slate-700 dark:text-foreground leading-relaxed bg-muted/50 dark:bg-card p-4 rounded-2xl border border-border">
                   {analysis.executive_summary}
                 </p>
               </div>
@@ -141,7 +141,7 @@ export default function StudentCourseAnalysisPage() {
                     {analysis.key_definitions.map((d: any, i: number) => (
                       <div key={i} className="p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 rounded-2xl">
                         <span className="font-bold text-xs text-emerald-800 dark:text-emerald-300 block">{d.term}</span>
-                        <span className="text-xs font-medium text-muted-foreground dark:text-muted-foreground">{d.definition}</span>
+                        <span className="text-xs font-medium text-muted-foreground">{d.definition}</span>
                       </div>
                     ))}
                   </div>
@@ -166,7 +166,7 @@ export default function StudentCourseAnalysisPage() {
 
               {/* Mermaid Mindmap text view */}
               {analysis.mermaid_mindmap && (
-                <div className="space-y-2 pt-2 border-t border-border dark:border-border">
+                <div className="space-y-2 pt-2 border-t border-border">
                   <h3 className="font-bold text-xs uppercase text-slate-400 flex items-center gap-1.5">
                     <Network className="w-4 h-4" /> Schéma / Carte Mentale
                   </h3>

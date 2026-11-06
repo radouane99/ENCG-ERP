@@ -264,7 +264,7 @@ export function ProctorCombobox({
                   {selectedProctor.type}
                 </span>
               </div>
-              <p className="text-[10px] text-muted-foreground dark:text-muted-foreground truncate">
+              <p className="text-[10px] text-muted-foreground truncate">
                 {selectedProctor.department || 'ENCG Fès'}
               </p>
             </div>
@@ -331,9 +331,9 @@ export function ProctorCombobox({
 
       {/* FLOATING RICH DROPDOWN POPOVER */}
       {isOpen && (
-        <div className="absolute left-0 top-full mt-2 w-full min-w-[320px] max-w-[460px] max-h-[380px] bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm shadow-slate-900/30 overflow-hidden z-[100] flex flex-col animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute left-0 top-full mt-2 w-full min-w-[320px] max-w-[460px] max-h-[380px] bg-card border border-border rounded-2xl shadow-sm shadow-slate-900/30 overflow-hidden z-[100] flex flex-col animate-in fade-in zoom-in-95 duration-150">
           {/* Search Header */}
-          <div className="p-2.5 border-b border-border dark:border-border bg-slate-50/80 dark:bg-slate-800/50 backdrop-blur-md shrink-0 space-y-2">
+          <div className="p-2.5 border-b border-border bg-slate-50/80 dark:bg-slate-800/50 backdrop-blur-md shrink-0 space-y-2">
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
@@ -342,7 +342,7 @@ export function ProctorCombobox({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Chercher nom, département..."
-                className="w-full pl-8 pr-7 py-1.5 text-xs bg-card dark:bg-card border border-border dark:border-border text-foreground dark:text-foreground placeholder-slate-400 focus:outline-hidden focus:ring-1 focus:ring-amber-500 rounded-[var(--control-radius)]"
+                className="w-full pl-8 pr-7 py-1.5 text-xs bg-card border border-border text-foreground placeholder-slate-400 focus:outline-hidden focus:ring-1 focus:ring-amber-500 rounded-[var(--control-radius)]"
               />
               {search && (
                 <button
@@ -373,7 +373,7 @@ export function ProctorCombobox({
                     'px-2 py-0.5 rounded-lg font-bold transition-all whitespace-nowrap cursor-pointer',
                     categoryFilter === tab.id
                       ? 'bg-amber-500 text-white shadow-xs'
-                      : "bg-slate-200/60 dark:bg-card text-muted-foreground dark:text-muted-foreground hover:text-foreground dark:hover:text-white"
+                      : "bg-slate-200/60 dark:bg-card text-muted-foreground hover:text-foreground dark:hover:text-white"
                   )}
                 >
                   {tab.label}
@@ -492,7 +492,7 @@ export function ProctorCombobox({
           </div>
 
           {/* Quick footer with count hint */}
-          <div className="px-3 py-1.5 bg-muted/50 dark:bg-slate-800/80 border-t border-border dark:border-border text-[10px] text-muted-foreground flex items-center justify-between shrink-0">
+          <div className="px-3 py-1.5 bg-muted/50 dark:bg-slate-800/80 border-t border-border text-[10px] text-muted-foreground flex items-center justify-between shrink-0">
             <span>
               <strong className="text-slate-700 dark:text-foreground font-bold">
                 {filteredProctors.length}

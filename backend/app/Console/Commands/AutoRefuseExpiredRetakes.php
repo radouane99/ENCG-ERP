@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\Mail\RattrapageDecisionMail;
 use App\Models\Institution;
-use App\Models\InstitutionSetting;
 use App\Models\ResitEligibility;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -84,15 +83,6 @@ class AutoRefuseExpiredRetakes extends Command
 
     private function resolveJustificationDeadline(): ?string
     {
-        if (class_exists(InstitutionSetting::class)) {
-            $value = InstitutionSetting::query()
-                ->where('key', 'retake_justification_deadline')
-                ->value('value');
-            if (filled($value)) {
-                return (string) $value;
-            }
-        }
-
         foreach (Institution::query()->get() as $institution) {
             $settings = $institution->settings ?? [];
             if (is_string($settings)) {

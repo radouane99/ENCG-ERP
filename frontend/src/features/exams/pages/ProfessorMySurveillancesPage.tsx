@@ -20,7 +20,7 @@ export default function ProfessorMySurveillancesPage() {
           <FileText className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-[#0f2863] italic erp-page-title">Mes Ordres de Surveillance</h1>
+          <h1 className="text-[#1a3673] italic erp-page-title">Mes Ordres de Surveillance</h1>
           <p className="text-xs text-muted-foreground">
             Retrouvez ici toutes vos affectations de surveillance pour les examens
           </p>

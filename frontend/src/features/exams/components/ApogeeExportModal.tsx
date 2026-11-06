@@ -57,10 +57,10 @@ export default function ApogeeExportModal({ isOpen, onClose, defaultFiliereId }:
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-      <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-card border border-border rounded-2xl shadow-sm w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         
         {/* Modal Header */}
-        <div className="p-6 bg-gradient-to-r from-[#0f2863] via-[#11296b] to-[#1e3b8a] text-white flex items-center justify-between">
+        <div className="p-6 bg-gradient-to-r from-[#1a3673] via-[#11296b] to-[#1e3b8a] text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-amber-400/20 border border-amber-400/30 flex items-center justify-center text-amber-300">
               <FileSpreadsheet className="w-5 h-5" />
@@ -83,14 +83,14 @@ export default function ApogeeExportModal({ isOpen, onClose, defaultFiliereId }:
         </div>
 
         {/* Filter Bar */}
-        <div className="p-4 bg-muted/50 dark:bg-slate-800/50 border-b border-border dark:border-border flex flex-wrap items-center justify-between gap-4">
+        <div className="p-4 bg-muted/50 dark:bg-slate-800/50 border-b border-border flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3 flex-wrap">
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Filière</label>
               <select
                 value={selectedFiliere}
                 onChange={(e) => setSelectedFiliere(e.target.value)}
-                className="px-3 py-1.5 bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-foreground dark:text-white outline-none cursor-pointer rounded-[var(--control-radius)]"
+                className="px-3 py-1.5 bg-card border border-border text-xs font-bold text-foreground dark:text-white outline-none cursor-pointer rounded-[var(--control-radius)]"
               >
                 <option value="">Toutes les Filières</option>
                 {filieres.map((f: any) => (
@@ -104,7 +104,7 @@ export default function ApogeeExportModal({ isOpen, onClose, defaultFiliereId }:
               <select
                 value={selectedSemester}
                 onChange={(e) => setSelectedSemester(e.target.value)}
-                className="px-3 py-1.5 bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-foreground dark:text-white outline-none cursor-pointer rounded-[var(--control-radius)]"
+                className="px-3 py-1.5 bg-card border border-border text-xs font-bold text-foreground dark:text-white outline-none cursor-pointer rounded-[var(--control-radius)]"
               >
                 <option value="">Tous les Semestres</option>
                 {['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10'].map((s, idx) => (
@@ -147,9 +147,9 @@ export default function ApogeeExportModal({ isOpen, onClose, defaultFiliereId }:
               <span>Génération du flux APOGEE en cours...</span>
             </div>
           ) : (
-            <div className="border border-border dark:border-border rounded-2xl overflow-hidden shadow-xs">
+            <div className="border border-border rounded-2xl overflow-hidden shadow-xs">
               <table className="w-full text-left text-xs font-mono">
-                <thead className="bg-muted dark:bg-slate-800/80 text-muted-foreground uppercase tracking-wider text-[10px] font-bold border-b border-border dark:border-border">
+                <thead className="bg-muted dark:bg-slate-800/80 text-muted-foreground uppercase tracking-wider text-[10px] font-bold border-b border-border">
                   <tr>
                     <th className="p-3">COD_ETB</th>
                     <th className="p-3">COD_IND</th>
@@ -160,7 +160,7 @@ export default function ApogeeExportModal({ isOpen, onClose, defaultFiliereId }:
                     <th className="p-3 text-center">DÉCISION (COD_TRE)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-card dark:bg-card">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-card">
                   {(previewData?.records || []).map((row: any, i: number) => (
                     <tr key={i} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
                       <td className="p-3 font-bold text-slate-400">{row.COD_ETB}</td>
@@ -196,7 +196,7 @@ export default function ApogeeExportModal({ isOpen, onClose, defaultFiliereId }:
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 bg-muted/50 dark:bg-slate-800/50 border-t border-border dark:border-border flex items-center justify-between">
+        <div className="p-4 bg-muted/50 dark:bg-slate-800/50 border-t border-border flex items-center justify-between">
           <div className="text-[11px] text-slate-400 font-medium flex items-center gap-1.5">
             <ShieldCheck className="w-4 h-4 text-emerald-500" />
             Conforme à la circulaire ministérielle MESRSFC — Système LMD Marocain

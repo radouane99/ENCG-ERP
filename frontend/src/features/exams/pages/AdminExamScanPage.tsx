@@ -398,7 +398,7 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
         <div className="lg:col-span-5 space-y-6">
           
           {/* Amphi Picker Widget */}
-          <div className="bg-card dark:bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-border shadow-sm space-y-4">
+          <div className="bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-border shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Amphi / Salle de Contrôle Actuel</label>
               <button
@@ -424,14 +424,14 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
                       "p-4 rounded-2xl border-2 transition-all cursor-pointer space-y-2 group relative overflow-hidden",
                       isActive
                         ? "border-primary bg-gradient-to-r from-indigo-50/80 to-purple-50/80 dark:from-indigo-950/60 dark:to-purple-950/60 shadow-md ring-4 ring-indigo-500/10"
-                        : "border-border dark:border-border hover:border-primary/20 bg-slate-50/50 dark:bg-slate-800/40"
+                        : "border-border hover:border-primary/20 bg-slate-50/50 dark:bg-slate-800/40"
                     )}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className={cn(
                           "w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold shadow-xs shrink-0 transition-transform group-hover:scale-105",
-                          isActive ? "bg-primary text-primary-foreground" : "bg-card dark:bg-card text-slate-700 dark:text-foreground border border-border"
+                          isActive ? "bg-primary text-primary-foreground" : "bg-card text-slate-700 dark:text-foreground border border-border"
                         )}>
                           {amphi.icon}
                         </div>
@@ -499,7 +499,7 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
           )}
 
           {/* Manual Input / Douchette Barcode */}
-          <div className="bg-card dark:bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-border shadow-sm space-y-4">
+          <div className="bg-card p-6 rounded-2xl border border-slate-200/80 dark:border-border shadow-sm space-y-4">
             <h3 className="text-sm font-bold text-foreground dark:text-white flex items-center gap-2">
               <Search className="w-4 h-4 text-primary" /> Saisie Manuelle ou Douchette Code-barres
             </h3>
@@ -510,13 +510,13 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
                 value={tokenInput}
                 onChange={(e) => setTokenInput(e.target.value)}
                 placeholder="Collez ou scannez le QR Token (ex: ENCG-N13809281...)"
-                className="flex-1 px-4 py-3 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-ring dark:text-white rounded-[var(--control-radius)]"
+                className="flex-1 px-4 py-3 border border-border bg-muted/50 dark:bg-card text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-ring dark:text-white rounded-[var(--control-radius)]"
                 autoFocus
               />
               <button
                 type="submit"
                 disabled={loading || !tokenInput.trim()}
-                className="bg-[#0f2863] text-white px-5 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider disabled:opacity-50 flex items-center gap-1.5 cursor-pointer shadow-md"
+                className="bg-[#1a3673] text-white px-5 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider disabled:opacity-50 flex items-center gap-1.5 cursor-pointer shadow-md"
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Vérifier'}
               </button>
@@ -549,13 +549,13 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
           {studentData ? (
             <div className={cn(
               "rounded-2xl border shadow-sm overflow-hidden animate-in zoom-in-95 duration-200 space-y-0",
-              studentData.is_wrong_room ? "bg-rose-50/50 dark:bg-rose-950/20 border-rose-300" : "bg-card dark:bg-card border-border dark:border-border"
+              studentData.is_wrong_room ? "bg-rose-50/50 dark:bg-rose-950/20 border-rose-300" : "bg-card border-border"
             )}>
               
               {/* Identity Header */}
               <div className={cn(
                 "p-8 text-white flex items-start justify-between",
-                studentData.is_wrong_room ? "bg-gradient-to-r from-rose-900 via-rose-800 to-slate-900" : "bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#09193d]"
+                studentData.is_wrong_room ? "bg-gradient-to-r from-rose-900 via-rose-800 to-slate-900" : "bg-gradient-to-r from-[#1a3673] via-[#1a387e] to-[#09193d]"
               )}>
                 <div className="flex items-center gap-5">
                   <div className="w-20 h-20 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-3xl font-bold text-amber-300 shadow-sm shrink-0">
@@ -655,7 +655,7 @@ const [isOnline, setIsOnline] = useState(navigator.onLine);
               </div>
             </div>
           ) : (
-            <div className="bg-card dark:bg-card rounded-2xl border border-slate-200/80 dark:border-border p-12 text-center shadow-sm space-y-4">
+            <div className="bg-card rounded-2xl border border-slate-200/80 dark:border-border p-12 text-center shadow-sm space-y-4">
               <div className="w-20 h-20 rounded-full bg-muted dark:bg-card text-slate-400 flex items-center justify-center mx-auto">
                 <QrCode className="w-10 h-10" />
               </div>

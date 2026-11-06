@@ -201,7 +201,7 @@ export default function AdminRetakePage() {
 
   const TABS: { key: ActiveTab; label: string; count: number; activeColor: string }[] = [
     { key: 'pending', label: '⚡ À décider (Absences)', count: stats.enAttente, activeColor: 'bg-amber-500 text-white' },
-    { key: 'all',     label: '📋 Tous les candidats',   count: stats.total,      activeColor: 'bg-[#0f2863] text-white' },
+    { key: 'all',     label: '📋 Tous les candidats',   count: stats.total,      activeColor: 'bg-[#1a3673] text-white' },
     { key: 'refused', label: '❌ Refusés',               count: stats.refuses,    activeColor: 'bg-red-500 text-white' },
   ]
 
@@ -211,7 +211,7 @@ export default function AdminRetakePage() {
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-[#0f2863] italic flex items-center gap-3 erp-page-title">
+        <h1 className="text-[#1a3673] italic flex items-center gap-3 erp-page-title">
           <GraduationCap className="w-7 h-7" /> Session Rattrapage
         </h1>
         <div className="flex items-center gap-3">
@@ -223,7 +223,7 @@ export default function AdminRetakePage() {
       </div>
 
       {/* Hero Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f2863] via-[#1a387e] to-[#0d4d8c] rounded-2xl p-5 text-white shadow-lg">
+      <div className="relative overflow-hidden bg-gradient-to-r from-[#1a3673] via-[#1a387e] to-[#0d4d8c] rounded-2xl p-5 text-white shadow-lg">
         <div className="relative z-10 flex items-start gap-4">
           <div className="p-2 bg-white/10 rounded-xl mt-0.5"><BarChart3 className="w-5 h-5" /></div>
           <div>
@@ -243,7 +243,7 @@ export default function AdminRetakePage() {
         {/* Deadline Card */}
         <div className="bg-card rounded-2xl border border-border shadow-sm p-5">
           <div className="flex items-center gap-2 mb-3">
-            <Calendar className="w-4 h-4 text-[#0f2863]" />
+            <Calendar className="w-4 h-4 text-[#1a3673]" />
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Délai de Justification</p>
           </div>
           <p className="text-[10px] text-slate-400 mb-3">Date limite pour que les étudiants soumettent leur justificatif d'absence. Passé ce délai, les dossiers seront refusés automatiquement.</p>
@@ -252,12 +252,12 @@ export default function AdminRetakePage() {
               type="date"
               value={deadline}
               onChange={e => setDeadline(e.target.value)}
-              className="flex-1 px-3 py-2 border border-border text-xs outline-none focus:border-[#0f2863] rounded-[var(--control-radius)]"
+              className="flex-1 px-3 py-2 border border-border text-xs outline-none focus:border-[#1a3673] rounded-[var(--control-radius)]"
             />
             <button
               onClick={saveDeadline}
               disabled={savingDeadline || !deadline}
-              className="px-3 py-2 rounded-lg bg-[#0f2863] hover:bg-[#0d4d8c] text-white text-[10px] font-bold disabled:opacity-50"
+              className="px-3 py-2 rounded-lg bg-[#1a3673] hover:bg-[#0d4d8c] text-white text-[10px] font-bold disabled:opacity-50"
             >
               {savingDeadline ? '...' : 'Enregistrer'}
             </button>
@@ -280,7 +280,7 @@ export default function AdminRetakePage() {
       <div className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-4">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-border pb-4">
           <div>
-            <h3 className="text-sm font-bold text-[#0f2863] uppercase tracking-wider flex items-center gap-2">
+            <h3 className="text-sm font-bold text-[#1a3673] uppercase tracking-wider flex items-center gap-2">
               <Layers className="w-4 h-4 text-primary" />
               Sélecteur de Cohorte & Module
             </h3>
@@ -297,7 +297,7 @@ export default function AdminRetakePage() {
                   setFilterFiliere(e.target.value)
                   setFilterModule('all')
                 }}
-                className="w-full pl-9 pr-8 py-2 border border-border bg-muted/50 text-xs font-bold text-slate-700 outline-none focus:border-[#0f2863] focus:bg-card appearance-none cursor-pointer rounded-[var(--control-radius)]"
+                className="w-full pl-9 pr-8 py-2 border border-border bg-muted/50 text-xs font-bold text-slate-700 outline-none focus:border-[#1a3673] focus:bg-card appearance-none cursor-pointer rounded-[var(--control-radius)]"
               >
                 <option value="all">🎓 Toutes les filières</option>
                 {filieres.map(f => <option key={f.id} value={String(f.id)}>{f.name}</option>)}
@@ -311,7 +311,7 @@ export default function AdminRetakePage() {
               <select
                 value={filterModule}
                 onChange={e => setFilterModule(e.target.value)}
-                className="w-full pl-9 pr-8 py-2 border border-border bg-muted/50 text-xs font-bold text-slate-700 outline-none focus:border-[#0f2863] focus:bg-card appearance-none cursor-pointer rounded-[var(--control-radius)]"
+                className="w-full pl-9 pr-8 py-2 border border-border bg-muted/50 text-xs font-bold text-slate-700 outline-none focus:border-[#1a3673] focus:bg-card appearance-none cursor-pointer rounded-[var(--control-radius)]"
               >
                 <option value="all">📚 Tous les modules</option>
                 {availableModules.map(m => (
@@ -326,7 +326,7 @@ export default function AdminRetakePage() {
               <select
                 value={filterReason}
                 onChange={e => setFilterReason(e.target.value)}
-                className="w-full px-3 py-2 border border-border bg-muted/50 text-xs font-bold text-slate-700 outline-none focus:border-[#0f2863] focus:bg-card cursor-pointer rounded-[var(--control-radius)]"
+                className="w-full px-3 py-2 border border-border bg-muted/50 text-xs font-bold text-slate-700 outline-none focus:border-[#1a3673] focus:bg-card cursor-pointer rounded-[var(--control-radius)]"
               >
                 <option value="all">🔍 Tous les motifs</option>
                 <option value="note">✓ Note insuffisante (6-10)</option>
@@ -354,7 +354,7 @@ export default function AdminRetakePage() {
                   className={cn(
                     "px-3 py-1 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 border",
                     isSelected
-                      ? "bg-[#0f2863] text-white border-[#0f2863] shadow-sm"
+                      ? "bg-[#1a3673] text-white border-[#1a3673] shadow-sm"
                       : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
                   )}
                 >
@@ -404,7 +404,7 @@ export default function AdminRetakePage() {
                 placeholder="Rechercher étudiant, CNE..."
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 border border-border text-xs outline-none focus:border-[#0f2863] rounded-[var(--control-radius)]"
+                className="w-full pl-9 pr-3 py-1.5 border border-border text-xs outline-none focus:border-[#1a3673] rounded-[var(--control-radius)]"
               />
             </div>
           </div>
@@ -429,8 +429,8 @@ export default function AdminRetakePage() {
 
         {/* #4 — Bulk action bar */}
         {selectedIds.size > 0 && (
-          <div className="flex items-center justify-between px-6 py-3 bg-[#0f2863]/5 border-b border-[#0f2863]/10">
-            <p className="text-xs font-bold text-[#0f2863]">
+          <div className="flex items-center justify-between px-6 py-3 bg-[#1a3673]/5 border-b border-[#1a3673]/10">
+            <p className="text-xs font-bold text-[#1a3673]">
               <SquareCheckBig className="w-4 h-4 inline mr-1.5" />{selectedIds.size} sélectionné(s)
             </p>
             <div className="flex items-center gap-2">

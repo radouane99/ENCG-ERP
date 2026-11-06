@@ -75,7 +75,7 @@ export default function AcademicArchitecturePage() {
           className={cn(
             "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'departments'
-              ? "bg-[#0f2863] text-white shadow-md"
+              ? "bg-[#1a3673] text-white shadow-md"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
         >
@@ -88,7 +88,7 @@ export default function AcademicArchitecturePage() {
           className={cn(
             "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'filieres'
-              ? "bg-[#0f2863] text-white shadow-md"
+              ? "bg-[#1a3673] text-white shadow-md"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
         >
@@ -101,7 +101,7 @@ export default function AcademicArchitecturePage() {
           className={cn(
             "flex items-center gap-2.5 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer whitespace-nowrap",
             activeTab === 'groups'
-              ? "bg-[#0f2863] text-white shadow-md"
+              ? "bg-[#1a3673] text-white shadow-md"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
         >

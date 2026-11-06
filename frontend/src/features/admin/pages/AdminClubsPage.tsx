@@ -140,8 +140,8 @@ const { data: clubs, isLoading } = useQuery({
       </div>
 
       {/* Main Content Card */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-6 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border dark:border-border pb-4">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm p-6 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
@@ -149,7 +149,7 @@ const { data: clubs, isLoading } = useQuery({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Rechercher par nom de club ou président..."
-              className="w-full pl-11 pr-4 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-slate-700/80 text-xs font-bold text-foreground dark:text-foreground focus:ring-4 focus:ring-indigo-500/15 outline-none transition-all rounded-[var(--control-radius)]"
+              className="w-full pl-11 pr-4 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-slate-700/80 text-xs font-bold text-foreground focus:ring-4 focus:ring-indigo-500/15 outline-none transition-all rounded-[var(--control-radius)]"
             />
           </div>
 
@@ -160,7 +160,7 @@ const { data: clubs, isLoading } = useQuery({
                 onClick={() => setStatusFilter(st)}
                 className={cn(
                   "px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all cursor-pointer",
-                  statusFilter === st ? "bg-[#0f2863] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground hover:bg-slate-200"
+                  statusFilter === st ? "bg-[#1a3673] text-white shadow-md" : "bg-muted dark:bg-card text-muted-foreground hover:bg-slate-200"
                 )}
               >
                 {st === 'all' ? 'Tous' : st === 'active' ? 'Agrées' : st === 'pending' ? 'En Attente' : 'Rejetés'}
@@ -179,7 +179,7 @@ const { data: clubs, isLoading } = useQuery({
               <div key={club.id} className="bg-slate-50/50 dark:bg-slate-800/40 border border-border dark:border-slate-700/80 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all flex flex-col justify-between space-y-4">
                 <div className="space-y-3">
                   <div className="flex justify-between items-start">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0f2863] to-blue-600 flex items-center justify-center text-amber-300 font-bold text-xl shadow-md">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#1a3673] to-blue-600 flex items-center justify-center text-amber-300 font-bold text-xl shadow-md">
                       {club.name.charAt(0)}
                     </div>
                     <span className={cn(
@@ -193,13 +193,13 @@ const { data: clubs, isLoading } = useQuery({
 
                   <div>
                     <h3 className="font-bold text-base text-foreground dark:text-white">{club.name}</h3>
-                    <p className="text-xs font-medium text-muted-foreground dark:text-muted-foreground line-clamp-2 mt-1">
+                    <p className="text-xs font-medium text-muted-foreground line-clamp-2 mt-1">
                       {club.description}
                     </p>
                   </div>
                 </div>
 
-                <div className="space-y-3 pt-4 border-t border-border dark:border-border">
+                <div className="space-y-3 pt-4 border-t border-border">
                   <div className="flex items-center justify-between text-xs font-bold">
                     <span className="text-muted-foreground">Membres Actifs :</span>
                     <span className="font-bold text-primary dark:text-indigo-400">{club.members_count || 30} Membres</span>
@@ -207,7 +207,7 @@ const { data: clubs, isLoading } = useQuery({
 
                   <div className="flex items-center justify-between text-xs font-bold">
                     <span className="text-muted-foreground">Président :</span>
-                    <span className="font-bold text-foreground dark:text-foreground">
+                    <span className="font-bold text-foreground">
                       {club.president ? `${club.president.first_name} ${club.president.last_name}` : 'BDE ENCG'}
                     </span>
                   </div>
@@ -228,7 +228,7 @@ const { data: clubs, isLoading } = useQuery({
                     <button
                       onClick={() => handleDownloadAgrementPdf(club)}
                       title="Télécharger le fichier PDF officiel"
-                      className="p-2 bg-muted dark:bg-card hover:bg-primary hover:text-white text-slate-700 dark:text-foreground rounded-xl transition-all border border-border dark:border-border cursor-pointer shadow-xs"
+                      className="p-2 bg-muted dark:bg-card hover:bg-primary hover:text-white text-slate-700 dark:text-foreground rounded-xl transition-all border border-border cursor-pointer shadow-xs"
                     >
                       <Download className="w-3.5 h-3.5" />
                     </button>

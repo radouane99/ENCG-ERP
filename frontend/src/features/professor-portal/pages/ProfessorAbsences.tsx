@@ -29,7 +29,7 @@ export default function ProfessorAbsences() {
           <Clock className="w-6 h-6 text-[#003a8c]" />
         </div>
         <div>
-          <h1 className="text-[#001A4B] italic erp-page-title">Suivi des Absences</h1>
+          <h1 className="text-[#1a3673] italic erp-page-title">Suivi des Absences</h1>
           <p className="text-sm text-white/50">Gérez la présence de vos étudiants pour toutes vos sessions d'enseignement.</p>
         </div>
       </div>

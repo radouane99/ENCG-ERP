@@ -92,7 +92,7 @@ export default function AdminStudentDetailPage() {
           {getInitials(student.first_name)}
         </div>
         <div>
-          <h1 className="text-[#0f2863] italic erp-page-title">Dossier Étudiant</h1>
+          <h1 className="text-[#1a3673] italic erp-page-title">Dossier Étudiant</h1>
           <p className="text-muted-foreground mt-1 text-sm">Consultation du profil et des accès</p>
         </div>
       </div>
@@ -111,7 +111,7 @@ export default function AdminStudentDetailPage() {
             
             <div className="bg-muted/50 border border-border rounded-2xl p-6">
               <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Adresse Email</span>
-              <p className="font-bold text-[#0f2863] text-lg">{student.email}</p>
+              <p className="font-bold text-[#1a3673] text-lg">{student.email}</p>
             </div>
           </div>
 
@@ -137,11 +137,11 @@ export default function AdminStudentDetailPage() {
             <div className="pt-4">
               <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-4">Documents Officiels (2025/2026)</h3>
               <div className="grid grid-cols-2 gap-4">
-                <button onClick={() => handleDocumentClick("releve")} className="flex flex-col items-center justify-center p-6 bg-[#0f2863] rounded-2xl hover:bg-[#1a387e] transition-colors shadow-sm group">
+                <button onClick={() => handleDocumentClick("releve")} className="flex flex-col items-center justify-center p-6 bg-[#1a3673] rounded-2xl hover:bg-[#1a387e] transition-colors shadow-sm group">
                   <FileText className="w-8 h-8 text-blue-200 mb-3 group-hover:text-white transition-colors" />
                   <span className="text-[10px] font-bold text-white uppercase tracking-wider text-center">Relevé de notes</span>
                 </button>
-                <button onClick={() => handleDocumentClick("attestation")} className="flex flex-col items-center justify-center p-6 bg-[#0f2863] rounded-2xl hover:bg-[#1a387e] transition-colors shadow-sm group">
+                <button onClick={() => handleDocumentClick("attestation")} className="flex flex-col items-center justify-center p-6 bg-[#1a3673] rounded-2xl hover:bg-[#1a387e] transition-colors shadow-sm group">
                   <CheckCircle className="w-8 h-8 text-blue-200 mb-3 group-hover:text-white transition-colors" />
                   <span className="text-[10px] font-bold text-white uppercase tracking-wider text-center">Attestation de réussite</span>
                 </button>
@@ -156,11 +156,11 @@ export default function AdminStudentDetailPage() {
                   <Bot className="w-32 h-32 text-primary" />
                 </div>
                 <div className="relative z-10">
-                  <h4 className="text-[#0f2863] font-bold mb-2">Bilan Pédagogique Intelligent</h4>
+                  <h4 className="text-[#1a3673] font-bold mb-2">Bilan Pédagogique Intelligent</h4>
                   <p className="text-sm text-indigo-900/70 font-medium mb-4 pr-12">
                     Gemini 1.5 Pro analysera le dossier pour rédiger un rapport professionnel.
                   </p>
-                  <button onClick={handleGenerateAI} className="flex items-center gap-2 px-5 py-2.5 bg-[#0f2863] text-white font-bold rounded-xl hover:bg-[#1a387e] transition-colors text-xs uppercase tracking-wider shadow-sm">
+                  <button onClick={handleGenerateAI} className="flex items-center gap-2 px-5 py-2.5 bg-[#1a3673] text-white font-bold rounded-xl hover:bg-[#1a387e] transition-colors text-xs uppercase tracking-wider shadow-sm">
                     <Bot className="w-4 h-4" /> Générer le bilan IA
                   </button>
                 </div>

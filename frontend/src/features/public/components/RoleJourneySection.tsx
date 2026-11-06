@@ -92,7 +92,7 @@ export default function RoleJourneySection({ lang = 'fr', isRTL = false }: RoleJ
     <section className="relative z-10 max-w-7xl mx-auto px-6 py-24">
       <div className="rounded-[2rem] border border-slate-200/80 bg-gradient-to-br from-white via-slate-50 to-white p-8 shadow-xl shadow-slate-100 backdrop-blur-xl dark:border-white/10 dark:from-[#0A1220] dark:via-[#08101B] dark:to-[#0A1220] md:p-10">
         <div className="mb-12 max-w-3xl">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#0f2863]/20 bg-[#0f2863]/10 dark:bg-amber-400/10 dark:border-amber-400/20 px-3 py-1 text-sm font-semibold text-[#0f2863] dark:text-amber-400">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#1a3673]/20 bg-[#1a3673]/10 dark:bg-amber-400/10 dark:border-amber-400/20 px-3 py-1 text-sm font-semibold text-[#1a3673] dark:text-amber-400">
             <Compass className="h-4 w-4" />
             {copy.eyebrow}
           </div>
@@ -110,9 +110,9 @@ export default function RoleJourneySection({ lang = 'fr', isRTL = false }: RoleJ
             return (
               <article
                 key={role.title}
-                className="group rounded-[1.75rem] border border-slate-200 bg-slate-50/80 p-8 transition-all hover:-translate-y-1 hover:border-[#0f2863]/30 hover:bg-white hover:shadow-xl dark:border-white/10 dark:bg-white/5 dark:hover:border-amber-400/30"
+                className="group rounded-[1.75rem] border border-slate-200 bg-slate-50/80 p-8 transition-all hover:-translate-y-1 hover:border-[#1a3673]/30 hover:bg-white hover:shadow-xl dark:border-white/10 dark:bg-white/5 dark:hover:border-amber-400/30"
               >
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0f2863]/10 text-[#0f2863] dark:bg-amber-400/15 dark:text-amber-400">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#1a3673]/10 text-[#1a3673] dark:bg-amber-400/15 dark:text-amber-400">
                   <Icon className="h-6 w-6" />
                 </div>
                 <h3 className="text-xl font-black text-slate-900 dark:text-white">{role.title}</h3>
@@ -125,7 +125,7 @@ export default function RoleJourneySection({ lang = 'fr', isRTL = false }: RoleJ
                     </li>
                   ))}
                 </ul>
-                <a href="/login" className="mt-6 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-[#0f2863] dark:text-slate-300 dark:hover:text-amber-400">
+                <a href="/login" className="mt-6 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-slate-700 transition hover:text-[#1a3673] dark:text-slate-300 dark:hover:text-amber-400">
                   {lang === 'ar' ? 'تسجيل الدخول' : lang === 'en' ? 'Sign in' : 'Se connecter'} <ArrowRight className={isRTL ? 'mr-1 h-4 w-4 rotate-180' : 'ml-1 h-4 w-4'} />
                 </a>
               </article>

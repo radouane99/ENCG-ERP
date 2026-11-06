@@ -69,13 +69,13 @@ export default function ViewUserPage() {
 
   if (!user) {
     return (
-      <div className="max-w-2xl mx-auto p-10 mt-12 text-center space-y-6 bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm">
+      <div className="max-w-2xl mx-auto p-10 mt-12 text-center space-y-6 bg-card border border-border rounded-2xl shadow-sm">
         <div className="w-20 h-20 mx-auto rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 flex items-center justify-center border border-rose-200 dark:border-rose-900/50">
           <AlertTriangle className="w-10 h-10" />
         </div>
         <div>
           <h2 className="text-2xl font-bold text-foreground dark:text-white">Compte Utilisateur Non Trouvé</h2>
-          <p className="text-sm font-medium text-muted-foreground dark:text-muted-foreground mt-2 max-w-md mx-auto">
+          <p className="text-sm font-medium text-muted-foreground mt-2 max-w-md mx-auto">
             L'identifiant <span className="font-mono bg-muted dark:bg-card px-2 py-0.5 rounded-lg text-xs">{id}</span> ne correspond à aucun profil enregistré ou a été archivé.
           </p>
         </div>
@@ -88,7 +88,7 @@ export default function ViewUserPage() {
           </button>
           <button
             onClick={() => navigate('/admin/users')}
-            className="flex items-center gap-2 px-6 py-2.5 bg-[#0f2863] text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-md hover:bg-[#0c1f4e] transition-colors"
+            className="flex items-center gap-2 px-6 py-2.5 bg-[#1a3673] text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-md hover:bg-[#0c1f4e] transition-colors"
           >
             <ArrowLeft className="w-4 h-4" /> Revenir aux Comptes
           </button>
@@ -110,12 +110,12 @@ export default function ViewUserPage() {
         <div className="flex items-center gap-3">
           <Link
             to="/admin/users"
-            className="w-10 h-10 rounded-2xl bg-card dark:bg-card border border-border dark:border-border text-muted-foreground dark:text-foreground flex items-center justify-center hover:bg-muted/50 transition-colors shadow-xs"
+            className="w-10 h-10 rounded-2xl bg-card border border-border text-muted-foreground dark:text-foreground flex items-center justify-center hover:bg-muted/50 transition-colors shadow-xs"
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[#0f2863] dark:text-blue-400">
+            <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[#1a3673] dark:text-blue-400">
               <ShieldCheck className="w-3.5 h-3.5" /> Fiche Compte Utilisateur
             </div>
             <h1 className="text-foreground dark:text-white erp-page-title">
@@ -127,19 +127,19 @@ export default function ViewUserPage() {
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             onClick={handleSendResetPassword}
-            className="flex items-center gap-2 px-4 py-2.5 bg-card dark:bg-card border border-border dark:border-border text-slate-700 dark:text-foreground font-bold rounded-xl text-xs hover:bg-muted/50 transition-colors shadow-xs"
+            className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border text-slate-700 dark:text-foreground font-bold rounded-xl text-xs hover:bg-muted/50 transition-colors shadow-xs"
           >
             <Key className="w-4 h-4 text-amber-500" /> Réinitialiser Mot de passe
           </button>
           <Link
             to="/admin/roles-permissions"
-            className="flex items-center gap-2 px-4 py-2.5 bg-card dark:bg-card border border-border dark:border-border text-primary dark:text-indigo-400 font-bold rounded-xl text-xs hover:bg-muted/50 transition-colors shadow-xs"
+            className="flex items-center gap-2 px-4 py-2.5 bg-card border border-border text-primary dark:text-indigo-400 font-bold rounded-xl text-xs hover:bg-muted/50 transition-colors shadow-xs"
           >
             <Shield className="w-4 h-4 text-primary" /> Privilèges RBAC
           </Link>
           <Link
             to={`/admin/users/${user.id}/edit`}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#0f2863] to-blue-900 text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-md hover:opacity-95 transition-all"
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#1a3673] to-blue-900 text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-md hover:opacity-95 transition-all"
           >
             <Edit className="w-4 h-4" /> Modifier le Compte
           </Link>
@@ -211,14 +211,14 @@ export default function ViewUserPage() {
       </div>
 
       {/* ── Content Tabs ── */}
-      <div className="flex items-center gap-2 border-b border-border dark:border-border pb-2">
+      <div className="flex items-center gap-2 border-b border-border pb-2">
         <button
           onClick={() => setActiveTab('profile')}
           className={cn(
             "flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
             activeTab === 'profile'
-              ? "bg-[#0f2863] text-white shadow-md"
-              : "bg-card dark:bg-card text-muted-foreground dark:text-muted-foreground hover:bg-muted border border-border dark:border-border"
+              ? "bg-[#1a3673] text-white shadow-md"
+              : "bg-card text-muted-foreground hover:bg-muted border border-border"
           )}
         >
           <UserIcon className="w-4 h-4" /> Informations Personnelles
@@ -228,8 +228,8 @@ export default function ViewUserPage() {
           className={cn(
             "flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
             activeTab === 'security'
-              ? "bg-[#0f2863] text-white shadow-md"
-              : "bg-card dark:bg-card text-muted-foreground dark:text-muted-foreground hover:bg-muted border border-border dark:border-border"
+              ? "bg-[#1a3673] text-white shadow-md"
+              : "bg-card text-muted-foreground hover:bg-muted border border-border"
           )}
         >
           <Lock className="w-4 h-4" /> Sécurité & Droits Spatie
@@ -239,8 +239,8 @@ export default function ViewUserPage() {
           className={cn(
             "flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer",
             activeTab === 'academic'
-              ? "bg-[#0f2863] text-white shadow-md"
-              : "bg-card dark:bg-card text-muted-foreground dark:text-muted-foreground hover:bg-muted border border-border dark:border-border"
+              ? "bg-[#1a3673] text-white shadow-md"
+              : "bg-card text-muted-foreground hover:bg-muted border border-border"
           )}
         >
           <Layers className="w-4 h-4" /> Affectation Institutionnelle
@@ -251,60 +251,60 @@ export default function ViewUserPage() {
       {activeTab === 'profile' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Identity details */}
-          <div className="md:col-span-2 bg-card dark:bg-card rounded-2xl border border-slate-200/90 dark:border-border p-8 shadow-sm space-y-6">
+          <div className="md:col-span-2 bg-card rounded-2xl border border-slate-200/90 dark:border-border p-8 shadow-sm space-y-6">
             <h3 className="text-lg font-bold text-foreground dark:text-white flex items-center gap-2">
-              <Fingerprint className="w-5 h-5 text-[#0f2863] dark:text-blue-400" /> Coordonnées & État Civil
+              <Fingerprint className="w-5 h-5 text-[#1a3673] dark:text-blue-400" /> Coordonnées & État Civil
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
-              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border">
+              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border">
                 <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Nom Officiel</span>
-                <p className="font-bold text-foreground dark:text-foreground text-sm">{user.last_name || user.name.split(' ').slice(1).join(' ') || user.name}</p>
+                <p className="font-bold text-foreground text-sm">{user.last_name || user.name.split(' ').slice(1).join(' ') || user.name}</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border">
+              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border">
                 <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Prénom</span>
-                <p className="font-bold text-foreground dark:text-foreground text-sm">{user.first_name || user.name.split(' ')[0]}</p>
+                <p className="font-bold text-foreground text-sm">{user.first_name || user.name.split(' ')[0]}</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border">
+              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border">
                 <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Email Institutionnel</span>
-                <p className="font-bold text-foreground dark:text-foreground text-sm">{user.email}</p>
+                <p className="font-bold text-foreground text-sm">{user.email}</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border">
+              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border">
                 <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Téléphone de Contact</span>
-                <p className="font-bold text-foreground dark:text-foreground text-sm">{user.phone || 'Non renseigné'}</p>
+                <p className="font-bold text-foreground text-sm">{user.phone || 'Non renseigné'}</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border">
+              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border">
                 <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Carte Nationale (CIN)</span>
-                <p className="font-bold text-foreground dark:text-foreground text-sm font-mono">{user.cin || '—'}</p>
+                <p className="font-bold text-foreground text-sm font-mono">{user.cin || '—'}</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border">
+              <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border">
                 <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Date d'enregistrement</span>
-                <p className="font-bold text-foreground dark:text-foreground text-sm">{user.created_at ? new Date(user.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Compte Système'}</p>
+                <p className="font-bold text-foreground text-sm">{user.created_at ? new Date(user.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Compte Système'}</p>
               </div>
             </div>
           </div>
 
           {/* Quick Summary Card */}
           <div className="space-y-6">
-            <div className="bg-card dark:bg-card rounded-2xl border border-slate-200/90 dark:border-border p-6 shadow-sm space-y-4">
+            <div className="bg-card rounded-2xl border border-slate-200/90 dark:border-border p-6 shadow-sm space-y-4">
               <h3 className="text-sm font-bold text-foreground dark:text-white uppercase tracking-wider flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-amber-500" /> Établissement de Rattachement
               </h3>
               <div className="p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-950/20 border border-primary/20 dark:border-blue-900/40 space-y-2">
-                <p className="text-xs font-bold text-[#0f2863] dark:text-blue-300">
+                <p className="text-xs font-bold text-[#1a3673] dark:text-blue-300">
                   {user.institution_name || 'École Nationale de Commerce et de Gestion de Fès'}
                 </p>
-                <p className="text-[11px] text-muted-foreground dark:text-muted-foreground font-medium">
+                <p className="text-[11px] text-muted-foreground font-medium">
                   Université Sidi Mohamed Ben Abdellah • Fès, Maroc
                 </p>
               </div>
 
-              <div className="pt-2 border-t border-border dark:border-border space-y-3">
+              <div className="pt-2 border-t border-border space-y-3">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted-foreground">Statut du Compte</span>
                   <span className="font-bold text-emerald-600 flex items-center gap-1">
@@ -344,13 +344,13 @@ export default function ViewUserPage() {
 
       {activeTab === 'security' && <AccountSecurityPanel key={securityOperation} initialOperation={securityOperation} userId={user.id} onChanged={() => { void api.get(`/users/${id}`).then(response => setUser(response.data.data)).catch(() => toast.error('Actualisation du compte indisponible.')) }} />}
       {activeTab === 'security' && (
-        <div className="bg-card dark:bg-card rounded-2xl border border-slate-200/90 dark:border-border p-8 shadow-sm space-y-6">
+        <div className="bg-card rounded-2xl border border-slate-200/90 dark:border-border p-8 shadow-sm space-y-6">
           <h3 className="text-lg font-bold text-foreground dark:text-white flex items-center gap-2">
             <Lock className="w-5 h-5 text-primary" /> Sécurité du Compte & Rôles Spatie
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-6 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border space-y-4">
+            <div className="p-6 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border space-y-4">
               <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">Rôles Attribués</span>
               <div className="flex flex-wrap gap-2">
                 {user.roles?.length ? (
@@ -365,31 +365,31 @@ export default function ViewUserPage() {
               </div>
             </div>
 
-            <div className="p-6 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border space-y-4">
+            <div className="p-6 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border space-y-4">
               <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">Mesures de Protection</span>
               <div className="space-y-2.5 text-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground dark:text-muted-foreground">Double Facteur (2FA TOTP)</span>
+                  <span className="text-muted-foreground">Double Facteur (2FA TOTP)</span>
                   <span className={cn("font-bold px-2 py-0.5 rounded-lg", user.two_factor_enabled ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-muted-foreground")}>
                     {user.two_factor_enabled ? 'Configuré' : 'Non configuré'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground dark:text-muted-foreground">Chiffrement Mot de Passe</span>
+                  <span className="text-muted-foreground">Chiffrement Mot de Passe</span>
                   <span className="font-bold text-slate-700 dark:text-foreground font-mono">Hachage serveur</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground dark:text-muted-foreground">Changement Forcé de Passe</span>
+                  <span className="text-muted-foreground">Changement Forcé de Passe</span>
                   <span className="font-bold text-slate-700 dark:text-foreground">{user.must_change_password ? 'Oui' : 'Non'}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="pt-4 border-t border-border dark:border-border flex justify-end">
+          <div className="pt-4 border-t border-border flex justify-end">
             <Link
               to="/admin/roles-permissions"
-              className="px-6 py-3 bg-[#0f2863] text-white font-bold rounded-2xl text-xs uppercase tracking-wider shadow-md hover:bg-[#0c1f4e] transition-colors inline-flex items-center gap-2"
+              className="px-6 py-3 bg-[#1a3673] text-white font-bold rounded-2xl text-xs uppercase tracking-wider shadow-md hover:bg-[#0c1f4e] transition-colors inline-flex items-center gap-2"
             >
               <Shield className="w-4 h-4" /> Modifier la Matrice de Permissions
             </Link>
@@ -398,25 +398,25 @@ export default function ViewUserPage() {
       )}
 
       {activeTab === 'academic' && (
-        <div className="bg-card dark:bg-card rounded-2xl border border-slate-200/90 dark:border-border p-8 shadow-sm space-y-6">
+        <div className="bg-card rounded-2xl border border-slate-200/90 dark:border-border p-8 shadow-sm space-y-6">
           <h3 className="text-lg font-bold text-foreground dark:text-white flex items-center gap-2">
             <Layers className="w-5 h-5 text-amber-500" /> Données Pédagogiques & Contrat
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border">
+            <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border">
               <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Catégorie Métier</span>
-              <p className="font-bold text-foreground dark:text-foreground text-sm">
+              <p className="font-bold text-foreground text-sm">
                 {isSuperAdmin ? 'Direction Générale / Administrateur Système' : isProf ? 'Corps Professoral & Recherche' : 'Personnel Administratif'}
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border">
+            <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border">
               <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Département d'Appartenance</span>
-              <p className="font-bold text-foreground dark:text-foreground text-sm">{user.department || 'Sciences de Gestion • ENCG Fès'}</p>
+              <p className="font-bold text-foreground text-sm">{user.department || 'Sciences de Gestion • ENCG Fès'}</p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border">
+            <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border">
               <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Statut d'Activité</span>
               <p className="font-bold text-emerald-600 text-sm flex items-center gap-1">
                 <CheckCircle2 className="w-4 h-4" /> En Service

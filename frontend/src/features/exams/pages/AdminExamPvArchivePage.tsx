@@ -151,7 +151,7 @@ export default function AdminExamPvArchivePage() {
             <button
               type="button"
               onClick={() => navigate('/admin/exams')}
-              className="p-2.5 bg-card dark:bg-card border border-border dark:border-border rounded-2xl text-muted-foreground dark:text-foreground hover:text-foreground hover:bg-muted/50 transition-all shadow-xs group cursor-pointer"
+              className="p-2.5 bg-card border border-border rounded-2xl text-muted-foreground dark:text-foreground hover:text-foreground hover:bg-muted/50 transition-all shadow-xs group cursor-pointer"
               title="Retour au Planning des Examens"
             >
               <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
@@ -161,7 +161,7 @@ export default function AdminExamPvArchivePage() {
                 <span className="px-3 py-0.5 bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
                   <Archive className="w-3 h-3 text-amber-500" /> Archiving System
                 </span>
-                <span className="px-3 py-0.5 bg-[#0f2863]/10 text-[#0f2863] dark:text-sky-400 border border-[#0f2863]/20 rounded-full text-[10px] font-bold uppercase tracking-wider">
+                <span className="px-3 py-0.5 bg-[#1a3673]/10 text-[#1a3673] dark:text-sky-400 border border-[#1a3673]/20 rounded-full text-[10px] font-bold uppercase tracking-wider">
                   Conforme MESRSFC & LMD
                 </span>
               </div>
@@ -175,7 +175,7 @@ export default function AdminExamPvArchivePage() {
             <Button
               variant="outline"
               onClick={() => refetch()}
-              className="border-border dark:border-border rounded-2xl text-xs font-bold flex items-center gap-2 shadow-xs cursor-pointer"
+              className="border-border rounded-2xl text-xs font-bold flex items-center gap-2 shadow-xs cursor-pointer"
             >
               <RefreshCw className="w-4 h-4 text-muted-foreground" /> Actualiser
             </Button>
@@ -192,7 +192,7 @@ export default function AdminExamPvArchivePage() {
                 toast.info('Génération de l\'aperçu A4 d\'archives...')
                 window.print()
               }}
-              className="bg-gradient-to-r from-[#0f2863] to-[#1a387e] hover:from-[#133075] hover:to-[#204497] text-white rounded-2xl text-xs font-bold shadow-md flex items-center gap-2 cursor-pointer"
+              className="bg-gradient-to-r from-[#1a3673] to-[#1a387e] hover:from-[#133075] hover:to-[#204497] text-white rounded-2xl text-xs font-bold shadow-md flex items-center gap-2 cursor-pointer"
             >
               <Printer className="w-4 h-4 text-amber-300" /> Imprimer Rapport d'Archives A4
             </Button>
@@ -201,7 +201,7 @@ export default function AdminExamPvArchivePage() {
 
         {/* 📊 Strategic KPI Summary Banner */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-gradient-to-br from-[#0f2863] via-[#1a387e] to-[#254ea8] text-white p-5 rounded-2xl shadow-lg relative overflow-hidden">
+          <div className="bg-gradient-to-br from-[#1a3673] via-[#1a387e] to-[#254ea8] text-white p-5 rounded-2xl shadow-lg relative overflow-hidden">
             <div className="absolute right-0 top-0 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none" />
             <span className="text-[10px] font-bold uppercase text-blue-200 tracking-wider">Total Épreuves Archivées</span>
             <div className="text-3xl font-bold mt-1 flex items-baseline gap-2">
@@ -244,10 +244,10 @@ export default function AdminExamPvArchivePage() {
         </div>
 
         {/* 🔍 Multi-Criteria Filter Bar */}
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-5 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-border dark:border-border pb-3">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground dark:text-muted-foreground flex items-center gap-2">
-              <Filter className="w-4 h-4 text-[#0f2863] dark:text-sky-400" /> Filtres de Recherche d'Archives
+        <div className="bg-card border border-border rounded-2xl p-5 shadow-xs space-y-4">
+          <div className="flex items-center justify-between border-b border-border pb-3">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+              <Filter className="w-4 h-4 text-[#1a3673] dark:text-sky-400" /> Filtres de Recherche d'Archives
             </h2>
             <span className="text-xs text-slate-400 font-bold">
               {filteredExams.length} examen(s) trouvé(s)
@@ -303,16 +303,16 @@ export default function AdminExamPvArchivePage() {
               placeholder="Rechercher par nom de module, code, salle ou groupe..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-medium text-foreground dark:text-white outline-none focus:ring-2 focus:ring-[#0f2863] rounded-[var(--control-radius)]"
+              className="w-full pl-10 pr-4 py-2.5 bg-muted/50 dark:bg-card border border-border text-xs font-medium text-foreground dark:text-white outline-none focus:ring-2 focus:ring-[#1a3673] rounded-[var(--control-radius)]"
             />
           </div>
         </div>
 
         {/* 📄 Main Archive Data Table */}
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-xs space-y-4">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-xs space-y-4">
           {isLoading ? (
             <div className="flex justify-center items-center py-16 text-slate-400 text-xs font-bold">
-              <Spinner className="w-8 h-8 mr-3 text-[#0f2863]" /> Chargement des archives des PVs d'examens depuis la base de données...
+              <Spinner className="w-8 h-8 mr-3 text-[#1a3673]" /> Chargement des archives des PVs d'examens depuis la base de données...
             </div>
           ) : filteredExams.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground font-bold space-y-2">
@@ -324,7 +324,7 @@ export default function AdminExamPvArchivePage() {
             <div className="overflow-x-auto">
               <table className="w-full text-xs text-left border-collapse">
                 <thead>
-                  <tr className="bg-muted/50 dark:bg-slate-800/60 text-muted-foreground dark:text-muted-foreground uppercase tracking-wider font-bold text-[10px]">
+                  <tr className="bg-muted/50 dark:bg-slate-800/60 text-muted-foreground uppercase tracking-wider font-bold text-[10px]">
                     <th className="p-3.5 rounded-l-xl">Date & Tps</th>
                     <th className="p-3.5">Module & Filière</th>
                     <th className="p-3.5 text-center">Salle / Amphi</th>
@@ -345,7 +345,7 @@ export default function AdminExamPvArchivePage() {
                         {/* Date & Time */}
                         <td className="p-3.5 whitespace-nowrap">
                           <div className="font-bold text-foreground dark:text-white flex items-center gap-1.5">
-                            <Calendar className="w-3.5 h-3.5 text-[#0f2863] dark:text-sky-400" />
+                            <Calendar className="w-3.5 h-3.5 text-[#1a3673] dark:text-sky-400" />
                             {dateFormatted}
                           </div>
                           <div className="text-[11px] text-muted-foreground font-mono mt-0.5">
@@ -389,7 +389,7 @@ export default function AdminExamPvArchivePage() {
 
                         {/* Presence & Copies Count */}
                         <td className="p-3.5 text-center whitespace-nowrap">
-                          <div className="font-bold text-foreground dark:text-foreground">
+                          <div className="font-bold text-foreground">
                             {exam.presents_count ?? exam.generated_count ?? 0} Émargés
                           </div>
                           <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center justify-center gap-1 mt-0.5">
@@ -432,7 +432,7 @@ export default function AdminExamPvArchivePage() {
                             <button
                               type="button"
                               onClick={() => navigate(`/admin/exams/${exam.id}/surveillance`)}
-                              className="px-3 py-1.5 bg-[#0f2863] hover:bg-[#15347e] text-white font-bold rounded-xl text-[10px] uppercase tracking-wider transition-all flex items-center gap-1 shadow-xs cursor-pointer"
+                              className="px-3 py-1.5 bg-[#1a3673] hover:bg-[#15347e] text-white font-bold rounded-xl text-[10px] uppercase tracking-wider transition-all flex items-center gap-1 shadow-xs cursor-pointer"
                               title="Ouvrir le Hub de Surveillance & PV complet"
                             >
                               <Eye className="w-3.5 h-3.5" /> Voir Hub & PV
@@ -460,10 +460,10 @@ export default function AdminExamPvArchivePage() {
         {/* 🔍 Quick Inspection Modal */}
         {inspectedExam && (
           <div className="fixed inset-0 z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in no-print">
-            <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 max-w-xl w-full shadow-sm space-y-5">
-              <div className="flex items-center justify-between border-b border-border dark:border-border pb-3">
+            <div className="bg-card border border-border rounded-2xl p-6 max-w-xl w-full shadow-sm space-y-5">
+              <div className="flex items-center justify-between border-b border-border pb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-[#0f2863] text-white flex items-center justify-center font-bold">
+                  <div className="w-10 h-10 rounded-xl bg-[#1a3673] text-white flex items-center justify-center font-bold">
                     <FileText className="w-5 h-5 text-amber-400" />
                   </div>
                   <div>
@@ -501,7 +501,7 @@ export default function AdminExamPvArchivePage() {
                 )}
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-border dark:border-border">
+              <div className="flex justify-end gap-2 pt-2 border-t border-border">
                 <Button variant="outline" onClick={() => setInspectedExam(null)} className="rounded-xl font-bold text-xs cursor-pointer">
                   Fermer
                 </Button>
@@ -518,7 +518,7 @@ export default function AdminExamPvArchivePage() {
                     setInspectedExam(null)
                     navigate(`/admin/exams/${inspectedExam.id}/surveillance`)
                   }}
-                  className="bg-[#0f2863] text-white rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+                  className="bg-[#1a3673] text-white rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer"
                 >
                   <Eye className="w-4 h-4" /> Accéder au Hub de Surveillance & PV
                 </Button>
@@ -537,8 +537,8 @@ export default function AdminExamPvArchivePage() {
 
       {/* 🖨️ Clean Printable Section for A4 PDF Output */}
       <div id="printable-pv-archive-report" className="p-8">
-        <div style={{ textAlign: 'center', borderBottom: '2px solid #0f2863', paddingBottom: '15px', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: 'bold', color: '#0f2863', textTransform: 'uppercase', margin: 0 }}>
+        <div style={{ textAlign: 'center', borderBottom: '2px solid #1a3673', paddingBottom: '15px', marginBottom: '20px' }}>
+          <h2 style={{ fontSize: '16px', fontWeight: 'bold', color: '#1a3673', textTransform: 'uppercase', margin: 0 }}>
             ROYAUME DU MAROC — UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH
           </h2>
           <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#334155', margin: '5px 0 0 0' }}>
@@ -551,7 +551,7 @@ export default function AdminExamPvArchivePage() {
 
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', textAlign: 'left' }}>
           <thead>
-            <tr style={{ backgroundColor: '#0f2863', color: 'white' }}>
+            <tr style={{ backgroundColor: '#1a3673', color: 'white' }}>
               <th style={{ padding: '8px', border: '1px solid #cbd5e1' }}>N°</th>
               <th style={{ padding: '8px', border: '1px solid #cbd5e1' }}>Date</th>
               <th style={{ padding: '8px', border: '1px solid #cbd5e1' }}>Module</th>

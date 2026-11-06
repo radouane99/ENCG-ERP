@@ -283,7 +283,7 @@ export default function DepartmentList() {
           <div className="flex flex-wrap items-center gap-3">
             <button 
               onClick={() => handleOpenModal()}
-              className="px-5 py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-[#0f2863] rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shadow-lg hover:scale-105 cursor-pointer"
+              className="px-5 py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-[#1a3673] rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shadow-lg hover:scale-105 cursor-pointer"
             >
               <Plus className="w-4 h-4" /> Nouveau Département
             </button>
@@ -335,7 +335,7 @@ export default function DepartmentList() {
       </div>
 
       {/* SEARCH & FILTERS BAR */}
-      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-card dark:bg-card p-4 rounded-2xl border border-border dark:border-border shadow-sm">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
         <div className="relative flex-1 w-full">
           <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
           <input
@@ -343,7 +343,7 @@ export default function DepartmentList() {
             placeholder="Rechercher par nom de département, code ou nom du chef de département..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20 rounded-[var(--control-radius)]"
+            className="w-full pl-10 pr-4 py-2.5 bg-muted/50 dark:bg-card border border-border text-xs font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20 rounded-[var(--control-radius)]"
           />
         </div>
 
@@ -365,11 +365,11 @@ export default function DepartmentList() {
       {/* MAIN DEPARTMENTS GRID */}
       {loading ? (
         <div className="py-20 text-center text-slate-400">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0f2863] mx-auto mb-2" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1a3673] mx-auto mb-2" />
           <p className="text-xs font-bold">Chargement des départements académiques...</p>
         </div>
       ) : filteredDepartments.length === 0 ? (
-        <div className="py-16 text-center text-slate-400 space-y-2 bg-card dark:bg-card rounded-2xl border border-border dark:border-border">
+        <div className="py-16 text-center text-slate-400 space-y-2 bg-card rounded-2xl border border-border">
           <Building2 className="w-12 h-12 mx-auto text-slate-300" />
           <h4 className="text-base font-bold text-slate-700 dark:text-foreground">Aucun département trouvé</h4>
           <p className="text-xs text-slate-400">Essayez de réinitialiser la recherche ou de créer un nouveau département.</p>
@@ -385,10 +385,10 @@ export default function DepartmentList() {
             return (
               <div 
                 key={dept.id} 
-                className="bg-card dark:bg-card rounded-2xl shadow-sm hover:shadow-xl border border-slate-200/80 dark:border-border overflow-hidden flex flex-col transition-all duration-300 group hover:-translate-y-1"
+                className="bg-card rounded-2xl shadow-sm hover:shadow-xl border border-slate-200/80 dark:border-border overflow-hidden flex flex-col transition-all duration-300 group hover:-translate-y-1"
               >
                 {/* Header Badge & Code */}
-                <div className="bg-gradient-to-br from-[#0f2863] via-[#11296b] to-[#1e3b8a] p-6 relative text-white">
+                <div className="bg-gradient-to-br from-[#1a3673] via-[#11296b] to-[#1e3b8a] p-6 relative text-white">
                   <div className="flex justify-between items-start mb-3 relative z-10">
                     <span className="px-3 py-1 bg-white/15 backdrop-blur-md text-amber-300 text-xs font-mono font-bold rounded-lg border border-white/20 tracking-widest shadow-xs">
                       CODE: {dept.code}
@@ -414,10 +414,10 @@ export default function DepartmentList() {
                 </div>
 
                 {/* Body Content & Stats */}
-                <div className="p-6 space-y-5 flex-1 bg-card dark:bg-card">
+                <div className="p-6 space-y-5 flex-1 bg-card">
                   
                   {/* Chef de Département Box */}
-                  <div className="bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border dark:border-border space-y-2">
+                  <div className="bg-muted/50 dark:bg-slate-800/60 p-4 rounded-2xl border border-border space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1">
                         <Award className="w-3.5 h-3.5 text-amber-500" /> Chef de Département
@@ -429,10 +429,10 @@ export default function DepartmentList() {
 
                     <div className="flex items-center justify-between pt-1">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs text-white shadow-xs bg-gradient-to-tr from-[#0f2863] to-blue-600">
+                        <div className="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs text-white shadow-xs bg-gradient-to-tr from-[#1a3673] to-blue-600">
                           {initial}
                         </div>
-                        <div className="font-bold text-xs text-foreground dark:text-foreground">
+                        <div className="font-bold text-xs text-foreground">
                           {headName}
                         </div>
                       </div>
@@ -471,7 +471,7 @@ export default function DepartmentList() {
                 </div>
 
                 {/* Card Footer Actions */}
-                <div className="p-4 bg-slate-50/80 dark:bg-slate-800/40 border-t border-border dark:border-border flex flex-wrap items-center justify-between gap-2">
+                <div className="p-4 bg-slate-50/80 dark:bg-slate-800/40 border-t border-border flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <button 
                       onClick={() => setSelectedDeptForOrg(dept)}
@@ -525,10 +525,10 @@ export default function DepartmentList() {
       {/* 👑 MODAL 1: CREATE / EDIT DEPARTMENT */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-md overflow-hidden">
-            <div className="flex items-center justify-between p-6 border-b border-border dark:border-border bg-slate-50/50 dark:bg-slate-800/40">
+          <div className="bg-card border border-border rounded-2xl shadow-sm w-full max-w-md overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-border bg-slate-50/50 dark:bg-slate-800/40">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[#0f2863] text-white flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-2xl bg-[#1a3673] text-white flex items-center justify-center font-bold">
                   <Building2 className="w-5 h-5" />
                 </div>
                 <div>
@@ -549,7 +549,7 @@ export default function DepartmentList() {
                     type="text" required 
                     value={formData.code} 
                     onChange={e => setFormData({...formData, code: e.target.value})}
-                    className="w-full px-3.5 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-mono font-bold text-foreground dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none uppercase rounded-[var(--control-radius)]"
+                    className="w-full px-3.5 py-2.5 border border-border bg-muted/50 dark:bg-card text-xs font-mono font-bold text-foreground dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none uppercase rounded-[var(--control-radius)]"
                     placeholder="Ex: SG" 
                   />
                 </div>
@@ -559,7 +559,7 @@ export default function DepartmentList() {
                     type="text" required 
                     value={formData.name} 
                     onChange={e => setFormData({...formData, name: e.target.value})}
-                    className="w-full px-3.5 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold text-foreground dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none rounded-[var(--control-radius)]"
+                    className="w-full px-3.5 py-2.5 border border-border bg-muted/50 dark:bg-card text-xs font-bold text-foreground dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none rounded-[var(--control-radius)]"
                     placeholder="Ex: Sciences de Gestion" 
                   />
                 </div>
@@ -571,7 +571,7 @@ export default function DepartmentList() {
                   type="text" 
                   value={formData.name_ar} 
                   onChange={e => setFormData({...formData, name_ar: e.target.value})}
-                  className="w-full px-3.5 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold text-foreground dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none text-right rounded-[var(--control-radius)]"
+                  className="w-full px-3.5 py-2.5 border border-border bg-muted/50 dark:bg-card text-xs font-bold text-foreground dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none text-right rounded-[var(--control-radius)]"
                   dir="rtl"
                   placeholder="علوم التسيير" 
                 />
@@ -582,7 +582,7 @@ export default function DepartmentList() {
                 <select
                   value={formData.head_name}
                   onChange={e => setFormData({...formData, head_name: e.target.value})}
-                  className="w-full px-3.5 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold text-foreground dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none rounded-[var(--control-radius)]"
+                  className="w-full px-3.5 py-2.5 border border-border bg-muted/50 dark:bg-card text-xs font-bold text-foreground dark:text-white focus:ring-2 focus:ring-blue-500/20 outline-none rounded-[var(--control-radius)]"
                 >
                   <option value="">Sélectionner un enseignant chercheur...</option>
                   {professors.map((p: any) => (
@@ -593,7 +593,7 @@ export default function DepartmentList() {
                 </select>
               </div>
 
-              <div className="flex items-center justify-between p-3.5 bg-muted/50 dark:bg-slate-800/50 rounded-2xl border border-border dark:border-border">
+              <div className="flex items-center justify-between p-3.5 bg-muted/50 dark:bg-slate-800/50 rounded-2xl border border-border">
                 <div>
                   <div className="text-xs font-bold text-foreground dark:text-white">Statut Opérationnel</div>
                   <div className="text-[10px] text-slate-400">Activer ou désactiver le département</div>
@@ -603,15 +603,15 @@ export default function DepartmentList() {
                   id="is_active"
                   checked={formData.is_active} 
                   onChange={e => setFormData({...formData, is_active: e.target.checked})}
-                  className="w-5 h-5 rounded-md text-[#0f2863] focus:ring-[#0f2863] cursor-pointer"
+                  className="w-5 h-5 rounded-md text-[#1a3673] focus:ring-[#1a3673] cursor-pointer"
                 />
               </div>
               
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-border dark:border-border mt-6">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-border mt-6">
                 <button type="button" onClick={handleCloseModal} className="px-5 py-2.5 text-xs font-bold text-muted-foreground hover:bg-muted dark:hover:bg-slate-800 rounded-xl transition-colors">
                   ANNULER
                 </button>
-                <button type="submit" className="px-6 py-2.5 text-xs font-bold uppercase tracking-wider bg-[#0f2863] text-white hover:bg-[#1a387e] rounded-xl shadow-lg transition-all cursor-pointer">
+                <button type="submit" className="px-6 py-2.5 text-xs font-bold uppercase tracking-wider bg-[#1a3673] text-white hover:bg-[#1a387e] rounded-xl shadow-lg transition-all cursor-pointer">
                   {editingId ? 'METTRE À JOUR' : 'ENREGISTRER'}
                 </button>
               </div>
@@ -624,8 +624,8 @@ export default function DepartmentList() {
       {/* 👑 MODAL 2: NOMMER CHEF DE DÉPARTEMENT 1-CLIC */}
       {showAssignHeadModal && selectedDeptForHead && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-md overflow-hidden space-y-5 p-6">
-            <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
+          <div className="bg-card border border-border rounded-2xl shadow-sm w-full max-w-md overflow-hidden space-y-5 p-6">
+            <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-bold">
                   <Award className="w-5 h-5" />
@@ -643,7 +643,7 @@ export default function DepartmentList() {
               <select
                 value={selectedHeadProfId}
                 onChange={e => setSelectedHeadProfId(e.target.value)}
-                className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
+                className="w-full px-4 py-3 bg-muted/50 dark:bg-card border border-border text-xs font-bold text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
               >
                 <option value="">Sélectionner un enseignant chercheur...</option>
                 {professors.map((p: any) => (
@@ -654,7 +654,7 @@ export default function DepartmentList() {
               </select>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t border-border dark:border-border">
+            <div className="flex justify-end gap-3 pt-4 border-t border-border">
               <button
                 onClick={() => setShowAssignHeadModal(false)}
                 className="px-4 py-2 text-xs font-bold text-muted-foreground hover:bg-muted rounded-xl"
@@ -675,10 +675,10 @@ export default function DepartmentList() {
       {/* 👁️ MODAL 3: VOIR DÉTAILS DU DÉPARTEMENT (FILIÈRES & ENSEIGNANTS) */}
       {selectedDeptForDetails && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-xl overflow-hidden space-y-6 p-6">
-            <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
+          <div className="bg-card border border-border rounded-2xl shadow-sm w-full max-w-xl overflow-hidden space-y-6 p-6">
+            <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[#0f2863] text-white flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-2xl bg-[#1a3673] text-white flex items-center justify-center font-bold">
                   <Building2 className="w-5 h-5 text-amber-300" />
                 </div>
                 <div>
@@ -690,10 +690,10 @@ export default function DepartmentList() {
             </div>
 
             <div className="space-y-4 text-xs">
-              <div className="bg-muted/50 dark:bg-slate-800/50 p-4 rounded-2xl border border-border dark:border-border space-y-2">
+              <div className="bg-muted/50 dark:bg-slate-800/50 p-4 rounded-2xl border border-border space-y-2">
                 <div className="font-bold text-slate-700 dark:text-foreground flex items-center justify-between">
                   <span>Chef de Département:</span>
-                  <span className="font-bold text-[#0f2863] dark:text-amber-300">{selectedDeptForDetails.head_name || 'Non défini'}</span>
+                  <span className="font-bold text-[#1a3673] dark:text-amber-300">{selectedDeptForDetails.head_name || 'Non défini'}</span>
                 </div>
                 <div className="font-bold text-slate-700 dark:text-foreground flex items-center justify-between">
                   <span>Effectif Enseignants Rattachés:</span>
@@ -706,30 +706,30 @@ export default function DepartmentList() {
               </div>
 
               <div className="space-y-2">
-                <div className="font-bold text-foreground dark:text-foreground uppercase tracking-wider text-[10px]">
+                <div className="font-bold text-foreground uppercase tracking-wider text-[10px]">
                   Filières & Parcours Associés :
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <span className="p-2.5 bg-muted dark:bg-card rounded-xl font-bold text-slate-700 dark:text-foreground border border-border dark:border-border">
+                  <span className="p-2.5 bg-muted dark:bg-card rounded-xl font-bold text-slate-700 dark:text-foreground border border-border">
                     🎓 Management & Audit
                   </span>
-                  <span className="p-2.5 bg-muted dark:bg-card rounded-xl font-bold text-slate-700 dark:text-foreground border border-border dark:border-border">
+                  <span className="p-2.5 bg-muted dark:bg-card rounded-xl font-bold text-slate-700 dark:text-foreground border border-border">
                     🎓 Finance & Comptabilité
                   </span>
-                  <span className="p-2.5 bg-muted dark:bg-card rounded-xl font-bold text-slate-700 dark:text-foreground border border-border dark:border-border">
+                  <span className="p-2.5 bg-muted dark:bg-card rounded-xl font-bold text-slate-700 dark:text-foreground border border-border">
                     🎓 Marketing & Commerce
                   </span>
-                  <span className="p-2.5 bg-muted dark:bg-card rounded-xl font-bold text-slate-700 dark:text-foreground border border-border dark:border-border">
+                  <span className="p-2.5 bg-muted dark:bg-card rounded-xl font-bold text-slate-700 dark:text-foreground border border-border">
                     🎓 Tronct Commun S1-S4
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-border dark:border-border">
+            <div className="flex justify-end pt-2 border-t border-border">
               <button
                 onClick={() => setSelectedDeptForDetails(null)}
-                className="px-6 py-2.5 bg-[#0f2863] text-white font-bold rounded-xl text-xs uppercase tracking-wider"
+                className="px-6 py-2.5 bg-[#1a3673] text-white font-bold rounded-xl text-xs uppercase tracking-wider"
               >
                 Fermer
               </button>
@@ -741,8 +741,8 @@ export default function DepartmentList() {
       {/* 🌳 MODAL 4: ORGANIGRAMME PÉDAGOGIQUE HIÉRARCHIQUE DU DÉPARTEMENT */}
       {selectedDeptForOrg && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-2xl overflow-hidden space-y-6 p-6">
-            <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
+          <div className="bg-card border border-border rounded-2xl shadow-sm w-full max-w-2xl overflow-hidden space-y-6 p-6">
+            <div className="flex items-center justify-between border-b border-border pb-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white flex items-center justify-center font-bold">
                   <Sparkles className="w-5 h-5 text-amber-300" />
@@ -760,7 +760,7 @@ export default function DepartmentList() {
               
               {/* LEVEL 1: CHEF DE DÉPARTEMENT */}
               <div className="flex flex-col items-center">
-                <div className="px-5 py-3 bg-gradient-to-r from-[#0f2863] to-blue-700 text-white rounded-2xl shadow-lg border border-blue-400/30 text-center space-y-1 w-64 relative">
+                <div className="px-5 py-3 bg-gradient-to-r from-[#1a3673] to-blue-700 text-white rounded-2xl shadow-lg border border-blue-400/30 text-center space-y-1 w-64 relative">
                   <span className="px-2 py-0.5 bg-amber-400/20 text-amber-300 rounded-full text-[9px] font-bold uppercase tracking-widest border border-amber-400/30 inline-block">
                     👑 CHEF DE DÉPARTEMENT
                   </span>
@@ -793,7 +793,7 @@ export default function DepartmentList() {
                   ) : professors.slice(0, 12).map((p: any) => {
                     const name = p.user?.name || `${p.user?.first_name || ''} ${p.user?.last_name || ''}`.trim() || p.name;
                     return (
-                    <span key={p.id} className="px-2.5 py-1 bg-card dark:bg-card text-slate-700 dark:text-foreground rounded-lg text-[10px] font-bold border border-border dark:border-border">
+                    <span key={p.id} className="px-2.5 py-1 bg-card text-slate-700 dark:text-foreground rounded-lg text-[10px] font-bold border border-border">
                       {name}
                     </span>
                     );
@@ -803,10 +803,10 @@ export default function DepartmentList() {
 
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-border dark:border-border">
+            <div className="flex justify-end pt-2 border-t border-border">
               <button
                 onClick={() => setSelectedDeptForOrg(null)}
-                className="px-6 py-2.5 bg-[#0f2863] text-white font-bold rounded-xl text-xs uppercase tracking-wider"
+                className="px-6 py-2.5 bg-[#1a3673] text-white font-bold rounded-xl text-xs uppercase tracking-wider"
               >
                 Fermer l'Organigramme
               </button>

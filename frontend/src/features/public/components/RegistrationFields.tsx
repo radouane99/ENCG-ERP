@@ -49,7 +49,7 @@ export function Field({
 
     return (
       <div className={cn('flex flex-col gap-2.5', className)}>
-        <label htmlFor={inputId} className={cn("text-sm sm:text-base font-bold tracking-wide uppercase text-foreground dark:text-foreground flex items-center", isRtl && "justify-start font-serif text-lg font-bold")}>
+        <label htmlFor={inputId} className={cn("text-sm sm:text-base font-bold tracking-wide uppercase text-foreground flex items-center", isRtl && "justify-start font-serif text-lg font-bold")}>
           <span>{cleanLabel}</span>
           {required && <span className="text-[#E60028] font-bold ms-1">*</span>}
         </label>
@@ -78,12 +78,12 @@ export function Field({
 
   return (
     <div className={cn('flex flex-col gap-2.5', className)}>
-      <label htmlFor={inputId} className={cn("text-sm sm:text-base font-bold tracking-wide uppercase text-foreground dark:text-foreground flex items-center", isRtl && "justify-start font-serif text-lg font-bold")}>
+      <label htmlFor={inputId} className={cn("text-sm sm:text-base font-bold tracking-wide uppercase text-foreground flex items-center", isRtl && "justify-start font-serif text-lg font-bold")}>
         <span>{cleanLabel}</span>
         {required && <span className="text-rose-500 font-bold ms-1">*</span>}
       </label>
       <div className="relative group">
-        <span className={cn("pointer-events-none absolute inset-y-0 flex items-center text-slate-400 dark:text-slate-500 group-focus-within:text-[#0f2863] dark:group-focus-within:text-blue-400 transition-colors", isRtl ? "right-4" : "left-4")}>
+        <span className={cn("pointer-events-none absolute inset-y-0 flex items-center text-slate-400 dark:text-slate-500 group-focus-within:text-[#1a3673] dark:group-focus-within:text-blue-400 transition-colors", isRtl ? "right-4" : "left-4")}>
           <Icon className="w-5 h-5" />
         </span>
         <input
@@ -94,7 +94,7 @@ export function Field({
             "w-full py-4 text-base sm:text-lg font-bold placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none transition-all shadow-sm rounded-[var(--control-radius)]",
             isReadOnly || hasVal
               ? "bg-muted dark:bg-slate-800/90 border-2 border-slate-300 dark:border-border text-foreground dark:text-white shadow-inner rounded-[var(--control-radius)]"
-              : "bg-card dark:bg-slate-900/90 border-2 border-slate-300 dark:border-white/20 text-foreground dark:text-white focus:border-[#0f2863] dark:focus:border-blue-400 focus:ring-4 focus:ring-[#0f2863]/20 rounded-[var(--control-radius)]",
+              : "bg-card dark:bg-slate-900/90 border-2 border-slate-300 dark:border-white/20 text-foreground dark:text-white focus:border-[#1a3673] dark:focus:border-blue-400 focus:ring-4 focus:ring-[#1a3673]/20 rounded-[var(--control-radius)]",
             isRtl ? "pr-12 pl-4 text-right font-serif text-xl font-bold rounded-[var(--control-radius)]" : "pl-12 pr-4 rounded-[var(--control-radius)]",
             isReadOnly && !isRtl && "pr-36 rounded-[var(--control-radius)]"
           )}
@@ -118,8 +118,8 @@ export function Field({
 export function SectionCard({ title, icon: Icon, children, isRtl = false }: { title: string; icon: React.ElementType; children: React.ReactNode; isRtl?: boolean }) {
   return (
     <div className="rounded-2xl border-2 border-border dark:border-white/15 bg-white/90 dark:bg-white/[0.04] p-6 sm:p-8 space-y-6 shadow-md">
-      <p className={cn("text-sm sm:text-base font-bold uppercase tracking-wider text-[#0f2863] dark:text-blue-400 flex items-center gap-3 border-b-2 border-border dark:border-white/15 pb-3.5", isRtl && "font-serif text-xl font-bold")}>
-        <Icon className="w-5 h-5 text-[#0f2863] dark:text-blue-400 shrink-0" />
+      <p className={cn("text-sm sm:text-base font-bold uppercase tracking-wider text-[#1a3673] dark:text-blue-400 flex items-center gap-3 border-b-2 border-border dark:border-white/15 pb-3.5", isRtl && "font-serif text-xl font-bold")}>
+        <Icon className="w-5 h-5 text-[#1a3673] dark:text-blue-400 shrink-0" />
         <span>{title}</span>
       </p>
       {children}
@@ -147,7 +147,7 @@ export function VirtualArabicKeyboardModal({
 
   return (
     <Modal open={true} onClose={onClose} title={isAr ? "لوحة المفاتيح العربية" : "Clavier arabe"} size="lg">
-      <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="bg-card border border-border rounded-2xl shadow-sm w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
 
         {/* Header */}
         <div className="p-4 bg-gradient-to-r from-[#0c1e4e] via-[#162e74] to-[#081436] text-white flex items-center justify-between">
@@ -174,7 +174,7 @@ export function VirtualArabicKeyboardModal({
         </div>
 
         {/* Live Preview Display Input */}
-        <div className="p-4 bg-muted/50 dark:bg-background border-b border-border dark:border-border space-y-2">
+        <div className="p-4 bg-muted/50 dark:bg-background border-b border-border space-y-2">
           <div className="flex items-center justify-between">
             <label className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
               {isAr ? 'المعاينة المباشرة' : 'Aperçu en direct'}
@@ -193,7 +193,7 @@ export function VirtualArabicKeyboardModal({
             value={currentValue}
             onChange={(e) => setFormData((prev: any) => ({ ...prev, [fieldName]: e.target.value }))}
             placeholder={isAr ? "انقر على الحروف أدناه..." : "Cliquez sur les touches ci-dessous..."}
-            className="w-full p-4 bg-card dark:bg-card border-2 border-indigo-500/40 text-2xl font-bold font-serif text-foreground dark:text-white text-right outline-none focus:ring-4 focus:ring-indigo-500/20 shadow-inner rounded-[var(--control-radius)]"
+            className="w-full p-4 bg-card border-2 border-indigo-500/40 text-2xl font-bold font-serif text-foreground dark:text-white text-right outline-none focus:ring-4 focus:ring-indigo-500/20 shadow-inner rounded-[var(--control-radius)]"
           />
         </div>
 
@@ -206,7 +206,7 @@ export function VirtualArabicKeyboardModal({
                 key={k}
                 type="button"
                 onClick={() => setFormData((prev: any) => ({ ...prev, [fieldName]: (prev[fieldName] || '') + k }))}
-                className="min-w-11 min-h-11 py-2.5 bg-card dark:bg-card hover:bg-primary hover:text-white dark:hover:bg-primary text-foreground dark:text-foreground font-serif font-bold text-lg rounded-xl border border-border dark:border-border shadow-xs active:scale-95 transition-all cursor-pointer"
+                className="min-w-11 min-h-11 py-2.5 bg-card hover:bg-primary hover:text-white dark:hover:bg-primary text-foreground font-serif font-bold text-lg rounded-xl border border-border shadow-xs active:scale-95 transition-all cursor-pointer"
               >
                 {k}
               </button>
@@ -220,7 +220,7 @@ export function VirtualArabicKeyboardModal({
                 key={k}
                 type="button"
                 onClick={() => setFormData((prev: any) => ({ ...prev, [fieldName]: (prev[fieldName] || '') + k }))}
-                className="min-w-11 min-h-11 py-2.5 bg-card dark:bg-card hover:bg-primary hover:text-white dark:hover:bg-primary text-foreground dark:text-foreground font-serif font-bold text-lg rounded-xl border border-border dark:border-border shadow-xs active:scale-95 transition-all cursor-pointer"
+                className="min-w-11 min-h-11 py-2.5 bg-card hover:bg-primary hover:text-white dark:hover:bg-primary text-foreground font-serif font-bold text-lg rounded-xl border border-border shadow-xs active:scale-95 transition-all cursor-pointer"
               >
                 {k}
               </button>
@@ -234,7 +234,7 @@ export function VirtualArabicKeyboardModal({
                 key={k}
                 type="button"
                 onClick={() => setFormData((prev: any) => ({ ...prev, [fieldName]: (prev[fieldName] || '') + k }))}
-                className="min-w-11 min-h-11 py-2.5 bg-card dark:bg-card hover:bg-primary hover:text-white dark:hover:bg-primary text-foreground dark:text-foreground font-serif font-bold text-lg rounded-xl border border-border dark:border-border shadow-xs active:scale-95 transition-all cursor-pointer"
+                className="min-w-11 min-h-11 py-2.5 bg-card hover:bg-primary hover:text-white dark:hover:bg-primary text-foreground font-serif font-bold text-lg rounded-xl border border-border shadow-xs active:scale-95 transition-all cursor-pointer"
               >
                 {k}
               </button>
@@ -248,7 +248,7 @@ export function VirtualArabicKeyboardModal({
                 key={k}
                 type="button"
                 onClick={() => setFormData((prev: any) => ({ ...prev, [fieldName]: (prev[fieldName] || '') + k }))}
-                className="min-w-11 min-h-11 py-2.5 bg-card dark:bg-card hover:bg-primary hover:text-white dark:hover:bg-primary text-foreground dark:text-foreground font-serif font-bold text-lg rounded-xl border border-border dark:border-border shadow-xs active:scale-95 transition-all cursor-pointer"
+                className="min-w-11 min-h-11 py-2.5 bg-card hover:bg-primary hover:text-white dark:hover:bg-primary text-foreground font-serif font-bold text-lg rounded-xl border border-border shadow-xs active:scale-95 transition-all cursor-pointer"
               >
                 {k}
               </button>
@@ -260,7 +260,7 @@ export function VirtualArabicKeyboardModal({
             <button
               type="button"
               onClick={() => setFormData((prev: any) => ({ ...prev, [fieldName]: (prev[fieldName] || '') + ' ' }))}
-              className="flex-1 py-3 bg-card dark:bg-card hover:bg-slate-200 text-foreground dark:text-foreground font-bold text-sm rounded-xl border border-border dark:border-border shadow-xs cursor-pointer active:scale-98 transition-all"
+              className="flex-1 py-3 bg-card hover:bg-slate-200 text-foreground font-bold text-sm rounded-xl border border-border shadow-xs cursor-pointer active:scale-98 transition-all"
             >
               {isAr ? 'مسافة ␣' : 'Espace ␣'}
             </button>

@@ -65,7 +65,7 @@ export default function StudentsCreditsPage() {
       </div>
 
       {/* Blue Banner: CADRE RÉGLEMENTAIRE MAROCAIN */}
-      <div className="bg-gradient-to-r from-blue-900 via-[#1a387e] to-[#0f2863] p-8 text-white rounded-2xl shadow-sm relative overflow-hidden border border-blue-800/50">
+      <div className="bg-gradient-to-r from-blue-900 via-[#1a387e] to-[#1a3673] p-8 text-white rounded-2xl shadow-sm relative overflow-hidden border border-blue-800/50">
         <div className="absolute right-0 top-0 opacity-10">
           <ShieldCheck className="w-64 h-64" />
         </div>
@@ -83,17 +83,17 @@ export default function StudentsCreditsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-sm flex items-center justify-between">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Effectif Global</p>
             <p className="text-3xl font-bold text-foreground dark:text-white">{total || 72}</p>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-primary/5 dark:bg-blue-950/60 text-[#0f2863] dark:text-blue-300 flex items-center justify-center font-bold">
+          <div className="w-12 h-12 rounded-2xl bg-primary/5 dark:bg-blue-950/60 text-[#1a3673] dark:text-blue-300 flex items-center justify-center font-bold">
             <Users className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-sm flex items-center justify-between">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">En Crédit ECTS</p>
             <p className="text-3xl font-bold text-primary">14</p>
@@ -103,7 +103,7 @@ export default function StudentsCreditsPage() {
           </div>
         </div>
 
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-sm flex items-center justify-between">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Dérogations Actives</p>
             <p className="text-3xl font-bold text-amber-600">5</p>
@@ -113,7 +113,7 @@ export default function StudentsCreditsPage() {
           </div>
         </div>
 
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-sm flex items-center justify-between">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Dernière Chance</p>
             <p className="text-3xl font-bold text-rose-600">3</p>
@@ -125,10 +125,10 @@ export default function StudentsCreditsPage() {
       </div>
 
       {/* Table Container */}
-      <div className="bg-card dark:bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-card border border-slate-200/80 dark:border-border rounded-2xl shadow-sm overflow-hidden flex flex-col">
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-border dark:border-border bg-slate-50/50 dark:bg-slate-800/50">
+            <thead className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-border bg-slate-50/50 dark:bg-slate-800/50">
               <tr>
                 <th className="px-8 py-5">Étudiant & Matricule</th>
                 <th className="px-8 py-5">Filière & Semestre</th>
@@ -141,7 +141,7 @@ export default function StudentsCreditsPage() {
               {loading ? (
                 <tr>
                   <td colSpan={5} className="text-center py-16 text-slate-400">
-                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#0f2863] mb-4" />
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#1a3673] mb-4" />
                     Chargement des dossiers de dérogation...
                   </td>
                 </tr>
@@ -167,7 +167,7 @@ export default function StudentsCreditsPage() {
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => handleExportDerogationPdf(s)}
-                        className="px-3 py-1.5 bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
+                        className="px-3 py-1.5 bg-[#1a3673] hover:bg-[#1a387e] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-md cursor-pointer"
                         title="Télécharger la Décision Officielle de Dérogation A4"
                       >
                         <Printer className="w-3.5 h-3.5 text-amber-400" /> Décision A4 (PDF)

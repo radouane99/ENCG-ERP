@@ -65,7 +65,7 @@ export default function ProfessorWorkloadPage() {
   // Loading Skeleton Screen
   if (isLoading) {
     return (
-      <div className="space-y-8 font-sans p-2 animate-pulse text-foreground dark:text-foreground">
+      <div className="space-y-8 font-sans p-2 animate-pulse text-foreground">
         <div className="h-10 bg-slate-200 dark:bg-card rounded-2xl w-80"></div>
         <div className="h-44 bg-slate-200 dark:bg-card rounded-2xl w-full"></div>
         <div className="h-40 bg-slate-200 dark:bg-card rounded-2xl w-full"></div>
@@ -81,7 +81,7 @@ export default function ProfessorWorkloadPage() {
   // Error / Empty State if no professor profile found
   if (isError || !workloadData) {
     return (
-      <div className="rounded-2xl bg-card dark:bg-card border border-border dark:border-border p-12 text-center space-y-4 max-w-xl mx-auto my-12">
+      <div className="rounded-2xl bg-card border border-border p-12 text-center space-y-4 max-w-xl mx-auto my-12">
         <div className="w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto">
           <AlertCircle className="w-8 h-8" />
         </div>
@@ -97,12 +97,12 @@ export default function ProfessorWorkloadPage() {
   const w = workloadData;
 
   return (
-    <div className="space-y-8 font-sans animate-in fade-in duration-500 text-foreground dark:text-foreground pb-28">
+    <div className="space-y-8 font-sans animate-in fade-in duration-500 text-foreground pb-28">
       
       {/* ── Role Status Badge & Optional Admin Switcher ── */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-muted dark:bg-slate-800/60 p-2.5 rounded-2xl border border-border dark:border-slate-700/60">
         <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground dark:text-foreground pl-2">
-          <GraduationCap className="w-4 h-4 text-[#001A4B] dark:text-blue-400" />
+          <GraduationCap className="w-4 h-4 text-[#1a3673] dark:text-blue-400" />
           <span>Statut Enseignant Détecté :</span>
           <span className={cn(
             "px-2.5 py-0.5 rounded-lg text-[11px] font-bold uppercase tracking-wider",
@@ -116,7 +116,7 @@ export default function ProfessorWorkloadPage() {
 
         {/* Administration Inspection Switcher (Only visible to admin / dept-head) */}
         {isAdminOrHead && (
-          <div className="flex items-center gap-1.5 text-xs font-bold bg-card dark:bg-card p-1 rounded-xl shadow-xs border border-border dark:border-border">
+          <div className="flex items-center gap-1.5 text-xs font-bold bg-card p-1 rounded-xl shadow-xs border border-border">
             <span className="text-[10px] text-slate-400 uppercase tracking-widest px-2 font-bold">Mode Test Admin :</span>
             <button
               onClick={() => setAdminSimulatedRole('auto')}
@@ -131,7 +131,7 @@ export default function ProfessorWorkloadPage() {
               onClick={() => setAdminSimulatedRole('permanent')}
               className={cn(
                 "px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer",
-                adminSimulatedRole === 'permanent' ? "bg-[#001A4B] text-white" : "text-muted-foreground"
+                adminSimulatedRole === 'permanent' ? "bg-[#1a3673] text-white" : "text-muted-foreground"
               )}
             >
               Permanent
@@ -140,7 +140,7 @@ export default function ProfessorWorkloadPage() {
               onClick={() => setAdminSimulatedRole('vacataire')}
               className={cn(
                 "px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer",
-                adminSimulatedRole === 'vacataire' ? "bg-amber-500 text-[#001A4B]" : "text-muted-foreground"
+                adminSimulatedRole === 'vacataire' ? "bg-amber-500 text-[#1a3673]" : "text-muted-foreground"
               )}
             >
               Vacataire
@@ -154,7 +154,7 @@ export default function ProfessorWorkloadPage() {
         "rounded-2xl p-8 md:p-10 text-white shadow-sm border flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden transition-all duration-300",
         isVacataire
           ? "bg-gradient-to-br from-[#1e293b] via-[#0f172a] to-[#1e1b4b] border-amber-500/20"
-          : "bg-gradient-to-br from-[#001A4B] via-[#082663] to-[#0d1d3d] border-white/10"
+          : "bg-gradient-to-br from-[#1a3673] via-[#082663] to-[#0d1d3d] border-white/10"
       )}>
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
         <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -163,8 +163,8 @@ export default function ProfessorWorkloadPage() {
           <div className={cn(
             "w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm shrink-0 font-bold",
             isVacataire 
-              ? "bg-gradient-to-br from-amber-400 to-amber-500 shadow-amber-500/20 text-[#001A4B]" 
-              : "bg-gradient-to-br from-emerald-400 to-teal-500 shadow-emerald-500/20 text-[#001A4B]"
+              ? "bg-gradient-to-br from-amber-400 to-amber-500 shadow-amber-500/20 text-[#1a3673]" 
+              : "bg-gradient-to-br from-emerald-400 to-teal-500 shadow-emerald-500/20 text-[#1a3673]"
           )}>
             {isVacataire ? <CreditCard className="w-8 h-8" /> : <Clock className="w-8 h-8" />}
           </div>
@@ -210,7 +210,7 @@ export default function ProfessorWorkloadPage() {
           {!isVacataire && (
             <button
               onClick={handleDownloadAnnualActivityPdf}
-              className="px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shrink-0 cursor-pointer bg-amber-400 hover:bg-amber-300 text-[#001A4B] shadow-amber-400/20"
+              className="px-5 py-3.5 rounded-2xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shrink-0 cursor-pointer bg-amber-400 hover:bg-amber-300 text-[#1a3673] shadow-amber-400/20"
             >
               <GraduationCap className="w-4 h-4" /> 
               Bilan Annuel d'Activité (PDF CNU)
@@ -226,8 +226,8 @@ export default function ProfessorWorkloadPage() {
         /* ============================================================ */
         <>
           {/* Statutory Hours Progression Card */}
-          <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border dark:border-border space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border dark:border-border pb-4">
+          <div className="bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
               <div>
                 <h2 className="text-base font-bold text-foreground dark:text-white uppercase tracking-wide flex items-center gap-2">
                   <Award className="w-5 h-5 text-primary" />
@@ -252,7 +252,7 @@ export default function ProfessorWorkloadPage() {
                 </span>
               </div>
 
-              <div className="w-full bg-muted dark:bg-card rounded-full h-4 p-0.5 border border-border dark:border-border overflow-hidden">
+              <div className="w-full bg-muted dark:bg-card rounded-full h-4 p-0.5 border border-border overflow-hidden">
                 <div 
                   className="bg-gradient-to-r from-blue-600 to-emerald-500 h-full rounded-full transition-all duration-500" 
                   style={{ width: `${Math.min(100, w.completion_percent ?? 0)}%` }}
@@ -270,7 +270,7 @@ export default function ProfessorWorkloadPage() {
 
           {/* KPI Cards: PURE PEDAGOGICAL (NO MONEY / NO VIREMENT) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border flex items-center gap-4">
+            <div className="bg-card rounded-2xl p-6 shadow-sm border border-border flex items-center gap-4">
               <div className="w-13 h-13 rounded-2xl bg-primary/5 dark:bg-blue-950 text-primary dark:text-blue-400 flex items-center justify-center font-bold shrink-0">
                 <Clock className="w-6 h-6" />
               </div>
@@ -283,7 +283,7 @@ export default function ProfessorWorkloadPage() {
               </div>
             </div>
 
-            <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border flex items-center gap-4">
+            <div className="bg-card rounded-2xl p-6 shadow-sm border border-border flex items-center gap-4">
               <div className="w-13 h-13 rounded-2xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold shrink-0">
                 <BookOpen className="w-6 h-6" />
               </div>
@@ -294,7 +294,7 @@ export default function ProfessorWorkloadPage() {
               </div>
             </div>
 
-            <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border flex items-center gap-4">
+            <div className="bg-card rounded-2xl p-6 shadow-sm border border-border flex items-center gap-4">
               <div className="w-13 h-13 rounded-2xl bg-primary/5 dark:bg-indigo-950 text-primary dark:text-indigo-400 flex items-center justify-center font-bold shrink-0">
                 <TrendingUp className="w-6 h-6" />
               </div>
@@ -305,7 +305,7 @@ export default function ProfessorWorkloadPage() {
               </div>
             </div>
 
-            <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border flex items-center gap-4">
+            <div className="bg-card rounded-2xl p-6 shadow-sm border border-border flex items-center gap-4">
               <div className="w-13 h-13 rounded-2xl bg-teal-50 dark:bg-teal-950 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold shrink-0">
                 <ShieldCheck className="w-6 h-6" />
               </div>
@@ -318,8 +318,8 @@ export default function ProfessorWorkloadPage() {
           </div>
 
           {/* Temporal Period Tabs Selector (Par Semaine / Par Mois / Par An / Modules) */}
-          <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border dark:border-border space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border dark:border-border pb-4">
+          <div className="bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
               <div>
                 <h2 className="text-base font-bold text-foreground dark:text-white uppercase tracking-wide">
                   Détail Pédagogique des Séances & Horaires
@@ -334,7 +334,7 @@ export default function ProfessorWorkloadPage() {
                   className={cn(
                     "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                     activeTab === 'annual'
-                      ? "bg-card dark:bg-card text-[#001A4B] dark:text-white shadow-xs"
+                      ? "bg-card text-[#1a3673] dark:text-white shadow-xs"
                       : "text-muted-foreground hover:text-foreground dark:hover:text-white"
                   )}
                 >
@@ -345,7 +345,7 @@ export default function ProfessorWorkloadPage() {
                   className={cn(
                     "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                     activeTab === 'monthly'
-                      ? "bg-card dark:bg-card text-[#001A4B] dark:text-white shadow-xs"
+                      ? "bg-card text-[#1a3673] dark:text-white shadow-xs"
                       : "text-muted-foreground hover:text-foreground dark:hover:text-white"
                   )}
                 >
@@ -356,7 +356,7 @@ export default function ProfessorWorkloadPage() {
                   className={cn(
                     "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                     activeTab === 'weekly'
-                      ? "bg-card dark:bg-card text-[#001A4B] dark:text-white shadow-xs"
+                      ? "bg-card text-[#1a3673] dark:text-white shadow-xs"
                       : "text-muted-foreground hover:text-foreground dark:hover:text-white"
                   )}
                 >
@@ -367,7 +367,7 @@ export default function ProfessorWorkloadPage() {
                   className={cn(
                     "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                     activeTab === 'modules'
-                      ? "bg-card dark:bg-card text-[#001A4B] dark:text-white shadow-xs"
+                      ? "bg-card text-[#1a3673] dark:text-white shadow-xs"
                       : "text-muted-foreground hover:text-foreground dark:hover:text-white"
                   )}
                 >
@@ -385,21 +385,21 @@ export default function ProfessorWorkloadPage() {
                     <div className="text-2xl font-bold text-foreground dark:text-white">
                       {w.hours_cm ?? 0}h <span className="text-xs font-normal text-muted-foreground">/ {Math.round((w.hours_cm ?? 0) / 2)} séances</span>
                     </div>
-                    <p className="text-xs text-muted-foreground dark:text-muted-foreground">Cours Magistraux en amphithéâtre et grandes promotions.</p>
+                    <p className="text-xs text-muted-foreground">Cours Magistraux en amphithéâtre et grandes promotions.</p>
                   </div>
                   <div className="p-5 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-primary/20 dark:border-indigo-900/40 space-y-2">
                     <div className="text-[10px] font-bold uppercase text-primary dark:text-indigo-400 tracking-wider">Volume TD Réalisé</div>
                     <div className="text-2xl font-bold text-foreground dark:text-white">
                       {w.hours_td ?? 0}h <span className="text-xs font-normal text-muted-foreground">/ {Math.round((w.hours_td ?? 0) / 2)} séances</span>
                     </div>
-                    <p className="text-xs text-muted-foreground dark:text-muted-foreground">Travaux Dirigés dispensés par groupes d'études réduits.</p>
+                    <p className="text-xs text-muted-foreground">Travaux Dirigés dispensés par groupes d'études réduits.</p>
                   </div>
                   <div className="p-5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 space-y-2">
                     <div className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 tracking-wider">Volume TP & Ateliers</div>
                     <div className="text-2xl font-bold text-foreground dark:text-white">
                       {w.hours_tp ?? 0}h <span className="text-xs font-normal text-muted-foreground">/ {Math.round((w.hours_tp ?? 0) / 2)} séances</span>
                     </div>
-                    <p className="text-xs text-muted-foreground dark:text-muted-foreground">Travaux Pratiques en laboratoires informatiques & études de cas.</p>
+                    <p className="text-xs text-muted-foreground">Travaux Pratiques en laboratoires informatiques & études de cas.</p>
                   </div>
                 </div>
 
@@ -430,7 +430,7 @@ export default function ProfessorWorkloadPage() {
                 ) : (
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-border dark:border-border text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                      <tr className="border-b border-border text-[10px] font-bold uppercase tracking-wider text-slate-400">
                         <th className="pb-3 pl-2">Mois</th>
                         <th className="pb-3 text-center">Séances Réalisées</th>
                         <th className="pb-3 text-center">Cours Magistral (CM)</th>
@@ -495,7 +495,7 @@ export default function ProfessorWorkloadPage() {
                           </div>
                         </div>
                         <div className="pt-2 border-t border-border dark:border-slate-700/50 flex items-center justify-between text-[11px]">
-                          <span className="font-bold text-muted-foreground dark:text-muted-foreground">Type : {slot.type}</span>
+                          <span className="font-bold text-muted-foreground">Type : {slot.type}</span>
                           <span className="text-emerald-600 dark:text-emerald-400 font-bold">{slot.duration_hours ?? 2}h certifiées</span>
                         </div>
                       </div>
@@ -514,7 +514,7 @@ export default function ProfessorWorkloadPage() {
                   </div>
                 ) : (
                   w.modules_breakdown.map((mod: any, idx: number) => (
-                    <div key={idx} className="p-5 rounded-2xl bg-card dark:bg-card border border-border dark:border-border shadow-xs space-y-4">
+                    <div key={idx} className="p-5 rounded-2xl bg-card border border-border shadow-xs space-y-4">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
                           <div className="flex items-center gap-2">
@@ -537,7 +537,7 @@ export default function ProfessorWorkloadPage() {
                       {/* Progress Bar for Module Syllabus */}
                       <div className="space-y-1.5">
                         <div className="flex justify-between text-xs font-bold">
-                          <span className="text-muted-foreground dark:text-muted-foreground">Avancement des chapitres au Cahier de Textes</span>
+                          <span className="text-muted-foreground">Avancement des chapitres au Cahier de Textes</span>
                           <span className="text-emerald-600 dark:text-emerald-400 font-bold">{mod.progress}%</span>
                         </div>
                         <div className="w-full bg-muted dark:bg-card rounded-full h-2.5 overflow-hidden">
@@ -561,8 +561,8 @@ export default function ProfessorWorkloadPage() {
         /* ============================================================ */
         <>
           {/* Vacation Hours Progression */}
-          <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border dark:border-border space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border dark:border-border pb-4">
+          <div className="bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
               <div>
                 <h2 className="text-base font-bold text-foreground dark:text-white uppercase tracking-wide flex items-center gap-2">
                   <CreditCard className="w-5 h-5 text-amber-500" />
@@ -589,7 +589,7 @@ export default function ProfessorWorkloadPage() {
                 </span>
               </div>
 
-              <div className="w-full bg-muted dark:bg-card rounded-full h-4 p-0.5 border border-border dark:border-border overflow-hidden">
+              <div className="w-full bg-muted dark:bg-card rounded-full h-4 p-0.5 border border-border overflow-hidden">
                 <div 
                   className="bg-gradient-to-r from-amber-500 to-emerald-500 h-full rounded-full transition-all duration-500" 
                   style={{ width: `100%` }}
@@ -607,7 +607,7 @@ export default function ProfessorWorkloadPage() {
 
           {/* FINANCIAL KPI CARDS ("DKSHI DYAL L'KHLASS") */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border flex items-center gap-4">
+            <div className="bg-card rounded-2xl p-6 shadow-sm border border-border flex items-center gap-4">
               <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold shrink-0">
                 <Clock className="w-7 h-7" />
               </div>
@@ -618,7 +618,7 @@ export default function ProfessorWorkloadPage() {
               </div>
             </div>
 
-            <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border flex items-center gap-4">
+            <div className="bg-card rounded-2xl p-6 shadow-sm border border-border flex items-center gap-4">
               <div className="w-14 h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold shrink-0">
                 <CreditCard className="w-7 h-7" />
               </div>
@@ -631,7 +631,7 @@ export default function ProfessorWorkloadPage() {
               </div>
             </div>
 
-            <div className="bg-card dark:bg-card rounded-2xl p-6 shadow-sm border border-border dark:border-border flex items-center gap-4">
+            <div className="bg-card rounded-2xl p-6 shadow-sm border border-border flex items-center gap-4">
               <div className="w-14 h-14 rounded-2xl bg-primary/5 dark:bg-blue-950 text-primary dark:text-blue-400 flex items-center justify-center font-bold shrink-0">
                 <ShieldCheck className="w-7 h-7" />
               </div>
@@ -644,8 +644,8 @@ export default function ProfessorWorkloadPage() {
           </div>
 
           {/* Monthly Payment Breakdown Table */}
-          <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border dark:border-border space-y-6">
-            <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
+          <div className="bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border space-y-6">
+            <div className="flex items-center justify-between border-b border-border pb-4">
               <h2 className="text-base font-bold text-foreground dark:text-white uppercase tracking-wide">
                 Bordereau Mensuel des Vacations pour Paiement
               </h2>
@@ -660,7 +660,7 @@ export default function ProfessorWorkloadPage() {
               ) : (
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-border dark:border-border text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <tr className="border-b border-border text-[10px] font-bold uppercase tracking-wider text-slate-400">
                       <th className="pb-3 pl-2">Mois</th>
                       <th className="pb-3 text-center">CM</th>
                       <th className="pb-3 text-center">TD</th>

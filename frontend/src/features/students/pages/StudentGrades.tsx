@@ -294,17 +294,17 @@ export default function StudentGrades() {
 
   if (isError || !data) {
     return (
-      <div className="p-8 max-w-2xl mx-auto text-center space-y-4 font-sans bg-card dark:bg-card rounded-2xl border border-border dark:border-border shadow-sm mt-8">
+      <div className="p-8 max-w-2xl mx-auto text-center space-y-4 font-sans bg-card rounded-2xl border border-border shadow-sm mt-8">
         <div className="w-14 h-14 bg-rose-50 dark:bg-rose-950/40 rounded-2xl flex items-center justify-center mx-auto text-rose-500 border border-rose-200 dark:border-rose-900">
           <AlertCircle className="w-7 h-7" />
         </div>
         <h3 className="text-xl font-bold text-foreground dark:text-white">Impossible de charger vos notes</h3>
-        <p className="text-xs text-muted-foreground dark:text-muted-foreground max-w-md mx-auto leading-relaxed">
+        <p className="text-xs text-muted-foreground max-w-md mx-auto leading-relaxed">
           Une erreur temporaire est survenue lors de la synchronisation avec le serveur Apogée. Vos notes restent sécurisées et seront disponibles dès le rétablissement de la liaison.
         </p>
         <button
           onClick={() => window.location.reload()}
-          className="px-5 py-2.5 rounded-xl bg-[#001A4B] text-white font-bold text-xs shadow-md hover:bg-[#082663] transition-all cursor-pointer"
+          className="px-5 py-2.5 rounded-xl bg-[#1a3673] text-white font-bold text-xs shadow-md hover:bg-[#082663] transition-all cursor-pointer"
         >
           Réessayer
         </button>
@@ -313,7 +313,7 @@ export default function StudentGrades() {
   }
 
   return (
-    <div data-testid="student-grades-page" className="space-y-6 sm:space-y-8 font-sans animate-in fade-in duration-500 text-foreground dark:text-foreground max-w-7xl mx-auto pb-12">
+    <div data-testid="student-grades-page" className="space-y-6 sm:space-y-8 font-sans animate-in fade-in duration-500 text-foreground max-w-7xl mx-auto pb-12">
       <label className="block text-sm font-medium">Année universitaire
         <select aria-label="Année universitaire" value={academicYearId} onChange={event => setAcademicYearId(event.target.value)} className="ms-3 border border-input bg-background p-2 rounded-[var(--control-radius)]">
           <option value="">Année active</option>{(data?.available_years || []).map((year: any) => <option key={year.id} value={year.id}>{year.label}</option>)}
@@ -324,11 +324,11 @@ export default function StudentGrades() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-[#001A4B] dark:text-white flex items-center gap-2.5 erp-page-title">
+            <h1 className="text-[#1a3673] dark:text-white flex items-center gap-2.5 erp-page-title">
               <Award className="w-7 h-7 text-amber-500" /> Performance Académique & Décisions LMD
             </h1>
           </div>
-          <p className="text-xs sm:text-sm text-muted-foreground dark:text-muted-foreground mt-1">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             Régime LMD ENCG Fès • Seuil de validation V ≥ 10.00/20 • Seuil éliminatoire &lt; 6.00/20
           </p>
         </div>
@@ -336,7 +336,7 @@ export default function StudentGrades() {
         {/* Privacy Eye Toggle */}
         <button
           onClick={() => setIsRevealed(!isRevealed)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border border-border dark:border-border bg-card dark:bg-card shadow-xs hover:bg-muted/50 dark:hover:bg-slate-800/60 text-xs font-bold text-slate-700 dark:text-foreground transition-all cursor-pointer self-start md:self-auto"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border border-border bg-card shadow-xs hover:bg-muted/50 dark:hover:bg-slate-800/60 text-xs font-bold text-slate-700 dark:text-foreground transition-all cursor-pointer self-start md:self-auto"
           title={isRevealed ? "Masquer les notes pour confidentialité" : "Afficher toutes mes notes"}
         >
           {isRevealed ? <EyeOff className="w-4 h-4 text-slate-400" /> : <Eye className="w-4 h-4 text-primary" />}
@@ -345,7 +345,7 @@ export default function StudentGrades() {
       </div>
       
       {/* ── Executive Hero Banner (ENCG Royal Navy) ── */}
-      <div className="bg-gradient-to-br from-[#001A4B] via-[#082663] to-[#04122d] rounded-2xl p-6 sm:p-9 text-white shadow-sm border border-white/10 relative overflow-hidden flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+      <div className="bg-gradient-to-br from-[#1a3673] via-[#082663] to-[#04122d] rounded-2xl p-6 sm:p-9 text-white shadow-sm border border-white/10 relative overflow-hidden flex flex-col lg:flex-row lg:items-center justify-between gap-8">
         {/* Subtle Ambient Glows */}
         <div className="absolute top-0 right-0 w-[450px] h-[450px] bg-blue-500/15 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
         <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -377,9 +377,9 @@ export default function StudentGrades() {
             <button
               data-testid="lmd-simulator"
               onClick={() => setSimulatorModalOpen(true)}
-              className="bg-amber-400 hover:bg-amber-300 text-[#001A4B] px-4 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center gap-2 transition-all cursor-pointer active:scale-95"
+              className="bg-amber-400 hover:bg-amber-300 text-[#1a3673] px-4 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center gap-2 transition-all cursor-pointer active:scale-95"
             >
-              <FlaskConical className="w-4 h-4 text-[#001A4B]" /> Simulateur LMD & IA
+              <FlaskConical className="w-4 h-4 text-[#1a3673]" /> Simulateur LMD & IA
             </button>
 
             <button 
@@ -475,7 +475,7 @@ export default function StudentGrades() {
       {/* ── 4 Executive KPI Metric Cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Moyenne & Mention */}
-        <div className="bg-card dark:bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
+        <div className="bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">
               {activeSemSummary ? `Moyenne ${activeSemSummary.semester}` : 'Moyenne Globale'}
@@ -485,13 +485,13 @@ export default function StudentGrades() {
             </div>
           </div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl sm:text-3xl font-bold text-[#001A4B] dark:text-white">
+            <span className="text-2xl sm:text-3xl font-bold text-[#1a3673] dark:text-white">
               {isRevealed ? (displayAvg !== null ? displayAvg.toFixed(2) : '—') : '••••'}
             </span>
             <span className="text-xs font-bold text-slate-400">/ 20</span>
           </div>
-          <div className="flex items-center justify-between text-xs pt-1 border-t border-border dark:border-border">
-            <span className="font-bold text-muted-foreground dark:text-muted-foreground">Mention officielle :</span>
+          <div className="flex items-center justify-between text-xs pt-1 border-t border-border">
+            <span className="font-bold text-muted-foreground">Mention officielle :</span>
             <span className="font-bold text-emerald-600 dark:text-emerald-400">
               {displayAvg !== null && displayAvg >= 10 ? displayDecision : '—'}
             </span>
@@ -499,7 +499,7 @@ export default function StudentGrades() {
         </div>
 
         {/* Card 2: Taux de Réussite */}
-        <div className="bg-card dark:bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
+        <div className="bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Taux de Réussite</span>
             <div className="w-8 h-8 rounded-xl bg-primary/5 dark:bg-blue-950/50 text-primary flex items-center justify-center">
@@ -512,7 +512,7 @@ export default function StudentGrades() {
             </span>
             <span className="text-xs font-bold text-slate-400">({displayValidatedModules}/{displayTotalModules} validés)</span>
           </div>
-          <div className="space-y-1 pt-1 border-t border-border dark:border-border">
+          <div className="space-y-1 pt-1 border-t border-border">
             <div className="w-full bg-muted dark:bg-card rounded-full h-1.5 overflow-hidden">
               <div 
                 className="bg-primary h-full rounded-full transition-all duration-500"
@@ -527,7 +527,7 @@ export default function StudentGrades() {
         </div>
 
         {/* Card 3: Modules Validés */}
-        <div className="bg-card dark:bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
+        <div className="bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Statut des Modules</span>
             <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 flex items-center justify-center">
@@ -540,7 +540,7 @@ export default function StudentGrades() {
             </span>
             <span className="text-xs font-bold text-slate-400">/ {displayTotalModules} Validés</span>
           </div>
-          <div className="flex items-center justify-between text-xs pt-1 border-t border-border dark:border-border">
+          <div className="flex items-center justify-between text-xs pt-1 border-t border-border">
             <span className="text-muted-foreground font-bold">Rattrapage :</span>
             <span className={cn("font-bold px-2 py-0.5 rounded-full text-[10px]", displayRetakeModules > 0 ? "bg-amber-100 text-amber-800" : "bg-emerald-50 text-emerald-700")}>
               {displayRetakeModules > 0 ? `${displayRetakeModules} à repasser` : '0 module'}
@@ -549,7 +549,7 @@ export default function StudentGrades() {
         </div>
 
         {/* Card 4: Statut Délibération & Jury */}
-        <div className="bg-card dark:bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
+        <div className="bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">
               {activeSemSummary?.is_archived ? 'Archivage Académique' : 'Jury & Délibération'}
@@ -564,7 +564,7 @@ export default function StudentGrades() {
             </div>
           </div>
           <div>
-            <span className="text-lg font-bold text-[#001A4B] dark:text-white block">
+            <span className="text-lg font-bold text-[#1a3673] dark:text-white block">
               {activeSemSummary 
                 ? (activeSemSummary.is_archived ? 'Semestre Archivé' : 'Évaluation en Cours')
                 : 'Cursus S1 ➔ S5'}
@@ -575,7 +575,7 @@ export default function StudentGrades() {
                 : 'Cycle Normal ENCG Fès'}
             </span>
           </div>
-          <div className="flex items-center justify-between text-xs pt-1 border-t border-border dark:border-border">
+          <div className="flex items-center justify-between text-xs pt-1 border-t border-border">
             <span className="text-muted-foreground font-bold">Statut légal :</span>
             {activeSemSummary?.is_archived ? (
               <span className="inline-flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400 text-[11px]">
@@ -592,14 +592,14 @@ export default function StudentGrades() {
 
       {/* ── Academic Cursus Progression Pipeline (S1 to S5) ── */}
       {semestersSummary.length > 0 && (
-        <div className="bg-card dark:bg-card rounded-2xl p-6 border border-slate-200/80 dark:border-border shadow-xs space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border dark:border-border">
+        <div className="bg-card rounded-2xl p-6 border border-slate-200/80 dark:border-border shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-2xl bg-primary/5 dark:bg-blue-950/50 text-primary flex items-center justify-center">
                 <Layers className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-[#001A4B] dark:text-white">
+                <h3 className="text-sm font-bold text-[#1a3673] dark:text-white">
                   Historique Académique & Cursus LMD (S1 ➔ {currentSemesterCode})
                 </h3>
                 <p className="text-[11px] text-slate-400 font-medium">
@@ -626,14 +626,14 @@ export default function StudentGrades() {
                   className={cn(
                     "p-3.5 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden group",
                     isSelected
-                      ? "bg-[#001A4B] text-white border-[#001A4B] shadow-md ring-2 ring-blue-500/30"
+                      ? "bg-[#1a3673] text-white border-[#1a3673] shadow-md ring-2 ring-blue-500/30"
                       : "bg-muted/50 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700/60 hover:bg-muted dark:hover:bg-slate-800 hover:border-slate-300"
                   )}
                 >
                   <div className="flex items-center justify-between mb-1.5">
                     <span className={cn(
                       "text-xs font-bold",
-                      isSelected ? "text-white" : "text-[#001A4B] dark:text-white"
+                      isSelected ? "text-white" : "text-[#1a3673] dark:text-white"
                     )}>
                       {s.semester}
                     </span>
@@ -647,7 +647,7 @@ export default function StudentGrades() {
                     ) : (
                       <span className={cn(
                         "text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1",
-                        isSelected ? "bg-emerald-400 text-[#001A4B]" : "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                        isSelected ? "bg-emerald-400 text-[#1a3673]" : "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
                       )}>
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Actif
                       </span>
@@ -689,7 +689,7 @@ export default function StudentGrades() {
 
       {/* AI Judge Result Box (if evaluated) */}
       {judge && (
-        <div data-testid="lmd-judge-result" className="bg-card dark:bg-card rounded-2xl p-6 sm:p-7 border border-primary/20 dark:border-primary shadow-sm space-y-2 animate-in fade-in">
+        <div data-testid="lmd-judge-result" className="bg-card rounded-2xl p-6 sm:p-7 border border-primary/20 dark:border-primary shadow-sm space-y-2 animate-in fade-in">
           <div className="flex items-center justify-between">
             <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary/5 dark:bg-indigo-950 text-primary dark:text-indigo-300 border border-primary/20 flex items-center gap-1.5">
               <Sparkles className="w-3 h-3 text-primary" /> Verdict Officiel du Moteur LMD
@@ -701,7 +701,7 @@ export default function StudentGrades() {
               Fermer
             </button>
           </div>
-          <h3 className="text-xl font-bold text-[#001A4B] dark:text-white">{judge.verdict}</h3>
+          <h3 className="text-xl font-bold text-[#1a3673] dark:text-white">{judge.verdict}</h3>
           <p className="text-xs text-muted-foreground dark:text-foreground leading-relaxed font-medium">
             {isRtl ? judge.explanation_ar : judge.explanation_fr}
           </p>
@@ -709,11 +709,11 @@ export default function StudentGrades() {
       )}
 
       {/* ── Main Grades Content Container ── */}
-      <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 shadow-xs border border-slate-200/80 dark:border-border space-y-6">
+      <div className="bg-card rounded-2xl p-6 sm:p-8 shadow-xs border border-slate-200/80 dark:border-border space-y-6">
         {/* Controls: Title + Search & Filter */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-border dark:border-border">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-border">
           <div>
-            <h2 className="text-lg font-bold text-[#001A4B] dark:text-white flex items-center gap-2.5">
+            <h2 className="text-lg font-bold text-[#1a3673] dark:text-white flex items-center gap-2.5">
               <BookOpen className="w-5 h-5 text-primary" /> Détail des Modules & Éléments Pédagogiques
             </h2>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -731,7 +731,7 @@ export default function StudentGrades() {
                 placeholder="Rechercher un module..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-xs font-bold border border-border dark:border-border bg-muted/50 dark:bg-card text-foreground dark:text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#001A4B] rounded-[var(--control-radius)]"
+                className="w-full pl-9 pr-3 py-2 text-xs font-bold border border-border bg-muted/50 dark:bg-card text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#1a3673] rounded-[var(--control-radius)]"
               />
               {searchQuery && (
                 <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-muted-foreground">
@@ -744,7 +744,7 @@ export default function StudentGrades() {
             <select
               value={statusFilter}
               onChange={(e: any) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 text-xs font-bold border border-border dark:border-border bg-muted/50 dark:bg-card text-slate-700 dark:text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#001A4B] rounded-[var(--control-radius)]"
+              className="px-3 py-2 text-xs font-bold border border-border bg-muted/50 dark:bg-card text-slate-700 dark:text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#1a3673] rounded-[var(--control-radius)]"
             >
               <option value="all">Tous les statuts</option>
               <option value="validated">Validés (≥ 10/20)</option>
@@ -762,7 +762,7 @@ export default function StudentGrades() {
             className={cn(
               "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer",
               selectedSemester === 'all'
-                ? "bg-[#001A4B] text-white shadow-sm"
+                ? "bg-[#1a3673] text-white shadow-sm"
                 : "bg-muted dark:bg-card text-muted-foreground dark:text-foreground hover:bg-slate-200 dark:hover:bg-slate-700"
             )}
           >
@@ -780,7 +780,7 @@ export default function StudentGrades() {
                 className={cn(
                   "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2",
                   selectedSemester.toUpperCase() === semCode
-                    ? "bg-[#001A4B] text-white shadow-sm"
+                    ? "bg-[#1a3673] text-white shadow-sm"
                     : "bg-muted dark:bg-card text-muted-foreground dark:text-foreground hover:bg-slate-200 dark:hover:bg-slate-700"
                 )}
               >
@@ -798,7 +798,7 @@ export default function StudentGrades() {
                   <span className={cn(
                     "text-[9px] px-1.5 py-0.2 rounded-full font-bold flex items-center gap-1",
                     selectedSemester.toUpperCase() === semCode 
-                      ? "bg-emerald-400 text-[#001A4B]" 
+                      ? "bg-emerald-400 text-[#1a3673]" 
                       : "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
                   )}>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> En cours
@@ -817,7 +817,7 @@ export default function StudentGrades() {
 
         {/* Contextual Archive Banner when an archived semester is selected */}
         {activeSemSummary?.is_archived && (
-          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-[#001A4B] text-white rounded-2xl p-4 sm:p-5 border border-slate-700/80 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-[#1a3673] text-white rounded-2xl p-4 sm:p-5 border border-slate-700/80 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-start sm:items-center gap-3.5">
               <div className="w-11 h-11 rounded-2xl bg-white/10 flex items-center justify-center shrink-0 border border-white/10">
                 <Archive className="w-5 h-5 text-amber-400" />
@@ -865,7 +865,7 @@ export default function StudentGrades() {
         <div className="overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-border">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="bg-slate-50/80 dark:bg-slate-800/60 text-[10px] font-bold text-muted-foreground dark:text-muted-foreground uppercase tracking-wider border-b border-border dark:border-border">
+              <tr className="bg-slate-50/80 dark:bg-slate-800/60 text-[10px] font-bold text-muted-foreground uppercase tracking-wider border-b border-border">
                 <th className="py-3.5 pl-4 pr-3">Élément de Module</th>
                 <th className="py-3.5 px-3 text-center">CC 1 (25%)</th>
                 <th className="py-3.5 px-3 text-center">CC 2 (25%)</th>
@@ -876,7 +876,7 @@ export default function StudentGrades() {
                 <th className="py-3.5 pr-4 pl-3 text-right">Recours 48h</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-card dark:bg-card">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 bg-card">
               {filteredGrades.map((grade: any, idx: number) => {
                 const total = grade.moyenne_finale !== null && grade.moyenne_finale !== undefined 
                   ? Number(grade.moyenne_finale) 
@@ -904,7 +904,7 @@ export default function StudentGrades() {
                           {grade.semester_number || grade.semester || 'S5'}
                         </span>
                         {grade.is_archived ? (
-                          <span className="text-[9px] font-bold text-muted-foreground dark:text-muted-foreground bg-muted dark:bg-card border border-border dark:border-slate-700/60 px-1.5 py-0.2 rounded-md flex items-center gap-1">
+                          <span className="text-[9px] font-bold text-muted-foreground bg-muted dark:bg-card border border-border dark:border-slate-700/60 px-1.5 py-0.2 rounded-md flex items-center gap-1">
                             <Archive className="w-2.5 h-2.5" /> {grade.academic_year || 'Archivé'}
                           </span>
                         ) : (
@@ -993,7 +993,7 @@ export default function StudentGrades() {
                     <td className="py-3.5 pr-4 pl-3 text-right">
                       {grade.is_archived ? (
                         <span 
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-muted dark:bg-slate-800/80 text-muted-foreground dark:text-muted-foreground border border-border dark:border-slate-700/60 text-[11px] font-bold"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-muted dark:bg-slate-800/80 text-muted-foreground border border-border dark:border-slate-700/60 text-[11px] font-bold"
                           title="Semestre archivé : PV de délibération officiel scellé, aucun recours possible"
                         >
                           <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> PV Clôturé
@@ -1040,7 +1040,7 @@ export default function StudentGrades() {
         </div>
 
         {/* ── Official LMD Pedagogical Rules Footer ── */}
-        <div className="pt-4 border-t border-border dark:border-border flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="pt-4 border-t border-border flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <LmdLegend />
           <div className="text-[11px] text-slate-400 flex items-center gap-2">
             <Info className="w-3.5 h-3.5 text-primary shrink-0" />
@@ -1051,9 +1051,9 @@ export default function StudentGrades() {
 
       {/* ── Active Appeals Section (Guichet LMD 48h) ── */}
       {appealsList.length > 0 && (
-        <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 shadow-xs border border-slate-200/80 dark:border-border space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-border dark:border-border">
-            <h2 className="text-lg font-bold text-[#001A4B] dark:text-white flex items-center gap-2">
+        <div className="bg-card rounded-2xl p-6 sm:p-8 shadow-xs border border-slate-200/80 dark:border-border space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-border">
+            <h2 className="text-lg font-bold text-[#1a3673] dark:text-white flex items-center gap-2">
               <Scale className="w-5 h-5 text-amber-600" /> Suivi de mes Réclamations de Notes (Guichet LMD 48h)
             </h2>
             <span className="px-3 py-1 bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 rounded-full text-xs font-bold">
@@ -1089,8 +1089,8 @@ export default function StudentGrades() {
                 </p>
 
                 {appeal.resolution_notes && (
-                  <div className="p-3 rounded-xl bg-card dark:bg-card border border-border dark:border-border text-xs text-slate-700 dark:text-foreground">
-                    <span className="font-bold text-[#001A4B] dark:text-blue-300">Avis du Professeur Responsable :</span> {appeal.resolution_notes}
+                  <div className="p-3 rounded-xl bg-card border border-border text-xs text-slate-700 dark:text-foreground">
+                    <span className="font-bold text-[#1a3673] dark:text-blue-300">Avis du Professeur Responsable :</span> {appeal.resolution_notes}
                   </div>
                 )}
               </div>
@@ -1113,8 +1113,8 @@ export default function StudentGrades() {
       {/* ── Grade Appeal Modal (Guichet 48h) ── */}
       {appealModalOpen && selectedModuleForAppeal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-sm border border-border dark:border-border space-y-5">
-            <div className="flex items-center justify-between pb-3 border-b border-border dark:border-border">
+          <div className="bg-card rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-sm border border-border space-y-5">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
               <div className="flex items-center gap-2 text-amber-600">
                 <Scale className="w-5 h-5" />
                 <h3 className="text-base font-bold text-foreground dark:text-white">Déposer un Recours de Note (48h)</h3>
@@ -1140,7 +1140,7 @@ export default function StudentGrades() {
               <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Module concerné</span>
               <p className="font-bold text-sm text-foreground dark:text-white">{cleanMojibake(selectedModuleForAppeal.module_name || selectedModuleForAppeal.module?.name)}</p>
               <p className="text-xs font-mono text-muted-foreground">
-                Note actuelle enregistrée : <strong className="text-foreground dark:text-foreground">{selectedTarget ? Number(selectedTarget.value).toFixed(2) : '—'} / 20</strong>
+                Note actuelle enregistrée : <strong className="text-foreground">{selectedTarget ? Number(selectedTarget.value).toFixed(2) : '—'} / 20</strong>
               </p>
             </div>
 
@@ -1156,7 +1156,7 @@ export default function StudentGrades() {
                 <select
                   value={appealReasonType}
                   onChange={(e) => setAppealReasonType(e.target.value)}
-                  className="w-full px-3 py-2.5 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs font-bold text-foreground dark:text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#001A4B] rounded-[var(--control-radius)]"
+                  className="w-full px-3 py-2.5 border border-border bg-muted/50 dark:bg-card text-xs font-bold text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#1a3673] rounded-[var(--control-radius)]"
                 >
                   <option value="erreur_materielle">Erreur matérielle de sommation des points sur l'épreuve</option>
                   <option value="oubli_cc">Omission ou erreur de report de la note de Contrôle Continu (CC)</option>
@@ -1173,7 +1173,7 @@ export default function StudentGrades() {
                   placeholder="Précisez la question ou la copie concernée (ex : Exercice 3 non comptabilisé sur 4 points)..."
                   value={appealReasonDetails}
                   onChange={(e) => setAppealReasonDetails(e.target.value)}
-                  className="w-full p-3 border border-border dark:border-border bg-muted/50 dark:bg-card text-xs text-foreground dark:text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#001A4B] rounded-[var(--control-radius)]"
+                  className="w-full p-3 border border-border bg-muted/50 dark:bg-card text-xs text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#1a3673] rounded-[var(--control-radius)]"
                 />
               </div>
 
@@ -1188,7 +1188,7 @@ export default function StudentGrades() {
                 <button
                   type="submit"
                   disabled={submittingAppeal}
-                  className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#001A4B] hover:bg-[#082663] text-white shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[#1a3673] hover:bg-[#082663] text-white shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   <Send className="w-3.5 h-3.5" /> {submittingAppeal ? 'Transmission...' : 'Soumettre le Recours'}
                 </button>

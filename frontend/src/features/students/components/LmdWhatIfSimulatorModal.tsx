@@ -238,9 +238,9 @@ export default function LmdWhatIfSimulatorModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-      <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-7 max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-lg border border-border dark:border-border space-y-5">
+      <div className="bg-card rounded-2xl p-6 sm:p-7 max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-lg border border-border space-y-5">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-border dark:border-border">
+        <div className="flex items-center justify-between pb-3 border-b border-border">
           <div className="flex items-center gap-2.5 text-primary">
             <div className="p-2 rounded-xl bg-primary/10 text-primary">
               <FlaskConical className="w-5 h-5" />
@@ -270,7 +270,7 @@ export default function LmdWhatIfSimulatorModal({
             className={cn(
               'flex-1 py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer',
               activeTab === 'semester'
-                ? 'bg-card dark:bg-slate-900 text-[#001A4B] dark:text-white shadow-xs'
+                ? 'bg-card text-[#1a3673] dark:text-white shadow-xs'
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
@@ -283,7 +283,7 @@ export default function LmdWhatIfSimulatorModal({
             className={cn(
               'flex-1 py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer',
               activeTab === 'module'
-                ? 'bg-card dark:bg-slate-900 text-[#001A4B] dark:text-white shadow-xs'
+                ? 'bg-card text-[#1a3673] dark:text-white shadow-xs'
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
@@ -377,7 +377,7 @@ export default function LmdWhatIfSimulatorModal({
                     className={cn(
                       'px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer border',
                       targetGpa === opt.value
-                        ? 'bg-[#001A4B] text-white border-[#001A4B]'
+                        ? 'bg-[#1a3673] text-white border-[#1a3673]'
                         : 'bg-card text-muted-foreground border-border hover:text-foreground'
                     )}
                   >
@@ -445,7 +445,7 @@ export default function LmdWhatIfSimulatorModal({
                         step="0.25"
                         value={mod.simulatedGrade}
                         onChange={(e) => handleUpdateModuleGrade(mod.id, parseFloat(e.target.value))}
-                        className="w-28 sm:w-36 accent-[#001A4B] cursor-pointer"
+                        className="w-28 sm:w-36 accent-[#1a3673] cursor-pointer"
                       />
                       <input
                         type="number"
@@ -485,7 +485,7 @@ export default function LmdWhatIfSimulatorModal({
                     type="button"
                     onClick={handleVerifyWithOfficialEngine}
                     disabled={serverSimLoading}
-                    className="text-[11px] font-bold text-[#001A4B] dark:text-amber-200 underline cursor-pointer disabled:opacity-50"
+                    className="text-[11px] font-bold text-[#1a3673] dark:text-amber-200 underline cursor-pointer disabled:opacity-50"
                   >
                     {serverSimLoading ? 'Calcul officiel...' : 'Certifier avec le moteur serveur'}
                   </button>
@@ -494,7 +494,7 @@ export default function LmdWhatIfSimulatorModal({
                   {displayedRescuePlan.map((item: any, i: number) => (
                     <div
                       key={i}
-                      className="p-2.5 rounded-xl bg-card dark:bg-slate-900 border border-amber-200/80 dark:border-amber-900/60 text-xs space-y-1"
+                      className="p-2.5 rounded-xl bg-card border border-amber-200/80 dark:border-amber-900/60 text-xs space-y-1"
                     >
                       <div className="flex items-center justify-between font-bold text-foreground">
                         <span className="truncate">{item.name}</span>
@@ -546,7 +546,7 @@ export default function LmdWhatIfSimulatorModal({
                   step="0.25"
                   value={simCc1}
                   onChange={(e) => setSimCc1(e.target.value)}
-                  className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-sm font-bold rounded-[var(--control-radius)]"
+                  className="w-full px-3 py-2 border border-border bg-card text-sm font-bold rounded-[var(--control-radius)]"
                 />
               </div>
               <div>
@@ -560,7 +560,7 @@ export default function LmdWhatIfSimulatorModal({
                   step="0.25"
                   value={simCc2}
                   onChange={(e) => setSimCc2(e.target.value)}
-                  className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-sm font-bold rounded-[var(--control-radius)]"
+                  className="w-full px-3 py-2 border border-border bg-card text-sm font-bold rounded-[var(--control-radius)]"
                 />
               </div>
               <div>
@@ -574,7 +574,7 @@ export default function LmdWhatIfSimulatorModal({
                   step="0.25"
                   value={simExam}
                   onChange={(e) => setSimExam(e.target.value)}
-                  className="w-full px-3 py-2 border border-border dark:border-border bg-card dark:bg-card text-sm font-bold rounded-[var(--control-radius)]"
+                  className="w-full px-3 py-2 border border-border bg-card text-sm font-bold rounded-[var(--control-radius)]"
                 />
               </div>
             </div>
@@ -629,7 +629,7 @@ export default function LmdWhatIfSimulatorModal({
               onClose();
             }}
             disabled={judgeLoading}
-            className="w-full py-3 rounded-2xl bg-[#001A4B] hover:bg-[#082663] text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
+            className="w-full py-3 rounded-2xl bg-[#1a3673] hover:bg-[#082663] text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer transition-all disabled:opacity-50"
           >
             <Sparkles className="w-4 h-4 text-amber-300" />
             {judgeLoading

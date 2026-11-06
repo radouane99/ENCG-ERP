@@ -489,7 +489,7 @@ const { data: dbIncidentsData } = useQuery({
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
     ctx.lineTo(clientX - rect.left, clientY - rect.top)
-    ctx.strokeStyle = '#0f2863'
+    ctx.strokeStyle = '#1a3673'
     ctx.lineWidth = 2.5
     ctx.lineCap = 'round'
     ctx.stroke()
@@ -648,9 +648,9 @@ const { data: dbIncidentsData } = useQuery({
           <button
             type="button"
             onClick={() => navigate(isProfessorView ? '/professor/proctoring' : '/admin/exams')}
-            className="px-4 py-2.5 bg-card dark:bg-card hover:bg-muted/50 dark:hover:bg-slate-800 text-foreground dark:text-white border border-border dark:border-border rounded-2xl text-xs font-bold transition-all shadow-xs hover:shadow-md flex items-center gap-2 cursor-pointer group"
+            className="px-4 py-2.5 bg-card hover:bg-muted/50 dark:hover:bg-slate-800 text-foreground dark:text-white border border-border rounded-2xl text-xs font-bold transition-all shadow-xs hover:shadow-md flex items-center gap-2 cursor-pointer group"
           >
-            <ArrowLeft className="w-4 h-4 text-[#0f2863] dark:text-sky-400 group-hover:-translate-x-1 transition-transform" />
+            <ArrowLeft className="w-4 h-4 text-[#1a3673] dark:text-sky-400 group-hover:-translate-x-1 transition-transform" />
             {isProfessorView ? 'Retour à Mes Convocations de Surveillance' : 'Retour à la Gestion des Examens'}
           </button>
         </div>
@@ -800,7 +800,7 @@ const { data: dbIncidentsData } = useQuery({
         )}
 
         {/* Collaborative Dual Surveillance Live Sync Banner */}
-        <div className="bg-gradient-to-r from-blue-900/40 via-indigo-900/30 to-[#0f2863]/40 border border-sky-400/30 backdrop-blur-md rounded-2xl p-4 text-white shadow-lg space-y-3">
+        <div className="bg-gradient-to-r from-blue-900/40 via-indigo-900/30 to-[#1a3673]/40 border border-sky-400/30 backdrop-blur-md rounded-2xl p-4 text-white shadow-lg space-y-3">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-white/10 pb-3">
             <div className="flex items-center gap-2.5">
               <span className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse shadow-sm shadow-emerald-400" />
@@ -939,7 +939,7 @@ const { data: dbIncidentsData } = useQuery({
         </div>
 
         {/* ⚡ SAISIE RAPIDE & BATCH OPERATIONS TOOLBAR */}
-        <div className="bg-card dark:bg-card border border-border dark:border-border p-4 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="bg-card border border-border p-4 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
               <Zap className="w-4 h-4 text-amber-500 animate-bounce" /> Saisie Rapide (1-Clic) :
@@ -969,7 +969,7 @@ const { data: dbIncidentsData } = useQuery({
               onClick={() => setViewMode('list')}
               className={cn(
                 "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5",
-                viewMode === 'list' ? "bg-card dark:bg-card text-foreground dark:text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                viewMode === 'list' ? "bg-card text-foreground dark:text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <List className="w-4 h-4" /> Vue Tableau Liste
@@ -979,7 +979,7 @@ const { data: dbIncidentsData } = useQuery({
               onClick={() => setViewMode('grid')}
               className={cn(
                 "px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5",
-                viewMode === 'grid' ? "bg-card dark:bg-card text-[#0f2863] dark:text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
+                viewMode === 'grid' ? "bg-card text-[#1a3673] dark:text-white shadow-xs" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Grid className="w-4 h-4 text-primary" /> 🗺️ Plan de Salle (Grille)
@@ -989,7 +989,7 @@ const { data: dbIncidentsData } = useQuery({
 
         {/* KPI Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="bg-card dark:bg-card border border-border dark:border-border p-5 rounded-2xl shadow-sm">
+          <div className="bg-card border border-border p-5 rounded-2xl shadow-sm">
             <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">Effectif Attendu</span>
             <div className="text-2xl font-bold text-foreground dark:text-white mt-1">
               {totalCount} <span className="text-xs font-bold text-slate-400">Étudiants</span>
@@ -1026,10 +1026,10 @@ const { data: dbIncidentsData } = useQuery({
         </div>
 
         {/* Main Content Area */}
-        <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-sm space-y-6">
+        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-6">
 
           {/* Toolbar & Filters */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border dark:border-border pb-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4">
             <div className="relative flex-1 max-w-md">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
               <input
@@ -1037,7 +1037,7 @@ const { data: dbIncidentsData } = useQuery({
                 placeholder="Rechercher par nom ou CNE/Apogée..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-medium text-foreground dark:text-white outline-none focus:ring-2 focus:ring-[#0f2863] rounded-[var(--control-radius)]"
+                className="w-full pl-10 pr-4 py-2 bg-muted/50 dark:bg-card border border-border text-xs font-medium text-foreground dark:text-white outline-none focus:ring-2 focus:ring-[#1a3673] rounded-[var(--control-radius)]"
               />
             </div>
 
@@ -1056,8 +1056,8 @@ const { data: dbIncidentsData } = useQuery({
                   className={cn(
                     "px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer",
                     statusFilter === f.id
-                      ? "bg-[#0f2863] text-white shadow-md"
-                      : "bg-muted dark:bg-card text-muted-foreground dark:text-muted-foreground hover:text-foreground"
+                      ? "bg-[#1a3673] text-white shadow-md"
+                      : "bg-muted dark:bg-card text-muted-foreground hover:text-foreground"
                   )}
                 >
                   {f.label}
@@ -1071,12 +1071,12 @@ const { data: dbIncidentsData } = useQuery({
             <div className="overflow-x-auto">
               {isLoadingDetails && candidates.length === 0 ? (
                 <div className="flex justify-center items-center py-12 text-slate-400 text-xs font-bold">
-                  <Spinner className="w-6 h-6 mr-2 text-[#0f2863]" /> Chargement des données de la base de données...
+                  <Spinner className="w-6 h-6 mr-2 text-[#1a3673]" /> Chargement des données de la base de données...
                 </div>
               ) : (
                 <table className="w-full text-xs text-left border-collapse">
                   <thead>
-                    <tr className="bg-muted/50 dark:bg-slate-800/60 text-muted-foreground dark:text-muted-foreground uppercase tracking-wider font-bold text-[10px]">
+                    <tr className="bg-muted/50 dark:bg-slate-800/60 text-muted-foreground uppercase tracking-wider font-bold text-[10px]">
                       <th className="p-3 w-14 text-center">N° Place</th>
                       <th className="p-3">CNE / Apogée</th>
                       <th className="p-3">Nom & Prénom</th>
@@ -1092,7 +1092,7 @@ const { data: dbIncidentsData } = useQuery({
                         <td className="p-3 text-center font-bold text-foreground dark:text-white bg-slate-50/80 dark:bg-slate-800/50 rounded-l-xl">
                           {student.seat_number}
                         </td>
-                        <td className="p-3 font-mono font-medium text-muted-foreground dark:text-muted-foreground">
+                        <td className="p-3 font-mono font-medium text-muted-foreground">
                           {student.cne}
                         </td>
                         <td className="p-3 font-bold text-foreground dark:text-white">
@@ -1212,7 +1212,7 @@ const { data: dbIncidentsData } = useQuery({
                     )}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="px-2 py-0.5 bg-white/80 dark:bg-card text-foreground dark:text-white rounded-md text-[10px] font-bold border border-border dark:border-border">
+                      <span className="px-2 py-0.5 bg-white/80 dark:bg-card text-foreground dark:text-white rounded-md text-[10px] font-bold border border-border">
                         {student.seat_number}
                       </span>
                       <span className={cn(
@@ -1264,7 +1264,7 @@ const { data: dbIncidentsData } = useQuery({
 
             <div className="space-y-3">
               {incidentsList.map((inc) => (
-                <div key={inc.id} className="p-4 bg-card dark:bg-card border border-rose-200 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
+                <div key={inc.id} className="p-4 bg-card border border-rose-200 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-foreground dark:text-white">{inc.student_name}</span>
@@ -1290,8 +1290,8 @@ const { data: dbIncidentsData } = useQuery({
 
         {/* Dual Signatures Official Status Banner */}
         {(principalSignatureUrl || secondarySignatureUrl) && (
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 shadow-sm space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border dark:border-border pb-3 gap-2">
+          <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border pb-3 gap-2">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-primary/5 text-primary dark:bg-indigo-950 dark:text-indigo-300 flex items-center justify-center font-bold">
                   ✍️
@@ -1354,7 +1354,7 @@ const { data: dbIncidentsData } = useQuery({
 
                 <div className="shrink-0 text-right">
                   {principalSignatureUrl ? (
-                    <div className="bg-card dark:bg-card p-2 rounded-xl border border-emerald-300 shadow-xs">
+                    <div className="bg-card p-2 rounded-xl border border-emerald-300 shadow-xs">
                       {principalSignatureUrl.startsWith('data:image') ? (
                         <img src={principalSignatureUrl} alt={`Signature ${principalSupervisorName}`} className="h-10 max-w-[130px] object-contain" />
                       ) : (
@@ -1368,7 +1368,7 @@ const { data: dbIncidentsData } = useQuery({
                         setSigningSupervisorRole('principal')
                         setShowSignatureModal(true)
                       }}
-                      className="px-3.5 py-2 bg-[#0f2863] hover:bg-[#1a387e] text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-all cursor-pointer"
+                      className="px-3.5 py-2 bg-[#1a3673] hover:bg-[#1a387e] text-white rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-all cursor-pointer"
                     >
                       ✍️ Signer mon PV
                     </button>
@@ -1383,7 +1383,7 @@ const { data: dbIncidentsData } = useQuery({
                 "p-4 rounded-2xl border transition-all flex items-center justify-between gap-4",
                 secondarySignatureUrl 
                   ? "bg-emerald-50/60 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/60" 
-                  : "bg-muted/50 dark:bg-slate-800/40 border-border dark:border-border"
+                  : "bg-muted/50 dark:bg-slate-800/40 border-border"
               )}>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -1410,7 +1410,7 @@ const { data: dbIncidentsData } = useQuery({
 
                 <div className="shrink-0 text-right">
                   {secondarySignatureUrl ? (
-                    <div className="bg-card dark:bg-card p-2 rounded-xl border border-emerald-300 shadow-xs">
+                    <div className="bg-card p-2 rounded-xl border border-emerald-300 shadow-xs">
                       {secondarySignatureUrl.startsWith('data:image') ? (
                         <img src={secondarySignatureUrl} alt={`Signature ${secondarySupervisorName}`} className="h-10 max-w-[130px] object-contain" />
                       ) : (
@@ -1440,8 +1440,8 @@ const { data: dbIncidentsData } = useQuery({
         {/* 📷 CAMERA LIVE QR SCANNER MODAL */}
         {showQrScanModal && (
           <div className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-            <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 max-w-md w-full shadow-sm space-y-5">
-              <div className="flex items-center justify-between border-b border-border dark:border-border pb-3">
+            <div className="bg-card border border-border rounded-2xl p-6 max-w-md w-full shadow-sm space-y-5">
+              <div className="flex items-center justify-between border-b border-border pb-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold">
                     <Camera className="w-5 h-5" />
@@ -1476,7 +1476,7 @@ const { data: dbIncidentsData } = useQuery({
                     value={scannedQrToken}
                     onChange={e => setScannedQrToken(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && handleProcessScanCode()}
-                    className="flex-1 px-3 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 rounded-[var(--control-radius)]"
+                    className="flex-1 px-3 py-2.5 bg-muted/50 dark:bg-card border border-border text-xs font-bold text-foreground dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 rounded-[var(--control-radius)]"
                   />
                   <Button onClick={handleProcessScanCode} className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold">
                     Valider
@@ -1490,8 +1490,8 @@ const { data: dbIncidentsData } = useQuery({
         {/* 📜 PRINTABLE OFFICIAL EXAM PV PREVIEW MODAL */}
         {showPvPreviewModal && (
           <div className="fixed inset-0 z-[9999] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in overflow-y-auto">
-            <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-8 max-w-3xl w-full shadow-sm space-y-6 my-8">
-              <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
+            <div className="bg-card border border-border rounded-2xl p-8 max-w-3xl w-full shadow-sm space-y-6 my-8">
+              <div className="flex items-center justify-between border-b border-border pb-4">
                 <h3 className="text-lg font-bold text-foreground dark:text-white">Aperçu du Procès-Verbal d'Examen Officiel</h3>
                 <button onClick={() => setShowPvPreviewModal(false)} className="p-2 text-slate-400 hover:text-muted-foreground rounded-xl">
                   <X className="w-5 h-5" />
@@ -1499,13 +1499,13 @@ const { data: dbIncidentsData } = useQuery({
               </div>
 
               {/* Official Document Preview Area */}
-              <div className="bg-muted/50 dark:bg-background p-6 rounded-2xl border border-border dark:border-border space-y-4 text-xs font-sans max-h-[75vh] overflow-y-auto">
+              <div className="bg-muted/50 dark:bg-background p-6 rounded-2xl border border-border space-y-4 text-xs font-sans max-h-[75vh] overflow-y-auto">
                 {/* Header ENCG */}
-                <div className="flex items-center justify-between border-b-2 border-[#0f2863] pb-4 bg-card dark:bg-card p-4 rounded-2xl">
+                <div className="flex items-center justify-between border-b-2 border-[#1a3673] pb-4 bg-card p-4 rounded-2xl">
                   <div className="flex items-center gap-3">
                     <img src="/logo-encg.png" alt="Logo ENCG Fès" className="h-12 w-auto object-contain" />
                     <div>
-                      <h2 className="font-bold text-[#0f2863] dark:text-sky-400 text-xs md:text-sm uppercase tracking-wide">
+                      <h2 className="font-bold text-[#1a3673] dark:text-sky-400 text-xs md:text-sm uppercase tracking-wide">
                         UNIVERSITÉ SIDI MOHAMED BEN ABDELLAH — ENCG FÈS
                       </h2>
                       <h3 className="font-bold text-foreground dark:text-white text-xs">
@@ -1516,13 +1516,13 @@ const { data: dbIncidentsData } = useQuery({
                       </p>
                     </div>
                   </div>
-                  <span className="px-3 py-1 bg-[#0f2863] text-white text-[10px] font-bold rounded-lg uppercase tracking-wider shrink-0 shadow-xs">
+                  <span className="px-3 py-1 bg-[#1a3673] text-white text-[10px] font-bold rounded-lg uppercase tracking-wider shrink-0 shadow-xs">
                     PV OFFICIEL CERTIFIÉ
                   </span>
                 </div>
 
                 {/* Exam Metadata Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 text-[11px] bg-card dark:bg-card p-4 rounded-2xl border border-border dark:border-border">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 text-[11px] bg-card p-4 rounded-2xl border border-border">
                   <div>
                     <span className="text-slate-400 uppercase text-[9px] font-bold block">Module</span>
                     <strong className="text-foreground dark:text-white">{examObj?.module?.name || '—'}</strong>
@@ -1544,7 +1544,7 @@ const { data: dbIncidentsData } = useQuery({
                   </div>
                   <div>
                     <span className="text-slate-400 uppercase text-[9px] font-bold block">Lieu de l'Épreuve</span>
-                    <strong className="text-[#0f2863] dark:text-sky-400">{examObj?.room?.name || '—'}</strong>
+                    <strong className="text-[#1a3673] dark:text-sky-400">{examObj?.room?.name || '—'}</strong>
                   </div>
                   <div>
                     <span className="text-slate-400 uppercase text-[9px] font-bold block">Surveillant Responsable</span>
@@ -1577,8 +1577,8 @@ const { data: dbIncidentsData } = useQuery({
                 </div>
 
                 {/* Compact Candidates Table */}
-                <div className="bg-card dark:bg-card rounded-2xl border border-border dark:border-border overflow-hidden">
-                  <div className="px-3.5 py-2 bg-muted dark:bg-card border-b border-border dark:border-border flex justify-between items-center">
+                <div className="bg-card rounded-2xl border border-border overflow-hidden">
+                  <div className="px-3.5 py-2 bg-muted dark:bg-card border-b border-border flex justify-between items-center">
                     <span className="font-bold text-[11px] text-foreground dark:text-white uppercase tracking-wider">
                       📋 Registre d'Émargement des Candidats ({candidates.length} Étudiants)
                     </span>
@@ -1599,7 +1599,7 @@ const { data: dbIncidentsData } = useQuery({
                         {candidates.map((c) => (
                           <tr key={c.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
                             <td className="p-2 text-center font-bold text-slate-700 dark:text-foreground">{c.seat_number}</td>
-                            <td className="p-2 font-mono text-muted-foreground dark:text-muted-foreground">{c.cne}</td>
+                            <td className="p-2 font-mono text-muted-foreground">{c.cne}</td>
                             <td className="p-2 font-bold text-foreground dark:text-white">{c.name}</td>
                             <td className="p-2 text-center">
                               {c.has_fraud ? (
@@ -1627,7 +1627,7 @@ const { data: dbIncidentsData } = useQuery({
                       <AlertTriangle className="w-4 h-4 text-rose-600" /> Registre Officiel des Incidents & Cas de Fraude ({incidentsList.length}) :
                     </div>
                     {incidentsList.map(i => (
-                      <div key={i.id} className="p-2 bg-card dark:bg-card text-rose-900 dark:text-rose-200 rounded-xl text-[10px] border border-rose-100 dark:border-rose-900 flex justify-between items-center">
+                      <div key={i.id} className="p-2 bg-card text-rose-900 dark:text-rose-200 rounded-xl text-[10px] border border-rose-100 dark:border-rose-900 flex justify-between items-center">
                         <div>
                           <strong>{i.student_name} ({i.cne})</strong> — {i.description}
                           {i.confiscated_items && <span className="text-muted-foreground block">Objets saisis : {i.confiscated_items}</span>}
@@ -1641,8 +1641,8 @@ const { data: dbIncidentsData } = useQuery({
                 {/* Dual Official Signatures & Verification Seal */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
                   {/* Surveillant Principal */}
-                  <div className="p-3.5 rounded-2xl bg-card dark:bg-card border border-border dark:border-border text-center space-y-1.5">
-                    <div className="text-[10px] font-bold uppercase text-[#0f2863] dark:text-sky-400">
+                  <div className="p-3.5 rounded-2xl bg-card border border-border text-center space-y-1.5">
+                    <div className="text-[10px] font-bold uppercase text-[#1a3673] dark:text-sky-400">
                       Surveillant Principal (Responsable)
                     </div>
                     <div className="font-bold text-xs text-foreground dark:text-white">
@@ -1677,7 +1677,7 @@ const { data: dbIncidentsData } = useQuery({
                               setShowPvPreviewModal(false);
                               setShowSignatureModal(true);
                             }}
-                            className="text-[10px] text-[#0f2863] dark:text-sky-400 font-bold hover:underline cursor-pointer"
+                            className="text-[10px] text-[#1a3673] dark:text-sky-400 font-bold hover:underline cursor-pointer"
                           >
                             ✍️ Signer maintenant
                           </button>
@@ -1687,8 +1687,8 @@ const { data: dbIncidentsData } = useQuery({
                   </div>
 
                   {/* Surveillant Secondaire */}
-                  <div className="p-3.5 rounded-2xl bg-card dark:bg-card border border-border dark:border-border text-center space-y-1.5">
-                    <div className="text-[10px] font-bold uppercase text-[#0f2863] dark:text-sky-400">
+                  <div className="p-3.5 rounded-2xl bg-card border border-border text-center space-y-1.5">
+                    <div className="text-[10px] font-bold uppercase text-[#1a3673] dark:text-sky-400">
                       Surveillant Secondaire (Salle)
                     </div>
                     <div className="font-bold text-xs text-foreground dark:text-white">
@@ -1724,7 +1724,7 @@ const { data: dbIncidentsData } = useQuery({
                               setShowPvPreviewModal(false);
                               setShowSignatureModal(true);
                             }}
-                            className="text-[10px] text-[#0f2863] dark:text-sky-400 font-bold hover:underline cursor-pointer"
+                            className="text-[10px] text-[#1a3673] dark:text-sky-400 font-bold hover:underline cursor-pointer"
                           >
                             ✍️ Signer maintenant
                           </button>
@@ -1735,7 +1735,7 @@ const { data: dbIncidentsData } = useQuery({
                 </div>
 
                 {/* Seal & QR Verification Footer */}
-                <div className="p-3 bg-card dark:bg-card rounded-2xl border border-border dark:border-border flex items-center justify-between text-[10px] text-muted-foreground">
+                <div className="p-3 bg-card rounded-2xl border border-border flex items-center justify-between text-[10px] text-muted-foreground">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4 text-emerald-600" />
                     <span>Empreinte SHA-256 : <strong className="font-mono text-slate-700 dark:text-foreground">{pvLockSeal || `SHA256:ENCG-FES-${id}-CONFIRMED`}</strong></span>
@@ -1751,7 +1751,7 @@ const { data: dbIncidentsData } = useQuery({
                       setShowPvPreviewModal(false);
                       setShowSignatureModal(true);
                     }}
-                    className="bg-amber-500 hover:bg-amber-600 text-[#001A4B] rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+                    className="bg-amber-500 hover:bg-amber-600 text-[#1a3673] rounded-xl font-bold text-xs flex items-center gap-1.5 cursor-pointer"
                   >
                     ✍️ Apposer ma Signature (Pad / Certificat)
                   </Button>
@@ -1766,7 +1766,7 @@ const { data: dbIncidentsData } = useQuery({
                   >
                     <AlertTriangle className="w-4 h-4" /> Télécharger PV de Fraude (PDF)
                   </Button>
-                  <Button onClick={handlePrintOfficialPV} className="bg-[#0f2863] hover:bg-[#163882] text-white rounded-xl font-bold text-xs flex items-center gap-2 shadow-md cursor-pointer">
+                  <Button onClick={handlePrintOfficialPV} className="bg-[#1a3673] hover:bg-[#163882] text-white rounded-xl font-bold text-xs flex items-center gap-2 shadow-md cursor-pointer">
                     <Printer className="w-4 h-4" /> Imprimer le PV Officiel A4 (PDF)
                   </Button>
                 </div>
@@ -1778,8 +1778,8 @@ const { data: dbIncidentsData } = useQuery({
         {/* Fraud Incident Modal */}
         {showFraudModal && selectedStudentForFraud && (
           <div className="fixed inset-0 z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-            <div className="bg-card dark:bg-card border border-rose-200 rounded-2xl p-6 max-w-lg w-full shadow-sm space-y-5">
-              <div className="flex items-center justify-between border-b border-border dark:border-border pb-4">
+            <div className="bg-card border border-rose-200 rounded-2xl p-6 max-w-lg w-full shadow-sm space-y-5">
+              <div className="flex items-center justify-between border-b border-border pb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center font-bold">
                     🚨
@@ -1817,8 +1817,8 @@ const { data: dbIncidentsData } = useQuery({
                       setIsSanctionDropdownOpen(false)
                     }}
                     className={cn(
-                      "w-full px-3.5 py-2.5 bg-card dark:bg-card border rounded-2xl text-xs font-bold text-foreground dark:text-white transition-all flex items-center justify-between shadow-xs hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer",
-                      isTypeDropdownOpen ? "border-[#0f2863] ring-2 ring-[#0f2863]/10 dark:ring-sky-500/20" : "border-border dark:border-border"
+                      "w-full px-3.5 py-2.5 bg-card border rounded-2xl text-xs font-bold text-foreground dark:text-white transition-all flex items-center justify-between shadow-xs hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer",
+                      isTypeDropdownOpen ? "border-[#1a3673] ring-2 ring-[#1a3673]/10 dark:ring-sky-500/20" : "border-border"
                     )}
                   >
                     <div className="flex items-center gap-2.5 truncate">
@@ -1845,12 +1845,12 @@ const { data: dbIncidentsData } = useQuery({
                         </span>
                       </div>
                     </div>
-                    <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0", isTypeDropdownOpen && "rotate-180 text-[#0f2863] dark:text-sky-400")} />
+                    <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0", isTypeDropdownOpen && "rotate-180 text-[#1a3673] dark:text-sky-400")} />
                   </button>
 
                   {/* Dropdown Menu Popup */}
                   {isTypeDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1.5 z-50 bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm p-1.5 space-y-1 backdrop-blur-xl animate-in fade-in zoom-in-95">
+                    <div className="absolute top-full left-0 right-0 mt-1.5 z-50 bg-card border border-border rounded-2xl shadow-sm p-1.5 space-y-1 backdrop-blur-xl animate-in fade-in zoom-in-95">
                       {[
                         { value: 'fraude', label: 'Fraude / Triche', sublabel: 'Téléphone, copion, aides illicites', icon: '🚨' },
                         { value: 'usurpation', label: 'Usurpation d\'identité', sublabel: 'Substitution de candidat / Faux document', icon: '🪪' },
@@ -1901,8 +1901,8 @@ const { data: dbIncidentsData } = useQuery({
                       setIsTypeDropdownOpen(false)
                     }}
                     className={cn(
-                      "w-full px-3.5 py-2.5 bg-card dark:bg-card border rounded-2xl text-xs font-bold text-foreground dark:text-white transition-all flex items-center justify-between shadow-xs hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer",
-                      isSanctionDropdownOpen ? "border-[#0f2863] ring-2 ring-[#0f2863]/10 dark:ring-sky-500/20" : "border-border dark:border-border"
+                      "w-full px-3.5 py-2.5 bg-card border rounded-2xl text-xs font-bold text-foreground dark:text-white transition-all flex items-center justify-between shadow-xs hover:border-slate-300 dark:hover:border-slate-600 cursor-pointer",
+                      isSanctionDropdownOpen ? "border-[#1a3673] ring-2 ring-[#1a3673]/10 dark:ring-sky-500/20" : "border-border"
                     )}
                   >
                     <div className="flex items-center gap-2.5 truncate">
@@ -1923,12 +1923,12 @@ const { data: dbIncidentsData } = useQuery({
                         </span>
                       </div>
                     </div>
-                    <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0", isSanctionDropdownOpen && "rotate-180 text-[#0f2863] dark:text-sky-400")} />
+                    <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform duration-200 shrink-0", isSanctionDropdownOpen && "rotate-180 text-[#1a3673] dark:text-sky-400")} />
                   </button>
 
                   {/* Dropdown Menu Popup */}
                   {isSanctionDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1.5 z-50 bg-card dark:bg-card border border-border dark:border-border rounded-2xl shadow-sm p-1.5 space-y-1 backdrop-blur-xl animate-in fade-in zoom-in-95">
+                    <div className="absolute top-full left-0 right-0 mt-1.5 z-50 bg-card border border-border rounded-2xl shadow-sm p-1.5 space-y-1 backdrop-blur-xl animate-in fade-in zoom-in-95">
                       {[
                         { value: 'module', label: 'Module Unique (Défaut)', sublabel: 'Note 0.00/20 attribuée au module de l\'examen', icon: '📘' },
                         { value: 'semestre', label: 'Semestre Entier', sublabel: 'Note 0.00/20 étendue à tous les modules de la session', icon: '📚' },
@@ -1973,7 +1973,7 @@ const { data: dbIncidentsData } = useQuery({
                     onChange={e => setFraudDescription(e.target.value)}
                     placeholder="Expliquez en détail les circonstances constatées par l'équipe de surveillance..."
                     rows={3}
-                    className="w-full px-3 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-medium text-foreground dark:text-white outline-none resize-none rounded-[var(--control-radius)]"
+                    className="w-full px-3 py-2.5 bg-muted/50 dark:bg-card border border-border text-xs font-medium text-foreground dark:text-white outline-none resize-none rounded-[var(--control-radius)]"
                   />
                 </div>
 
@@ -1984,12 +1984,12 @@ const { data: dbIncidentsData } = useQuery({
                     value={confiscatedItems}
                     onChange={e => setConfiscatedItems(e.target.value)}
                     placeholder="ex: iPhone 13 Noir, Feuille A4 manuscrite dissimulée"
-                    className="w-full px-3 py-2.5 bg-muted/50 dark:bg-card border border-border dark:border-border text-xs font-medium text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
+                    className="w-full px-3 py-2.5 bg-muted/50 dark:bg-card border border-border text-xs font-medium text-foreground dark:text-white outline-none rounded-[var(--control-radius)]"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 border-t border-border dark:border-border pt-4">
+              <div className="flex justify-end gap-3 border-t border-border pt-4">
                 <Button variant="outline" onClick={() => setShowFraudModal(false)} className="rounded-xl font-bold text-xs">Annuler</Button>
                 <Button onClick={handleSubmitFraudReport} className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold text-xs px-6 shadow-lg">
                   🚨 Enregistrer l'Incident au PV
@@ -2002,8 +2002,8 @@ const { data: dbIncidentsData } = useQuery({
         {/* Signature Modal */}
         {showSignatureModal && (
           <div className="fixed inset-0 z-[9999] bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in">
-            <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl p-6 max-w-lg w-full shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b border-border dark:border-border pb-3">
+            <div className="bg-card border border-border rounded-2xl p-6 max-w-lg w-full shadow-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-border pb-3">
                 <h3 className="text-base font-bold text-foreground dark:text-white flex items-center gap-2">
                   <ShieldCheck className="w-5 h-5 text-amber-500" /> Signature Officielle du PV d'Examen
                 </h3>
@@ -2014,7 +2014,7 @@ const { data: dbIncidentsData } = useQuery({
 
               {/* Professor Role Selection */}
               <div className="p-3 bg-blue-50/60 dark:bg-slate-800/80 rounded-2xl border border-primary/20 dark:border-border">
-                <span className="text-[10px] font-bold uppercase text-muted-foreground dark:text-muted-foreground tracking-wider block mb-2">
+                <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider block mb-2">
                   Partie à Signer (Choix de l'Enseignant)
                 </span>
                 <div className="grid grid-cols-2 gap-2">
@@ -2024,8 +2024,8 @@ const { data: dbIncidentsData } = useQuery({
                     className={cn(
                       "py-2 px-3 rounded-xl text-xs font-bold transition-all border text-left flex flex-col gap-0.5 cursor-pointer",
                       signingSupervisorRole === 'principal'
-                        ? "bg-[#0f2863] text-white border-[#0f2863] shadow-xs ring-2 ring-[#0f2863]/20"
-                        : "bg-card dark:bg-card text-slate-700 dark:text-foreground border-border hover:border-slate-300"
+                        ? "bg-[#1a3673] text-white border-[#1a3673] shadow-xs ring-2 ring-[#1a3673]/20"
+                        : "bg-card text-slate-700 dark:text-foreground border-border hover:border-slate-300"
                     )}
                   >
                     <span className="text-[10px] uppercase font-bold tracking-wider text-amber-300">👑 Surveillant Principal</span>
@@ -2038,8 +2038,8 @@ const { data: dbIncidentsData } = useQuery({
                     className={cn(
                       "py-2 px-3 rounded-xl text-xs font-bold transition-all border text-left flex flex-col gap-0.5 cursor-pointer",
                       signingSupervisorRole === 'secondary'
-                        ? "bg-[#0f2863] text-white border-[#0f2863] shadow-xs ring-2 ring-[#0f2863]/20"
-                        : "bg-card dark:bg-card text-slate-700 dark:text-foreground border-border hover:border-slate-300"
+                        ? "bg-[#1a3673] text-white border-[#1a3673] shadow-xs ring-2 ring-[#1a3673]/20"
+                        : "bg-card text-slate-700 dark:text-foreground border-border hover:border-slate-300"
                     )}
                   >
                     <span className="text-[10px] uppercase font-bold tracking-wider text-sky-300">🧑‍🏫 Surveillant Secondaire</span>
@@ -2055,7 +2055,7 @@ const { data: dbIncidentsData } = useQuery({
                   onClick={() => setSignatureMode('digital')}
                   className={cn(
                     "flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer",
-                    signatureMode === 'digital' ? "bg-[#0f2863] text-white shadow-xs" : "text-muted-foreground dark:text-foreground hover:bg-slate-200 dark:hover:bg-slate-700"
+                    signatureMode === 'digital' ? "bg-[#1a3673] text-white shadow-xs" : "text-muted-foreground dark:text-foreground hover:bg-slate-200 dark:hover:bg-slate-700"
                   )}
                 >
                   <Sparkles className="w-3.5 h-3.5" /> Certificat Numérique ENCG
@@ -2065,7 +2065,7 @@ const { data: dbIncidentsData } = useQuery({
                   onClick={() => setSignatureMode('pad')}
                   className={cn(
                     "flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer",
-                    signatureMode === 'pad' ? "bg-[#0f2863] text-white shadow-xs" : "text-muted-foreground dark:text-foreground hover:bg-slate-200 dark:hover:bg-slate-700"
+                    signatureMode === 'pad' ? "bg-[#1a3673] text-white shadow-xs" : "text-muted-foreground dark:text-foreground hover:bg-slate-200 dark:hover:bg-slate-700"
                   )}
                 >
                   <FileText className="w-3.5 h-3.5" /> Pad Interactif (Stylet / Souris)
@@ -2073,13 +2073,13 @@ const { data: dbIncidentsData } = useQuery({
               </div>
 
               {signatureMode === 'digital' ? (
-                <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border dark:border-border space-y-2">
+                <div className="p-4 rounded-2xl bg-muted/50 dark:bg-slate-800/50 border border-border space-y-2">
                   <div className="text-xs font-bold text-slate-700 dark:text-foreground">
-                    Signataire officiel : <strong className="text-[#0f2863] dark:text-sky-400">
+                    Signataire officiel : <strong className="text-[#1a3673] dark:text-sky-400">
                       {signingSupervisorRole === 'principal' ? `${principalSupervisorName} (Surveillant Principal)` : `${secondarySupervisorName} (Surveillant Secondaire)`}
                     </strong>
                   </div>
-                  <div className="text-[11px] text-muted-foreground dark:text-muted-foreground font-mono">
+                  <div className="text-[11px] text-muted-foreground font-mono">
                     Horodatage certifié : {new Date().toLocaleString('fr-FR')}
                   </div>
                   <div className="pt-2">
@@ -2118,11 +2118,11 @@ const { data: dbIncidentsData } = useQuery({
                 </div>
               )}
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-border dark:border-border">
+              <div className="flex justify-end gap-2 pt-2 border-t border-border">
                 <Button variant="outline" onClick={() => setShowSignatureModal(false)} className="rounded-xl text-xs font-bold">
                   Annuler
                 </Button>
-                <Button onClick={handleSaveSignature} className="bg-[#0f2863] hover:bg-[#163882] text-white rounded-xl font-bold text-xs">
+                <Button onClick={handleSaveSignature} className="bg-[#1a3673] hover:bg-[#163882] text-white rounded-xl font-bold text-xs">
                   ✓ Valider & Enregistrer la Signature
                 </Button>
               </div>
@@ -2136,18 +2136,18 @@ const { data: dbIncidentsData } = useQuery({
       <div id="official-pv-printable" className="hidden print:block text-black bg-card">
         
         {/* Institutional Header with Official ENCG Logo */}
-        <div className="border-b-2 border-[#0f2863] pb-3 mb-3 flex justify-between items-center">
+        <div className="border-b-2 border-[#1a3673] pb-3 mb-3 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <img src="/logo-encg.png" alt="Logo ENCG Fès" className="h-16 w-auto object-contain" />
             <div>
-              <div className="text-[10pt] font-bold uppercase text-[#0f2863] tracking-wide">Royaume du Maroc</div>
+              <div className="text-[10pt] font-bold uppercase text-[#1a3673] tracking-wide">Royaume du Maroc</div>
               <div className="text-[8.5pt] font-bold text-foreground">Université Sidi Mohamed Ben Abdellah — Fès</div>
-              <div className="text-[9.5pt] font-bold text-[#0f2863] tracking-tight">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION</div>
+              <div className="text-[9.5pt] font-bold text-[#1a3673] tracking-tight">ÉCOLE NATIONALE DE COMMERCE ET DE GESTION</div>
               <div className="text-[8pt] font-bold text-muted-foreground uppercase tracking-widest">Service des Examens & de la Scolarité</div>
             </div>
           </div>
           <div className="text-right space-y-1">
-            <div className="px-3 py-1 bg-[#0f2863] text-white font-bold text-[8.5pt] rounded tracking-wider inline-block uppercase">
+            <div className="px-3 py-1 bg-[#1a3673] text-white font-bold text-[8.5pt] rounded tracking-wider inline-block uppercase">
               PV D'EXAMEN OFFICIEL
             </div>
             <div className="text-[8.5pt] font-mono text-slate-700">Année Académique : <strong>2025/2026</strong></div>
@@ -2157,7 +2157,7 @@ const { data: dbIncidentsData } = useQuery({
 
         {/* Title */}
         <div className="text-center my-3 space-y-0.5">
-          <h1 className="text-[13pt] text-[#0f2863] erp-page-title">
+          <h1 className="text-[13pt] text-[#1a3673] erp-page-title">
             PROCÈS-VERBAL OFFICIEL DE DÉROULEMENT ET D'ÉMARGEMENT D'EXAMEN
           </h1>
           <p className="text-[8.5pt] font-bold text-muted-foreground italic">
@@ -2171,7 +2171,7 @@ const { data: dbIncidentsData } = useQuery({
           <tbody>
             <tr>
               <td className="p-2 border border-slate-400 bg-muted font-bold w-1/4">Intitulé du Module :</td>
-              <td className="p-2 border border-slate-400 font-bold text-[#0f2863]" colSpan={3}>
+              <td className="p-2 border border-slate-400 font-bold text-[#1a3673]" colSpan={3}>
                 {examObj?.module?.name || '—'}
               </td>
             </tr>
@@ -2199,8 +2199,8 @@ const { data: dbIncidentsData } = useQuery({
         </table>
 
         {/* Bilan d'Émargement & Enveloppe summary box */}
-        <div className="border-2 border-[#0f2863] rounded-lg p-3 mb-4 bg-muted/50 text-[9.5pt] font-sans">
-          <div className="font-bold text-[#0f2863] uppercase tracking-wider mb-2 text-center border-b border-slate-300 pb-1">
+        <div className="border-2 border-[#1a3673] rounded-lg p-3 mb-4 bg-muted/50 text-[9.5pt] font-sans">
+          <div className="font-bold text-[#1a3673] uppercase tracking-wider mb-2 text-center border-b border-slate-300 pb-1">
             📦 BILAN OFFICIEL DU DÉROULEMENT ET RESTITUTION DES COPIES
           </div>
           <div className="grid grid-cols-4 gap-4 text-center font-bold">
@@ -2218,7 +2218,7 @@ const { data: dbIncidentsData } = useQuery({
             </div>
             <div className="p-2 bg-card rounded border border-slate-300">
               <span className="text-[8pt] text-muted-foreground block uppercase">Copies Rendues & Scellées</span>
-              <span className="text-[12pt] font-bold text-[#0f2863]">{finalCopiesCount} copies</span>
+              <span className="text-[12pt] font-bold text-[#1a3673]">{finalCopiesCount} copies</span>
             </div>
           </div>
         </div>
@@ -2283,12 +2283,12 @@ const { data: dbIncidentsData } = useQuery({
 
         {/* Full Candidates Attendance Table */}
         <div className="mb-4">
-          <div className="font-bold text-[#0f2863] text-[9pt] uppercase mb-1">
+          <div className="font-bold text-[#1a3673] text-[9pt] uppercase mb-1">
             📋 Registre d'Émargement des Candidats :
           </div>
           <table className="w-full text-[8.5pt] border-collapse border border-slate-400">
             <thead>
-              <tr className="bg-muted text-[#0f2863] font-bold text-[8pt] uppercase">
+              <tr className="bg-muted text-[#1a3673] font-bold text-[8pt] uppercase">
                 <th className="p-1.5 border border-slate-400 w-10 text-center">Place</th>
                 <th className="p-1.5 border border-slate-400 w-28 text-left">CNE</th>
                 <th className="p-1.5 border border-slate-400 text-left">Nom & Prénom</th>
@@ -2315,7 +2315,7 @@ const { data: dbIncidentsData } = useQuery({
         {/* Official Signatures & SHA-256 Seal Block */}
         <div className="mt-6 pt-4 border-t-2 border-slate-400 grid grid-cols-3 gap-4 text-[9pt]">
           <div className="border border-slate-300 rounded p-3 text-center space-y-2">
-            <div className="font-bold text-[#0f2863]">Surveillant Principal :</div>
+            <div className="font-bold text-[#1a3673]">Surveillant Principal :</div>
             <div className="text-[8pt] text-muted-foreground">{principalSupervisorName}</div>
             <div className="h-16 flex items-center justify-center">
               {principalSignatureUrl ? (
@@ -2331,7 +2331,7 @@ const { data: dbIncidentsData } = useQuery({
           </div>
 
           <div className="border border-slate-300 rounded p-3 text-center space-y-2">
-            <div className="font-bold text-[#0f2863]">Surveillant Secondaire :</div>
+            <div className="font-bold text-[#1a3673]">Surveillant Secondaire :</div>
             <div className="text-[8pt] text-muted-foreground">{secondarySupervisorName}</div>
             <div className="h-16 flex items-center justify-center">
               {secondarySignatureUrl ? (
@@ -2347,7 +2347,7 @@ const { data: dbIncidentsData } = useQuery({
           </div>
 
           <div className="border border-slate-300 rounded p-3 text-center space-y-2">
-            <div className="font-bold text-[#0f2863]">Certification Examens :</div>
+            <div className="font-bold text-[#1a3673]">Certification Examens :</div>
             <div className="text-[8pt] text-muted-foreground">ENCG Fès</div>
             <div className="h-16 flex items-center justify-center gap-2">
               <QRCodeSVG value={`https://encg.usmba.ac.ma/verify-exam-pv?id=${id}&seal=${pvLockSeal || 'OFFICIAL-PV'}`} size={48} />

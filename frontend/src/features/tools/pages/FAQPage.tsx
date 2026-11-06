@@ -39,7 +39,7 @@ export default function FAQPage() {
   return (
     <div className="space-y-6 animate-in max-w-4xl mx-auto pb-20">
       <div className="flex items-center justify-center mb-12">
-        <h1 className="text-[#0f2863] italic erp-page-title">
+        <h1 className="text-[#1a3673] italic erp-page-title">
           Questions Fréquentes (FAQ)
         </h1>
       </div>

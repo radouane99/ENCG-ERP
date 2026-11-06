@@ -261,13 +261,13 @@ export default function StudentSchedule() {
   };
 
   return (
-    <div className="space-y-6 font-sans animate-in fade-in duration-500 text-foreground dark:text-foreground pb-20">
+    <div className="space-y-6 font-sans animate-in fade-in duration-500 text-foreground pb-20">
       
       {/* ── Executive Top Cockpit Header (Fully Responsive) ── */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-slate-200/80 dark:border-border pb-5">
         <div className="space-y-1.5">
           <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-            <h1 className="text-[#001A4B] dark:text-white erp-page-title">
+            <h1 className="text-[#1a3673] dark:text-white erp-page-title">
               Cockpit Étudiant · Emploi du Temps
             </h1>
             <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 shadow-2xs">
@@ -275,7 +275,7 @@ export default function StudentSchedule() {
               Planning Validé & Publié
             </span>
           </div>
-          <p className="text-xs text-muted-foreground dark:text-muted-foreground font-medium flex items-center gap-1.5 sm:gap-2 flex-wrap">
+          <p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5 sm:gap-2 flex-wrap">
             <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span>École Nationale de Commerce et de Gestion de Fès</span>
             <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
@@ -290,7 +290,7 @@ export default function StudentSchedule() {
           <button
             onClick={() => refetch()}
             disabled={isFetching}
-            className="inline-flex items-center justify-center gap-2 h-10 px-3.5 rounded-xl bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-slate-700 dark:text-foreground hover:bg-muted/50 dark:hover:bg-slate-800 hover:border-slate-300 transition-all cursor-pointer disabled:opacity-50 shadow-2xs"
+            className="inline-flex items-center justify-center gap-2 h-10 px-3.5 rounded-xl bg-card border border-border text-xs font-bold text-slate-700 dark:text-foreground hover:bg-muted/50 dark:hover:bg-slate-800 hover:border-slate-300 transition-all cursor-pointer disabled:opacity-50 shadow-2xs"
             title="Rafraîchir les données de l'emploi du temps"
           >
             <RefreshCcw className={cn("w-3.5 h-3.5 text-muted-foreground", isFetching && "animate-spin text-primary")} />
@@ -309,7 +309,7 @@ export default function StudentSchedule() {
           <button
             onClick={handleDownloadPdf}
             disabled={isGeneratingPdf}
-            className="inline-flex items-center justify-center gap-2 h-10 px-3 sm:px-4.5 rounded-xl bg-[#001A4B] hover:bg-[#082663] text-white text-xs font-bold shadow-sm hover:shadow-md transition-all cursor-pointer disabled:opacity-50 border border-white/10"
+            className="inline-flex items-center justify-center gap-2 h-10 px-3 sm:px-4.5 rounded-xl bg-[#1a3673] hover:bg-[#082663] text-white text-xs font-bold shadow-sm hover:shadow-md transition-all cursor-pointer disabled:opacity-50 border border-white/10"
           >
             <Download className={cn("w-4 h-4 text-amber-300", isGeneratingPdf && "animate-bounce")} />
             <span className="truncate">{isGeneratingPdf ? 'Génération...' : 'Télécharger PDF'}</span>
@@ -327,7 +327,7 @@ export default function StudentSchedule() {
       </div>
 
       {/* ── Executive Hero Banner (Responsive Grid & Cards) ── */}
-      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#001A4B] via-[#082663] to-[#001338] text-white p-4 sm:p-7 lg:p-8 shadow-sm border border-blue-900/40">
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#1a3673] via-[#082663] to-[#001338] text-white p-4 sm:p-7 lg:p-8 shadow-sm border border-blue-900/40">
         <div className="absolute top-0 right-0 w-80 sm:w-96 h-80 sm:h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
         <div className="absolute bottom-0 left-1/3 w-64 sm:w-80 h-64 sm:h-80 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
 
@@ -447,8 +447,8 @@ export default function StudentSchedule() {
                 15 Septembre 2026
               </span>
             </div>
-            <p className="text-[11px] sm:text-[11.5px] text-muted-foreground dark:text-muted-foreground font-medium leading-relaxed">
-              Dispensés en <strong className="text-foreground dark:text-foreground">Amphithéâtre</strong> regroupant l'ensemble de la section ({studentSection}, ~100 étudiants).
+            <p className="text-[11px] sm:text-[11.5px] text-muted-foreground font-medium leading-relaxed">
+              Dispensés en <strong className="text-foreground">Amphithéâtre</strong> regroupant l'ensemble de la section ({studentSection}, ~100 étudiants).
             </p>
           </div>
         </div>
@@ -467,7 +467,7 @@ export default function StudentSchedule() {
                 22 Septembre 2026
               </span>
             </div>
-            <p className="text-[11px] sm:text-[11.5px] text-muted-foreground dark:text-muted-foreground font-medium leading-relaxed">
+            <p className="text-[11px] sm:text-[11.5px] text-muted-foreground font-medium leading-relaxed">
               Dispensés en salles de cours par sous-groupe officiel (<strong className="text-violet-700 dark:text-violet-300">{studentSubGroup}</strong>, scission alphabétique A à K).
             </p>
           </div>
@@ -475,7 +475,7 @@ export default function StudentSchedule() {
       </div>
 
       {/* ── View Controls Bar & Filter (Responsive & Horizontal Scroll for Days) ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-card dark:bg-card p-3 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-border shadow-2xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-card p-3 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-border shadow-2xs">
         {/* View Mode Toggle */}
         <div className="flex items-center gap-1 bg-muted dark:bg-slate-800/80 p-1 rounded-xl w-full sm:w-auto">
           <button
@@ -483,7 +483,7 @@ export default function StudentSchedule() {
             className={cn(
               "flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer",
               viewMode === 'matrix'
-                ? "bg-[#001A4B] text-white shadow-xs"
+                ? "bg-[#1a3673] text-white shadow-xs"
                 : "text-muted-foreground dark:text-foreground hover:text-foreground dark:hover:text-white"
             )}
           >
@@ -495,7 +495,7 @@ export default function StudentSchedule() {
             className={cn(
               "flex-1 sm:flex-initial flex items-center justify-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer",
               viewMode === 'cards'
-                ? "bg-[#001A4B] text-white shadow-xs"
+                ? "bg-[#1a3673] text-white shadow-xs"
                 : "text-muted-foreground dark:text-foreground hover:text-foreground dark:hover:text-white"
             )}
           >
@@ -512,7 +512,7 @@ export default function StudentSchedule() {
               className={cn(
                 "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0",
                 selectedDay === 'all'
-                  ? "bg-[#001A4B] text-white"
+                  ? "bg-[#1a3673] text-white"
                   : "bg-muted dark:bg-card text-muted-foreground dark:text-foreground hover:bg-slate-200"
               )}
             >
@@ -525,7 +525,7 @@ export default function StudentSchedule() {
                 className={cn(
                   "px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0",
                   selectedDay.toLowerCase() === d.name.toLowerCase()
-                    ? "bg-[#001A4B] text-white"
+                    ? "bg-[#1a3673] text-white"
                     : "bg-muted dark:bg-card text-muted-foreground dark:text-foreground hover:bg-slate-200"
                 )}
               >
@@ -535,7 +535,7 @@ export default function StudentSchedule() {
           </div>
         )}
 
-        <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground dark:text-muted-foreground shrink-0">
+        <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground shrink-0">
           <span className="w-2 h-2 rounded-full bg-emerald-500" />
           <span>{filteredSchedule.length} séance(s) trouvée(s)</span>
         </div>
@@ -546,9 +546,9 @@ export default function StudentSchedule() {
           <Spinner size="lg" />
         </div>
       ) : schedule.length === 0 ? (
-        <div className="bg-card dark:bg-card rounded-2xl p-8 sm:p-12 text-center shadow-sm border border-border dark:border-border space-y-3">
+        <div className="bg-card rounded-2xl p-8 sm:p-12 text-center shadow-sm border border-border space-y-3">
           <CalendarIcon className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto" />
-          <h3 className="text-base font-bold text-foreground dark:text-foreground">Aucun cours programmé</h3>
+          <h3 className="text-base font-bold text-foreground">Aucun cours programmé</h3>
           <p className="text-xs text-muted-foreground max-w-md mx-auto">
             L'emploi du temps officiel pour votre groupe ({studentGroupName} • {studentSubGroup}) n'a pas encore de séances enregistrées dans la base de données.
           </p>
@@ -557,19 +557,19 @@ export default function StudentSchedule() {
         /* ══════════════════════════════════════════════════════════════
            1. VUE GRILLE HEBDOMADAIRE (MATRIX TIMETABLE WITH STICKY TIME)
         ══════════════════════════════════════════════════════════════ */
-        <div className="bg-card dark:bg-card rounded-2xl sm:rounded-3xl p-3 sm:p-6 shadow-sm border border-slate-200/80 dark:border-border overflow-x-auto relative">
+        <div className="bg-card rounded-2xl sm:rounded-3xl p-3 sm:p-6 shadow-sm border border-slate-200/80 dark:border-border overflow-x-auto relative">
           <table className="w-full border-collapse min-w-[780px] sm:min-w-[850px]">
             <thead>
               <tr>
-                <th className="sticky left-0 bg-card dark:bg-card z-10 p-3 text-left text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-border dark:border-border w-32 sm:w-36 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                <th className="sticky left-0 bg-card z-10 p-3 text-left text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-border w-32 sm:w-36 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
                   Créneau Horaire
                 </th>
                 {DAYS.map((day) => (
                   <th
                     key={day.key}
-                    className="p-3 text-center border-b border-border dark:border-border"
+                    className="p-3 text-center border-b border-border"
                   >
-                    <div className="font-bold text-sm text-[#001A4B] dark:text-white uppercase tracking-wider">
+                    <div className="font-bold text-sm text-[#1a3673] dark:text-white uppercase tracking-wider">
                       {day.name}
                     </div>
                     <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
@@ -583,8 +583,8 @@ export default function StudentSchedule() {
               {TIME_SLOTS.map((slot, slotIdx) => (
                 <tr key={slotIdx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                   {/* Slot Header (Sticky Column for Mobile/Tablet) */}
-                  <td className="sticky left-0 bg-card dark:bg-card z-10 p-2.5 sm:p-3.5 align-top shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
-                    <div className="flex items-center gap-1.5 font-mono text-xs font-bold text-foreground dark:text-foreground">
+                  <td className="sticky left-0 bg-card z-10 p-2.5 sm:p-3.5 align-top shadow-[2px_0_5px_-2px_rgba(0,0,0,0.05)]">
+                    <div className="flex items-center gap-1.5 font-mono text-xs font-bold text-foreground">
                       <Clock className="w-3.5 h-3.5 text-primary shrink-0" />
                       <span>{slot.label}</span>
                     </div>
@@ -632,7 +632,7 @@ export default function StudentSchedule() {
                                 className={cn(
                                   "px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider",
                                   isCm
-                                    ? "bg-[#001A4B] text-white"
+                                    ? "bg-[#1a3673] text-white"
                                     : isTd
                                     ? "bg-violet-600 text-white"
                                     : "bg-emerald-600 text-white"
@@ -640,7 +640,7 @@ export default function StudentSchedule() {
                               >
                                 {isCm ? 'CM' : isTd ? 'TD' : 'TP'}
                               </span>
-                              <span className="font-mono text-[9px] font-bold text-muted-foreground dark:text-muted-foreground">
+                              <span className="font-mono text-[9px] font-bold text-muted-foreground">
                                 {session.time}
                               </span>
                             </div>
@@ -683,10 +683,10 @@ export default function StudentSchedule() {
                 className={cn(
                   "p-4 sm:p-5 rounded-2xl border transition-all duration-300 hover:shadow-lg flex flex-col justify-between space-y-4 group",
                   isCm
-                    ? "bg-card dark:bg-card border-primary/20 dark:border-blue-900/50 hover:border-primary"
+                    ? "bg-card border-primary/20 dark:border-blue-900/50 hover:border-primary"
                     : isTd
-                    ? "bg-card dark:bg-card border-violet-200 dark:border-violet-900/50 hover:border-violet-500"
-                    : "bg-card dark:bg-card border-emerald-200 dark:border-emerald-900/50 hover:border-emerald-500"
+                    ? "bg-card border-violet-200 dark:border-violet-900/50 hover:border-violet-500"
+                    : "bg-card border-emerald-200 dark:border-emerald-900/50 hover:border-emerald-500"
                 )}
               >
                 <div className="space-y-2.5">
@@ -697,7 +697,7 @@ export default function StudentSchedule() {
                     <span className={cn(
                       "px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider",
                       isCm
-                        ? "bg-[#001A4B] text-white"
+                        ? "bg-[#1a3673] text-white"
                         : isTd
                         ? "bg-violet-600 text-white"
                         : "bg-emerald-600 text-white"
@@ -717,11 +717,11 @@ export default function StudentSchedule() {
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-border dark:border-border flex items-center justify-between text-xs font-bold">
+                <div className="pt-3 border-t border-border flex items-center justify-between text-xs font-bold">
                   <span className="font-mono text-slate-700 dark:text-foreground flex items-center gap-1.5">
                     <Clock className="w-4 h-4 text-slate-400 shrink-0" /> {item.time}
                   </span>
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-muted dark:bg-card text-foreground dark:text-foreground text-xs font-bold">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-muted dark:bg-card text-foreground text-xs font-bold">
                     <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" /> {item.location}
                   </span>
                 </div>
@@ -734,9 +734,9 @@ export default function StudentSchedule() {
       {/* ── Modal Aperçu Emploi du Temps PDF (Responsive A4 Paysage) ── */}
       {isPreviewModalOpen && previewPdfUrl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-2 sm:p-4 lg:p-6 animate-in fade-in duration-200">
-          <div className="bg-card dark:bg-card border border-border dark:border-border rounded-2xl sm:rounded-3xl w-full max-w-6xl max-h-[96vh] flex flex-col shadow-sm overflow-hidden">
+          <div className="bg-card border border-border rounded-2xl sm:rounded-3xl w-full max-w-6xl max-h-[96vh] flex flex-col shadow-sm overflow-hidden">
             {/* Modal Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b border-border dark:border-border bg-slate-50/80 dark:bg-slate-900/80">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 sm:px-6 py-3 sm:py-4 border-b border-border bg-slate-50/80 dark:bg-slate-900/80">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 text-primary dark:text-blue-400 flex items-center justify-center font-bold shrink-0">
                   <Eye className="w-5 h-5" />
@@ -748,7 +748,7 @@ export default function StudentSchedule() {
                       A4 Paysage
                     </span>
                   </h3>
-                  <p className="text-[10px] sm:text-[11px] text-muted-foreground dark:text-muted-foreground font-medium truncate">
+                  <p className="text-[10px] sm:text-[11px] text-muted-foreground font-medium truncate">
                     {studentGroupName} • Sous-groupe {studentSubGroup} • {studentFiliereName}
                   </p>
                 </div>
@@ -767,7 +767,7 @@ export default function StudentSchedule() {
                 <button
                   onClick={handleDownloadPdf}
                   disabled={isGeneratingPdf}
-                  className="flex items-center gap-1.5 h-9 px-3 sm:px-3.5 rounded-xl bg-[#001A4B] hover:bg-[#082663] text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 h-9 px-3 sm:px-3.5 rounded-xl bg-[#1a3673] hover:bg-[#082663] text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5 text-amber-300" />
                   <span>Télécharger</span>
@@ -787,7 +787,7 @@ export default function StudentSchedule() {
             <div className="flex-1 p-2 sm:p-4 bg-slate-100/50 dark:bg-slate-950/50 overflow-hidden flex flex-col items-center justify-center">
               <iframe
                 src={`${previewPdfUrl}#toolbar=0&navpanes=0`}
-                className="w-full h-[65vh] sm:h-[75vh] rounded-xl sm:rounded-2xl border border-border dark:border-border bg-card shadow-inner"
+                className="w-full h-[65vh] sm:h-[75vh] rounded-xl sm:rounded-2xl border border-border bg-card shadow-inner"
                 title="Aperçu Emploi du Temps PDF"
               />
             </div>

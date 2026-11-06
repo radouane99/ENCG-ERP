@@ -32,7 +32,7 @@ export default function AdminExamGlobalLiveDashboardPage() {
             <BarChart3 className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-[#0f2863] erp-page-title">Supervision de la session</h1>
+            <h1 className="text-[#1a3673] erp-page-title">Supervision de la session</h1>
             <p className="text-xs text-muted-foreground">
               Supervision en temps réel : {stats?.session_name || 'Chargement...'}
             </p>
@@ -58,7 +58,7 @@ export default function AdminExamGlobalLiveDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Etudiants */}
         <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
-          <h2 className="text-lg font-bold text-[#0f2863] mb-6 flex items-center gap-2">
+          <h2 className="text-lg font-bold text-[#1a3673] mb-6 flex items-center gap-2">
             <Users className="w-5 h-5 text-primary" /> Présence Étudiants
           </h2>
           <div className="grid grid-cols-3 gap-4 mb-8">
@@ -87,7 +87,7 @@ export default function AdminExamGlobalLiveDashboardPage() {
 
         {/* Professeurs */}
         <div className="bg-card rounded-2xl border border-border shadow-sm p-6">
-          <h2 className="text-lg font-bold text-[#0f2863] mb-6 flex items-center gap-2">
+          <h2 className="text-lg font-bold text-[#1a3673] mb-6 flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-teal-500" /> Surveillants (Professeurs)
           </h2>
           <div className="grid grid-cols-3 gap-4 mb-8">

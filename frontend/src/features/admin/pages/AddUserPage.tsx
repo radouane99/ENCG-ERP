@@ -18,7 +18,7 @@ export default function AddUserPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-[#0f2863] italic erp-page-title">Add New User</h1>
+          <h1 className="text-[#1a3673] italic erp-page-title">Add New User</h1>
         </div>
       </div>
 
@@ -83,7 +83,7 @@ export default function AddUserPage() {
           <div className="flex justify-end mt-8">
             <button 
               type="button" 
-              className="px-8 py-3.5 bg-[#0f2863] text-white font-bold rounded-2xl hover:bg-[#1a387e] transition-colors text-sm uppercase tracking-wide shadow-md"
+              className="px-8 py-3.5 bg-[#1a3673] text-white font-bold rounded-2xl hover:bg-[#1a387e] transition-colors text-sm uppercase tracking-wide shadow-md"
             >
               Create User
             </button>

@@ -96,7 +96,7 @@ export default function DocumentViewerModal({
               <a 
                 href={pdfUrl} 
                 download={`${title.toLowerCase().replace(/\s+/g, '_')}.pdf`}
-                className="flex items-center gap-2 px-4 py-2 bg-[#0f2863] text-white text-xs font-extrabold uppercase tracking-wider rounded-xl hover:bg-[#1a387e] transition-colors shadow-sm"
+                className="flex items-center gap-2 px-4 py-2 bg-[#1a3673] text-white text-xs font-extrabold uppercase tracking-wider rounded-xl hover:bg-[#1a387e] transition-colors shadow-sm"
               >
                 <Download className="w-4 h-4" />
                 Télécharger
