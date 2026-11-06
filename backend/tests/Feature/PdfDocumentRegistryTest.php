@@ -25,6 +25,7 @@ class PdfDocumentRegistryTest extends TestCase
     {
         parent::setUp();
         Storage::fake('private');
+        PdfDocumentRecord::query()->delete();
         $user = User::factory()->create(['institution_id' => 1]);
         $user->assignRole(Role::findOrCreate('admin', 'sanctum'));
         $this->actingAs($user, 'sanctum');
@@ -110,7 +111,7 @@ class PdfDocumentRegistryTest extends TestCase
 
     public function test_background_generation_keeps_the_institution_and_original_actor(): void
     {
-        $actor = auth()->user();
+        $actor = auth()->user() ?? auth('sanctum')->user();
         Storage::fake('local');
         $job = new GenerateOfficialPdfJob('pdf.workflow_record', ['title' => 'Document de test', 'facts' => [], 'headers' => [], 'rows' => [], 'notice' => 'Recette'], 'audit/job.pdf');
         app('auth')->forgetGuards();

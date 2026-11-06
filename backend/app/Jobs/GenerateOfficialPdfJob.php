@@ -28,8 +28,9 @@ class GenerateOfficialPdfJob implements ShouldQueue
         public string $outputPath,
         public string $disk = 'local'
     ) {
-        $this->documentInstitutionId = auth()->user()?->institution_id;
-        $this->documentActorId = auth()->id();
+        $user = auth()->user() ?? auth('sanctum')->user();
+        $this->documentInstitutionId = $user?->institution_id;
+        $this->documentActorId = $user?->id;
     }
 
     public function handle(OfficialPdfFactory $factory): void

@@ -61,7 +61,7 @@ class GradeGridService
             app(AcademicWindowGuard::class)->assertGradesOpen();
             $service = app(GradeService::class);
             foreach ([$cc, $exam] as $a) {
-                abort_if($service->isPvSigned($module->id) || $service->isExamLocked($a), 403, 'Module verrouillé.');
+                abort_if($service->isPvSigned($module->id, null, $group->id) || $service->isExamLocked($a), 403, 'Module verrouillé.');
             }
             foreach ($data['updates'] as $u) {
                 if (! $students->contains('id', $u['student_id'])) {

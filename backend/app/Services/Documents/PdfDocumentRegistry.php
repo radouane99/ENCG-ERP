@@ -13,8 +13,10 @@ class PdfDocumentRegistry
     public function reserve(string $fingerprint, ?int $institutionId, ?string $view, string $label, ?int $actorId = null): PdfDocumentRecord
     {
         return DB::transaction(function () use ($fingerprint, $institutionId, $view, $label, $actorId) {
-            $actorId ??= auth()->id();
-            if ($actorId && ! User::whereKey($actorId)->where('institution_id', $institutionId)->exists()) {
+            $user = auth()->user() ?? auth('sanctum')->user();
+            $actorId ??= $user?->id;
+            $institutionId ??= $user?->institution_id;
+            if ($actorId && $institutionId && ! User::whereKey($actorId)->where('institution_id', $institutionId)->exists()) {
                 $actorId = null;
             }
             $record = PdfDocumentRecord::firstOrCreate(['content_fingerprint' => $fingerprint], [

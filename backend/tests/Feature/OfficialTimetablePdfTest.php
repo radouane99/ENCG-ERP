@@ -4,10 +4,12 @@ namespace Tests\Feature;
 
 use App\Services\Academic\OfficialTimetableMatrixService;
 use App\Services\Documents\OfficialPdfFactory;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class OfficialTimetablePdfTest extends TestCase
 {
+    use RefreshDatabase;
     public function test_official_timetable_html_keeps_accents_logo_and_qr(): void
     {
         $catalog = $this->sampleCatalog();
