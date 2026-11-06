@@ -46,26 +46,33 @@ class RegisteredPdf extends PDF
     public function loadHTML(string $string, ?string $encoding = null): self
     {
         $this->sourceHtml = $string;
+        $this->sourceView = null;
+        $this->expectedPages = null;
+        $this->paperConfigured = false;
+        $this->dompdf = app('dompdf');
+        $this->dompdf->setPaper($this->config->get('dompdf.defines.default_paper_size', 'a4'), $this->config->get('dompdf.defines.default_paper_orientation', 'portrait'));
         $this->record = null;
         $this->archivedOutput = null;
-        $this->institutionId ??= auth()->user()?->institution_id;
-        $this->actorId ??= auth()->id();
+        $this->institutionId = auth()->user()?->institution_id;
+        $this->actorId = auth()->id();
 
         return parent::loadHTML($string, $encoding);
     }
 
     public function loadView(string $view, array $data = [], array $mergeData = [], ?string $encoding = null): self
     {
-        $this->sourceView = $view;
-        $this->expectedPages = $view === 'pdf.emploi_du_temps_officiel' && ! empty($data['catalog']['sections']) ? count($data['catalog']['sections']) : null;
-        $this->institutionId = auth()->user()?->institution_id;
+        $institutionId = auth()->user()?->institution_id;
         foreach ($data as $value) {
-            if (! $this->institutionId && $value instanceof Model && $value->getAttribute('institution_id')) {
-                $this->institutionId = (int) $value->getAttribute('institution_id');
+            if (! $institutionId && $value instanceof Model && $value->getAttribute('institution_id')) {
+                $institutionId = (int) $value->getAttribute('institution_id');
             }
         }
+        $this->loadHTML($this->view->make($view, $data, $mergeData)->render(), $encoding);
+        $this->sourceView = $view;
+        $this->expectedPages = $view === 'pdf.emploi_du_temps_officiel' && ! empty($data['catalog']['sections']) ? count($data['catalog']['sections']) : null;
+        $this->institutionId = $institutionId;
 
-        return $this->loadHTML($this->view->make($view, $data, $mergeData)->render(), $encoding);
+        return $this;
     }
 
     public function loadFile(string $file): self

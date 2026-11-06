@@ -60,10 +60,13 @@ final class AdmissionVisionExtractor
                     }
                     $process = new Process(['pdftoppm', '-f', '1', '-l', '6', '-r', '120', '-scale-to', '1600', '-jpeg', $path, $directory.'/page']);
                     $process->setTimeout(min(5, max(1, $deadline - microtime(true))));
-                    $process->mustRun();
+                    $process->run();
                     $images = glob($directory.'/page-*.jpg') ?: [];
                     natsort($images);
                     $images = array_values($images);
+                    if ($images === []) {
+                        $images = [$path];
+                    }
                 } else {
                     $images = [$path];
                 }

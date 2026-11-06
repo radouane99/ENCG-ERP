@@ -46,6 +46,14 @@ class PdfTextEngine implements OcrEngineInterface
         }
 
         if ($returnVar !== 0 || empty(trim($text))) {
+            try {
+                $parsed = (new \Smalot\PdfParser\Parser)->parseFile($filePath)->getText();
+                if (! empty(trim($parsed))) {
+                    return $parsed;
+                }
+            } catch (Throwable) {
+            }
+
             Log::info("[PdfTextEngine] pdftotext returned empty text for {$filePath}. Requesting fallback.");
             throw new RuntimeException('pdftotext returned empty string or failed execution.');
         }
