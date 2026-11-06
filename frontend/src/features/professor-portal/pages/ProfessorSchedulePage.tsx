@@ -19,6 +19,7 @@ import TimetableChangePanel from '../components/TimetableChangePanel';
 import { QRScannerModal } from '../components/QRScannerModal';
 import { cn } from '@shared/lib/utils';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const DAYS = [
   { key: 1, name: 'Lundi', short: 'LUN' },
@@ -30,19 +31,20 @@ const DAYS = [
 ];
 
 const TIME_SLOTS = [
-  { label: '08:30 - 10:30', period: 'Matinée 1' },
-  { label: '10:45 - 12:45', period: 'Matinée 2' },
-  { label: '14:30 - 16:30', period: 'Après-midi 1' },
-  { label: '16:45 - 18:45', period: 'Après-midi 2' },
+  { label: '08:30 - 10:30', period: 'morning_1' },
+  { label: '10:45 - 12:45', period: 'morning_2' },
+  { label: '14:30 - 16:30', period: 'afternoon_1' },
+  { label: '16:45 - 18:45', period: 'afternoon_2' },
 ];
 
 export default function ProfessorSchedulePage() {
+  const { t } = useTranslation('timetable', { keyPrefix: 'professor_schedule' });
   const { user } = useAuthStore();
   const [activeSession, setActiveSession] = useState<any | null>(null);
   const [viewMode, setViewMode] = useState<'matrix' | 'list' | 'official'>('matrix');
   const [selectedDay, setSelectedDay] = useState<number>(1);
 
-  const profFullName = user?.name || 'Enseignant';
+  const profFullName = user?.name || t('teacher');
   const { data: scheduleData, refetch: refetchSchedule, isError: scheduleError } = useQuery({
     queryKey: ['professor-personal-schedule'],
     queryFn: () => api.get('/professor-portal/schedule').then(res => res.data),
@@ -69,7 +71,7 @@ export default function ProfessorSchedulePage() {
       return { ...session, attendance_session_id: response.data.session.id, attendance_date: response.data.session.session_date };
     },
     onSuccess: session => setActiveSession(session),
-    onError: (err: any) => toast.error(err.response?.data?.message || 'Ouverture de l’appel impossible.'),
+    onError: (err: any) => toast.error(err.response?.data?.message || t('attendance_error')),
   });
   const handleRefetchAll = () => {
     refetchSchedule();
@@ -83,7 +85,7 @@ export default function ProfessorSchedulePage() {
     try {
       const response = await api.get(`/timetable/export/professor/${professorId}/ics`, { responseType: 'blob' });
       const url = URL.createObjectURL(response.data); const link = document.createElement('a'); link.href = url; link.download = 'emploi-du-temps.ics'; link.click(); window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-    } catch { toast.error('Export agenda indisponible.'); }
+    } catch { toast.error(t('export_error')); }
   };
   const handleDownloadPdf = () => {
     if (professorId) openAuthenticatedUrl(`/api/timetable/export/professor/${professorId}/pdf`);
@@ -124,10 +126,10 @@ export default function ProfessorSchedulePage() {
             </div>
             <div>
               <h1 className="text-[#001A4B] dark:text-white erp-page-title">
-                Mon Emploi du Temps Officiel
+                {t('heading')}
               </h1>
               <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-0.5 font-medium">
-                Planning synchronisé en direct avec la matrice officielle de l'Administration · ENCG Fès
+                {t('subtitle')}
               </p>
             </div>
           </div>
@@ -140,53 +142,53 @@ export default function ProfessorSchedulePage() {
             className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-card dark:bg-card border border-border dark:border-border text-xs font-bold text-slate-700 dark:text-foreground shadow-xs hover:bg-muted/50 transition-all cursor-pointer"
           >
             <RefreshCcw className={cn("w-3.5 h-3.5 text-primary", isMatrixFetching && "animate-spin")} />
-            Actualiser
+            {t('refresh')}
           </button>
 
           <button
             onClick={handleExportIcs}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-card dark:bg-card border border-border dark:border-border text-xs font-bold uppercase tracking-wider text-foreground dark:text-foreground shadow-xs hover:bg-muted/50 transition-all cursor-pointer"
           >
-            <Calendar className="w-4 h-4 text-primary" /> Exporter (.ics)
+            <Calendar className="w-4 h-4 text-primary" /> {t('export')}
           </button>
 
           <button
             onClick={handleDownloadPdf}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#001A4B] hover:bg-[#082663] text-white text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer"
           >
-            <Download className="w-4 h-4 text-amber-300" /> Télécharger PDF A4
+            <Download className="w-4 h-4 text-amber-300" /> {t('download')}
           </button>
         </div>
       </div>
 
       {/* ── Summary Key Indicator Strip ── */}
-      {scheduleError && <div role="alert" className="rounded-xl border border-red-200 p-4 text-red-700">Votre emploi du temps est indisponible. <button onClick={() => refetchSchedule()} className="underline">Réessayer</button></div>}
+      {scheduleError && <div role="alert" className="rounded-xl border border-red-200 p-4 text-red-700">{t('load_error')} <button onClick={() => refetchSchedule()} className="underline">{t('retry')}</button></div>}
       <TimetableChangePanel sessions={activeSessions} />
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-border dark:border-border">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">Enseignant</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">{t('teacher')}</span>
           <div className="text-base font-bold text-[#001A4B] dark:text-white truncate">{profFullName}</div>
-          <div className="text-[10px] font-bold text-muted-foreground mt-1">Corps Enseignant-Chercheur</div>
+          <div className="text-[10px] font-bold text-muted-foreground mt-1">{t('faculty')}</div>
         </div>
 
         <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-border dark:border-border">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">Séances Programmées</span>
-          <div className="text-2xl font-bold text-[#001A4B] dark:text-white">{activeSessions.length} séances / sem</div>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">{t('scheduled')}</span>
+          <div className="text-2xl font-bold text-[#001A4B] dark:text-white">{t('weekly_short', { count: activeSessions.length })}</div>
           <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider mt-1 flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3" /> Synchronisé en direct
+            <CheckCircle2 className="w-3 h-3" /> {t('synced')}
           </div>
         </div>
 
         <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-border dark:border-border">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">Volume Hebdomadaire</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">{t('weekly_hours')}</span>
           <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{Math.round(activeSessions.reduce((sum: number, item: any) => { const minutes = (time: string) => { const parts = time.split(":" ).map(Number); return parts[0] * 60 + parts[1] }; return sum + (minutes(item.end_time) - minutes(item.start_time)) / 60 }, 0) * 100) / 100} heures</div>
-          <div className="text-[10px] font-bold text-muted-foreground mt-1">Créneaux d'enseignement</div>
+          <div className="text-[10px] font-bold text-muted-foreground mt-1">{t('teaching_slots')}</div>
         </div>
 
         <div className="bg-card dark:bg-card rounded-2xl p-5 shadow-sm border border-border dark:border-border">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">Semestre & Année</span>
-          <div className="text-base font-bold text-[#001A4B] dark:text-white">Semestre Courant</div>
-          <div className="text-[10px] font-bold text-primary mt-1">Année Universitaire 2026/2027</div>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">{t('term_and_year')}</span>
+          <div className="text-base font-bold text-[#001A4B] dark:text-white">{t('current_term')}</div>
+          <div className="text-[10px] font-bold text-primary mt-1">{t('year')}</div>
         </div>
       </div>
 
@@ -200,15 +202,15 @@ export default function ProfessorSchedulePage() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 bg-amber-400 text-[#001A4B] rounded-full text-[10px] font-bold uppercase tracking-wider">
-                  Missions de Surveillance
+                  {t('proctoring')}
                 </span>
-                <span className="text-xs text-blue-200 font-bold">{surveillances.length} séance(s)</span>
+                <span className="text-xs text-blue-200 font-bold">{t('sessions_count', { count: surveillances.length })}</span>
               </div>
               <h3 className="text-base font-bold text-white mt-1">
                 {surveillances[0]?.session_name || "Session d'Examens"}
               </h3>
               <p className="text-xs text-blue-100/80 mt-0.5">
-                Prochaine surveillance : <strong className="text-white">{surveillances[0]?.module_name}</strong> le <strong>{surveillances[0]?.date}</strong> ({surveillances[0]?.time}) en <strong>{surveillances[0]?.room}</strong>
+                {t('next_proctoring', { module: surveillances[0]?.module_name, date: surveillances[0]?.date, time: surveillances[0]?.time, room: surveillances[0]?.room })}
               </p>
             </div>
           </div>
@@ -217,7 +219,7 @@ export default function ProfessorSchedulePage() {
             to="/professor/proctoring"
             className="px-4 py-2.5 bg-amber-400 hover:bg-amber-300 text-[#001A4B] rounded-xl text-xs font-bold uppercase tracking-wider shadow-md transition-all shrink-0 flex items-center gap-1.5"
           >
-            <Eye className="w-4 h-4" /> Voir mes Convocations
+            <Eye className="w-4 h-4" /> {t('convocations')}
           </Link>
         </div>
       )}
@@ -234,7 +236,7 @@ export default function ProfessorSchedulePage() {
                 : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border border-border dark:border-border hover:bg-muted/50"
             )}
           >
-            Vue Grille Hebdomadaire
+            {t('grid')}
           </button>
           <button
             onClick={() => setViewMode('official')}
@@ -245,7 +247,7 @@ export default function ProfessorSchedulePage() {
                 : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border border-border dark:border-border hover:bg-muted/50"
             )}
           >
-            Vue Matrice Officielle (ENCG)
+            {t('official')}
           </button>
           <button
             onClick={() => setViewMode('list')}
@@ -256,12 +258,12 @@ export default function ProfessorSchedulePage() {
                 : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border border-border dark:border-border hover:bg-muted/50"
             )}
           >
-            Vue Liste Détaillée
+            {t('list')}
           </button>
         </div>
 
         <span className="text-xs font-bold text-muted-foreground dark:text-muted-foreground">
-          {activeSessions.length} séance(s) hebdomadaire(s)
+          {t('weekly_count', { count: activeSessions.length })}
         </span>
       </div>
 
@@ -271,12 +273,12 @@ export default function ProfessorSchedulePage() {
           <table className="w-full min-w-[900px] border-collapse">
             <thead>
               <tr className="border-b border-border dark:border-border">
-                <th className="p-3 text-left text-xs font-bold text-slate-400 uppercase tracking-widest w-36">
-                  Créneau Horaire
+                <th className="p-3 text-start text-xs font-bold text-slate-400 uppercase tracking-widest w-36">
+                  {t('slot')}
                 </th>
                 {DAYS.map((day) => (
                   <th key={day.key} className="p-3 text-center text-xs font-bold text-slate-700 dark:text-foreground uppercase tracking-wider">
-                    {day.name}
+                    {t(`day_${day.key}`)}
                   </th>
                 ))}
               </tr>
@@ -291,7 +293,7 @@ export default function ProfessorSchedulePage() {
                         {slot.label}
                       </div>
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                        {slot.period}
+                        {t(slot.period)}
                       </span>
                     </div>
                   </td>
@@ -333,14 +335,14 @@ export default function ProfessorSchedulePage() {
                                   onClick={() => startCall.mutate(session)} disabled={startCall.isPending}
                                   className="w-full mt-2 py-1.5 bg-[#001A4B] hover:bg-[#082663] text-white rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 shadow-xs cursor-pointer transition-colors"
                                 >
-                                  <QrCode className="w-3 h-3 text-amber-300" /> Faire l'Appel (QR / Liste)
+                                  <QrCode className="w-3 h-3 text-amber-300" /> {t('take_attendance')}
                                 </button>
                               </div>
                             ))}
                           </div>
                         ) : (
                           <div className="h-28 rounded-2xl border border-dashed border-border dark:border-slate-800/80 flex items-center justify-center text-[11px] text-slate-300 dark:text-slate-700 font-medium">
-                            Libre
+                            {t('free')}
                           </div>
                         )}
                       </td>
@@ -358,7 +360,7 @@ export default function ProfessorSchedulePage() {
         <div className="space-y-6">
           {profMatrixSections.length === 0 ? (
             <div className="bg-card dark:bg-card rounded-2xl p-10 text-center border border-border dark:border-border text-slate-400 text-xs">
-              Aucune affectation trouvée dans la matrice officielle.
+              {t('unassigned')}
             </div>
           ) : (
             profMatrixSections.map((section: any, idx: number) => (
@@ -379,14 +381,14 @@ export default function ProfessorSchedulePage() {
                   <table className="w-full min-w-[850px] border-collapse text-xs">
                     <thead>
                       <tr className="bg-muted/50 dark:bg-slate-800/60 text-muted-foreground dark:text-foreground">
-                        <th className="border border-border dark:border-border p-2.5 font-bold text-left">Module & Élément</th>
-                        <th className="border border-border dark:border-border p-2.5 font-bold text-left">Intervenant</th>
-                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">Lundi</th>
-                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">Mardi</th>
-                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">Mercredi</th>
-                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">Jeudi</th>
-                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">Vendredi</th>
-                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">Salles</th>
+                        <th className="border border-border dark:border-border p-2.5 font-bold text-start">{t('module')}</th>
+                        <th className="border border-border dark:border-border p-2.5 font-bold text-start">{t('lecturer')}</th>
+                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">{t('day_1')}</th>
+                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">{t('day_2')}</th>
+                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">{t('day_3')}</th>
+                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">{t('day_4')}</th>
+                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">{t('day_5')}</th>
+                        <th className="border border-border dark:border-border p-2.5 font-bold text-center">{t('rooms')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -436,7 +438,7 @@ export default function ProfessorSchedulePage() {
                     : "bg-card dark:bg-card text-muted-foreground dark:text-foreground border border-border dark:border-border hover:bg-muted/50"
                 )}
               >
-                {day.name}
+                {t(`day_${day.key}`)}
               </button>
             ))}
           </div>
@@ -444,7 +446,7 @@ export default function ProfessorSchedulePage() {
           <div className="bg-card dark:bg-card rounded-2xl p-6 sm:p-8 shadow-sm border border-border dark:border-border space-y-4">
             <h3 className="text-base font-bold text-[#001A4B] dark:text-white flex items-center gap-2">
               <Calendar className="w-5 h-5 text-primary" />
-              Séances du {DAYS.find((d) => d.key === selectedDay)?.name}
+              {t('day_sessions', { day: t(`day_${selectedDay}`) })}
             </h3>
 
             {(() => {
@@ -458,8 +460,8 @@ export default function ProfessorSchedulePage() {
                 return (
                   <div className="py-12 text-center rounded-2xl bg-muted/50 dark:bg-slate-800/30 border border-dashed border-border dark:border-border">
                     <Clock className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-                    <p className="text-xs font-bold text-muted-foreground">Aucun cours programmé pour ce jour.</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Journée réservée aux travaux de recherche ou consultations.</p>
+                    <p className="text-xs font-bold text-muted-foreground">{t('no_classes')}</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">{t('free_day')}</p>
                   </div>
                 );
               }
@@ -474,7 +476,7 @@ export default function ProfessorSchedulePage() {
                       <div className="flex items-start gap-4">
                         <div className="w-16 h-16 rounded-2xl bg-[#001A4B] text-white flex flex-col items-center justify-center font-bold shrink-0 shadow-sm">
                           <span className="text-xs text-amber-300">{cls.time?.split(' - ')[0] || cls.time}</span>
-                          <span className="text-[8px] uppercase tracking-wider text-slate-300 mt-0.5">HORAIRE</span>
+                          <span className="text-[8px] uppercase tracking-wider text-slate-300 mt-0.5">{t('time')}</span>
                         </div>
 
                         <div className="space-y-1">
@@ -482,7 +484,7 @@ export default function ProfessorSchedulePage() {
                             <span className="px-2 py-0.5 bg-primary/10 dark:bg-blue-950 text-primary dark:text-blue-300 text-[10px] font-bold rounded uppercase">
                               {cls.code || 'CM'}
                             </span>
-                            <span className="text-xs font-bold text-slate-400">Horaire : {cls.time}</span>
+                            <span className="text-xs font-bold text-slate-400">{t('time')} · {cls.time}</span>
                           </div>
                           <h4 className="text-sm font-bold text-foreground dark:text-white">{cls.title}</h4>
                           <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground font-medium">
@@ -501,7 +503,7 @@ export default function ProfessorSchedulePage() {
                           onClick={() => startCall.mutate(cls)} disabled={startCall.isPending}
                           className="px-5 py-2.5 bg-[#001A4B] hover:bg-[#082663] text-white font-bold text-xs rounded-xl uppercase tracking-wider shadow-sm flex items-center gap-2 cursor-pointer transition-colors"
                         >
-                          <QrCode className="w-4 h-4 text-amber-300" /> Faire l'Appel (QR / Liste)
+                          <QrCode className="w-4 h-4 text-amber-300" /> {t('take_attendance')}
                         </button>
                       </div>
                     </div>

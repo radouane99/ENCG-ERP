@@ -18,6 +18,7 @@
     }
   },
   "vacataires": {
+    "empty": "No visiting lecturers found.",
     "title": "Gestion des Vacataires",
     "subtitle": "Contrats, suivi des heures et génération des bordereaux de paiement.",
     "tabs": {
@@ -27,6 +28,9 @@
     "search": "Chercher un contrat...",
     "new_btn": "Nouveau Contrat",
     "card": {
+      "no_module": "No module assigned",
+      "hours_value": "{{value}} h",
+      "rate_value": "{{value}} MAD/hour",
       "active": "Actif",
       "hours": "Volume Horaire:",
       "rate": "Taux Horaire:",

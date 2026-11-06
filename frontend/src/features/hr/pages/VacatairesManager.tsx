@@ -78,11 +78,11 @@ export default function VacatairesManager() {
             <div className="space-y-4">
               <div className="flex justify-between items-center mb-6">
                 <div className="relative w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input
                     type="text"
                     placeholder={t('vacataires.search')}
-                    className="w-full pl-9 pr-4 py-2 border border-input bg-background text-sm rounded-[var(--control-radius)]"
+                    className="w-full ps-9 pe-4 py-2 border border-input bg-background text-sm rounded-[var(--control-radius)]"
                   />
                 </div>
                 <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl font-medium">
@@ -98,7 +98,7 @@ export default function VacatairesManager() {
                       <div className="flex justify-between items-start mb-4">
                         <div>
                           <h4 className="font-semibold text-foreground">{contract.first_name} {contract.last_name}</h4>
-                          <p className="text-sm text-muted-foreground">{contract.module || 'Aucun module assigné'}</p>
+                          <p className="text-sm text-muted-foreground">{contract.module || t('vacataires.card.no_module')}</p>
                         </div>
                         <span className="bg-emerald-500/10 text-emerald-600 text-xs px-2 py-1 rounded-full font-medium">
                           {contract.status === 'active' ? t('vacataires.card.active') : contract.status}
@@ -107,11 +107,11 @@ export default function VacatairesManager() {
                       <div className="space-y-2 text-sm text-muted-foreground">
                         <div className="flex justify-between">
                           <span>{t('vacataires.card.hours')}</span>
-                          <span className="font-medium text-foreground">{contract.agreed_hours || 0}h</span>
+                          <span className="font-medium text-foreground">{t('vacataires.card.hours_value', { value: contract.agreed_hours || 0 })}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>{t('vacataires.card.rate')}</span>
-                          <span className="font-medium text-foreground">{contract.hourly_rate || 0} DH/h</span>
+                          <span className="font-medium text-foreground">{t('vacataires.card.rate_value', { value: contract.hourly_rate || 0 })}</span>
                         </div>
                       </div>
                       <div className="mt-4 pt-4 border-t border-border/50 flex gap-2">
@@ -130,7 +130,7 @@ export default function VacatairesManager() {
                   ))}
                   {(!vacataires || vacataires.length === 0) && (
                     <div className="col-span-full text-center py-8 text-muted-foreground">
-                      Aucun vacataire trouvé.
+                      {t('vacataires.empty')}
                     </div>
                   )}
                 </div>
