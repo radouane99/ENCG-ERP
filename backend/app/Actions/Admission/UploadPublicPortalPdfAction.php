@@ -15,14 +15,14 @@ final class UploadPublicPortalPdfAction
     {
         $id = (string) Str::uuid();
         $path = $file->store('public-portal/'.$actor->institution_id, 'private');
-        abort_unless(is_string($path) && $path !== '', 503, 'Le PDF n’a pas pu être stocké. Réessayez plus tard.');
+        abort_unless(is_string($path) && $path !== '', 503, __('Le PDF n’a pas pu être stocké. Réessayez plus tard.'));
         $name = Str::limit(basename($file->getClientOriginalName()), 180, '');
         $sha256 = hash_file('sha256', $file->getRealPath());
         try {
             DB::transaction(function () use ($actor, $id, $path, $name, $sha256) {
                 $institution = Institution::whereKey($actor->institution_id)->lockForUpdate()->firstOrFail();
                 $settings = $institution->settings ?? [];
-                abort_if(count($settings['public_portal']['attachments'] ?? []) >= 100, 422, 'Limite de fichiers atteinte. Contactez le service technique.');
+                abort_if(count($settings['public_portal']['attachments'] ?? []) >= 100, 422, __('Limite de fichiers atteinte. Contactez le service technique.'));
                 $settings['public_portal']['attachments'][$id] = ['path' => $path, 'name' => $name, 'sha256' => $sha256];
                 $institution->settings = $settings;
                 $institution->save();

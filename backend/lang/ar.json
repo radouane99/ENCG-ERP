@@ -1,0 +1,13 @@
+{
+    "La page a été modifiée. Rechargez avant de réessayer.": "تم تعديل الصفحة. أعد تحميلها قبل المحاولة مجدداً.",
+    "PDF inconnu pour cet établissement.": "ملف PDF غير مسجل لدى هذه المؤسسة.",
+    "Le PDF n’a pas pu être stocké. Réessayez plus tard.": "تعذر حفظ ملف PDF. أعد المحاولة لاحقاً.",
+    "Limite de fichiers atteinte. Contactez le service technique.": "تم بلوغ الحد الأقصى للملفات. تواصل مع الدعم التقني.",
+    "Ce fichier ne correspond plus à la version publiée.": "لم يعد هذا الملف مطابقاً للنسخة المنشورة.",
+    "Suivi mis à jour.": "تم تحديث حالة المتابعة.",
+    "Votre compte ne possède pas d’adresse email.": "لا يتوفر حسابك على عنوان بريد إلكتروني.",
+    "Message de test remis au transport :transport pour votre adresse. La livraison doit être vérifiée dans votre boîte de réception.": "تم تسليم رسالة الاختبار إلى خدمة الإرسال :transport. تحقق من وصولها إلى صندوق بريدك.",
+    "Test de messagerie du portail ENCG": "اختبار البريد الإلكتروني لبوابة ENCG",
+    "Bonjour :name,": "مرحباً :name،",
+    "Ce message confirme la réception du test de messagerie demandé depuis les paramètres du portail ENCG.": "تؤكد هذه الرسالة وصول رسالة الاختبار التي طُلب إرسالها من إعدادات بوابة ENCG."
+}

@@ -64,7 +64,7 @@ class PublicPortalController extends Controller
         $config = $institution->settings['public_portal'] ?? [];
         $file = $config['attachments'][$id] ?? null;
         abort_unless($file && Storage::disk('private')->exists($file['path']), 404);
-        abort_if(isset($file['sha256']) && ! hash_equals($file['sha256'], hash('sha256', Storage::disk('private')->get($file['path']))), 409, 'Ce fichier ne correspond plus à la version publiée.');
+        abort_if(isset($file['sha256']) && ! hash_equals($file['sha256'], hash('sha256', Storage::disk('private')->get($file['path']))), 409, __('Ce fichier ne correspond plus à la version publiée.'));
 
         return Storage::disk('private')->download($file['path'], 'communique-'.$id.'.pdf', ['Content-Type' => 'application/pdf', 'Cache-Control' => 'private, no-store', 'X-Content-Type-Options' => 'nosniff']);
     }

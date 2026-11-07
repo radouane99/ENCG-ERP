@@ -16,7 +16,7 @@ class SystemTestMail extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: 'Test de messagerie du portail ENCG');
+        return new Envelope(subject: __('Test de messagerie du portail ENCG'));
     }
 
     public function content(): Content

@@ -31,6 +31,6 @@ class PublicSupportController extends Controller
         $data = $request->validate(['status' => 'required|in:new,in_progress,closed']);
         app(UpdatePublicSupportStatusAction::class)->execute($request->user(), $id, $data['status']);
 
-        return response()->json(['message' => 'Suivi mis à jour.']);
+        return response()->json(['message' => __('Suivi mis à jour.')]);
     }
 }

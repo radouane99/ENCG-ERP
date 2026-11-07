@@ -64,7 +64,10 @@ class PublicPortalContentTest extends TestCase
         $this->admin();
         $payload = $this->payload();
         $this->putJson('/api/admin/public-portal', $payload)->assertOk();
-        $this->putJson('/api/admin/public-portal', $payload)->assertStatus(409);
+        $this->putJson('/api/admin/public-portal', $payload, ['Accept-Language' => 'fr'])
+            ->assertStatus(409)->assertJsonPath('message', 'La page a été modifiée. Rechargez avant de réessayer.');
+        $this->putJson('/api/admin/public-portal', $payload, ['Accept-Language' => 'ar'])
+            ->assertStatus(409)->assertJsonPath('message', 'تم تعديل الصفحة. أعد تحميلها قبل المحاولة مجدداً.');
         $payload['revision'] = 1;
         $payload['announcements'][0]['attachment_id'] = 'd970b8d5-d586-4d13-9838-09b73f711192';
         $this->putJson('/api/admin/public-portal', $payload)->assertStatus(422);

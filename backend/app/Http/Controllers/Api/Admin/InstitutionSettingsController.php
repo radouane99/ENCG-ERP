@@ -82,9 +82,12 @@ class InstitutionSettingsController extends Controller
     {
         $this->authorizeStaff($request);
         $email = $request->user()->email;
-        abort_unless($email, 422, 'Votre compte ne possède pas d’adresse email.');
-        Mail::to($email)->send(new SystemTestMail($request->user()->name));
+        abort_unless($email, 422, __('Votre compte ne possède pas d’adresse email.'));
+        Mail::to($email)->locale(app()->getLocale())->send(new SystemTestMail($request->user()->name));
 
-        return response()->json(['success' => true, 'message' => 'Message de test remis au transport '.config('mail.default').' pour votre adresse. La livraison doit être vérifiée dans votre boîte de réception.']);
+        return response()->json([
+            'success' => true,
+            'message' => __('Message de test remis au transport :transport pour votre adresse. La livraison doit être vérifiée dans votre boîte de réception.', ['transport' => config('mail.default')]),
+        ]);
     }
 }
