@@ -32,7 +32,7 @@ class ContactController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Demande enregistrée pour le service concerné.',
+                'message' => __('Demande enregistrée pour le service concerné.'),
                 'reference' => 'DEM-'.str_pad((string) $submission->id, 6, '0', STR_PAD_LEFT),
                 'department' => $department,
             ]);
@@ -41,7 +41,7 @@ class ContactController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Échec de l\'envoi du message.',
+                'message' => __('Échec de l\'envoi du message.'),
             ], 500);
         }
     }

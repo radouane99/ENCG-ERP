@@ -2,6 +2,8 @@ import '../public-portal.css';
 import React,{ useEffect,useState } from 'react';
 import { useNavigate,Link } from 'react-router-dom';
 import api from '@shared/lib/api';
+import { useTranslation } from 'react-i18next';
+import { changeAppLanguage, LOCALE_META, normalizeLocale } from '@shared/lib/locale';
 import { ShieldCheck,Sparkles,GraduationCap,ArrowRight,LogIn,BrainCircuit,UserCheck,Activity,Database,BarChart3,Sun,Moon,MapPin,Phone,Mail,Send,CheckCircle2,Award,Menu,X } from 'lucide-react';
 import { cn } from '@shared/lib/utils';
 import { useAuthStore } from '@stores/authStore';
@@ -15,6 +17,39 @@ import TafemAdmissibilitySection from '@features/public/components/TafemAdmissib
 
 const dict = {
   fr: {
+    preview: "Aperçu du portail",
+    digitalHelp: "Assistance numérique",
+    verifiedDocs: "Documents vérifiables",
+    verifyQr: "Identifiant numérique et vérification QR",
+    hours: "Horaires d’accueil",
+    address: "Adresse",
+    phone: "Téléphone",
+    email: "Email",
+    unknownAddress: "Adresse à confirmer auprès de l’établissement",
+    unknownPhone: "Téléphone non renseigné",
+    unknownEmail: "Email institutionnel non renseigné",
+    sent: "Demande enregistrée",
+    keepRef: "Conservez votre référence",
+    refHelp: "Le service concerné pourra retrouver votre demande.",
+    sendAgain: "Envoyer un autre message",
+    sendError: "Votre demande n’a pas pu être enregistrée. Réessayez.",
+    chooseSubject: "— Sélectionner un sujet —",
+    subjectAdmission: "Admission & Inscription",
+    subjectPlatform: "Problème technique",
+    subjectAccess: "Accès au compte / connexion",
+    subjectDocs: "Document ou dossier à compléter",
+    subjectTraining: "Informations Formation",
+    subjectOther: "Autre",
+    sending: "Envoi en cours...",
+    official: "Site Officiel ENCG",
+    university: "Université USMBA",
+    student: "Portail Étudiant",
+    professor: "Espace Professeur",
+    admin: "Administration",
+    openNav: "Ouvrir la navigation",
+    closeNav: "Fermer la navigation",
+    light: "Activer le mode clair",
+    dark: "Activer le mode sombre",
     font: 'font-sans',
     navVision: 'Vision', navEco: 'Espaces utilisateurs', navAi: 'ENCG AI',
     navDash: 'Tableau de bord', navLogin: 'Connexion',
@@ -45,6 +80,39 @@ const dict = {
     madeBy: 'Fait avec passion au Maroc',
   },
   en: {
+    preview: "Portal preview",
+    digitalHelp: "Digital support",
+    verifiedDocs: "Verifiable documents",
+    verifyQr: "Digital identifier and QR verification",
+    hours: "Reception hours",
+    address: "Address",
+    phone: "Phone",
+    email: "Email",
+    unknownAddress: "Confirm the address with the institution",
+    unknownPhone: "Phone number unavailable",
+    unknownEmail: "Institutional email unavailable",
+    sent: "Request recorded",
+    keepRef: "Keep your reference",
+    refHelp: "The relevant department can use it to find your request.",
+    sendAgain: "Send another message",
+    sendError: "Your request could not be recorded. Try again.",
+    chooseSubject: "— Select a subject —",
+    subjectAdmission: "Admissions and enrollment",
+    subjectPlatform: "Technical issue",
+    subjectAccess: "Account access or sign-in",
+    subjectDocs: "Missing document or incomplete application",
+    subjectTraining: "Program information",
+    subjectOther: "Other",
+    sending: "Sending…",
+    official: "Official ENCG website",
+    university: "USMBA University",
+    student: "Student portal",
+    professor: "Faculty portal",
+    admin: "Administration",
+    openNav: "Open navigation",
+    closeNav: "Close navigation",
+    light: "Enable light mode",
+    dark: "Enable dark mode",
     font: 'font-sans',
     navVision: 'Vision', navEco: 'User spaces', navAi: 'ENCG AI',
     navDash: 'Dashboard', navLogin: 'Login',
@@ -75,6 +143,39 @@ const dict = {
     madeBy: 'Made with passion in Morocco',
   },
   ar: {
+    preview: "معاينة البوابة",
+    digitalHelp: "المساعدة الرقمية",
+    verifiedDocs: "وثائق قابلة للتحقق",
+    verifyQr: "معرّف رقمي والتحقق برمز QR",
+    hours: "ساعات الاستقبال",
+    address: "العنوان",
+    phone: "الهاتف",
+    email: "البريد الإلكتروني",
+    unknownAddress: "يرجى تأكيد العنوان لدى المؤسسة",
+    unknownPhone: "رقم الهاتف غير متاح",
+    unknownEmail: "البريد الإلكتروني للمؤسسة غير متاح",
+    sent: "تم تسجيل الطلب",
+    keepRef: "احتفظ بمرجع طلبك",
+    refHelp: "يستطيع القسم المعني العثور على طلبك بهذا المرجع.",
+    sendAgain: "إرسال رسالة أخرى",
+    sendError: "تعذر تسجيل طلبك. أعد المحاولة.",
+    chooseSubject: "— اختر موضوعاً —",
+    subjectAdmission: "القبول والتسجيل",
+    subjectPlatform: "مشكلة تقنية",
+    subjectAccess: "الوصول إلى الحساب أو تسجيل الدخول",
+    subjectDocs: "وثيقة ناقصة أو ملف غير مكتمل",
+    subjectTraining: "معلومات عن التكوينات",
+    subjectOther: "موضوع آخر",
+    sending: "جارٍ الإرسال…",
+    official: "الموقع الرسمي للمدرسة",
+    university: "جامعة سيدي محمد بن عبد الله",
+    student: "بوابة الطلبة",
+    professor: "فضاء الأساتذة",
+    admin: "الإدارة",
+    openNav: "فتح قائمة التنقل",
+    closeNav: "إغلاق قائمة التنقل",
+    light: "تفعيل الوضع الفاتح",
+    dark: "تفعيل الوضع الداكن",
     font: 'font-sans',
     navVision: 'الرؤية', navEco: 'فضاءات المستخدمين', navAi: 'الذكاء الاصطناعي',
     navDash: 'لوحة التحكم', navLogin: 'تسجيل الدخول',
@@ -112,14 +213,15 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const publicPortal = usePublicPortal();
   const publicContact = publicPortal.isError ? undefined : publicPortal.data?.contact;
-  const [contactError, setContactError] = useState('');
+  const [contactError, setContactError] = useState(false);
   const [contactReference, setContactReference] = useState('');
   const { isAuthenticated } = useAuthStore();
   const { theme, setTheme } = useTheme();
 
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [lang, setLang] = useState<Lang>('fr');
+  const { i18n } = useTranslation();
+  const lang = normalizeLocale(i18n.resolvedLanguage || i18n.language);
   const [formState, setFormState] = useState({ name: '', email: '', subject: '', message: '' });
   const [formSent, setFormSent] = useState(false);
   const [formSending, setFormSending] = useState(false);
@@ -141,7 +243,7 @@ export default function LandingPage() {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormSending(true);
-    setContactError('');
+    setContactError(false);
 
     try {
       const response = await api.post('/contact', {
@@ -157,12 +259,13 @@ export default function LandingPage() {
     } catch (err) {
       console.error('Contact API error:', err);
       setFormSending(false);
-      setContactError('Votre demande n’a pas pu être enregistrée. Réessayez.');
+      setContactError(true);
     }
   };
 
   return (
     <div
+      lang={lang}
       dir={isRTL ? 'rtl' : 'ltr'}
       className={cn(
         'public-portal min-h-screen transition-colors duration-500 overflow-x-hidden selection:bg-[#1a3673] selection:text-white',
@@ -212,16 +315,16 @@ export default function LandingPage() {
               <a href="#ia" className="text-[#1a3673] dark:text-blue-400 font-bold flex items-center gap-1 hover:text-[#162e74] transition-colors">
                 <BrainCircuit className="w-4 h-4" />{t.navAi}
               </a>
-              <a href="#contact" className="text-slate-600 dark:text-slate-300 hover:text-[#1a3673] dark:hover:text-white transition-colors">Contact</a>
+              <a href="#contact" className="text-slate-600 dark:text-slate-300 hover:text-[#1a3673] dark:hover:text-white transition-colors">{t.footerContact}</a>
             </div>
 
             {/* Actions */}
             <div className="flex items-center gap-2">
-              <button type="button" aria-controls="public-mobile-navigation" aria-expanded={mobileMenuOpen} aria-label={mobileMenuOpen ? 'Fermer la navigation' : 'Ouvrir la navigation'} onClick={() => setMobileMenuOpen(value => !value)} className="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-card text-foreground xl:hidden">{mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
+              <button type="button" aria-controls="public-mobile-navigation" aria-expanded={mobileMenuOpen} aria-label={mobileMenuOpen ? t.closeNav : t.openNav} onClick={() => setMobileMenuOpen(value => !value)} className="flex h-11 w-11 items-center justify-center rounded-xl border border-border bg-card text-foreground xl:hidden">{mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
               {/* Dark/Light toggle */}
               <button
                 onClick={() => setTheme(currentTheme === 'dark' ? 'light' : 'dark')}
-                aria-label={currentTheme === 'dark' ? 'Activer le mode clair' : 'Activer le mode sombre'}
+                aria-label={currentTheme === 'dark' ? t.light : t.dark}
                 className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
               >
                 {currentTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -231,7 +334,11 @@ export default function LandingPage() {
                 {(['fr', 'en', 'ar'] as Lang[]).map((l) => (
                   <button
                     key={l}
-                    onClick={() => setLang(l)}
+                    type="button"
+                    lang={l}
+                    aria-label={LOCALE_META[l].label}
+                    aria-pressed={lang === l}
+                    onClick={() => void changeAppLanguage(l)}
                     className={cn(
                       'px-3 py-1 text-xs font-bold uppercase rounded-md transition-colors',
                       lang === l
@@ -269,7 +376,7 @@ export default function LandingPage() {
               ['#questions-frequentes', lang === 'ar' ? 'الأسئلة الشائعة' : lang === 'en' ? 'Frequently asked questions' : 'Questions fréquentes'],
               ['#contact', t.footerContact],
             ].map(([href, label]) => <a key={href} href={href} onClick={() => setMobileMenuOpen(false)} className="flex min-h-11 items-center rounded-lg px-4 font-medium hover:bg-muted">{label}</a>)}
-            <div className="mt-2 flex gap-2 border-t border-border p-2 sm:hidden">{(['fr', 'en', 'ar'] as Lang[]).map(value => <button key={value} type="button" aria-pressed={lang === value} onClick={() => setLang(value)} className={`min-h-11 flex-1 rounded-lg text-xs font-semibold uppercase ${lang === value ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>{value}</button>)}</div>
+            <div className="mt-2 flex gap-2 border-t border-border p-2 sm:hidden">{(['fr', 'en', 'ar'] as Lang[]).map(value => <button key={value} type="button" lang={value} aria-label={LOCALE_META[value].label} aria-pressed={lang === value} onClick={() => void changeAppLanguage(value)} className={`min-h-11 flex-1 rounded-lg text-xs font-semibold uppercase ${lang === value ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>{value}</button>)}</div>
           </div>}
         </div>
       </nav>
@@ -320,7 +427,7 @@ export default function LandingPage() {
                 <div className="flex gap-1.5">
                   <div className="w-3 h-3 rounded-full bg-blue-600" /><div className="w-3 h-3 rounded-full bg-amber-400" /><div className="w-3 h-3 rounded-full bg-emerald-500" />
                 </div>
-                <span className="text-xs text-slate-400 font-mono font-bold">Aperçu du portail</span>
+                <span className="text-xs text-slate-400 font-mono font-bold">{t.preview}</span>
               </div>
               <div className="space-y-4">
                 {[
@@ -343,7 +450,7 @@ export default function LandingPage() {
             <div className="absolute top-[5%] right-[-5%] bg-white dark:bg-[#0A1220]/90 backdrop-blur-xl border border-amber-400/40 p-4 rounded-2xl shadow-xl transform rotate-3 animate-bounce [animation-duration:4s]">
               <div className="flex items-center gap-3 mb-2">
                 <Sparkles className="w-5 h-5 text-amber-500" />
-                <span className="text-sm font-bold text-slate-900 dark:text-white">Assistance numérique</span>
+                <span className="text-sm font-bold text-slate-900 dark:text-white">{t.digitalHelp}</span>
               </div>
               <div className="h-1.5 w-full bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
                 <div className="h-full w-3/4 bg-gradient-to-r from-[#1a3673] to-amber-500" />
@@ -352,9 +459,9 @@ export default function LandingPage() {
             <div className="absolute bottom-[5%] left-[-5%] bg-white dark:bg-[#0A1220]/90 backdrop-blur-xl border border-blue-200 dark:border-blue-500/30 p-4 rounded-2xl shadow-xl transform -rotate-3 animate-bounce [animation-duration:5s]">
               <div className="flex items-center gap-3 mb-1">
                 <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                <span className="text-sm font-bold text-slate-900 dark:text-white">Documents vérifiables</span>
+                <span className="text-sm font-bold text-slate-900 dark:text-white">{t.verifiedDocs}</span>
               </div>
-              <p className="text-[10px] text-slate-500">Identifiant numérique et vérification QR</p>
+              <p className="text-[10px] text-slate-500">{t.verifyQr}</p>
             </div>
           </div>
         </div>
@@ -428,7 +535,7 @@ export default function LandingPage() {
           <div className="text-center mb-16">
             <div className="inline-flex items-center gap-2 bg-indigo-50 dark:bg-[#1a3673]/30 border border-indigo-200 dark:border-indigo-800 rounded-full px-4 py-1.5 mb-6">
               <Mail className="w-4 h-4 text-[#1a3673] dark:text-amber-400" />
-              <span className="text-xs font-bold text-[#1a3673] dark:text-amber-400 tracking-wider uppercase">Contact</span>
+              <span className="text-xs font-bold text-[#1a3673] dark:text-amber-400 tracking-wider uppercase">{t.footerContact}</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">{t.contactTitle}</h2>
             <p className="text-slate-500 dark:text-slate-400 text-lg max-w-xl mx-auto">{t.contactSubtitle}</p>
@@ -439,15 +546,15 @@ export default function LandingPage() {
             <div className="lg:col-span-2 flex flex-col gap-5">
               <div className="flex-1 bg-white dark:bg-[#0A1220] rounded-2xl p-7 border border-slate-200 dark:border-white/10 shadow-md dark:shadow-none">
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm mb-8">{t.contactDesc}</p>
-                {publicContact?.hours && <p className="mb-5 whitespace-pre-line text-sm text-muted-foreground"><strong>Horaires d’accueil</strong><br />{publicContact.hours}</p>}
+                {publicContact?.hours && <p className="mb-5 whitespace-pre-line text-sm text-muted-foreground"><strong>{t.hours}</strong><br />{publicContact.hours}</p>}
                 <div className="space-y-5">
                   <div className="flex items-start gap-4">
                     <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-[#1a3673]/30 flex items-center justify-center border border-indigo-200 dark:border-indigo-800 shrink-0">
                       <MapPin className="w-5 h-5 text-[#1a3673] dark:text-amber-400" />
                     </div>
                     <div>
-                      <div className="font-bold text-slate-900 dark:text-white text-sm mb-1">Adresse</div>
-                      <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">{publicContact?.address || 'Adresse à confirmer auprès de l’établissement'}</p>
+                      <div className="font-bold text-slate-900 dark:text-white text-sm mb-1">{t.address}</div>
+                      <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">{publicContact?.address || t.unknownAddress}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -455,8 +562,8 @@ export default function LandingPage() {
                       <Phone className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div>
-                      <div className="font-bold text-slate-900 dark:text-white text-sm mb-1">Téléphone</div>
-                      <p className="text-slate-500 dark:text-slate-400 text-xs">{publicContact?.phone || 'Téléphone non renseigné'}</p>
+                      <div className="font-bold text-slate-900 dark:text-white text-sm mb-1">{t.phone}</div>
+                      <p className="text-slate-500 dark:text-slate-400 text-xs">{publicContact?.phone || t.unknownPhone}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -464,8 +571,8 @@ export default function LandingPage() {
                       <Mail className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div>
-                      <div className="font-bold text-slate-900 dark:text-white text-sm mb-1">Email</div>
-                      <p className="text-slate-500 dark:text-slate-400 text-xs">{publicContact?.email || 'Email institutionnel non renseigné'}</p>
+                      <div className="font-bold text-slate-900 dark:text-white text-sm mb-1">{t.email}</div>
+                      <p className="text-slate-500 dark:text-slate-400 text-xs">{publicContact?.email || t.unknownEmail}</p>
                     </div>
                   </div>
                 </div>
@@ -479,13 +586,13 @@ export default function LandingPage() {
                   <div className="w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-500/10 flex items-center justify-center border-4 border-emerald-200 dark:border-emerald-500/20">
                     <CheckCircle2 className="w-10 h-10 text-emerald-500" />
                   </div>
-                  <h3 className="text-2xl font-black text-slate-900 dark:text-white">Demande enregistrée</h3><p role="status" className="text-sm">Conservez votre référence : <strong>{contactReference}</strong>. Le service concerné pourra retrouver votre demande.</p>
+                  <h3 className="text-2xl font-black text-slate-900 dark:text-white">{t.sent}</h3><p role="status" className="text-sm">{t.keepRef} <strong dir="ltr">{contactReference}</strong>. {t.refHelp}</p>
                   <button onClick={() => setFormSent(false)} className="text-sm text-slate-500 dark:text-slate-400 hover:text-[#1a3673] transition-colors underline underline-offset-2">
-                    Envoyer un autre message
+                    {t.sendAgain}
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleFormSubmit} className="p-8 space-y-5">{contactError && <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{contactError}</p>}
+                <form onSubmit={handleFormSubmit} className="p-8 space-y-5">{contactError && <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm text-destructive">{t.sendError}</p>}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div className="group">
                       <label htmlFor="public-contact-name" className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-2 uppercase tracking-wider">{t.formName}</label>
@@ -513,11 +620,11 @@ export default function LandingPage() {
                       onChange={e => setFormState(s => ({ ...s, subject: e.target.value }))}
                       className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1a3673]/30 focus:border-[#1a3673] transition-all"
                     >
-                      <option value="">— Sélectionner un sujet —</option>
-                      <option value="admission">Admission & Inscription</option>
-                      <option value="platform">Problème technique</option><option value="access">Accès au compte / connexion</option><option value="documents">Document ou dossier à compléter</option>
-                      <option value="formation">Informations Formation</option>
-                      <option value="autre">Autre</option>
+                      <option value="">{t.chooseSubject}</option>
+                      <option value="admission">{t.subjectAdmission}</option>
+                      <option value="platform">{t.subjectPlatform}</option><option value="access">{t.subjectAccess}</option><option value="documents">{t.subjectDocs}</option>
+                      <option value="formation">{t.subjectTraining}</option>
+                      <option value="autre">{t.subjectOther}</option>
                     </select>
                   </div>
                   <div>
@@ -535,7 +642,7 @@ export default function LandingPage() {
                     className="w-full bg-gradient-to-r from-[#1a3673] via-[#162e74] to-[#1e3a8a] text-white py-4 rounded-xl font-bold shadow-lg shadow-[#1a3673]/20 hover:shadow-[#1a3673]/40 transition-all hover:scale-[1.02] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
                   >
                     {formSending ? (
-                      <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Envoi en cours...</>
+                      <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> {t.sending}</>
                     ) : (
                       <><Send className="w-5 h-5" /> {t.formBtn}</>
                     )}
@@ -582,11 +689,11 @@ export default function LandingPage() {
             <div>
               <h4 className="text-white font-bold mb-5 text-sm uppercase tracking-wider">{t.footerLinks}</h4>
               <ul className="space-y-3 text-sm">
-                <li><a href="https://encgf-usmba.ac.ma" target="_blank" rel="noreferrer" className="text-slate-300 hover:text-white transition-colors">Site Officiel ENCG</a></li>
-                <li><a href="https://usmba.ac.ma" target="_blank" rel="noreferrer" className="text-slate-300 hover:text-white transition-colors">Université USMBA</a></li>
-                <li><Link to="/login" className="text-slate-300 hover:text-white transition-colors">Portail Étudiant</Link></li>
-                <li><Link to="/login" className="text-slate-300 hover:text-white transition-colors">Espace Professeur</Link></li>
-                <li><Link to="/login" className="text-slate-300 hover:text-white transition-colors">Administration</Link></li>
+                <li><a href="https://encgf-usmba.ac.ma" target="_blank" rel="noreferrer" className="text-slate-300 hover:text-white transition-colors">{t.official}</a></li>
+                <li><a href="https://usmba.ac.ma" target="_blank" rel="noreferrer" className="text-slate-300 hover:text-white transition-colors">{t.university}</a></li>
+                <li><Link to="/login" className="text-slate-300 hover:text-white transition-colors">{t.student}</Link></li>
+                <li><Link to="/login" className="text-slate-300 hover:text-white transition-colors">{t.professor}</Link></li>
+                <li><Link to="/login" className="text-slate-300 hover:text-white transition-colors">{t.admin}</Link></li>
               </ul>
             </div>
 
@@ -596,15 +703,15 @@ export default function LandingPage() {
               <ul className="space-y-4 text-sm">
                 <li className="flex items-start gap-3">
                   <MapPin className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
-                  <span className="text-slate-300 leading-relaxed">{publicContact?.address || 'Adresse à confirmer auprès de l’établissement'}</span>
+                  <span className="text-slate-300 leading-relaxed">{publicContact?.address || t.unknownAddress}</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <Phone className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="text-slate-300">{publicContact?.phone || 'Téléphone non renseigné'}</span>
+                  <span className="text-slate-300">{publicContact?.phone || t.unknownPhone}</span>
                 </li>
                 <li className="flex items-center gap-3">
                   <Mail className="w-4 h-4 text-amber-400 shrink-0" />
-                  <span className="text-slate-300">{publicContact?.email || 'Email institutionnel non renseigné'}</span>
+                  <span className="text-slate-300">{publicContact?.email || t.unknownEmail}</span>
                 </li>
               </ul>
             </div>

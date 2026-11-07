@@ -24,8 +24,18 @@ final class PublicPortalContent
 
         return ['revision' => (int) ($config['revision'] ?? 0), 'timezone' => config('admissions.timezone'),
             'contact' => ['name' => $institution->name, 'address' => $institution->address, 'email' => $institution->email, 'phone' => $institution->phone, 'hours' => $config['hours'] ?? ''],
-            'guides' => collect(['tafem', 'cnaem'])->mapWithKeys(fn ($route) => [$route => ['instructions' => $config['guides'][$route]['instructions'] ?? '', 'documents' => AdmissionEntryRules::documents($route), 'physical_checklist' => array_values(AdmissionEntryRules::physicalChecklist($route))]])->all(),
-            'announcements' => $announcements->values()->map(fn ($item) => array_merge(collect($item)->only(['id', 'title', 'body', 'status', 'starts_on', 'ends_on', 'attachment_id'])->all(), ['starts_on' => $item['starts_on'] ?? '', 'ends_on' => $item['ends_on'] ?? '']))->all(),
+            'guides' => collect(['tafem', 'cnaem'])->mapWithKeys(function ($route) use ($config) {
+                $checklist = array_values(AdmissionEntryRules::physicalChecklist($route));
+
+                return [$route => [
+                    'instructions' => $config['guides'][$route]['instructions'] ?? '',
+                    'instructions_ar' => $config['guides'][$route]['instructions_ar'] ?? '',
+                    'documents' => AdmissionEntryRules::documents($route),
+                    'physical_checklist' => $checklist,
+                    'physical_checklist_ar' => array_map(fn ($label) => __($label, [], 'ar'), $checklist),
+                ]];
+            })->all(),
+            'announcements' => $announcements->values()->map(fn ($item) => array_merge(collect($item)->only(['id', 'title', 'body', 'title_ar', 'body_ar', 'status', 'starts_on', 'ends_on', 'attachment_id'])->all(), ['starts_on' => $item['starts_on'] ?? '', 'ends_on' => $item['ends_on'] ?? '']))->all(),
         ] + ($admin ? ['attachments' => collect($config['attachments'] ?? [])->map(fn ($file, $id) => ['id' => $id, 'name' => $file['name']])->values()->all()] : []);
     }
 }

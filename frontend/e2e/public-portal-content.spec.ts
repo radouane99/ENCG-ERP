@@ -38,6 +38,16 @@ test('public support records a reference and uses institution contact data', asy
   await page.getByRole('button', { name: 'Envoyer le message', exact: true }).click()
   await expect(page.getByText('DEM-000042', { exact: true })).toBeVisible()
   expect(sent.subject).toBe('documents')
+  await page.getByRole('button', { name: 'العربية', exact: true }).click()
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl')
+  await expect(page.getByRole('heading', { name: 'تم تسجيل الطلب' })).toBeVisible()
+  await expect(page.getByText('DEM-000042', { exact: true })).toBeVisible()
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ar')
+  await expect(page.locator('#public-contact-subject').getByRole('option', { name: 'مشكلة تقنية' })).toBeAttached()
+  await page.getByRole('tab', { name: 'CNAEM', exact: true }).click()
+  await expect(page.getByText('شهادة القبول الرسمية في CNAEM', { exact: true })).toBeVisible()
+  await expect(page.getByText('مسار التسجيل في خمس خطوات', { exact: true })).toBeVisible()
 })
 
 test('admin can save a scheduled official notice and clear error is shown on conflict', async ({ page }) => {
@@ -55,6 +65,8 @@ test('admin can save a scheduled official notice and clear error is shown on con
   await panel.getByRole('button', { name: 'Ajouter une annonce' }).click()
   await panel.getByLabel('Titre', { exact: true }).fill('Official synthetic notice')
   await panel.getByLabel('Contenu', { exact: true }).fill('Administrative announcement text')
+  await panel.getByLabel('Titre en arabe', { exact: true }).fill('بلاغ رسمي')
+  await panel.getByLabel('Contenu en arabe', { exact: true }).fill('تفاصيل التسجيل')
   await panel.getByLabel('Début de publication').fill('2026-11-01')
   await panel.getByLabel('Fin de publication').fill('2026-11-10')
   await panel.getByRole('combobox', { name: 'État annonce 1', exact: true }).selectOption('published')
@@ -63,6 +75,7 @@ test('admin can save a scheduled official notice and clear error is shown on con
   await page.setViewportSize({ width: 1280, height: 2400 })
   await panel.screenshot({ path: 'test-results/public-design-admin-editor.png' })
   expect(saved.announcements[0].status).toBe('published')
+  expect(saved.announcements[0]).toMatchObject({ title_ar: 'بلاغ رسمي', body_ar: 'تفاصيل التسجيل' })
   conflict = true
   await panel.getByLabel('Titre', { exact: true }).fill('Draft preserved')
   await panel.getByRole('button', { name: 'Enregistrer le contenu public' }).click()

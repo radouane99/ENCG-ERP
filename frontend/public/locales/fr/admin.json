@@ -1,5 +1,9 @@
 {
   "public_portal": {
+    "guide_ar": "Consignes {{route}} en arabe",
+    "heading_ar": "Titre en arabe",
+    "content_ar": "Contenu en arabe",
+    "arabic_help": "La version arabe est facultative. Si elle est absente, le texte principal s’affiche.",
     "title": "Page publique : guides et annonces",
     "description": "Les coordonnées officielles proviennent du formulaire institutionnel ci-dessus. Les annonces publiées apparaissent uniquement entre les dates choisies, heure du Maroc. Les dates sont facultatives pour un brouillon et obligatoires pour publier. Ces annonces ne changent pas le calendrier des inscriptions.",
     "loading": "Chargement…",

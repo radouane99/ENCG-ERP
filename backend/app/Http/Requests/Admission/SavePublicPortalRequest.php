@@ -14,8 +14,10 @@ class SavePublicPortalRequest extends FormRequest
     public function rules(): array
     {
         return ['revision' => 'required|integer|min:0', 'hours' => 'nullable|string|max:1000',
-            'guides' => 'required|array:tafem,cnaem', 'guides.tafem' => 'required|array:instructions', 'guides.cnaem' => 'required|array:instructions', 'guides.*.instructions' => 'nullable|string|max:5000',
-            'announcements' => 'present|array|max:30', 'announcements.*' => 'array:id,title,body,status,starts_on,ends_on,attachment_id',
+            'guides' => 'required|array:tafem,cnaem', 'guides.tafem' => 'required|array:instructions,instructions_ar', 'guides.cnaem' => 'required|array:instructions,instructions_ar', 'guides.*.instructions' => 'nullable|string|max:5000', 'guides.*.instructions_ar' => 'nullable|string|max:5000',
+            'announcements' => 'present|array|max:30', 'announcements.*' => 'array:id,title,body,title_ar,body_ar,status,starts_on,ends_on,attachment_id',
+            'announcements.*.title_ar' => 'nullable|required_with:announcements.*.body_ar|string|max:180',
+            'announcements.*.body_ar' => 'nullable|required_with:announcements.*.title_ar|string|max:5000',
             'announcements.*.id' => 'nullable|uuid|distinct', 'announcements.*.title' => 'required|string|max:180', 'announcements.*.body' => 'required|string|max:5000',
             'announcements.*.status' => 'required|in:draft,published,archived', 'announcements.*.starts_on' => 'nullable|required_if:announcements.*.status,published|date_format:Y-m-d', 'announcements.*.ends_on' => 'nullable|required_if:announcements.*.status,published|date_format:Y-m-d|after_or_equal:announcements.*.starts_on',
             'announcements.*.attachment_id' => 'nullable|uuid'];

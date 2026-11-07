@@ -44,11 +44,18 @@ class PublicPortalContentTest extends TestCase
     {
         $this->admin();
         $payload = $this->payload();
+        $payload['guides']['tafem']['instructions_ar'] = 'تعليمات التسجيل';
+        $payload['announcements'][0]['title_ar'] = 'بلاغ رسمي';
+        $payload['announcements'][0]['body_ar'] = 'تفاصيل التسجيل';
         $saved = $this->putJson('/api/admin/public-portal', $payload)->assertOk()->assertJsonPath('data.revision', 1);
         $this->travelTo(CarbonImmutable::parse('2026-10-31 23:59:59', 'Africa/Casablanca'));
         $this->getJson('/api/public/admissions/portal')->assertJsonCount(0, 'data.announcements');
         $this->travelTo(CarbonImmutable::parse('2026-11-01 00:00:00', 'Africa/Casablanca'));
-        $this->getJson('/api/public/admissions/portal')->assertJsonCount(1, 'data.announcements');
+        $this->getJson('/api/public/admissions/portal')
+            ->assertJsonCount(1, 'data.announcements')
+            ->assertJsonPath('data.announcements.0.title_ar', 'بلاغ رسمي')
+            ->assertJsonPath('data.guides.tafem.instructions_ar', 'تعليمات التسجيل')
+            ->assertJsonPath('data.guides.tafem.physical_checklist_ar.0', 'تمت مطابقة الهوية مع البطاقة الوطنية.');
         $this->travelTo(CarbonImmutable::parse('2026-11-11 00:00:00', 'Africa/Casablanca'));
         $this->getJson('/api/public/admissions/portal')->assertJsonCount(0, 'data.announcements');
         $this->travelTo(CarbonImmutable::parse('2026-11-05 12:00:00', 'Africa/Casablanca'));

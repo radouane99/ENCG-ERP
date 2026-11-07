@@ -16,8 +16,18 @@ final class SavePublicPortalAction
             $settings = $institution->settings ?? [];
             $previous = $settings['public_portal'] ?? [];
             abort_unless((int) ($previous['revision'] ?? 0) === $data['revision'], 409, __('La page a été modifiée. Rechargez avant de réessayer.'));
+            foreach ($data['guides'] as $route => &$guide) {
+                $guide += ['instructions_ar' => $previous['guides'][$route]['instructions_ar'] ?? null];
+            }
+            unset($guide);
+
+            $previousAnnouncements = collect($previous['announcements'] ?? [])->keyBy('id');
             foreach ($data['announcements'] as &$item) {
                 $item['id'] ??= (string) Str::uuid();
+                $previousItem = $previousAnnouncements->get($item['id'], []);
+                if (! array_key_exists('title_ar', $item) && ! array_key_exists('body_ar', $item)) {
+                    $item += array_intersect_key($previousItem, array_flip(['title_ar', 'body_ar']));
+                }
                 abort_if(! empty($item['attachment_id']) && ! isset($previous['attachments'][$item['attachment_id']]), 422, __('PDF inconnu pour cet établissement.'));
             }
             unset($item);

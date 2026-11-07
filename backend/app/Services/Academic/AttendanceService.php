@@ -38,7 +38,13 @@ class AttendanceService
             Group::whereKey($groupId)->lockForUpdate()->firstOrFail();
             $now = Carbon::now();
             $date = $options['date'] ?? $now->toDateString();
-            $existing = AttendanceSession::where('module_id', $moduleId)->where('group_id', $groupId)->where('created_by', $actor->id)->where('session_date', $date)->where('status', 'active')->where('expires_at', '>=', $now)->first();
+            $existing = AttendanceSession::where('module_id', $moduleId)
+                ->where('group_id', $groupId)
+                ->where('created_by', $actor->id)
+                ->whereDate('session_date', $date)
+                ->where('status', 'active')
+                ->where('expires_at', '>=', $now)
+                ->first();
             if ($existing) {
                 return $existing;
             }

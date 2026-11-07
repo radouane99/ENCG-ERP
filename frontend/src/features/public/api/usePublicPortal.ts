@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import api from '@shared/lib/api'
 
-export type PortalAnnouncement = { id: string; title: string; body: string; status: 'draft' | 'published' | 'archived'; starts_on: string; ends_on: string; attachment_id?: string | null }
-export type PortalContent = { revision: number; timezone: string; contact: { name: string; email: string | null; phone: string | null; address: string | null; hours: string }; guides: Record<'tafem' | 'cnaem', { instructions: string; documents: string[]; physical_checklist: string[] }>; announcements: PortalAnnouncement[]; attachments?: { id: string; name: string }[] }
+export type PortalAnnouncement = { id: string; title: string; body: string; title_ar?: string | null; body_ar?: string | null; status: 'draft' | 'published' | 'archived'; starts_on: string; ends_on: string; attachment_id?: string | null }
+export type PortalContent = { revision: number; timezone: string; contact: { name: string; email: string | null; phone: string | null; address: string | null; hours: string }; guides: Record<'tafem' | 'cnaem', { instructions: string; instructions_ar?: string | null; documents: string[]; physical_checklist: string[]; physical_checklist_ar?: string[] }>; announcements: PortalAnnouncement[]; attachments?: { id: string; name: string }[] }
 
 export function usePublicPortal() {
   return useQuery({ queryKey: ['public-portal-content'], queryFn: async () => {
