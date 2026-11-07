@@ -60,7 +60,7 @@ export default function NotificationsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }, [page, t]);
 
   useEffect(() => {
     fetchNotifications();

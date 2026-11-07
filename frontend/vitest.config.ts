@@ -18,6 +18,7 @@ export default defineConfig({
       '@features': path.resolve(import.meta.dirname, './src/features'),
       '@stores': path.resolve(import.meta.dirname, './src/stores'),
       '@hooks': path.resolve(import.meta.dirname, './src/hooks'),
+      '@app': path.resolve(import.meta.dirname, './src/app'),
     },
   },
 })
