@@ -5,7 +5,7 @@ import { Play,Square,Users,MapPin,Clock,CheckCircle2 } from 'lucide-react';
 import api from '@/shared/lib/api';
 
 export default function ProfessorAttendanceView() {
-  const { t } = useTranslation(['attendance', 'common']);
+  const { t, i18n } = useTranslation(['attendance', 'common']);
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [session, setSession] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
@@ -131,7 +131,7 @@ export default function ProfessorAttendanceView() {
             <div className="flex gap-4 text-white/50 text-sm mb-8 font-medium">
               <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {session.group_name}</span>
               <span className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {session.room_name}</span>
-              <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {t('attendance:professor_view.expires_at')} {new Date(session.expires_at).toLocaleTimeString('fr-FR', {hour: '2-digit', minute:'2-digit'})}</span>
+              <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {t('attendance:professor_view.expires_at')} {new Date(session.expires_at).toLocaleTimeString(i18n.resolvedLanguage || 'fr', {hour: '2-digit', minute:'2-digit'})}</span>
             </div>
 
             <div className="bg-card p-6 rounded-2xl shadow-sm border border-border mb-6 transition-transform hover:scale-105 duration-300">
@@ -168,7 +168,7 @@ export default function ProfessorAttendanceView() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-foreground truncate">{student.name}</p>
-                      <p className="text-xs text-white/50">{new Date(student.scanned_at).toLocaleTimeString('fr-FR')}</p>
+                      <p className="text-xs text-white/50">{new Date(student.scanned_at).toLocaleTimeString(i18n.resolvedLanguage || 'fr')}</p>
                     </div>
                     {student.is_valid && <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />}
                   </div>

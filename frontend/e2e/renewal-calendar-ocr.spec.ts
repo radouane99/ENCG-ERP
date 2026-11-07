@@ -53,7 +53,7 @@ test.describe('Calendrier annuel et recette OCR', () => {
       await page.route(url => url.pathname === '/api/admissions/workflow/ocr-settings', r => r.fulfill(json({ provider: 'local', cloud_enabled: false, configured: false, can_manage: true, local_available: true })))
       let calls = 0
       await page.route(url => url.pathname === '/api/admissions/workflow/ocr-evaluation', r => { calls++; expect(r.request().headers()['content-type']).toContain('multipart/form-data'); return r.fulfill(json({ data: { dataset_kind: 'synthetic', samples: 2, totals: { labeled: 4, exact: 2, missing: 1, mismatched: 1, critical_mismatches: 1 }, exact_match_percent: 50, by_document_type: { bac: { labeled: 2, exact: 2, missing: 0, mismatched: 0 } }, by_field: {}, notice: 'Aucun moteur OCR n’est appelé par cette comparaison.' } })) })
-      await page.goto('/academic/enrollments'); await page.getByRole('button', { name: 'Campagnes & échéances', exact: true }).click()
+      await page.goto('/academic/enrollments'); await page.getByRole('button', { name: /Campagne & Quotas|Paramètres/ }).click()
       const panel = page.getByRole('region', { name: 'Recette OCR', exact: true })
       await panel.getByLabel(/Annotations attendues et extraites/).setInputFiles({ name: 'synthetic.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ dataset_kind: 'synthetic', samples: [] })) })
       await expect(panel.getByRole('button', { name: 'Comparer les annotations' })).toBeDisabled()

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -70,6 +71,7 @@ interface ImportPreview {
 }
 
 export default function AdmissionAdminWorkbench() {
+  const { t: translate, i18n } = useTranslation('admin')
   const [params, _setParams] = useSearchParams()
   const linkedCampaign = Number(params.get('campaign_id'))
   const linkedApplication = Number(params.get('application_id'))
@@ -1548,6 +1550,18 @@ export default function AdmissionAdminWorkbench() {
                         </button>
                       </div>
                     </div>
+
+                    {app.reviews?.filter(review => review.decision === 'approved' && review.physical_checklist).map(review => (
+                      <section key={review.id} className="rounded-xl border border-emerald-500/40 bg-emerald-50/20 p-4 dark:bg-emerald-950/10">
+                        <h3 className="font-bold">{translate('physical_review_record.title')}</h3>
+                        <p className="mt-2 text-sm">{review.reviewer_name} · {new Date(review.created_at).toLocaleString(i18n.resolvedLanguage || 'fr')}</p>
+                        <ul className="mt-3 space-y-1 text-sm">
+                          {Object.entries(review.physical_checklist ?? {}).map(([key, checked]) => (
+                            <li key={key}>{checked ? '✓' : '—'} {app.physical_requirements?.[key] || key}</li>
+                          ))}
+                        </ul>
+                      </section>
+                    ))}
 
                     {/* Physical Guichet & Definitive Registration */}
                     <details className="rounded-2xl border-2 border-emerald-500/40 bg-emerald-50/20 p-5 dark:border-emerald-900/60 dark:bg-emerald-950/10">

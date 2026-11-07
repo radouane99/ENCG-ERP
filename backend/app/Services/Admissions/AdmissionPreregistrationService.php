@@ -54,7 +54,7 @@ class AdmissionPreregistrationService
 
     public function render(Application $app): Response
     {
-        $app->load('campaign.institution', 'campaign.filiere');
+        $app->load('campaign.institution', 'campaign.filiere', 'campaign.academicYear');
         $photoData = $this->resolvePhotoBase64($app);
         $logoBase64 = $this->resolveLogoBase64();
 

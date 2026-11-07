@@ -22,6 +22,8 @@ import { useStudentAbsences,useJustifyAbsence } from '../../api/absencesApi';
 import { offlineJustificatifStore } from '@shared/lib/offlineJustificatifStore';
 import { cn } from '@shared/lib/utils';
 import { toast } from 'sonner';
+import i18n from '@app/i18n';
+import { useTranslation } from 'react-i18next';
 
 function cleanMojibake(str?: string | null): string {
   if (!str) return '';
@@ -49,7 +51,7 @@ function cleanMojibake(str?: string | null): string {
 }
 
 function formatSessionDate(dateStr?: string | null): string {
-  if (!dateStr) return 'Date non renseignée';
+  if (!dateStr) return i18n.t('student_absence.missing_date');
   try {
     const cleanDate = dateStr.split('T')[0];
     const parts = cleanDate.split('-');
@@ -59,7 +61,7 @@ function formatSessionDate(dateStr?: string | null): string {
       const day = parseInt(parts[2], 10);
       const d = new Date(year, month, day);
       if (!isNaN(d.getTime())) {
-        return d.toLocaleDateString('fr-FR', {
+        return d.toLocaleDateString(i18n.resolvedLanguage || 'fr', {
           weekday: 'short',
           day: 'numeric',
           month: 'short',
@@ -69,15 +71,15 @@ function formatSessionDate(dateStr?: string | null): string {
     }
     const fallbackDate = new Date(dateStr);
     return isNaN(fallbackDate.getTime())
-      ? 'Date non renseignée'
-      : fallbackDate.toLocaleDateString('fr-FR', {
+      ? i18n.t('student_absence.missing_date')
+      : fallbackDate.toLocaleDateString(i18n.resolvedLanguage || 'fr', {
           weekday: 'short',
           day: 'numeric',
           month: 'short',
           year: 'numeric',
         });
   } catch {
-    return 'Date non renseignée';
+    return i18n.t('student_absence.missing_date');
   }
 }
 
@@ -95,6 +97,7 @@ function getJustification(record: any) {
 }
 
 export default function StudentAbsencesPage() {
+  useTranslation('common');
   const { data: rawAbsences, isLoading, refetch } = useStudentAbsences();
   const { mutate: justifyAbsence, isPending: isSubmittingJustification } = useJustifyAbsence();
 
@@ -287,7 +290,7 @@ export default function StudentAbsencesPage() {
     return (
       <div className="flex flex-col h-[60vh] items-center justify-center gap-3">
         <div className="w-10 h-10 border-4 border-[#1a3673]/20 border-t-[#1a3673] rounded-full animate-spin" />
-        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Chargement de votre relevé d'assiduité...</p>
+        <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{i18n.t('student_absence.loading')}</p>
       </div>
     );
   }
@@ -313,7 +316,7 @@ export default function StudentAbsencesPage() {
           className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl border border-border bg-card shadow-xs hover:bg-muted/50 dark:hover:bg-slate-800/60 text-xs font-bold text-slate-700 dark:text-foreground transition-all cursor-pointer self-start md:self-auto"
         >
           <Info className="w-4 h-4 text-primary" />
-          <span>Règlement d'Assiduité (48h)</span>
+          <span>{i18n.t('student_absence.regulations')}</span>
         </button>
       </div>
 
@@ -426,7 +429,7 @@ export default function StudentAbsencesPage() {
         {/* Card 1: Taux d'Assiduité */}
         <div className="bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Taux d'Assiduité</span>
+            <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">{i18n.t('student_absence.attendance')}</span>
             <div className="w-8 h-8 rounded-xl bg-primary/5 dark:bg-blue-950/50 text-primary flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4" />
             </div>
@@ -435,7 +438,7 @@ export default function StudentAbsencesPage() {
             <span className="text-2xl sm:text-3xl font-bold text-[#1a3673] dark:text-white">
               {stats.attendanceRate}%
             </span>
-            <span className="text-xs font-bold text-slate-400">global</span>
+            <span className="text-xs font-bold text-slate-400">{i18n.t('student_absence.global')}</span>
           </div>
           <div className="space-y-1 pt-1 border-t border-border">
             <div className="w-full bg-muted dark:bg-card rounded-full h-1.5 overflow-hidden">
@@ -448,7 +451,7 @@ export default function StudentAbsencesPage() {
               />
             </div>
             <div className="flex justify-between text-[10px] text-slate-400 font-bold">
-              <span>Régularité</span>
+              <span>{i18n.t('student_absence.regularity')}</span>
               <span>{stats.presentCount}/{stats.totalSessions} séances</span>
             </div>
           </div>
@@ -457,7 +460,7 @@ export default function StudentAbsencesPage() {
         {/* Card 2: Total Séances Enregistrées */}
         <div className="bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Total Séances</span>
+            <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">{i18n.t('student_absence.sessions')}</span>
             <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 flex items-center justify-center">
               <Calendar className="w-4 h-4" />
             </div>
@@ -466,7 +469,7 @@ export default function StudentAbsencesPage() {
             <span className="text-2xl sm:text-3xl font-bold text-emerald-600 dark:text-emerald-400">
               {stats.totalSessions}
             </span>
-            <span className="text-xs font-bold text-slate-400">séances pointées</span>
+            <span className="text-xs font-bold text-slate-400">{i18n.t('student_absence.recorded')}</span>
           </div>
           <div className="flex items-center justify-between text-xs pt-1 border-t border-border">
             <span className="text-muted-foreground font-bold">Retards constatés :</span>
@@ -479,7 +482,7 @@ export default function StudentAbsencesPage() {
         {/* Card 3: Absences & Justificatifs */}
         <div className="bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Statut Justifications</span>
+            <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">{i18n.t('student_absence.justifications')}</span>
             <div className="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 flex items-center justify-center">
               <FileText className="w-4 h-4" />
             </div>
@@ -488,7 +491,7 @@ export default function StudentAbsencesPage() {
             <span className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
               {stats.absentCount}
             </span>
-            <span className="text-xs font-bold text-slate-400">absence(s) au total</span>
+            <span className="text-xs font-bold text-slate-400">{i18n.t('student_absence.absences')}</span>
           </div>
           <div className="flex items-center justify-between text-xs pt-1 border-t border-border">
             <span className="font-bold text-emerald-600">{stats.justifiedCount} Justifiée(s)</span>
@@ -502,7 +505,7 @@ export default function StudentAbsencesPage() {
         {/* Card 4: Alerte Pédagogique (Règle des 3 absences) */}
         <div className="bg-card rounded-2xl p-5 border border-slate-200/80 dark:border-border shadow-xs space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Règle des 3 Absences</span>
+            <span className="text-[11px] font-bold uppercase text-slate-400 tracking-wider">{i18n.t('student_absence.three')}</span>
             <div className={cn(
               "w-8 h-8 rounded-xl flex items-center justify-center",
               stats.maxAbsencesInSingleModule >= 3 
@@ -567,7 +570,7 @@ export default function StudentAbsencesPage() {
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Rechercher un module..."
+                placeholder={i18n.t('student_absence.search')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 text-xs font-bold border border-border bg-muted/50 dark:bg-card text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#1a3673] rounded-[var(--control-radius)]"
@@ -601,10 +604,10 @@ export default function StudentAbsencesPage() {
               onChange={(e: any) => setJustificationFilter(e.target.value)}
               className="px-3 py-2 text-xs font-bold border border-border bg-muted/50 dark:bg-card text-slate-700 dark:text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#1a3673] rounded-[var(--control-radius)]"
             >
-              <option value="all">Tous les justificatifs</option>
-              <option value="unjustified">Non justifiées (action requise)</option>
-              <option value="pending">En attente de validation</option>
-              <option value="justified">Justifiées / Acceptées</option>
+              <option value="all">{i18n.t('student_absence.all')}</option>
+              <option value="unjustified">{i18n.t('student_absence.unjustified')}</option>
+              <option value="pending">{i18n.t('student_absence.pending')}</option>
+              <option value="justified">{i18n.t('student_absence.accepted')}</option>
             </select>
           </div>
         </div>
@@ -663,11 +666,11 @@ export default function StudentAbsencesPage() {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-slate-50/80 dark:bg-slate-800/50 text-[11px] font-bold uppercase text-muted-foreground tracking-wider border-b border-slate-200/80 dark:border-border">
-                <th className="py-3.5 pl-4 pr-3">Séance & Module</th>
-                <th className="py-3.5 px-3">Date & Horaire</th>
-                <th className="py-3.5 px-3 text-center">Statut de Présence</th>
-                <th className="py-3.5 px-3 text-center">Justificatif Réglementaire</th>
-                <th className="py-3.5 pr-4 pl-3 text-right">Action</th>
+                <th className="py-3.5 pl-4 pr-3">{i18n.t('student_absence.module')}</th>
+                <th className="py-3.5 px-3">{i18n.t('student_absence.date')}</th>
+                <th className="py-3.5 px-3 text-center">{i18n.t('student_absence.status')}</th>
+                <th className="py-3.5 px-3 text-center">{i18n.t('student_absence.proof')}</th>
+                <th className="py-3.5 pr-4 pl-3 text-right">{i18n.t('student_absence.action')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -854,7 +857,7 @@ export default function StudentAbsencesPage() {
               <div className="flex items-center justify-between pb-3 border-b border-border">
                 <div className="flex items-center gap-2 text-primary">
                   <UploadCloud className="w-5 h-5" />
-                  <h3 className="text-base font-bold text-foreground dark:text-white">Déposer un Justificatif d'Absence</h3>
+                  <h3 className="text-base font-bold text-foreground dark:text-white">{i18n.t('student_absence.submit')}</h3>
                 </div>
                 <button 
                   onClick={() => setSelectedRecord(null)}
@@ -866,7 +869,7 @@ export default function StudentAbsencesPage() {
 
               {/* Session Recap */}
               <div className="p-4 rounded-2xl bg-blue-50/60 dark:bg-blue-950/40 border border-primary/20 dark:border-primary text-xs space-y-1">
-                <span className="text-[10px] font-bold uppercase text-primary dark:text-blue-300 tracking-wider">Séance concernée</span>
+                <span className="text-[10px] font-bold uppercase text-primary dark:text-blue-300 tracking-wider">{i18n.t('student_absence.session')}</span>
                 <p className="font-bold text-sm text-foreground dark:text-white">{moduleName}</p>
                 <div className="text-muted-foreground flex items-center gap-2 font-medium">
                   <span>{sessionDate}</span>
@@ -887,22 +890,22 @@ export default function StudentAbsencesPage() {
 
               <form onSubmit={handleJustifySubmit} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 dark:text-foreground">Motif de l'absence</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-foreground">{i18n.t('student_absence.reason')}</label>
                   <select
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                     className="w-full px-3 py-2.5 border border-border bg-muted/50 dark:bg-card text-xs font-bold text-foreground focus:outline-hidden focus:ring-2 focus:ring-[#1a3673] rounded-[var(--control-radius)]"
                   >
-                    <option value="medical">Certificat Médical / Raison de Santé</option>
-                    <option value="family">Événement Familial Majeur (Cas de force majeure)</option>
-                    <option value="official">Convocation Administrative ou Judiciaire</option>
-                    <option value="sports">Représentation Sportive ou Institutionnelle ENCG</option>
-                    <option value="other">Autre motif exceptionnel justifié</option>
+                    <option value="medical">{i18n.t('student_absence.medical')}</option>
+                    <option value="family">{i18n.t('student_absence.family')}</option>
+                    <option value="official">{i18n.t('student_absence.official')}</option>
+                    <option value="sports">{i18n.t('student_absence.sports')}</option>
+                    <option value="other">{i18n.t('student_absence.other')}</option>
                   </select>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 dark:text-foreground">Précisions & Description</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-foreground">{i18n.t('student_absence.description')}</label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
@@ -914,7 +917,7 @@ export default function StudentAbsencesPage() {
 
                 {/* File Upload Zone */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 dark:text-foreground">Pièce Justificative (PDF, JPG, PNG - Max 5Mo)</label>
+                  <label className="text-xs font-bold text-slate-700 dark:text-foreground">{i18n.t('student_absence.file')}</label>
                   <div className="relative border-2 border-dashed border-border rounded-2xl p-4 text-center hover:bg-muted/50 dark:hover:bg-slate-800/50 transition-colors">
                     <input
                       type="file"

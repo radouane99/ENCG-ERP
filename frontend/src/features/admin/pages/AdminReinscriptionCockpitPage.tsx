@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -37,17 +38,19 @@ type Data = {
   by_level: Record<string, { total: number; confirmed: number; verified: number }>
 }
 
-const labels: Record<string, string> = {
-  needs_review: 'Rapprochement nécessaire',
-  academic_pending: 'Décision académique attendue',
-  pending: 'Confirmation étudiante attendue',
-  physical_pending: 'Contrôle physique attendu',
-  verified: 'Dossier finalisé',
+const statusKeys: Record<string, string> = {
+  needs_review: 'review',
+  academic_pending: 'academic_pending',
+  pending: 'pending',
+  physical_pending: 'physical_pending',
+  verified: 'verified',
 }
 
 const field = 'mt-1 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm'
 
 export default function AdminReinscriptionCockpitPage() {
+  const { t, i18n } = useTranslation('admin', { keyPrefix: 'renewal_cockpit' })
+  const labels = Object.fromEntries(Object.entries(statusKeys).map(([key, value]) => [key, t(value)]))
   const [level, setLevel] = useState('all')
   const [status, setStatus] = useState('all')
   const [search, setSearch] = useState('')
@@ -63,7 +66,7 @@ export default function AdminReinscriptionCockpitPage() {
   const params = { level, status, search, page }
 
   const query = useQuery({
-    queryKey: ['admin-reinscription-stats', params],
+    queryKey: ['admin-reinscription-stats', params, i18n.resolvedLanguage],
     queryFn: async () => (await api.get('/admin/reinscriptions/stats', { params })).data.data as Data,
   })
 
@@ -98,7 +101,7 @@ export default function AdminReinscriptionCockpitPage() {
       a.click()
       window.setTimeout(() => URL.revokeObjectURL(url), 60000)
     } catch {
-      toast.error('Export indisponible.')
+      toast.error(t('export_fail'))
     } finally {
       setBusy(false)
     }
@@ -107,15 +110,15 @@ export default function AdminReinscriptionCockpitPage() {
   return (
     <div className="mx-auto max-w-7xl space-y-6 p-4 md:p-6 pb-24 font-sans">
       <PageHeader
-        title="Réinscriptions annuelles • anciens étudiants"
-        subtitle={`Année ${data?.academic_year || 'en cours'} · Décision académique, confirmation étudiante et contrôle physique`}
+        title={t('title')}
+        subtitle={t('subtitle', { year: data?.academic_year || t('current_year') })}
         actions={
           <>
             <Button variant="outline" disabled={busy} onClick={() => { void query.refetch(); void calendar.refetch() }}>
-              Actualiser
+              {t('refresh')}
             </Button>
             <Button variant="outline" disabled={busy || !data?.meta.total} onClick={download}>
-              Exporter la liste filtrée
+              {t('export')}
             </Button>
             <Button
               disabled={busy || !data?.total_pending || !calendar.data?.data.is_open}
@@ -124,7 +127,7 @@ export default function AdminReinscriptionCockpitPage() {
                 setReminders(true)
               }}
             >
-              Relancer les confirmations attendues
+              {t('remind')}
             </Button>
           </>
         }
@@ -132,19 +135,17 @@ export default function AdminReinscriptionCockpitPage() {
 
       <RenewalCampaignPanel />
       <p className="rounded-2xl border border-primary/20 bg-primary/5 p-4 text-xs md:text-sm text-blue-950 dark:border-primary dark:bg-blue-950 dark:text-blue-100">
-        Le niveau provient de la délibération et du parcours préparé par la scolarité. Les étudiants admis direct ou
-        avec module(s) en réserve (dette) sont habilités à confirmer leur réinscription dans leur espace étudiant. La
-        confirmation en ligne et le contrôle physique au guichet sont deux étapes distinctes et traçables.
+        {t('workflow_help')}
       </p>
 
       {query.isPending ? (
         <div className="p-12 text-center text-muted-foreground space-y-2">
           <div className="w-8 h-8 border-3 border-primary/30 border-t-primary rounded-full animate-spin mx-auto" />
-          <p className="text-sm font-semibold">Chargement des dossiers annuels de réinscription…</p>
+          <p className="text-sm font-semibold">{t('loading')}</p>
         </div>
       ) : query.isError ? (
         <div role="alert" className="p-8 text-center space-y-3">
-          <p className="text-sm text-red-600 font-semibold">Impossible de charger les réinscriptions.</p>
+          <p className="text-sm text-red-600 font-semibold">{t('load_fail')}</p>
           <Button variant="outline" onClick={() => query.refetch()}>
             Réessayer
           </Button>
@@ -155,10 +156,10 @@ export default function AdminReinscriptionCockpitPage() {
             {/* Cartes KPI */}
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {[
-                ['Décision académique validée', data.total_eligible],
-                ['Confirmation étudiante attendue', data.total_pending],
-                ['Dossier physique à contrôler', data.total_physical_pending],
-                ['Dossiers finalisés', data.total_verified],
+                [t('eligible'), data.total_eligible],
+                ['pending', data.total_pending],
+                [t('physical'), data.total_physical_pending],
+                [t('completed'), data.total_verified],
               ].map(([label, value]) => (
                 <div key={String(label)} className="rounded-2xl border border-border bg-card p-5 shadow-xs">
                   <p className="text-xs font-bold text-muted-foreground uppercase">{label}</p>
@@ -169,8 +170,7 @@ export default function AdminReinscriptionCockpitPage() {
 
             {data.total_needs_review > 0 && (
               <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-950 font-medium">
-                {data.total_needs_review} dossier(s) attendent une décision académique ou un rapprochement. Ils sont
-                exclus des relances automatiques de confirmation.
+                {t('review_help', { count: data.total_needs_review })}
               </p>
             )}
 
@@ -178,7 +178,7 @@ export default function AdminReinscriptionCockpitPage() {
             <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-xs">
               <div className="grid gap-3 border-b border-border p-4 md:grid-cols-[1fr_200px_270px]">
                 <label className="text-xs font-bold text-slate-700 dark:text-foreground">
-                  Rechercher
+                  {t('search')}
                   <input
                     className={field}
                     value={search}
@@ -186,11 +186,11 @@ export default function AdminReinscriptionCockpitPage() {
                       setSearch(e.target.value)
                       setPage(1)
                     }}
-                    placeholder="Nom, CNE ou CIN"
+                    placeholder={t('search_hint')}
                   />
                 </label>
                 <label className="text-xs font-bold text-slate-700 dark:text-foreground">
-                  Niveau cible
+                  {t('level')}
                   <select
                     className={field}
                     value={level}
@@ -199,16 +199,16 @@ export default function AdminReinscriptionCockpitPage() {
                       setPage(1)
                     }}
                   >
-                    <option value="all">Tous les niveaux</option>
+                    <option value="all">{t('all_levels')}</option>
                     {['1A', '2A', '3A', '4A', '5A'].map((l) => (
                       <option key={l} value={l}>
-                        {l} · {data.by_level[l]?.total || 0} dossier(s)
+                        {l} · {t('files', { count: data.by_level[l]?.total || 0 })}
                       </option>
                     ))}
                   </select>
                 </label>
                 <label className="text-xs font-bold text-slate-700 dark:text-foreground">
-                  État du dossier
+                  {t('status')}
                   <select
                     className={field}
                     value={status}
@@ -217,7 +217,7 @@ export default function AdminReinscriptionCockpitPage() {
                       setPage(1)
                     }}
                   >
-                    <option value="all">Tous les états</option>
+                    <option value="all">{t('all_states')}</option>
                     {Object.entries(labels).map(([key, label]) => (
                       <option key={key} value={key}>
                         {label}
@@ -231,7 +231,7 @@ export default function AdminReinscriptionCockpitPage() {
                 <table className="w-full text-xs">
                   <thead className="bg-muted/40 font-bold uppercase text-[10px] text-muted-foreground">
                     <tr>
-                      {['Étudiant', 'Passage & Filière', 'État du dossier', 'Confirmation', 'Contrôle guichet'].map(
+                      {[t('student'), t('pathway'), t('status'), t('confirmation'), t('counter')].map(
                         (label) => (
                           <th key={label} className="p-4 text-start">
                             {label}
@@ -265,7 +265,7 @@ export default function AdminReinscriptionCockpitPage() {
                               ✓ {s.receipt_ref}
                             </span>
                           ) : (
-                            <span className="text-amber-600 font-medium">En attente</span>
+                            <span className="text-amber-600 font-medium">{t('waiting')}</span>
                           )}
                         </td>
                         <td className="p-4">
@@ -286,9 +286,9 @@ export default function AdminReinscriptionCockpitPage() {
                             </Button>
                           ) : s.physical_verified_at ? (
                             <div className="space-y-0.5">
-                              <p className="text-emerald-600 font-bold">✓ Contrôle validé</p>
+                              <p className="text-emerald-600 font-bold">{t('checked')}</p>
                               <p className="text-[10px] text-muted-foreground">
-                                {new Date(s.physical_verified_at).toLocaleDateString('fr-FR')} · {s.physical_verified_by}
+                                {new Date(s.physical_verified_at).toLocaleDateString(i18n.resolvedLanguage || 'fr')} · {s.physical_verified_by}
                               </p>
                             </div>
                           ) : (
@@ -307,11 +307,10 @@ export default function AdminReinscriptionCockpitPage() {
                     </div>
                     <div className="max-w-md mx-auto space-y-1">
                       <h3 className="font-bold text-sm text-foreground">
-                        Aucun dossier ne correspond aux filtres
+                        {t('empty')}
                       </h3>
                       <p className="text-xs text-muted-foreground">
-                        Vérifiez les filtres et les décisions académiques pour {data.academic_year}.
-                        Les inscriptions annuelles sont préparées après validation pédagogique. Les lauréats sont suivis dans leur registre dédié.
+                        {t('empty_help', { year: data.academic_year })}
                       </p>
                     </div>
                   </div>
@@ -320,7 +319,7 @@ export default function AdminReinscriptionCockpitPage() {
 
               <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border p-4 text-xs">
                 <p className="text-muted-foreground">
-                  {data.meta.total} dossier(s) annuel(s) · Page {page} / {data.meta.last_page}
+                  {t('pagination', { count: data.meta.total, page, total: data.meta.last_page })}
                 </p>
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
@@ -345,7 +344,7 @@ export default function AdminReinscriptionCockpitPage() {
       <Modal
         open={!!selected}
         onClose={() => !busy && setSelected(null)}
-        title="Vérification physique du dossier annuel"
+        title={t('modal')}
         preventBackdropClose={busy}
         preventEscapeClose={busy}
       >
@@ -371,22 +370,22 @@ export default function AdminReinscriptionCockpitPage() {
           ))}
         </div>
         <label className="mt-4 block text-xs font-bold text-slate-700 dark:text-foreground">
-          Observation de l’agent
+          {t('notes')}
           <textarea
             className={field}
             rows={3}
             maxLength={2000}
             value={observation}
             onChange={(e) => setObservation(e.target.value)}
-            placeholder="Remarques éventuelles sur les pièces physiques (quitus, assurance...)"
+            placeholder={t('notes_hint')}
           />
         </label>
         <p className="mt-3 text-[11px] text-muted-foreground">
-          Votre identité administrative, l’horodatage et la liste de contrôle seront archivés.
+          {t('audit')}
         </p>
         <div className="mt-5 flex justify-end gap-2">
           <Button variant="outline" disabled={busy} onClick={() => setSelected(null)}>
-            Annuler
+            {t('cancel')}
           </Button>
           <Button
             isLoading={busy}
@@ -401,7 +400,7 @@ export default function AdminReinscriptionCockpitPage() {
               })
             }
           >
-            Valider le contrôle physique
+            {t('validate')}
           </Button>
         </div>
       </Modal>
@@ -410,13 +409,11 @@ export default function AdminReinscriptionCockpitPage() {
       <Modal
         open={reminders}
         onClose={() => !busy && setReminders(false)}
-        title="Confirmer les relances annuelles"
+        title={t('confirm_title')}
         preventBackdropClose={busy}
       >
         <p className="text-xs md:text-sm leading-relaxed text-muted-foreground dark:text-foreground">
-          Les filtres actuels seront appliqués. Seuls les étudiants avec une décision académique validée et sans
-          confirmation recevront une notification portail et un email d’invitation. Une seule relance par jour et par
-          étudiant est autorisée pour respecter les quotas de communication.
+          {t('reminder_help')}
         </p>
         {error && (
           <p role="alert" className="mt-3 text-sm text-red-700">
@@ -425,7 +422,7 @@ export default function AdminReinscriptionCockpitPage() {
         )}
         <div className="mt-5 flex justify-end gap-2">
           <Button variant="outline" disabled={busy} onClick={() => setReminders(false)}>
-            Annuler
+            {t('cancel')}
           </Button>
           <Button
             isLoading={busy}
@@ -436,7 +433,7 @@ export default function AdminReinscriptionCockpitPage() {
               })
             }
           >
-            Confirmer les relances
+            {t('confirm')}
           </Button>
         </div>
       </Modal>

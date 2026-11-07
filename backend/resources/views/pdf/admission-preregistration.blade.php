@@ -82,7 +82,7 @@
             font-weight: bold;
             color: #f8fafc;
             margin-top: 1px;
-            direction: rtl;
+            direction: ltr;
         }
         .banner-title .sub-tag {
             font-size: 7pt;
@@ -216,7 +216,7 @@
     <!-- Titre et Campagne -->
     <div class="banner-title">
         <h1>FICHE OFFICIELLE DE PRÉINSCRIPTION EN LIGNE</h1>
-        <div class="ar-title">وصل التسجيل القبلي الإلكتروني الرسمي — برسم الموسم الجامعي {{ date('Y') }}/{{ date('Y')+1 }}</div>
+        <div class="ar-title">{{ \App\Helpers\ArabicGlyphReshaper::reshape('وصل التسجيل القبلي الإلكتروني الرسمي — برسم الموسم الجامعي') }} {{ $app->campaign->academicYear?->label ?? '—' }}</div>
         <div class="sub-tag">
             {{ $app->campaign->name }} · VOIE D'ACCÈS : {{ strtoupper($app->campaign->entry_route) }} · ENTRÉE S{{ $app->campaign->entry_semester ?? 1 }}
         </div>
@@ -231,8 +231,8 @@
                         {{ strtoupper($app->profile['last_name'] ?? $app->last_name) }} {{ strtoupper($app->profile['first_name'] ?? $app->first_name) }}
                     </span>
                     @if(!empty($app->profile['last_name_ar']) || !empty($app->profile['first_name_ar']))
-                        <span style="font-size: 10pt; font-weight: bold; color: #1e293b; margin-left: 10px; direction: rtl;">
-                            ({{ $app->profile['last_name_ar'] ?? '' }} {{ $app->profile['first_name_ar'] ?? '' }})
+                        <span style="font-size: 10pt; font-weight: bold; color: #1e293b; margin-left: 10px; direction: ltr;">
+                            ({{ \App\Helpers\ArabicGlyphReshaper::reshape(trim(($app->profile['last_name_ar'] ?? '').' '.($app->profile['first_name_ar'] ?? ''))) }})
                         </span>
                     @endif
                 </div>
@@ -427,7 +427,7 @@
                     </div>
                     <div style="height: 48px;"></div>
                     <div style="font-size: 5.5pt; color: #94a3b8; text-align: center;">
-                        Fait à ....................................., le ......./......./2026
+                        Fait à ....................................., le ......./......./........
                     </div>
                 </div>
             </td>

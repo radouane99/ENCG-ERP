@@ -179,7 +179,7 @@ class ReinscriptionController extends Controller
                 'current_page' => $page,
                 'last_page' => max(1, (int) ceil($filtered->count() / $perPage)),
             ],
-            'physical_requirements' => VerifyAnnualRenewalAction::CHECKLIST,
+            'physical_requirements' => array_map(fn ($label) => __($label), VerifyAnnualRenewalAction::CHECKLIST),
         ]]);
     }
 
