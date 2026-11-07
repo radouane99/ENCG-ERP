@@ -16,7 +16,7 @@ class AdmissionWorkflowMail extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: 'ENCG — Suivi de votre dossier '.$this->reference);
+        return new Envelope(subject: __('admission_mail.subject', ['reference' => $this->reference]));
     }
 
     public function content(): Content

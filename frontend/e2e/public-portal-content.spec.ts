@@ -68,6 +68,13 @@ test('admin can save a scheduled official notice and clear error is shown on con
   await panel.getByRole('button', { name: 'Enregistrer le contenu public' }).click()
   await expect(panel.getByRole('alert')).toContainText('La page a été modifiée.')
   await expect(panel.getByLabel('Titre', { exact: true })).toHaveValue('Draft preserved')
+
+  await page.evaluate(() => localStorage.setItem('encg_lang', 'ar'))
+  await page.reload({ waitUntil: 'domcontentloaded' })
+  await expect(page.locator('html')).toHaveAttribute('dir', 'rtl')
+  await expect(page.getByRole('heading', { name: 'إعدادات المؤسسة' })).toBeVisible()
+  await expect(panel.getByRole('button', { name: 'إضافة إعلان' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'طلبات الصفحة العامة' })).toBeVisible()
 })
 
 test('published notice and official PDF stay usable on a mobile screen', async ({ page }) => {

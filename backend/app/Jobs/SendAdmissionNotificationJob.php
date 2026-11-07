@@ -38,7 +38,8 @@ class SendAdmissionNotificationJob implements ShouldBeEncrypted, ShouldQueue
         $app = Application::findOrFail($n->application_id);
         $base = rtrim(config('app.frontend_url', config('app.url')), '/');
         $link = $base.($this->activationToken ? '/inscription?activation='.rawurlencode($this->activationToken) : '/dashboard');
-        Mail::to($n->recipient)->send(new AdmissionWorkflowMail($app->reference_number, $n->type, $link));
+        $locale = str_starts_with(strtolower((string) $app->owner?->locale), 'ar') ? 'ar' : 'fr';
+        Mail::to($n->recipient)->locale($locale)->send(new AdmissionWorkflowMail($app->reference_number, $n->type, $link));
         DB::table('admission_notifications')->where('id', $n->id)->update(['status' => 'sent', 'sent_at' => now(), 'updated_at' => now()]);
     }
 
