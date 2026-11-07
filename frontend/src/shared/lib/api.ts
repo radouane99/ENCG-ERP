@@ -1,3 +1,4 @@
+import i18n from '@app/i18n'
 import axios from 'axios'
 import { toast } from 'sonner'
 import { useAuthStore } from '@stores/authStore'
@@ -39,7 +40,7 @@ api.interceptors.response.use(
 
     if (status === 403) {
       if (error.response?.data?.requires_2fa_setup) {
-        toast.error('La double authentification (2FA) est obligatoire pour les administrateurs. Veuillez la configurer.')
+        toast.error(i18n.t('shared_errors.two_factor', { defaultValue: "La double authentification (2FA) est obligatoire pour les administrateurs. Veuillez la configurer." }))
         // Redirect to profile or 2FA setup page
         setTimeout(() => {
           window.location.href = '/profile'
@@ -47,7 +48,7 @@ api.interceptors.response.use(
         return Promise.reject(error)
       }
       if (!(error.config as any)?.suppressToast) {
-        toast.error(message || 'Accès Refusé : Vous n\'avez pas les permissions nécessaires.')
+        toast.error(message || i18n.t('shared_errors.forbidden', { defaultValue: "Accès Refusé : Vous n'avez pas les permissions nécessaires." }))
       }
       return Promise.reject(error)
     }
@@ -58,14 +59,16 @@ api.interceptors.response.use(
     }
 
     if (status === 429) {
-      toast.error('Trop de tentatives. Veuillez réessayer plus tard.')
+      toast.error(i18n.t('shared_errors.rate_limit', { defaultValue: 'Trop de tentatives. Veuillez réessayer plus tard.' }), {
+        id: 'rate-limit-toast',
+      })
       return Promise.reject(error)
     }
 
     if (status >= 500) {
       if (!(error.config as any)?.suppressToast) {
         toast.error(
-          import.meta.env.DEV ? (message || 'Erreur serveur.') : 'Erreur serveur. Veuillez réessayer.',
+          import.meta.env.DEV ? (message || i18n.t('shared_errors.server_short', { defaultValue: "Erreur serveur." })) : i18n.t('shared_errors.server', { defaultValue: "Erreur serveur. Veuillez réessayer." }),
           { id: 'server-error-toast' }
         )
       }
@@ -91,12 +94,12 @@ export function extractValidationErrors(error: unknown): Record<string, string> 
   return Object.fromEntries(
     Object.entries(data.errors).map(([field, messages]) => [
       field,
-      messages[0] ?? 'Erreur de validation',
+      messages[0] ?? i18n.t('shared_errors.validation', { defaultValue: "Erreur de validation" }),
     ]),
   )
 }
 
-export function getErrorMessage(error: unknown, fallback = 'Une erreur est survenue.'): string {
+export function getErrorMessage(error: unknown, fallback = i18n.t('shared_errors.generic', { defaultValue: "Une erreur est survenue." })): string {
   if (axios.isAxiosError(error)) {
     return (error.response?.data as ApiErrorResponse | undefined)?.message ?? fallback
   }

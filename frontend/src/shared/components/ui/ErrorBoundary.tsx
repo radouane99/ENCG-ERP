@@ -1,3 +1,4 @@
+import i18n from '@app/i18n';
 import { Component,type ErrorInfo,type ReactNode } from 'react';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -131,12 +132,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             color: '#f8fafc',
           }}
         >
-          Une erreur inattendue est survenue
+          {i18n.t('shared_errors.crash_title', { defaultValue: "Une erreur inattendue est survenue" })}
         </h1>
 
         <p style={{ color: '#94a3b8', marginBottom: '2rem', textAlign: 'center', maxWidth: 480 }}>
-          L'application a rencontré une erreur critique. Vous pouvez essayer de
-          recharger la page ou de revenir à l'accueil.
+          {i18n.t('shared_errors.crash_help', { defaultValue: "L'application a rencontré une erreur critique. Vous pouvez essayer de recharger la page ou de revenir à l'accueil." })}
         </p>
 
         {/* Action buttons */}
@@ -154,7 +154,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               fontWeight: 500,
             }}
           >
-            Réessayer
+            {i18n.t('shared_errors.retry', { defaultValue: "Réessayer" })}
           </button>
           <button
             onClick={this.handleReload}
@@ -169,7 +169,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               fontWeight: 500,
             }}
           >
-            Retour à l'accueil
+            {i18n.t('shared_errors.home', { defaultValue: "Retour à l'accueil" })}
           </button>
         </div>
 
@@ -188,7 +188,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             <summary
               style={{ cursor: 'pointer', color: '#94a3b8', fontSize: '0.85rem', marginBottom: '0.5rem' }}
             >
-              Détails techniques (développement uniquement)
+              {i18n.t('shared_errors.technical', { defaultValue: "Détails techniques (développement uniquement)" })}
             </summary>
             <pre
               style={{

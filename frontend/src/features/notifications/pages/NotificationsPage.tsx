@@ -18,6 +18,7 @@ import { cn,cleanMojibake } from '@shared/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import api from '@shared/lib/api';
 import { toast } from 'sonner';
+import { useTranslation } from 'react-i18next';
 
 interface Notification {
   id: string;
@@ -36,6 +37,7 @@ interface Notification {
 }
 
 export default function NotificationsPage() {
+  const { t, i18n } = useTranslation('common', { keyPrefix: 'notification_page' });
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,7 +56,7 @@ export default function NotificationsPage() {
       setLastPage(res.data?.meta?.last_page || 1);
     } catch {
       setLoadError(true);
-      toast.error('Impossible de charger les notifications.');
+      toast.error(t('load_fail'));
     } finally {
       setLoading(false);
     }
@@ -68,9 +70,9 @@ export default function NotificationsPage() {
     try {
       await api.patch(`/notifications/${id}/read`);
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, read_at: new Date().toISOString() } : n));
-      toast.success('Notification marquée comme lue.');
+      toast.success(t('marked'));
     } catch {
-      toast.error('Erreur lors de la mise à jour.');
+      toast.error(t('update_fail'));
     }
   };
 
@@ -78,9 +80,9 @@ export default function NotificationsPage() {
     try {
       await api.post('/notifications/mark-all-read');
       setNotifications(prev => prev.map(n => ({ ...n, read_at: new Date().toISOString() })));
-      toast.success('Toutes les notifications sont marquées comme lues.');
+      toast.success(t('all_marked'));
     } catch {
-      toast.error('Erreur lors de la mise à jour.');
+      toast.error(t('update_fail'));
     }
   };
 
@@ -88,9 +90,9 @@ export default function NotificationsPage() {
     try {
       await api.delete(`/notifications/${id}`);
       setNotifications(prev => prev.filter(n => n.id !== id));
-      toast.success('Notification supprimée.');
+      toast.success(t('deleted'));
     } catch {
-      toast.error('Erreur lors de la suppression.');
+      toast.error(t('delete_fail'));
     }
   };
 
@@ -100,21 +102,21 @@ export default function NotificationsPage() {
       case 'grades':
       case 'academic':
       case 'course':
-        return { label: 'Pédagogie & Notes', color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' };
+        return { label: t('academic'), color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' };
       case 'document':
       case 'document_approved':
       case 'document_pending':
       case 'document_request':
-        return { label: 'Documents & Scolarité', color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20' };
+        return { label: t('school_documents'), color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20' };
       case 'library':
       case 'financial':
-        return { label: 'Bibliothèque & Prêts', color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' };
+        return { label: t('library'), color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' };
       case 'danger':
       case 'absence':
       case 'alert':
-        return { label: 'Alerte & Assiduité', color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20' };
+        return { label: t('attendance'), color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20' };
       default:
-        return { label: 'Campus & Système', color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' };
+        return { label: t('campus_system'), color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' };
     }
   };
 
@@ -176,13 +178,13 @@ export default function NotificationsPage() {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-xs font-semibold tracking-wide uppercase text-blue-200 mb-3">
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span>Portail ENCG Fès • Communication Intégrée</span>
+              <span>{t('brand')}</span>
             </div>
             <h1 className="erp-page-title">
-              Centre de Notifications
+              {t('title')}
             </h1>
             <p className="text-blue-200/90 text-sm sm:text-base mt-1.5 max-w-xl">
-              Suivi en temps réel de vos notes, convocations, attestations, emprunts de médiathèque et annonces pédagogiques.
+              {t('description')}
             </p>
           </div>
 
@@ -193,13 +195,13 @@ export default function NotificationsPage() {
                 className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 shadow-sm cursor-pointer"
               >
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span>Tout marquer comme lu</span>
+                <span>{t('mark_all')}</span>
               </button>
             )}
             <button
               onClick={fetchNotifications}
               className="p-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all cursor-pointer"
-              title="Rafraîchir"
+              title={t('refresh')}
             >
               <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
             </button>
@@ -214,7 +216,7 @@ export default function NotificationsPage() {
             <Bell className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total des alertes</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('total')}</p>
             <p className="text-2xl font-bold text-foreground mt-0.5">{notifications.length}</p>
           </div>
         </div>
@@ -224,7 +226,7 @@ export default function NotificationsPage() {
             <AlertTriangle className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Non lues</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('unread')}</p>
             <p className="text-2xl font-bold text-foreground mt-0.5">{unreadCount}</p>
           </div>
         </div>
@@ -234,7 +236,7 @@ export default function NotificationsPage() {
             <CheckCircle2 className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Traitées / Lues</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('read')}</p>
             <p className="text-2xl font-bold text-foreground mt-0.5">{notifications.length - unreadCount}</p>
           </div>
         </div>
@@ -244,24 +246,24 @@ export default function NotificationsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* Search */}
         <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-muted-foreground absolute start-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Rechercher par mot-clé (ex: Comptabilité, Attestation...)"
+            placeholder={t('search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 text-sm bg-card border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 text-foreground placeholder:text-muted-foreground rounded-[var(--control-radius)]"
+            className="w-full ps-10 pe-4 py-2 text-sm bg-card border border-border focus:outline-none focus:ring-2 focus:ring-primary/20 text-foreground placeholder:text-muted-foreground rounded-[var(--control-radius)]"
           />
         </div>
 
         {/* Filter Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
           {[
-            { key: 'all', label: 'Toutes', count: notifications.length },
-            { key: 'unread', label: 'Non lues', count: unreadCount },
-            { key: 'academic', label: 'Pédagogie & Notes' },
-            { key: 'documents', label: 'Documents' },
-            { key: 'campus', label: 'Campus & Prêts' },
+            { key: 'all', label: t('all'), count: notifications.length },
+            { key: 'unread', label: t('unread'), count: unreadCount },
+            { key: 'academic', label: t('academic') },
+            { key: 'documents', label: t('documents') },
+            { key: 'campus', label: t('campus') },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -276,7 +278,7 @@ export default function NotificationsPage() {
               {tab.label}
               {tab.count !== undefined && (
                 <span className={cn(
-                  "ml-1.5 px-1.5 py-0.2 rounded-full text-[10px]",
+                  "ms-1.5 px-1.5 py-0.2 rounded-full text-[10px]",
                   filter === tab.key ? "bg-white/20 text-white" : "bg-card text-muted-foreground"
                 )}>
                   {tab.count}
@@ -292,23 +294,23 @@ export default function NotificationsPage() {
         {loading ? (
           <div className="py-20 text-center text-muted-foreground text-sm flex flex-col items-center gap-3">
             <RefreshCw className="w-8 h-8 animate-spin text-primary" />
-            <span>Chargement des notifications en cours...</span>
+            <span>{t('loading')}</span>
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-16 text-center bg-card border border-border rounded-2xl p-8">
             <div className="w-14 h-14 rounded-2xl bg-muted border border-border flex items-center justify-center mx-auto mb-3 text-muted-foreground">
               <Bell className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-bold text-foreground">Aucune notification trouvée</h3>
+            <h3 className="text-base font-bold text-foreground">{t('empty')}</h3>
             <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
-              Aucune alerte ne correspond à vos critères de recherche actuels.
+              {t('empty_help')}
             </p>
           </div>
         ) : (
           filtered.map((notif) => {
             const isUnread = notif.read_at === null;
             const category = getCategory(notif.data.category || notif.data.type);
-            const title = cleanMojibake(notif.data.title || 'Information ENCG');
+            const title = cleanMojibake(notif.data.title || t('default_title'));
             const message = cleanMojibake(notif.data.message || '');
             const targetUrl = notif.data.action_url || notif.data.url;
 
@@ -345,7 +347,7 @@ export default function NotificationsPage() {
                       )}
                       <span className="text-xs text-muted-foreground flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        {new Date(notif.created_at).toLocaleDateString('fr-FR', {
+                        {new Date(notif.created_at).toLocaleDateString(i18n.resolvedLanguage || 'fr', {
                           day: '2-digit',
                           month: 'short',
                           year: 'numeric',
@@ -378,7 +380,7 @@ export default function NotificationsPage() {
                       }}
                       className="px-3.5 py-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
                     >
-                      <span>Consulter</span>
+                      <span>{t('view')}</span>
                       <ExternalLink className="w-3.5 h-3.5" />
                     </button>
                   )}
@@ -387,7 +389,7 @@ export default function NotificationsPage() {
                     <button
                       onClick={() => markAsRead(notif.id)}
                       className="p-2 rounded-xl bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground transition-all cursor-pointer"
-                      title="Marquer comme lu"
+                      title={t('mark')}
                     >
                       <Check className="w-4 h-4 text-emerald-500" />
                     </button>
@@ -396,7 +398,7 @@ export default function NotificationsPage() {
                   <button
                     onClick={() => deleteNotification(notif.id)}
                     className="p-2 rounded-xl bg-muted/60 hover:bg-rose-500/10 text-muted-foreground hover:text-rose-500 transition-all cursor-pointer"
-                    title="Supprimer"
+                    title={t('delete')}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -406,11 +408,11 @@ export default function NotificationsPage() {
           })
         )}
       </div>
-      {loadError && <p role="alert" className="rounded-xl border border-destructive p-4">Notifications indisponibles. Actualisez pour réessayer.</p>}
-      <nav aria-label="Pages des notifications" className="flex flex-wrap items-center justify-center gap-4 py-4">
-        <button disabled={page <= 1 || loading} onClick={() => setPage(previous => previous - 1)} className="rounded-lg border px-3 py-2 disabled:opacity-50">Page précédente</button>
-        <span className="text-sm">Page {page} / {lastPage} · filtres et compteurs sur cette page</span>
-        <button disabled={page >= lastPage || loading} onClick={() => setPage(previous => previous + 1)} className="rounded-lg border px-3 py-2 disabled:opacity-50">Page suivante</button>
+      {loadError && <p role="alert" className="rounded-xl border border-destructive p-4">{t('unavailable')}</p>}
+      <nav aria-label={t('pagination')} className="flex flex-wrap items-center justify-center gap-4 py-4">
+        <button disabled={page <= 1 || loading} onClick={() => setPage(previous => previous - 1)} className="rounded-lg border px-3 py-2 disabled:opacity-50">{t('previous')}</button>
+        <span className="text-sm">{t('page', { page, total: lastPage })}</span>
+        <button disabled={page >= lastPage || loading} onClick={() => setPage(previous => previous + 1)} className="rounded-lg border px-3 py-2 disabled:opacity-50">{t('next')}</button>
       </nav>
     </div>
   );

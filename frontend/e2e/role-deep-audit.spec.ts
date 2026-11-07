@@ -1,6 +1,20 @@
 import { test, expect } from '@playwright/test'
 import { mockApi, seedSession } from './helpers'
 
+test('le centre de notifications et les erreurs API suivent la langue arabe', async ({ page }) => {
+  await mockApi(page)
+  await seedSession(page, 'admin')
+  await page.addInitScript(() => localStorage.setItem('encg_lang', 'ar'))
+  await page.route(url => url.pathname === '/api/notifications', route =>
+    route.fulfill({ status: 429, json: { message: 'Synthetic rate limit' } }),
+  )
+
+  await page.goto('/notifications')
+  await expect(page.getByRole('heading', { name: 'مركز الإشعارات' })).toBeVisible()
+  await expect(page.getByText('محاولات كثيرة. يرجى إعادة المحاولة لاحقاً.', { exact: true })).toBeVisible()
+  await expect(page.getByRole('navigation', { name: 'صفحات الإشعارات' })).toBeVisible()
+})
+
 test.describe('Audit rôles — erreurs serveur et faux succès', () => {
   test.skip(!process.env.E2E_ROLE_AUDIT, 'Sondes d’audit opt-in, assertions protectrices volontairement rouges.')
   test('un échec de sauvegarde des paramètres ne doit pas afficher un succès', async ({ page }) => {
