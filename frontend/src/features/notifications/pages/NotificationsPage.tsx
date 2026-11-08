@@ -25,7 +25,9 @@ interface Notification {
   type: string;
   data: {
     title?: string;
+    title_ar?: string;
     message?: string;
+    message_ar?: string;
     type?: string;
     category?: string;
     action_url?: string;
@@ -151,8 +153,8 @@ export default function NotificationsPage() {
   const unreadCount = notifications.filter(n => n.read_at === null).length;
 
   const filtered = notifications.filter(notif => {
-    const title = cleanMojibake(notif.data.title || '');
-    const message = cleanMojibake(notif.data.message || '');
+    const title = cleanMojibake((i18n.language.startsWith('ar') ? notif.data.title_ar : undefined) || notif.data.title || '');
+    const message = cleanMojibake((i18n.language.startsWith('ar') ? notif.data.message_ar : undefined) || notif.data.message || '');
     const categoryKey = (notif.data.category || notif.data.type || 'system').toLowerCase();
 
     const matchesSearch = 
@@ -310,8 +312,8 @@ export default function NotificationsPage() {
           filtered.map((notif) => {
             const isUnread = notif.read_at === null;
             const category = getCategory(notif.data.category || notif.data.type);
-            const title = cleanMojibake(notif.data.title || t('default_title'));
-            const message = cleanMojibake(notif.data.message || '');
+            const title = cleanMojibake((i18n.language.startsWith('ar') ? notif.data.title_ar : undefined) || notif.data.title || t('default_title'));
+            const message = cleanMojibake((i18n.language.startsWith('ar') ? notif.data.message_ar : undefined) || notif.data.message || '');
             const targetUrl = notif.data.action_url || notif.data.url;
 
             return (

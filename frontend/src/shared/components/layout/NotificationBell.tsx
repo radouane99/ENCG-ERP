@@ -11,7 +11,9 @@ interface Notification {
   type: string;
   data: {
     title?: string;
+    title_ar?: string;
     message?: string;
+    message_ar?: string;
     type?: string;
     category?: string;
     action_url?: string;
@@ -65,8 +67,8 @@ export function NotificationBell() {
       if (isBackgroundPoll && prevUnreadCountRef.current !== null && newUnreadCount > prevUnreadCountRef.current) {
         const latestUnread = data.find(n => n.read_at === null);
         if (latestUnread) {
-          const title = cleanMojibake(latestUnread.data.title || t('notifications.new'));
-          const message = cleanMojibake(latestUnread.data.message || '');
+          const title = cleanMojibake((i18n.language.startsWith('ar') ? latestUnread.data.title_ar : undefined) || latestUnread.data.title || t('notifications.new'));
+          const message = cleanMojibake((i18n.language.startsWith('ar') ? latestUnread.data.message_ar : undefined) || latestUnread.data.message || '');
           const targetUrl = latestUnread.data.action_url || latestUnread.data.url;
 
           toast.info(title, {
@@ -85,7 +87,7 @@ export function NotificationBell() {
     } catch {
       // Keep the last known count on a transient failure; the next poll can recover.
     } finally { notificationInFlight.current = false; }
-  }, [navigate, t]);
+  }, [navigate, t, i18n]);
 
   useEffect(() => {
     fetchNotifications(false);
@@ -265,8 +267,8 @@ export function NotificationBell() {
               filteredNotifications.map(notif => {
                 const isUnread = notif.read_at === null;
                 const typeLabel = notif.data.category || notif.data.type || 'system';
-                const title = cleanMojibake(notif.data.title || t('notifications.information'));
-                const message = cleanMojibake(notif.data.message || '');
+                const title = cleanMojibake((i18n.language.startsWith('ar') ? notif.data.title_ar : undefined) || notif.data.title || t('notifications.information'));
+                const message = cleanMojibake((i18n.language.startsWith('ar') ? notif.data.message_ar : undefined) || notif.data.message || '');
                 const targetUrl = notif.data.action_url || notif.data.url;
 
                 return (

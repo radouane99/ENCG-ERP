@@ -1,4 +1,8 @@
 {
+    "Demande de document enregistrée": "تم تسجيل طلب الوثيقة",
+    "Votre demande de « :document » a été enregistrée et est en cours de traitement par le service scolarité.": "تم تسجيل طلبك للحصول على « :document » وهو قيد المعالجة لدى مصلحة شؤون الطلبة.",
+    "Nouvelle séance de rattrapage programmée": "تمت برمجة حصة تعويضية جديدة",
+    "Séance de rattrapage : :purpose en :room le :date (:time).": "حصة تعويضية · :purpose · القاعة :room · بتاريخ :date (:time).",
     "Identité et numéro étudiant rapprochés": "تمت مطابقة الهوية ورقم الطالب.",
     "Décision académique annuelle vérifiée": "تم التحقق من القرار الأكاديمي السنوي.",
     "Pièces requises du dossier annuel contrôlées": "تم التحقق من الوثائق المطلوبة للملف السنوي.",

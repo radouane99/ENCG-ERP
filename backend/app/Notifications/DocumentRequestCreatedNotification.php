@@ -25,6 +25,8 @@ class DocumentRequestCreatedNotification extends Notification
 
         return [
             'title' => 'Demande de document enregistrée',
+            'title_ar' => __('Demande de document enregistrée', [], 'ar'),
+            'message_ar' => __('Votre demande de « :document » a été enregistrée et est en cours de traitement par le service scolarité.', ['document' => $docType], 'ar'),
             'message' => "Votre demande de \"{$docType}\" a été enregistrée avec succès. Elle est en cours de traitement par le service scolarité.",
             'type' => 'document_request',
             'action_url' => '/student/documents',

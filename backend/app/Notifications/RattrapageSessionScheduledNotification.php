@@ -25,6 +25,13 @@ class RattrapageSessionScheduledNotification extends Notification implements Sho
         return [
             'type' => 'rattrapage_session_scheduled',
             'title' => 'Nouvelle séance de rattrapage programmée',
+            'title_ar' => __('Nouvelle séance de rattrapage programmée', [], 'ar'),
+            'message_ar' => __('Séance de rattrapage : :purpose en :room le :date (:time).', [
+                'purpose' => $this->details['purpose'] ?? '',
+                'room' => $this->details['room_name'] ?? '',
+                'date' => $this->details['date'] ?? '',
+                'time' => $this->details['time'] ?? '',
+            ], 'ar'),
             'message' => "Séance de rattrapage : {$this->details['purpose']} en {$this->details['room_name']} le {$this->details['date']} ({$this->details['time']}).",
             'room_name' => $this->details['room_name'] ?? 'Salle',
             'date' => $this->details['date'] ?? '',

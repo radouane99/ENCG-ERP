@@ -1,6 +1,40 @@
 import { test, expect } from '@playwright/test'
 import { mockApi, seedSession } from './helpers'
 
+test('les absences et les notifications conservées changent de langue', async ({ page }) => {
+  await mockApi(page)
+  await seedSession(page, 'student')
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('encg_lang')) localStorage.setItem('encg_lang', 'ar')
+  })
+  await page.route(url => url.pathname === '/api/student-portal/absences', route => route.fulfill({
+    json: { data: [{ id: 1, status: 'absent', is_justified: false, attendance_session: {
+      module_id: 1, module_name: 'Synthetic module', session_date: '2026-11-08', session_type: 'cm',
+    } }] },
+  }))
+  await page.goto('/student/absences')
+  await expect(page.getByRole('heading', { name: 'تتبع المواظبة والمبررات' })).toBeVisible()
+  await page.getByRole('button', { name: 'إيداع مبرر الغياب', exact: true }).click()
+  await expect(page.getByRole('dialog', { name: 'إيداع مبرر الغياب' })).toBeVisible()
+  await page.getByRole('button', { name: 'إلغاء', exact: true }).click()
+  await page.getByRole('button', { name: 'نظام المواظبة (48 ساعة)', exact: true }).click()
+  await expect(page.getByRole('dialog', { name: 'النظام البيداغوجي المتعلق بالمواظبة' })).toBeVisible()
+  await expect(page.getByText('ثلاث حالات غياب غير مبررة', { exact: true })).toBeVisible()
+
+  await page.route(url => url.pathname === '/api/notifications', route => route.fulfill({
+    json: { data: [
+      { id: 'localized', data: { title: 'Demande enregistrée', message: 'Texte français', title_ar: 'تم تسجيل الطلب', message_ar: 'نص الإشعار بالعربية' }, read_at: null, created_at: '2026-11-08T09:00:00Z' },
+      { id: 'legacy', data: { title: 'Ancien message conservé', message: 'Legacy content' }, read_at: null, created_at: '2026-11-08T08:00:00Z' },
+    ], meta: { unread_count: 2, last_page: 1 } },
+  }))
+  await page.goto('/notifications')
+  await expect(page.getByText('نص الإشعار بالعربية', { exact: true })).toBeVisible()
+  await expect(page.getByText('Ancien message conservé', { exact: true })).toBeVisible()
+  await page.evaluate(() => localStorage.setItem('encg_lang', 'fr'))
+  await page.reload()
+  await expect(page.getByText('Texte français', { exact: true })).toBeVisible()
+})
+
 test('le centre de notifications et les erreurs API suivent la langue arabe', async ({ page }) => {
   await mockApi(page)
   await seedSession(page, 'admin')
