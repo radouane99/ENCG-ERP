@@ -330,5 +330,27 @@ class AuthSecurityWorkflowTest extends TestCase
             ->assertJsonPath('sudo_mode.active', true)
             ->assertJsonPath('passkeys.0.credential_id', 'pk_fido2_encg_touchid_01')
             ->assertJsonPath('security_history.0.method', 'passkey_webauthn');
+
+        // 6. Password history (last 5) & contextual identifier breach prevention (DGSSI)
+        $reuseRes = $this->withToken($token)->postJson('/api/v1/auth/change-password', [
+            'current_password' => 'Synthetic123!',
+            'password' => 'Synthetic123!',
+            'password_confirmation' => 'Synthetic123!',
+        ]);
+        $reuseRes->assertStatus(422)->assertJsonPath('code', 'PASSWORD_REUSE_FORBIDDEN');
+
+        $breachedPatternRes = $this->withToken($token)->postJson('/api/v1/auth/change-password', [
+            'current_password' => 'Synthetic123!',
+            'password' => 'MyEncg1234!Secure',
+            'password_confirmation' => 'MyEncg1234!Secure',
+        ]);
+        $breachedPatternRes->assertStatus(422)->assertJsonPath('code', 'PASSWORD_CONTAINS_PERSONAL_IDENTIFIER');
+
+        // 7. Emergency Lockdown (Self-Service Account Freeze / Panic Lock)
+        $lockdownRes = $this->withToken($token)->postJson('/api/v1/auth/emergency-lockdown');
+        $lockdownRes->assertOk()
+            ->assertJsonPath('success', true);
+        $this->assertGreaterThanOrEqual(2, (int) $lockdownRes->json('data.revoked_sessions_count'));
+        $this->assertSame(0, $user->tokens()->count());
     }
 }

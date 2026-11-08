@@ -105,6 +105,8 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:professor|vacata
     Route::get('/professor-portal/workload', [ProfessorPortalController::class, 'getWorkloadSummary']);
     Route::get('/professor-portal/workload-pdf', [ProfessorPortalController::class, 'downloadWorkloadPdf']);
     Route::get('/professor-portal/vacation-contract/pdf', [ProfessorPortalController::class, 'downloadVacationContractPdf']);
+    Route::get('/professor-portal/vacation-payment-tracker', [ProfessorPortalController::class, 'getVacationPaymentTracker']);
+    Route::post('/professor-portal/grade-rectifications', [ProfessorPortalController::class, 'requestGradeRectification']);
     Route::get('/professor-portal/research', [ProfessorPortalController::class, 'getResearchDashboard']);
     Route::get('/professor-portal/double-grading', [ProfessorPortalController::class, 'getDoubleGrading']);
     // Documents & Attestations RH

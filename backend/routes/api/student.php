@@ -157,6 +157,7 @@ $studentPortalRoutes = function () {
     Route::post('/td-swap/{swapId}/accept', [StudentPortalController::class, 'acceptTdSubGroupSwap']);
     Route::get('/scholarship-excellence', [StudentPortalController::class, 'getScholarshipAndExcellenceStatus']);
     Route::get('/calendar/ics', [StudentPortalController::class, 'exportDynamicCalendarIcs']);
+    Route::get('/campus-pass', [StudentPortalController::class, 'getDynamicCampusPass']);
 
     // Grade Appeals (Guichet Numérique LMD 48h)
     Route::get('/grade-appeals', [GradeAppealController::class, 'studentIndex']);

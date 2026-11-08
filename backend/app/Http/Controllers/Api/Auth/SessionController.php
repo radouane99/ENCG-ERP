@@ -487,4 +487,87 @@ class SessionController extends Controller
             'data' => $record,
         ]);
     }
+
+    /**
+     * Bouton d'Urgence "Panic Lock / Gel Instantané du Compte" (Self-Service Account Freeze).
+     */
+    public function emergencyLockdown(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $revokedTokensCount = $user->tokens()->count();
+        $user->tokens()->delete();
+
+        Cache::forget("sudo_mode:user_{$user->id}");
+        Cache::forget("auth_email_otp:{$user->id}");
+        Cache::forget("auth_email_otp:user_{$user->id}");
+
+        self::recordLoginEvent($user, $request, 'emergency_lockdown', false);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Verrouillage d\'urgence exécuté : toutes vos sessions actives et jetons ont été révoqués immédiatement.',
+            'data' => [
+                'revoked_sessions_count' => $revokedTokensCount,
+                'locked_at' => now()->toIso8601String(),
+            ],
+        ])->withCookie(AuthCookie::forget());
+    }
+
+    /**
+     * Vérifier un Badge Campus Numérique Dynamique (TOTP Anti-Capture d'Écran 60s).
+     */
+    public function verifyDynamicCampusPass(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'qr_payload' => ['required', 'string'],
+        ]);
+
+        $parts = explode('|', trim($validated['qr_payload']));
+        if (count($parts) !== 4 || $parts[0] !== 'ENCG-PASS') {
+            return response()->json([
+                'success' => false,
+                'valid' => false,
+                'message' => 'Format de badge numérique invalide.',
+            ], 422);
+        }
+
+        [, $studentNumber, $timeStepStr, $totpCode] = $parts;
+        $timeStep = (int) $timeStepStr;
+        $currentStep = intdiv(time(), 60);
+
+        // Accepter uniquement la fenêtre de 60s courante ou immédiatement précédente (rejette les captures d'écran anciennes)
+        if (abs($currentStep - $timeStep) > 1) {
+            return response()->json([
+                'success' => false,
+                'valid' => false,
+                'code' => 'SCREENSHOT_EXPIRED',
+                'message' => 'Ce QR Code dynamique a expiré (plus de 60 secondes). Les captures d\'écran ne sont pas autorisées.',
+            ], 422);
+        }
+
+        $expectedCode = strtoupper(substr(
+            hash_hmac('sha256', "CAMPUS-PASS:{$studentNumber}:{$timeStep}", (string) config('app.key', 'encg-secret')),
+            0,
+            12
+        ));
+
+        if (! hash_equals($expectedCode, strtoupper($totpCode))) {
+            return response()->json([
+                'success' => false,
+                'valid' => false,
+                'message' => 'Signature cryptographique TOTP du badge invalide.',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'valid' => true,
+            'message' => 'Badge Campus ENCG Fès authentique et actif (TOTP 60s vérifié).',
+            'data' => [
+                'student_number' => $studentNumber,
+                'time_step' => $timeStep,
+                'verified_at' => now()->toIso8601String(),
+            ],
+        ]);
+    }
 }

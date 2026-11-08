@@ -1351,4 +1351,7 @@ Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
     Route::post('/admin/tafem/promote-waiting-list', [AdmissionController::class, 'promoteWaitingList']);
     Route::get('/admin/security/ledger-verify', [AdminDashboardController::class, 'verifyCryptoLedger']);
     Route::post('/admin/security/ledger-seal', [AdminDashboardController::class, 'sealCryptoLedger'])->middleware('sudo.confirm');
+    Route::get('/admin/security/grade-rectifications', [AdminDashboardController::class, 'listGradeRectifications']);
+    Route::post('/admin/security/grade-rectifications/{rectificationId}/approve', [AdminDashboardController::class, 'approveGradeRectification'])->middleware('sudo.confirm');
+    Route::get('/admin/security/posture-summary', [AdminDashboardController::class, 'getSecurityPostureSummary']);
 });

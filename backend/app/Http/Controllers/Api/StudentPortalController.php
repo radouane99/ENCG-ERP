@@ -863,6 +863,48 @@ class StudentPortalController extends Controller
     }
 
     /**
+     * Carte d'Étudiant & Badge Campus Numérique Dynamique (TOTP Anti-Capture d'Écran 60s).
+     */
+    public function getDynamicCampusPass(Request $request): JsonResponse
+    {
+        $studentId = $this->resolveAuthenticatedStudentId($request);
+        $user = $request->user();
+        $student = $user->student;
+        $subGroupInfo = app(StudentSubGroupDispatcherService::class)->getStudentSubGroupInfo($studentId);
+        $subGroup = $subGroupInfo['sub_group'] ?? Cache::get("student_td_subgroup:{$studentId}", 'G1.1');
+        $sectionLabel = $subGroupInfo['section_label'] ?? 'Section 1';
+
+        $studentNumber = $student->student_number ?: ('ENCG-'.$student->id);
+        $nowTs = time();
+        $timeStep = intdiv($nowTs, 60);
+        $expiresInSeconds = 60 - ($nowTs % 60);
+
+        $totpCode = strtoupper(substr(
+            hash_hmac('sha256', "CAMPUS-PASS:{$studentNumber}:{$timeStep}", (string) config('app.key', 'encg-secret')),
+            0,
+            12
+        ));
+        $qrPayload = "ENCG-PASS|{$studentNumber}|{$timeStep}|{$totpCode}";
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'student_name' => trim("{$user->first_name} {$user->last_name}") ?: ($user->name ?? 'Étudiant ENCG'),
+                'student_number' => $studentNumber,
+                'cne' => $student->cne,
+                'section_label' => $sectionLabel,
+                'td_sub_group' => $subGroup,
+                'totp_code' => $totpCode,
+                'time_step' => $timeStep,
+                'rotation_interval_seconds' => 60,
+                'expires_in_seconds' => $expiresInSeconds,
+                'qr_payload' => $qrPayload,
+                'anti_screenshot_policy' => 'Rotation cryptographique toutes les 60 secondes (TOTP HMAC-SHA256)',
+            ],
+        ]);
+    }
+
+    /**
      * Résout l'ID de l'étudiant authentifié.
      */
     private function resolveAuthenticatedStudentId(Request $request): int

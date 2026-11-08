@@ -432,5 +432,59 @@ class MultiRoleInteractionAndNotificationTest extends TestCase
         $verifyClean->assertOk()
             ->assertJsonPath('data.status', 'INTEGRITY_VERIFIED')
             ->assertJsonPath('data.tamper_detected', false);
+
+        // 10. Carte d'Étudiant & Badge Campus Numérique Dynamique (TOTP Anti-Capture 60s)
+        Sanctum::actingAs($this->studentUser);
+        $passRes = $this->getJson('/api/student-portal/campus-pass');
+        $passRes->assertOk()->assertJsonPath('success', true);
+        $qrPayload = $passRes->json('data.qr_payload');
+        $this->assertStringStartsWith('ENCG-PASS|', (string) $qrPayload);
+
+        $verifyPassRes = $this->postJson('/api/v1/public/verify-campus-pass', [
+            'qr_payload' => $qrPayload,
+        ]);
+        $verifyPassRes->assertOk()->assertJsonPath('valid', true);
+
+        // Screenshot older than 60s must be rejected
+        $expiredPayload = 'ENCG-PASS|ENCG-2026-DELEGUE|1000|DEADBEEF1234';
+        $this->postJson('/api/v1/public/verify-campus-pass', ['qr_payload' => $expiredPayload])
+            ->assertStatus(422)
+            ->assertJsonPath('code', 'SCREENSHOT_EXPIRED');
+
+        // 11. Simulateur Fiscal & Suivi Paiement Vacataire (17% CGI Art. 73-II-F + 403 Permanent Guard)
+        Sanctum::actingAs($this->profUser); // Permanent professor -> must get 403
+        $this->getJson('/api/professor-portal/vacation-payment-tracker')->assertForbidden();
+
+        $this->professor->update(['contract_type' => 'vacataire']);
+        $vacTrackerRes = $this->getJson('/api/professor-portal/vacation-payment-tracker?simulated_hours=40&simulated_rate=300');
+        $vacTrackerRes->assertOk()
+            ->assertJsonPath('data.igr_rate_pct', 17)
+            ->assertJsonPath('data.gross_amount_mad', 12000)
+            ->assertJsonPath('data.igr_withholding_mad', 2040)
+            ->assertJsonPath('data.net_payable_mad', 9960);
+
+        // 12. Contrôle à 4 Yeux (Four-Eyes Principle) pour Rectification de Note + SOC Posture Summary
+        $grade = Grade::where('student_id', $this->student->id)->first();
+        $rectReq = $this->postJson('/api/professor-portal/grade-rectifications', [
+            'grade_id' => $grade->id,
+            'proposed_value' => 17.5,
+            'justification' => 'Erreur matérielle de report du bonus d\'étude de cas Audit Financier',
+        ]);
+        $rectReq->assertCreated()->assertJsonPath('data.status', 'pending_second_approver');
+        $rectId = $rectReq->json('data.id');
+
+        Sanctum::actingAs($this->adminUser);
+        $this->postJson('/api/v1/auth/sudo-confirm', ['password' => 'password'])->assertOk();
+        $rectApprove = $this->postJson("/api/admin/security/grade-rectifications/{$rectId}/approve");
+        $rectApprove->assertOk()
+            ->assertJsonPath('data.rectification.status', 'approved_and_sealed')
+            ->assertJsonPath('data.ledger_seal.status', 'SEALED');
+        $this->assertEquals(17.5, (float) $grade->fresh()->value);
+
+        $socRes = $this->getJson('/api/admin/security/posture-summary');
+        $socRes->assertOk()
+            ->assertJsonPath('data.cndp_loi_09_08_status', 'CONFORME')
+            ->assertJsonPath('data.security_controls.four_eyes_dual_control_grades', true)
+            ->assertJsonPath('data.security_controls.vacataire_cgi_73_ii_f_igr_rate', '17%');
     }
 }

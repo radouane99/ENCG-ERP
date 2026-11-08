@@ -47,6 +47,7 @@ const formatMethod = (method: string) => {
 
 export function SessionManager() {
   const userId = useAuthStore((state) => state.user?.id)
+  const clearSession = useAuthStore((state) => state.clearSession)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [sudoPassword, setSudoPassword] = useState('')
@@ -177,6 +178,20 @@ export function SessionManager() {
     }
   }
 
+  const handleEmergencyLockdown = async () => {
+    setBusy(true)
+    setError('')
+    try {
+      await api.post('/v1/auth/emergency-lockdown')
+      clearSession()
+      window.location.href = '/login'
+    } catch {
+      setError("Impossible d'exécuter le verrouillage d'urgence.")
+    } finally {
+      setBusy(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       <section className="rounded-2xl border border-border bg-card p-6 space-y-5">
@@ -190,13 +205,24 @@ export function SessionManager() {
               Fermez les accès que vous ne reconnaissez pas. La session actuelle reste ouverte.
             </p>
           </div>
-          <button
-            disabled={busy || !data?.some((session) => !session.is_current)}
-            onClick={() => revoke('others')}
-            className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground disabled:opacity-50 cursor-pointer"
-          >
-            Déconnecter toutes les autres sessions
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              disabled={busy || !data?.some((session) => !session.is_current)}
+              onClick={() => revoke('others')}
+              className="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground disabled:opacity-50 cursor-pointer"
+            >
+              Déconnecter toutes les autres sessions
+            </button>
+            <button
+              type="button"
+              data-testid="emergency-lockdown-btn"
+              disabled={busy}
+              onClick={handleEmergencyLockdown}
+              className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 text-xs font-bold disabled:opacity-50 cursor-pointer"
+            >
+              🚨 Urgence : Verrouiller tout le compte
+            </button>
+          </div>
         </div>
 
         {isLoading && <p role="status">Chargement des sessions…</p>}

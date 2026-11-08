@@ -337,10 +337,53 @@ class AuthController extends Controller
             return response()->json(['message' => 'Mot de passe actuel incorrect.'], 422);
         }
 
+        $newPassword = (string) $validated['password'];
+        $lowerNew = strtolower($newPassword);
+        $emailLocal = strtolower((string) strtok((string) $user->email, '@'));
+        $personalTokens = array_filter([
+            strlen($emailLocal) >= 4 ? $emailLocal : null,
+            ! empty($user->cin) ? strtolower((string) $user->cin) : null,
+            ! empty($user->student?->cne) ? strtolower((string) $user->student->cne) : null,
+            ! empty($user->student?->student_number) ? strtolower((string) $user->student->student_number) : null,
+            'azerty123',
+            'encg1234',
+            'password123',
+        ]);
+
+        foreach ($personalTokens as $forbiddenToken) {
+            if ($forbiddenToken && str_contains($lowerNew, $forbiddenToken)) {
+                return response()->json([
+                    'code' => 'PASSWORD_CONTAINS_PERSONAL_IDENTIFIER',
+                    'message' => 'Par mesure de sécurité (DGSSI), le mot de passe ne doit pas contenir votre CNE, CIN, Code Apogée, identifiant e-mail ou un motif compromis.',
+                ], 422);
+            }
+        }
+
+        $historyKey = "password_history:user_{$user->id}";
+        $previousHashes = Cache::get($historyKey, []);
+        if (! is_array($previousHashes)) {
+            $previousHashes = [];
+        }
+        $allRecentHashes = array_slice(array_merge([$user->password], $previousHashes), 0, 5);
+
+        foreach ($allRecentHashes as $oldHash) {
+            if (is_string($oldHash) && $oldHash !== '' && Hash::check($newPassword, $oldHash)) {
+                return response()->json([
+                    'code' => 'PASSWORD_REUSE_FORBIDDEN',
+                    'message' => 'Par mesure de sécurité (DGSSI), vous ne pouvez pas réutiliser l\'un de vos 5 derniers mots de passe.',
+                ], 422);
+            }
+        }
+
+        $oldPasswordHash = $user->password;
+
         $user->forceFill([
-            'password' => $validated['password'],
+            'password' => $newPassword,
             'must_change_password' => false,
         ])->save();
+
+        array_unshift($previousHashes, $oldPasswordHash);
+        Cache::put($historyKey, array_slice(array_values(array_unique($previousHashes)), 0, 5), now()->addYears(2));
 
         $user->tokens()->delete();
         $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;

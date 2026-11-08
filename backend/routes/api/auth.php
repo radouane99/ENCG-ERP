@@ -31,6 +31,7 @@ Route::prefix('public/admissions')->middleware('throttle:10,1')->group(function 
 });
 Route::get('public/admissions/documents/{document}', [AdmissionWorkflowController::class, 'download'])->name('admissions.document');
 Route::get('v1/public/verify-document/{code}', [SessionController::class, 'verifyPublicOfficialDocument'])->middleware('throttle:30,1');
+Route::post('v1/public/verify-campus-pass', [SessionController::class, 'verifyDynamicCampusPass'])->middleware('throttle:30,1');
 
 Route::prefix('admissions/workflow')->middleware(['auth:sanctum', 'institution.context'])->group(function () {
     $workflow = AdmissionWorkflowController::class;
@@ -132,6 +133,7 @@ Route::prefix('v1/auth')->group(function () {
         Route::delete('/passkeys/{credentialId}', [SessionController::class, 'revokePasskey']);
         Route::delete('/sessions/others', [SessionController::class, 'others']);
         Route::delete('/sessions/{id}', [SessionController::class, 'destroy'])->whereNumber('id');
+        Route::post('/emergency-lockdown', [SessionController::class, 'emergencyLockdown']);
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
         Route::post('/change-password', [AuthController::class, 'changePassword'])->middleware('throttle:login');
