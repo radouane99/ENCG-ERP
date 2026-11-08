@@ -35,6 +35,8 @@ interface AuthState {
 
   completeSession: (user?: User) => Promise<void>
   login: (email: string, password: string, remember?: boolean) => Promise<{ requiresTwoFactor: boolean }>
+  requestEmailOtp: (email: string) => Promise<{ message: string }>
+  verifyEmailOtp: (email: string, code: string, remember?: boolean) => Promise<{ requiresTwoFactor: boolean }>
   beginTwoFactor: (challenge: string) => void
   verifyTwoFactor: (code: string) => Promise<void>
   logout: () => Promise<void>
@@ -68,6 +70,29 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
 
   login: async (email, password, remember = false) => {
     const response = await api.post('/v1/auth/login', { email, password, remember })
+    const { user, requires_two_factor, two_factor_challenge_token } = response.data?.data || {}
+
+    if (requires_two_factor) {
+      if (typeof two_factor_challenge_token !== 'string' || !two_factor_challenge_token) throw new Error('Réponse de connexion invalide.')
+      get().beginTwoFactor(two_factor_challenge_token)
+      return { requiresTwoFactor: true }
+    }
+
+    if (!user || !Array.isArray(user.roles) || !Array.isArray(user.permissions)) throw new Error('Réponse de connexion invalide.')
+    get().setActiveRole(null)
+    set({ user, isAuthenticated: true, requiresTwoFactor: false, twoFactorChallengeToken: null, isLoading: false })
+    return { requiresTwoFactor: false }
+  },
+
+  requestEmailOtp: async (email) => {
+    const response = await api.post('/v1/auth/otp/request', { email })
+    return {
+      message: response.data?.message || 'Code OTP envoyé par e-mail.',
+    }
+  },
+
+  verifyEmailOtp: async (email, code, remember = false) => {
+    const response = await api.post('/v1/auth/otp/verify', { email, code, remember })
     const { user, requires_two_factor, two_factor_challenge_token } = response.data?.data || {}
 
     if (requires_two_factor) {

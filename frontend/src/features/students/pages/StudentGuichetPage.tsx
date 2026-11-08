@@ -83,6 +83,20 @@ export default function StudentGuichetPage() {
     staleTime: 60000,
   });
 
+  // 1d. Fetch Scholarship (Minhaty ONOUSC) & Director Honor Roll Status
+  const { data: scholarshipRes } = useQuery({
+    queryKey: ['student-scholarship-excellence'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/student-portal/scholarship-excellence');
+        return res.data?.data ?? null;
+      } catch {
+        return null;
+      }
+    },
+    staleTime: 60000,
+  });
+
   const requestRecLetterMutation = useMutation({
     mutationFn: async (moduleId: number) => {
       const res = await api.post('/student-portal/recommendation-letters', {
@@ -520,6 +534,36 @@ export default function StudentGuichetPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Bourse Minhaty (ONOUSC), Tableau d'Honneur & Synchronisation Calendrier .ics ── */}
+      {scholarshipRes && (
+        <div className="bg-card rounded-2xl border border-slate-200/80 dark:border-border p-4 sm:p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+                <Sparkles className="w-3 h-3" /> Suivi Bourse Minhaty (ONOUSC) & Excellence LMD
+              </span>
+              <span className="text-xs font-bold text-emerald-600">
+                Validation LMD : {scholarshipRes.lmd_validation_rate_pct}% • Moyenne : {scholarshipRes.gpa}/20 ({scholarshipRes.mention})
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Statut ONOUSC : <strong>{scholarshipRes.minhaty_onousc?.eligibility_status === 'maintien_bourse_complete_100_pct' ? 'Maintien Bourse Complète (100%)' : 'En cours d\'évaluation'}</strong>
+              {scholarshipRes.excellence_encg?.certificate_code && (
+                <span> • Tableau d&apos;Honneur : <code className="font-mono text-primary font-bold">{scholarshipRes.excellence_encg.certificate_code}</code></span>
+              )}
+            </p>
+          </div>
+          <a
+            href="/api/student-portal/calendar/ics"
+            download
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-primary/10 hover:bg-primary/15 text-primary border border-primary/20 text-xs font-bold shrink-0 transition-colors"
+          >
+            <Calendar className="w-4 h-4" />
+            Synchroniser Calendrier (.ics iCal / Google)
+          </a>
         </div>
       )}
 

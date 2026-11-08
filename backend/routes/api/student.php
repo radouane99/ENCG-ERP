@@ -151,6 +151,13 @@ $studentPortalRoutes = function () {
     Route::get('/recommendation-letters', [StudentPortalController::class, 'getRecommendationLetters']);
     Route::post('/recommendation-letters', [StudentPortalController::class, 'requestRecommendationLetter']);
 
+    // Bourse d'Échange de Sous-Groupes TD 1-pour-1, Bourses ONOUSC/Minhaty & Calendrier Dynamique .ics
+    Route::get('/td-swap', [StudentPortalController::class, 'getTdSubGroupSwaps']);
+    Route::post('/td-swap', [StudentPortalController::class, 'proposeTdSubGroupSwap']);
+    Route::post('/td-swap/{swapId}/accept', [StudentPortalController::class, 'acceptTdSubGroupSwap']);
+    Route::get('/scholarship-excellence', [StudentPortalController::class, 'getScholarshipAndExcellenceStatus']);
+    Route::get('/calendar/ics', [StudentPortalController::class, 'exportDynamicCalendarIcs']);
+
     // Grade Appeals (Guichet Numérique LMD 48h)
     Route::get('/grade-appeals', [GradeAppealController::class, 'studentIndex']);
     Route::post('/grade-appeals', [GradeAppealController::class, 'studentStore']);

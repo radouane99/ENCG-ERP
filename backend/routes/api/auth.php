@@ -100,6 +100,8 @@ Route::prefix('v1/auth')->group(function () {
     Route::post('/reset-password', [PasswordResetController::class, 'reset'])->middleware('throttle:login');
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:login');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
+    Route::post('/otp/request', [AuthController::class, 'requestEmailOtp'])->middleware('throttle:login');
+    Route::post('/otp/verify', [AuthController::class, 'verifyEmailOtp'])->middleware('throttle:login');
 
     Route::post('/two-factor/verify', [AuthController::class, 'verifyTwoFactor'])->middleware('throttle:login');
 
@@ -118,6 +120,7 @@ Route::prefix('v1/auth')->group(function () {
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/sessions', [SessionController::class, 'index']);
+        Route::get('/security-history', [SessionController::class, 'history']);
         Route::delete('/sessions/others', [SessionController::class, 'others']);
         Route::delete('/sessions/{id}', [SessionController::class, 'destroy'])->whereNumber('id');
         Route::post('/logout', [AuthController::class, 'logout']);

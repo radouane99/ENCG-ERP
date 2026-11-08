@@ -44,12 +44,16 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()
-  const { login } = useAuthStore()
+  const { login, requestEmailOtp, verifyEmailOtp } = useAuthStore()
   const [showPassword, setShowPassword] = useState(false)
   const [showCndpModal, setShowCndpModal] = useState(false)
   const [ssoProviders, setSsoProviders] = useState<SsoProvider[]>(DEFAULT_SSO_PROVIDERS)
   const [initialRemembered] = useState(() => loadRememberedLogin())
   const [hasSavedDeviceLogin, setHasSavedDeviceLogin] = useState(() => Boolean(initialRemembered.remember && initialRemembered.identifier))
+  const [authMode, setAuthMode] = useState<'password' | 'otp'>('password')
+  const [otpSent, setOtpSent] = useState(false)
+  const [otpCode, setOtpCode] = useState('')
+  const [otpLoading, setOtpLoading] = useState(false)
   const isAr = i18n.language === 'ar'
 
   useEffect(() => {
@@ -129,6 +133,49 @@ export default function LoginPage() {
       return
     }
     window.location.href = buildSsoRedirectUrl(provider.redirect, rememberChecked)
+  }
+
+  const handleRequestOtp = async () => {
+    const identifier = (watch('email') || '').trim()
+    if (identifier.length < 4) {
+      setError('email', { message: isAr ? 'أدخل البريد أو رمز مسار / أبوجي أولاً' : 'Veuillez saisir votre Email, CNE ou Code Apogée.' })
+      return
+    }
+    setOtpLoading(true)
+    try {
+      const res = await requestEmailOtp(identifier)
+      setOtpSent(true)
+      toast.success(res.message)
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Impossible d\'envoyer le code OTP.')
+    } finally {
+      setOtpLoading(false)
+    }
+  }
+
+  const handleVerifyOtp = async () => {
+    const identifier = (watch('email') || '').trim()
+    const cleanOtp = otpCode.replace(/\D/g, '').slice(0, 6)
+    if (cleanOtp.length !== 6) {
+      toast.error(isAr ? 'أدخل الرمز المكون من 6 أرقام' : 'Veuillez saisir le code OTP à 6 chiffres.')
+      return
+    }
+    setOtpLoading(true)
+    try {
+      const result = await verifyEmailOtp(identifier, cleanOtp, rememberChecked)
+      saveRememberedLogin(identifier, rememberChecked)
+      setHasSavedDeviceLogin(rememberChecked)
+      if (result.requiresTwoFactor) {
+        navigate('/two-factor', { state: location.state })
+      } else {
+        navigate(admissionReturnPath(location.state))
+        toast.success(isAr ? 'تم الدخول بنجاح!' : 'Connexion par code OTP réussie !')
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Code OTP invalide ou expiré.')
+    } finally {
+      setOtpLoading(false)
+    }
   }
 
   const onSubmit = async (data: LoginForm) => {
@@ -243,6 +290,35 @@ export default function LoginPage() {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {/* Mode Switch: Mot de passe classique vs Code OTP Email sans mot de passe */}
+        <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-muted/60 border border-border/70 text-[11px] font-bold">
+          <button
+            type="button"
+            onClick={() => setAuthMode('password')}
+            className={cn(
+              'py-1.5 px-2.5 rounded-lg transition-all cursor-pointer text-center',
+              authMode === 'password'
+                ? 'bg-card text-foreground shadow-2xs border border-border/60'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            🔑 {isAr ? 'كلمة المرور' : 'Mot de passe'}
+          </button>
+          <button
+            type="button"
+            data-testid="auth-mode-otp"
+            onClick={() => setAuthMode('otp')}
+            className={cn(
+              'py-1.5 px-2.5 rounded-lg transition-all cursor-pointer text-center',
+              authMode === 'otp'
+                ? 'bg-card text-primary shadow-2xs border border-primary/30'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            ✨ {isAr ? 'رمز OTP عبر البريد' : 'Code OTP Email (Sans MDP)'}
+          </button>
+        </div>
+
         {/* Email / CNE / Apogée Field */}
         <div className="space-y-1.5">
           <label className="text-[11px] font-bold uppercase tracking-wider text-foreground flex items-center justify-between" htmlFor="email">
@@ -270,46 +346,97 @@ export default function LoginPage() {
           )}
         </div>
 
-        {/* Password Field with Lead Icon & Password Toggle */}
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-foreground" htmlFor="password">
-              {t('password')}
-            </label>
-            <button
-              type="button"
-              onClick={() => navigate('/forgot-password')}
-              className="text-xs text-primary hover:underline font-bold"
-            >
-              {t('forgot_password')}
-            </button>
-          </div>
-          <div className="relative">
-            <div className="absolute inset-y-0 start-0 ps-3.5 flex items-center pointer-events-none text-muted-foreground">
-              <Lock className="w-4 h-4" />
+        {/* Password Field OR Passwordless Email OTP Field */}
+        {authMode === 'password' ? (
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-foreground" htmlFor="password">
+                {t('password')}
+              </label>
+              <button
+                type="button"
+                onClick={() => navigate('/forgot-password')}
+                className="text-xs text-primary hover:underline font-bold"
+              >
+                {t('forgot_password')}
+              </button>
             </div>
-            <Input
-              id="password"
-              type={showPassword ? 'text' : 'password'}
-              autoComplete="current-password"
-              {...register('password')}
-              error={!!errors.password}
-              placeholder="••••••••"
-              className={cn('w-full transition-all focus:ring-2 focus:ring-primary/20 bg-background/80 rounded-xl', isAr ? 'pr-10 pl-10' : 'ps-10 pe-10')}
-            />
-            <button
-              type="button"
-              aria-label={showPassword ? (isAr ? 'إخفاء كلمة المرور' : 'Masquer le mot de passe') : (isAr ? 'إظهار كلمة المرور' : 'Afficher le mot de passe')}
-              onClick={() => setShowPassword(!showPassword)}
-              className={cn('absolute top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 cursor-pointer', isAr ? 'left-3' : 'end-3')}
-            >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
+            <div className="relative">
+              <div className="absolute inset-y-0 start-0 ps-3.5 flex items-center pointer-events-none text-muted-foreground">
+                <Lock className="w-4 h-4" />
+              </div>
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                {...register('password')}
+                error={!!errors.password}
+                placeholder="••••••••"
+                className={cn('w-full transition-all focus:ring-2 focus:ring-primary/20 bg-background/80 rounded-xl', isAr ? 'pr-10 pl-10' : 'ps-10 pe-10')}
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? (isAr ? 'إخفاء كلمة المرور' : 'Masquer le mot de passe') : (isAr ? 'إظهار كلمة المرور' : 'Afficher le mot de passe')}
+                onClick={() => setShowPassword(!showPassword)}
+                className={cn('absolute top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 cursor-pointer', isAr ? 'left-3' : 'end-3')}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            {errors.password && (
+              <p className="text-xs text-destructive mt-1 font-semibold">{errors.password.message}</p>
+            )}
           </div>
-          {errors.password && (
-            <p className="text-xs text-destructive mt-1 font-semibold">{errors.password.message}</p>
-          )}
-        </div>
+        ) : (
+          <div className="p-3.5 rounded-xl bg-primary/5 border border-primary/20 space-y-3">
+            <div className="text-xs font-semibold text-foreground">
+              {isAr
+                ? 'استلم رمز دخول فوري مكون من 6 أرقام على بريدك الإلكتروني دون الحاجة لكلمة المرور.'
+                : 'Recevez un code à usage unique (6 chiffres) par e-mail pour vous connecter sans mot de passe.'}
+            </div>
+            {!otpSent ? (
+              <Button
+                type="button"
+                isLoading={otpLoading}
+                onClick={handleRequestOtp}
+                className="w-full py-2.5 rounded-xl font-bold text-xs bg-primary text-primary-foreground cursor-pointer"
+              >
+                {isAr ? 'إرسال رمز الدخول الفوري (OTP)' : 'Recevoir mon Code OTP par Email'}
+              </Button>
+            ) : (
+              <div className="space-y-2.5">
+                <Input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="000000"
+                  className="text-center font-mono text-lg tracking-widest font-bold rounded-xl"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleRequestOtp}
+                    disabled={otpLoading}
+                    className="flex-1 text-xs font-bold rounded-xl cursor-pointer"
+                  >
+                    {isAr ? 'إعادة الإرسال' : 'Renvoyer'}
+                  </Button>
+                  <Button
+                    type="button"
+                    isLoading={otpLoading}
+                    onClick={handleVerifyOtp}
+                    className="flex-2 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                  >
+                    {isAr ? 'تأكيد ودخول' : 'Valider le Code OTP'}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Enhanced Remember Me Card (30 Days Persistent Token + Device Identifier Storage) */}
         <div

@@ -360,5 +360,51 @@ class MultiRoleInteractionAndNotificationTest extends TestCase
             ->assertJsonPath('report.status', 'CONFORME_MESRSFC')
             ->assertJsonPath('report.aneaq_accreditation.referentiel_version', 'ANEAQ-MESRSFC-2026')
             ->assertJsonPath('report.aneaq_accreditation.gouvernance_et_securite.retenue_igr_vacataires_cgi_73_ii_f', '17%');
+
+        // 5. Détecteur Bourse Minhaty (ONOUSC) & Tableau d'Honneur / Excellence
+        Sanctum::actingAs($this->studentUser);
+        $scholarRes = $this->getJson('/api/student-portal/scholarship-excellence');
+        $scholarRes->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.minhaty_onousc.eligibility_status', 'maintien_bourse_complete_100_pct')
+            ->assertJsonPath('data.excellence_encg.is_director_honor_roll', true);
+        $this->assertStringStartsWith('HONNEUR-ENCG-', $scholarRes->json('data.excellence_encg.certificate_code'));
+
+        // 6. Bourse d'Échange de Sous-Groupes TD "1-for-1 Swap" (G1.1 <-> G1.2)
+        $peerUser = User::factory()->create([
+            'email' => 'camarade.td@encg-fes.ac.ma',
+            'institution_id' => $this->institution->id,
+        ]);
+        $peerUser->assignRole('student');
+        $peerStudent = Student::create([
+            'user_id' => $peerUser->id,
+            'student_number' => 'ENCG-2026-PEER',
+            'cne' => 'N135555555',
+            'gender' => 'male',
+            'status' => 'active',
+            'institution_id' => $this->institution->id,
+        ]);
+
+        $swapPropRes = $this->postJson('/api/student-portal/td-swap', [
+            'target_student_id' => $peerStudent->id,
+            'reason' => 'Covoiturage Fès - Route Imouzzer',
+        ]);
+        $swapPropRes->assertCreated()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.status', 'pending_peer');
+        $swapId = $swapPropRes->json('data.id');
+
+        Sanctum::actingAs($peerUser);
+        $swapAcceptRes = $this->postJson("/api/student-portal/td-swap/{$swapId}/accept");
+        $swapAcceptRes->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.status', 'approved');
+
+        // 7. Calendrier Universitaire Dynamique .ics Synchronisé 1-Clic
+        Sanctum::actingAs($this->studentUser);
+        $icsRes = $this->get('/api/student-portal/calendar/ics');
+        $icsRes->assertOk();
+        $this->assertStringContainsString('BEGIN:VCALENDAR', $icsRes->getContent());
+        $this->assertStringContainsString('PRODID:-//ENCG Fes//USMBA Academic Calendar//FR', $icsRes->getContent());
     }
 }

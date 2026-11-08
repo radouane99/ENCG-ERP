@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\PasswordlessOtpMail;
 use App\Models\User;
 use App\Services\LoginChallengeService;
 use App\Services\TwoFactorAuthService;
@@ -202,5 +203,50 @@ class AuthSecurityWorkflowTest extends TestCase
         $this->assertNotNull($token);
         $this->assertSame('auth-token-remember', $token->name);
         $this->assertTrue($token->expires_at->greaterThan(now()->addDays(25)));
+    }
+
+    public function test_passwordless_email_otp_login_and_personal_security_history(): void
+    {
+        $user = $this->account(false);
+
+        $this->postJson('/api/v1/auth/otp/request', [
+            'email' => $user->email,
+        ])->assertOk()->assertJsonPath('success', true);
+
+        $sentCode = null;
+        Mail::assertSent(PasswordlessOtpMail::class, function (PasswordlessOtpMail $mail) use (&$sentCode, $user) {
+            $sentCode = $mail->otpCode;
+
+            return $mail->hasTo($user->email);
+        });
+
+        $this->assertNotNull($sentCode);
+        $this->assertMatchesRegularExpression('/^[0-9]{6}$/', (string) $sentCode);
+
+        $verifyRes = $this->withHeader('X-Client', 'mobile')->postJson('/api/v1/auth/otp/verify', [
+            'email' => $user->email,
+            'code' => $sentCode,
+            'remember' => true,
+        ]);
+
+        $verifyRes->assertOk()
+            ->assertJsonPath('data.remember', true)
+            ->assertJsonPath('data.user.email', $user->email);
+
+        $plainToken = $verifyRes->json('data.token');
+        $this->assertNotEmpty($plainToken);
+
+        // Single-use OTP check
+        $this->postJson('/api/v1/auth/otp/verify', [
+            'email' => $user->email,
+            'code' => $sentCode,
+        ])->assertStatus(422);
+
+        // Verify sessions + personal security history (CNDP Loi 09-08)
+        $sessionsRes = $this->withToken($plainToken)->getJson('/api/v1/auth/sessions');
+        $sessionsRes->assertOk()
+            ->assertJsonPath('data.0.session_type', 'remember_30d')
+            ->assertJsonPath('security_history.0.method', 'email_otp')
+            ->assertJsonPath('security_history.0.remember', true);
     }
 }

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Presentation\Api\Controllers\Auth;
 
 use App\Domain\Auth\Services\RegisterUserService;
+use App\Http\Controllers\Api\Auth\SessionController;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
+use App\Mail\PasswordlessOtpMail;
 use App\Models\Application;
 use App\Models\Student;
 use App\Models\User;
@@ -16,7 +18,9 @@ use App\Support\AuthCookie;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -64,9 +68,94 @@ class AuthController extends Controller
         $expiresAt = $remember ? now()->addDays(AuthCookie::REMEMBER_DAYS) : now()->addHours(8);
         $token = $user->createToken($remember ? 'auth-token-remember' : 'auth-token', ['*'], $expiresAt)->plainTextToken;
 
+        SessionController::recordLoginEvent($user, $request, 'password', $remember);
         event(new Login('sanctum', $user, $remember));
 
         return $this->authenticatedResponse($request, $user, $token);
+    }
+
+    /**
+     * Demander un code OTP par e-mail (Connexion sans mot de passe — 6 chiffres).
+     */
+    public function requestEmailOtp(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'email' => 'required|string|max:255',
+        ]);
+
+        $user = $this->resolveUserByIdentifier((string) $validated['email']);
+
+        if ($user && $user->is_active && filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
+            $otpCode = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            Cache::put("auth_email_otp:{$user->id}", [
+                'hash' => Hash::make($otpCode),
+                'attempts' => 0,
+            ], now()->addMinutes(10));
+
+            try {
+                Mail::to($user->email)->send(new PasswordlessOtpMail($user, $otpCode, 10, $request->ip()));
+            } catch (\Throwable) {
+                // Ne pas bloquer la réponse en cas d'erreur SMTP/Resend transitoire en local
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Si ce compte existe et est actif, un code de connexion à 6 chiffres a été envoyé à votre adresse e-mail.',
+        ]);
+    }
+
+    /**
+     * Vérifier le code OTP reçu par e-mail et ouvrir la session.
+     */
+    public function verifyEmailOtp(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'email' => 'required|string|max:255',
+            'code' => 'required|string|size:6',
+            'remember' => 'sometimes|boolean',
+        ]);
+
+        $user = $this->resolveUserByIdentifier((string) $validated['email']);
+        if (! $user || ! $user->is_active) {
+            return response()->json(['message' => 'Code OTP invalide ou expiré.'], 422);
+        }
+
+        $cacheKey = "auth_email_otp:{$user->id}";
+        $record = Cache::get($cacheKey);
+
+        if (! is_array($record) || empty($record['hash'])) {
+            return response()->json(['message' => 'Code OTP invalide ou expiré.'], 422);
+        }
+
+        $attempts = (int) ($record['attempts'] ?? 0) + 1;
+        if ($attempts > 5) {
+            Cache::forget($cacheKey);
+
+            return response()->json(['message' => 'Trop de tentatives. Veuillez demander un nouveau code OTP.'], 422);
+        }
+
+        if (! Hash::check((string) $validated['code'], (string) $record['hash'])) {
+            $record['attempts'] = $attempts;
+            Cache::put($cacheKey, $record, now()->addMinutes(10));
+
+            return response()->json(['message' => 'Code OTP invalide ou expiré.'], 422);
+        }
+
+        Cache::forget($cacheKey);
+
+        $remember = $request->boolean('remember');
+        if ($user->two_factor_enabled) {
+            return response()->json(['data' => app(LoginChallengeService::class)->create($user, $remember)])->withCookie(AuthCookie::forget());
+        }
+
+        $expiresAt = $remember ? now()->addDays(AuthCookie::REMEMBER_DAYS) : now()->addHours(8);
+        $token = $user->createToken($remember ? 'auth-token-remember' : 'auth-token', ['*'], $expiresAt)->plainTextToken;
+
+        SessionController::recordLoginEvent($user, $request, 'email_otp', $remember);
+        event(new Login('sanctum', $user, $remember));
+
+        return $this->authenticatedResponse($request, $user, $token, 'Connexion par code OTP réussie.');
     }
 
     /**
@@ -89,6 +178,7 @@ class AuthController extends Controller
 
         $expiresAt = $remember ? now()->addDays(AuthCookie::REMEMBER_DAYS) : now()->addHours(8);
         $token = $user->createToken($remember ? 'auth-token-remember' : 'auth-token', ['*'], $expiresAt)->plainTextToken;
+        SessionController::recordLoginEvent($user, $request, 'two_factor', $remember);
         event(new Login('sanctum', $user, $remember));
 
         return $this->authenticatedResponse($request, $user, $token);

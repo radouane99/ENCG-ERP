@@ -63,6 +63,7 @@ class SsoController extends Controller
         }
         $expiresAt = $remember ? now()->addDays(AuthCookie::REMEMBER_DAYS) : now()->addHours(8);
         $token = $user->createToken($remember ? 'auth-token-remember' : 'auth-token', ['*'], $expiresAt)->plainTextToken;
+        SessionController::recordLoginEvent($user, $request, 'sso_'.($user->sso_provider ?: 'oauth'), $remember);
         event(new Login('sanctum', $user, $remember));
 
         return AuthCookie::attach(response()->json([
