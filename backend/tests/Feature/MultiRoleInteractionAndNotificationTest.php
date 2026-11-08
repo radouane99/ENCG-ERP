@@ -228,4 +228,49 @@ class MultiRoleInteractionAndNotificationTest extends TestCase
         // Student must be forbidden from administrative broadcast endpoints
         $response->assertForbidden();
     }
+
+    /**
+     * 5. PWA Push Subscription & Redis-Cached Broadcast Lifecycle.
+     */
+    public function test_pwa_push_subscription_and_redis_cached_broadcast_lifecycle(): void
+    {
+        Sanctum::actingAs($this->studentUser);
+
+        // Subscribe to PWA Push
+        $subResponse = $this->postJson('/api/notifications/push-subscribe', [
+            'endpoint' => 'https://fcm.googleapis.com/fcm/send/encg-test-sub',
+            'user_agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0)',
+        ]);
+        $subResponse->assertOk()->assertJsonPath('push_subscribed', true);
+
+        // Verify index returns push_subscribed = true and caches unread_count = 0
+        $indexResponse = $this->getJson('/api/notifications');
+        $indexResponse->assertOk()
+            ->assertJsonPath('meta.unread_count', 0)
+            ->assertJsonPath('meta.push_subscribed', true);
+
+        // Admin broadcasts urgent alert with 'push' channel only
+        Sanctum::actingAs($this->adminUser);
+        $broadcastResponse = $this->postJson('/api/admin/notifications/broadcast-urgent', [
+            'title' => '🎓 Résultats S5 Publiés',
+            'message' => 'Consultez votre relevé de notes.',
+            'target_type' => 'students',
+            'urgency' => 'urgent',
+            'send_channels' => ['push'],
+        ]);
+        $broadcastResponse->assertOk()->assertJsonPath('success', true);
+
+        // Admin fetches Redis-cached PWA Hub targeting stats
+        $statsResponse = $this->getJson('/api/admin/pwa-notifications/stats');
+        $statsResponse->assertOk()->assertJsonPath('success', true);
+
+        // Student fetches notifications again -> cache was invalidated by broadcast, unread_count is now 1
+        Sanctum::actingAs($this->studentUser);
+        $afterBroadcast = $this->getJson('/api/notifications');
+        $afterBroadcast->assertOk()->assertJsonPath('meta.unread_count', 1);
+
+        // Unsubscribe from PWA Push
+        $unsubResponse = $this->deleteJson('/api/notifications/push-subscribe');
+        $unsubResponse->assertOk()->assertJsonPath('push_subscribed', false);
+    }
 }

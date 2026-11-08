@@ -150,6 +150,8 @@ Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
     Route::prefix('notifications')->group(function () {
         Route::get('/', [NotificationController::class, 'index']);
         Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+        Route::post('/push-subscribe', [NotificationController::class, 'subscribePush']);
+        Route::delete('/push-subscribe', [NotificationController::class, 'unsubscribePush']);
         Route::patch('/{id}/read', [NotificationController::class, 'markAsRead']);
         Route::delete('/{id}', [NotificationController::class, 'destroy']);
     });

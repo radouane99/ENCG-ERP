@@ -1,8 +1,9 @@
-import React,{ useState,useEffect,useRef,useCallback } from 'react';
-import { Bell,BookOpen,CreditCard,ExternalLink,Check,CheckCircle2,FileText,AlertTriangle,ChevronRight,Inbox } from 'lucide-react';
-import { cn,cleanMojibake } from '@shared/lib/utils';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Bell, BookOpen, CreditCard, ExternalLink, Check, CheckCircle2, FileText, AlertTriangle, ChevronRight, Inbox } from 'lucide-react';
+import { cn, cleanMojibake } from '@shared/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import api from '@shared/lib/api';
+import { showNativePwaNotification } from '@shared/lib/pwaPush';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 
@@ -78,6 +79,7 @@ export function NotificationBell() {
               onClick: () => navigate(targetUrl)
             } : undefined
           });
+          void showNativePwaNotification(title, message, targetUrl);
         }
       }
 
@@ -179,12 +181,12 @@ export function NotificationBell() {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           "relative p-2 rounded-xl transition-all cursor-pointer",
-          isOpen 
-            ? "bg-primary/10 text-primary ring-2 ring-primary/20" 
+          isOpen
+            ? "bg-primary/10 text-primary ring-2 ring-primary/20"
             : "hover:bg-muted text-muted-foreground hover:text-foreground"
         )}
         title={t('notifications.center')}
@@ -213,7 +215,7 @@ export function NotificationBell() {
                 )}
               </div>
               {unreadCount > 0 && (
-                <button 
+                <button
                   onClick={markAllAsRead}
                   className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 font-semibold transition-colors"
                 >
@@ -272,8 +274,8 @@ export function NotificationBell() {
                 const targetUrl = notif.data.action_url || notif.data.url;
 
                 return (
-                  <div 
-                    key={notif.id} 
+                  <div
+                    key={notif.id}
                     onClick={() => handleNotificationClick(notif)}
                     className={cn(
                       "p-3.5 hover:bg-muted/50 transition-all flex gap-3 group relative cursor-pointer",
@@ -314,7 +316,7 @@ export function NotificationBell() {
 
                     {/* Quick Mark Read Button */}
                     {isUnread && (
-                      <button 
+                      <button
                         onClick={(e) => markAsRead(notif.id, e)}
                         className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-card border border-border shadow-xs text-muted-foreground hover:text-primary hover:bg-muted transition-all self-start"
                         title={t('notifications.mark_one')}
@@ -327,10 +329,10 @@ export function NotificationBell() {
               })
             )}
           </div>
-          
+
           {/* Footer */}
           <div className="p-2.5 border-t border-border bg-muted/20">
-            <button 
+            <button
               onClick={() => {
                 navigate('/notifications');
                 setIsOpen(false);

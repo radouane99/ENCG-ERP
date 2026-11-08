@@ -1,6 +1,7 @@
 import React,{ useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
+import { requestPwaPushPermission, showNativePwaNotification } from '@shared/lib/pwaPush';
 import { toast } from 'sonner';
 import {
 Bell,Send,Smartphone,CheckCircle2,ShieldAlert,RefreshCw,
@@ -149,15 +150,15 @@ export default function AdminPwaPushHubPage() {
   };
 
   const handleRequestNativePermission = async () => {
-    if (typeof Notification === 'undefined') {
-      toast.error("Les notifications Push ne sont pas supportées sur ce navigateur.");
-      return;
-    }
     try {
-      const res = await Notification.requestPermission();
+      const res = await requestPwaPushPermission();
+      if (res === 'unsupported') {
+        toast.error("Les notifications Push ne sont pas supportées sur ce navigateur.");
+        return;
+      }
       setPermissionStatus(res);
       if (res === 'granted') {
-        toast.success("Permission Push PWA accordée !");
+        toast.success("Permission Push PWA accordée et synchronisée !");
       } else {
         toast.info(`Statut des permissions : ${res}`);
       }
@@ -275,12 +276,9 @@ export default function AdminPwaPushHubPage() {
     try {
       const res = await api.post('/admin/notifications/broadcast-urgent', payload);
 
-      // Native Browser Push simulation if granted
-      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-        new Notification(title, {
-          body: message,
-          icon: '/favicon.ico',
-        });
+      // Native Browser / Service Worker Push if granted
+      if (channels.push) {
+        void showNativePwaNotification(title, message);
       }
 
       const count = res.data?.recipients_count ?? currentTarget.count;

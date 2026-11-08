@@ -14,9 +14,15 @@ use App\Models\User;
 use App\Notifications\SystemNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class NotificationController extends Controller
 {
+    private function unreadCountCacheKey(int|string $userId): string
+    {
+        return "notifications:unread_count:{$userId}";
+    }
+
     /**
      * Liste des notifications.
      */
@@ -33,7 +39,11 @@ class NotificationController extends Controller
 
         try {
             $notifications = $user->notifications()->paginate(15);
-            $unreadCount = $user->unreadNotifications()->count();
+            $unreadCount = Cache::remember(
+                $this->unreadCountCacheKey($user->id),
+                60,
+                fn () => $user->unreadNotifications()->count()
+            );
 
             return response()->json([
                 'success' => true,
@@ -44,6 +54,7 @@ class NotificationController extends Controller
                     'per_page' => $notifications->perPage(),
                     'total' => $notifications->total(),
                     'unread_count' => $unreadCount,
+                    'push_subscribed' => Cache::has("pwa_push:subscriptions:{$user->id}"),
                 ],
             ]);
         } catch (\Throwable $e) {
@@ -63,13 +74,15 @@ class NotificationController extends Controller
      */
     public function markAsRead(Request $request, string $id): JsonResponse
     {
-        $notification = $request->user()->notifications()->find($id);
+        $user = $request->user();
+        $notification = $user->notifications()->find($id);
 
         if (! $notification) {
             return response()->json(['success' => false, 'message' => 'Notification introuvable.'], 404);
         }
 
         $notification->markAsRead();
+        Cache::forget($this->unreadCountCacheKey($user->id));
 
         return response()->json([
             'success' => true,
@@ -82,7 +95,9 @@ class NotificationController extends Controller
      */
     public function markAllAsRead(Request $request): JsonResponse
     {
-        $request->user()->unreadNotifications->markAsRead();
+        $user = $request->user();
+        $user->unreadNotifications->markAsRead();
+        Cache::forget($this->unreadCountCacheKey($user->id));
 
         return response()->json([
             'success' => true,
@@ -95,17 +110,61 @@ class NotificationController extends Controller
      */
     public function destroy(Request $request, string $id): JsonResponse
     {
-        $notification = $request->user()->notifications()->find($id);
+        $user = $request->user();
+        $notification = $user->notifications()->find($id);
 
         if (! $notification) {
             return response()->json(['success' => false, 'message' => 'Notification introuvable.'], 404);
         }
 
         $notification->delete();
+        Cache::forget($this->unreadCountCacheKey($user->id));
 
         return response()->json([
             'success' => true,
             'message' => 'Notification supprimée.',
+        ]);
+    }
+
+    /**
+     * Enregistrer un abonnement PWA WebPush pour l'utilisateur connecté.
+     */
+    public function subscribePush(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $validated = $request->validate([
+            'endpoint' => 'nullable|string|max:2048',
+            'keys' => 'nullable|array',
+            'user_agent' => 'nullable|string|max:512',
+        ]);
+
+        Cache::put("pwa_push:subscriptions:{$user->id}", [
+            'user_id' => $user->id,
+            'endpoint' => $validated['endpoint'] ?? 'browser-native-notification',
+            'keys' => $validated['keys'] ?? [],
+            'user_agent' => $validated['user_agent'] ?? (string) $request->userAgent(),
+            'subscribed_at' => now()->toIso8601String(),
+        ], now()->addDays(90));
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Abonnement Push PWA activé avec succès.',
+            'push_subscribed' => true,
+        ]);
+    }
+
+    /**
+     * Désactiver l'abonnement PWA WebPush pour l'utilisateur connecté.
+     */
+    public function unsubscribePush(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        Cache::forget("pwa_push:subscriptions:{$user->id}");
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Abonnement Push PWA désactivé.',
+            'push_subscribed' => false,
         ]);
     }
 
@@ -196,12 +255,13 @@ class NotificationController extends Controller
             $targetLabel = 'Département '.($dept ? $dept->name : '#'.$targetId).' ('.$targetUsers->count().' enseignants)';
         }
 
-        // Notification Système (In-App) pour chaque utilisateur concerné
-        if (in_array('system', $channels) && $targetUsers->isNotEmpty()) {
+        // Notification Système & Push PWA pour chaque utilisateur concerné
+        if ((in_array('system', $channels, true) || in_array('push', $channels, true)) && $targetUsers->isNotEmpty()) {
             $notificationType = $urgency === 'critical' ? 'danger' : ($urgency === 'urgent' ? 'warning' : 'info');
             foreach ($targetUsers as $targetUser) {
                 try {
                     $targetUser->notify(new SystemNotification($validated['title'], $validated['message'], $notificationType));
+                    Cache::forget($this->unreadCountCacheKey($targetUser->id));
                 } catch (\Throwable) {
                     // Fail gracefully
                 }
@@ -209,12 +269,11 @@ class NotificationController extends Controller
         }
 
         $log = NotificationLog::create([
-            'title' => $validated['title'],
-            'message' => $validated['message'],
-            'recipient_type' => $targetLabel,
-            'channel' => implode(',', $channels),
+            'user_id' => $request->user()?->id,
+            'type' => implode(',', $channels),
+            'recipient' => $targetLabel,
+            'message' => $validated['title'].' — '.$validated['message'],
             'status' => 'sent',
-            'sent_at' => now(),
         ]);
 
         return response()->json([
@@ -228,106 +287,126 @@ class NotificationController extends Controller
     }
 
     /**
-     * Obtenir les statistiques et listes de ciblage (Années, Semestres, Filières, Groupes, Départements).
+     * Obtenir les statistiques et listes de ciblage (Années, Semestres, Filières, Groupes, Départements)
+     * avec agrégation SQL unique (anti N+1) et mise en cache Redis haute concurrence.
      */
     public function getPwaStats(Request $request): JsonResponse
     {
-        $studentsCount = Student::count();
-        $professorsCount = Professor::count();
-        $totalUsers = User::count();
-        $totalLogs = NotificationLog::count();
+        $targetingData = Cache::remember('pwa_hub:targeting_stats', 300, function () {
+            $studentsCount = Student::count();
+            $professorsCount = Professor::count();
+            $totalUsers = User::count();
 
-        // Répartition par Année d'études (1ère à 5ème Année ENCG)
-        $yearLevels = [
-            [
-                'level' => 1,
-                'name' => '1ère Année (Tronc Commun S1/S2)',
-                'semesters' => [1, 2],
-                'count' => StudentRegistration::whereIn('semester_number', [1, 2])->count(),
-            ],
-            [
-                'level' => 2,
-                'name' => '2ème Année (Tronc Commun S3/S4)',
-                'semesters' => [3, 4],
-                'count' => StudentRegistration::whereIn('semester_number', [3, 4])->count(),
-            ],
-            [
-                'level' => 3,
-                'name' => '3ème Année (Gestion & Commerce S5/S6)',
-                'semesters' => [5, 6],
-                'count' => StudentRegistration::whereIn('semester_number', [5, 6])->count(),
-            ],
-            [
-                'level' => 4,
-                'name' => '4ème Année (Spécialités Master S7/S8)',
-                'semesters' => [7, 8],
-                'count' => StudentRegistration::whereIn('semester_number', [7, 8])->count(),
-            ],
-            [
-                'level' => 5,
-                'name' => '5ème Année (Diplomation & PFE S9/S10)',
-                'semesters' => [9, 10],
-                'count' => StudentRegistration::whereIn('semester_number', [9, 10])->count(),
-            ],
-        ];
+            // Agrégation unique par semestre au lieu de 15 requêtes COUNT séparées
+            $semesterCounts = StudentRegistration::query()
+                ->selectRaw('semester_number, COUNT(*) as aggregate')
+                ->groupBy('semester_number')
+                ->pluck('aggregate', 'semester_number');
 
-        // Répartition par Semestre individuel (S1 à S10)
-        $semestersList = [];
-        for ($i = 1; $i <= 10; $i++) {
-            $semestersList[] = [
-                'semester_number' => $i,
-                'code' => "S{$i}",
-                'name' => "Semestre {$i}",
-                'count' => StudentRegistration::where('semester_number', $i)->count(),
+            $countForSemesters = fn (array $nums): int => array_sum(
+                array_map(fn (int $s) => (int) ($semesterCounts[$s] ?? 0), $nums)
+            );
+
+            // Répartition par Année d'études (1ère à 5ème Année ENCG)
+            $yearLevels = [
+                [
+                    'level' => 1,
+                    'name' => '1ère Année (Tronc Commun S1/S2)',
+                    'semesters' => [1, 2],
+                    'count' => $countForSemesters([1, 2]),
+                ],
+                [
+                    'level' => 2,
+                    'name' => '2ème Année (Tronc Commun S3/S4)',
+                    'semesters' => [3, 4],
+                    'count' => $countForSemesters([3, 4]),
+                ],
+                [
+                    'level' => 3,
+                    'name' => '3ème Année (Gestion & Commerce S5/S6)',
+                    'semesters' => [5, 6],
+                    'count' => $countForSemesters([5, 6]),
+                ],
+                [
+                    'level' => 4,
+                    'name' => '4ème Année (Spécialités Master S7/S8)',
+                    'semesters' => [7, 8],
+                    'count' => $countForSemesters([7, 8]),
+                ],
+                [
+                    'level' => 5,
+                    'name' => '5ème Année (Diplomation & PFE S9/S10)',
+                    'semesters' => [9, 10],
+                    'count' => $countForSemesters([9, 10]),
+                ],
             ];
-        }
 
-        $filieres = Filiere::withCount('studentRegistrations')->get()->map(fn ($f) => [
-            'id' => $f->id,
-            'code' => $f->code,
-            'name' => $f->name,
-            'students_count' => $f->student_registrations_count ?? 0,
-        ]);
+            // Répartition par Semestre individuel (S1 à S10)
+            $semestersList = [];
+            for ($i = 1; $i <= 10; $i++) {
+                $semestersList[] = [
+                    'semester_number' => $i,
+                    'code' => "S{$i}",
+                    'name' => "Semestre {$i}",
+                    'count' => (int) ($semesterCounts[$i] ?? 0),
+                ];
+            }
 
-        $groups = Group::with('filiere')->withCount('studentRegistrations')->get()->map(fn ($g) => [
-            'id' => $g->id,
-            'name' => $g->name,
-            'filiere_id' => $g->filiere_id,
-            'filiere_code' => $g->filiere?->code ?? '',
-            'students_count' => $g->student_registrations_count ?? 0,
-        ]);
+            $filieres = Filiere::withCount('studentRegistrations')->get()->map(fn ($f) => [
+                'id' => $f->id,
+                'code' => $f->code,
+                'name' => $f->name,
+                'students_count' => $f->student_registrations_count ?? 0,
+            ])->all();
 
-        $departments = Department::withCount('professors')->get()->map(fn ($d) => [
-            'id' => $d->id,
-            'code' => $d->code,
-            'name' => $d->name,
-            'professors_count' => $d->professors_count ?? 0,
-        ]);
+            $groups = Group::with('filiere')->withCount('studentRegistrations')->get()->map(fn ($g) => [
+                'id' => $g->id,
+                'name' => $g->name,
+                'filiere_id' => $g->filiere_id,
+                'filiere_code' => $g->filiere?->code ?? '',
+                'students_count' => $g->student_registrations_count ?? 0,
+            ])->all();
 
-        $recentLogs = NotificationLog::latest()->take(15)->get()->map(fn ($log) => [
-            'id' => $log->id,
-            'title' => $log->title,
-            'message' => $log->message,
-            'recipient_type' => $log->recipient_type,
-            'channel' => $log->channel,
-            'status' => $log->status,
-            'sent_at' => $log->sent_at?->format('d/m/Y H:i') ?? $log->created_at?->format('d/m/Y H:i'),
-        ]);
+            $departments = Department::withCount('professors')->get()->map(fn ($d) => [
+                'id' => $d->id,
+                'code' => $d->code,
+                'name' => $d->name,
+                'professors_count' => $d->professors_count ?? 0,
+            ])->all();
 
-        return response()->json([
-            'success' => true,
-            'data' => [
+            return [
                 'students_count' => $studentsCount,
                 'professors_count' => $professorsCount,
                 'total_users' => $totalUsers,
-                'total_broadcasts' => $totalLogs,
                 'year_levels' => $yearLevels,
                 'semesters' => $semestersList,
                 'filieres' => $filieres,
                 'groups' => $groups,
                 'departments' => $departments,
+            ];
+        });
+
+        $totalLogs = NotificationLog::count();
+        $recentLogs = NotificationLog::latest()->take(15)->get()->map(function ($log) {
+            $parts = explode(' — ', (string) $log->message, 2);
+
+            return [
+                'id' => $log->id,
+                'title' => $log->title ?? ($parts[0] ?: 'Notification Campus'),
+                'message' => isset($parts[1]) ? $parts[1] : $log->message,
+                'recipient_type' => $log->recipient_type ?? $log->recipient,
+                'channel' => $log->channel ?? $log->type,
+                'status' => $log->status,
+                'sent_at' => $log->sent_at?->format('d/m/Y H:i') ?? $log->created_at?->format('d/m/Y H:i'),
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => array_merge($targetingData, [
+                'total_broadcasts' => $totalLogs,
                 'recent_logs' => $recentLogs,
-            ],
+            ]),
         ]);
     }
 }
