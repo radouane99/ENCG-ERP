@@ -406,5 +406,31 @@ class MultiRoleInteractionAndNotificationTest extends TestCase
         $icsRes->assertOk();
         $this->assertStringContainsString('BEGIN:VCALENDAR', $icsRes->getContent());
         $this->assertStringContainsString('PRODID:-//ENCG Fes//USMBA Academic Calendar//FR', $icsRes->getContent());
+
+        // 8. Portail Public de Vérification Anti-Fraude HMAC-SHA256 + Minimisation CNDP Loi 09-08
+        $quitusCode = $quitusRes->json('data.verification_code');
+        $signatureCode = $quitusRes->json('data.signature_code');
+        $this->assertStringStartsWith('SIG-ENCG-', (string) $signatureCode);
+
+        $publicVerifyRes = $this->getJson("/api/v1/public/verify-document/{$signatureCode}");
+        $publicVerifyRes->assertOk()
+            ->assertJsonPath('verified', true)
+            ->assertJsonPath('data.reference_code', $quitusCode);
+        $this->assertStringContainsString('*', (string) $publicVerifyRes->json('data.holder_masked_identifier'));
+
+        // 9. Chaînage Cryptographique Anti-Falsification des Notes & PV + Step-Up Sudo Guard (423 -> 200)
+        Sanctum::actingAs($this->adminUser);
+        $sealWithoutSudo = $this->postJson('/api/admin/security/ledger-seal');
+        $sealWithoutSudo->assertStatus(423)->assertJsonPath('code', 'SUDO_REQUIRED');
+
+        $this->postJson('/api/v1/auth/sudo-confirm', ['password' => 'password'])->assertOk();
+
+        $sealWithSudo = $this->postJson('/api/admin/security/ledger-seal');
+        $sealWithSudo->assertOk()->assertJsonPath('data.status', 'SEALED');
+
+        $verifyClean = $this->getJson('/api/admin/security/ledger-verify');
+        $verifyClean->assertOk()
+            ->assertJsonPath('data.status', 'INTEGRITY_VERIFIED')
+            ->assertJsonPath('data.tamper_detected', false);
     }
 }

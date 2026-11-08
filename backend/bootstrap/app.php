@@ -7,7 +7,9 @@ use App\Http\Middleware\EnsurePasswordChanged;
 use App\Http\Middleware\QueryTokenAuth;
 use App\Http\Middleware\RecordHttpMetrics;
 use App\Http\Middleware\RequireAdmin2FA;
+use App\Http\Middleware\RequireStepUpAuth;
 use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\SecurityHeadersMiddleware;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\XssSanitizer;
 use App\Support\AuthCookie;
@@ -45,11 +47,13 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(RecordHttpMetrics::class);
+        $middleware->append(SecurityHeadersMiddleware::class);
         $trustedProxies = array_filter(array_map('trim', explode(',', (string) env('TRUSTED_PROXIES', '*'))));
         $middleware->trustProxies(at: $trustedProxies ?: '*');
         $middleware->alias([
             'role' => RoleMiddleware::class,
             'require-admin-2fa' => RequireAdmin2FA::class,
+            'sudo.confirm' => RequireStepUpAuth::class,
             'password.changed' => EnsurePasswordChanged::class,
             'institution.context' => EnsureInstitutionContext::class,
         ]);

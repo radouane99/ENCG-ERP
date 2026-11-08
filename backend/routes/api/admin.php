@@ -1349,4 +1349,6 @@ Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
     Route::get('/admin/tafem/security-daily-list', [AdmissionController::class, 'getSecurityDailyList']);
     Route::post('/admin/tafem/auto-repartition', [AdmissionController::class, 'runAutoRepartition']);
     Route::post('/admin/tafem/promote-waiting-list', [AdmissionController::class, 'promoteWaitingList']);
+    Route::get('/admin/security/ledger-verify', [AdminDashboardController::class, 'verifyCryptoLedger']);
+    Route::post('/admin/security/ledger-seal', [AdminDashboardController::class, 'sealCryptoLedger'])->middleware('sudo.confirm');
 });

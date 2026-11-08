@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\NewDeviceLoginAlertMail;
 use App\Mail\PasswordlessOtpMail;
 use App\Models\User;
 use App\Services\LoginChallengeService;
@@ -248,5 +249,86 @@ class AuthSecurityWorkflowTest extends TestCase
             ->assertJsonPath('data.0.session_type', 'remember_30d')
             ->assertJsonPath('security_history.0.method', 'email_otp')
             ->assertJsonPath('security_history.0.remember', true);
+    }
+
+    public function test_new_device_anomaly_alert_passkey_webauthn_sudo_mode_and_security_headers(): void
+    {
+        $user = $this->account(false);
+
+        // 1. First login from a known desktop browser (Windows + Chrome)
+        $firstLogin = $this->withHeaders([
+            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/128.0.0.0',
+            'X-Client' => 'mobile',
+        ])->postJson('/api/v1/auth/login', [
+            'email' => $user->email,
+            'password' => 'Synthetic123!',
+            'remember' => true,
+        ]);
+
+        $firstLogin->assertOk()
+            ->assertHeader('X-Content-Type-Options', 'nosniff')
+            ->assertHeader('X-Frame-Options', 'DENY')
+            ->assertHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+        // 2. Second login from a new unrecognized mobile device (iPhone + Safari) -> triggers NewDeviceLoginAlertMail
+        $secondLogin = $this->withHeaders([
+            'User-Agent' => 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) Safari/605.1.15',
+            'X-Client' => 'mobile',
+        ])->postJson('/api/v1/auth/login', [
+            'email' => $user->email,
+            'password' => 'Synthetic123!',
+            'remember' => false,
+        ]);
+        $secondLogin->assertOk();
+        $token = $secondLogin->json('data.token');
+
+        Mail::assertSent(NewDeviceLoginAlertMail::class, fn (NewDeviceLoginAlertMail $mail) => $mail->hasTo($user->email));
+
+        // 3. Step-Up Authentication (Sudo Mode 10 min)
+        $sudoStatusBefore = $this->withToken($token)->getJson('/api/v1/auth/sudo-status');
+        $sudoStatusBefore->assertOk()->assertJsonPath('data.sudo_verified', false);
+
+        $sudoConfirm = $this->withToken($token)->postJson('/api/v1/auth/sudo-confirm', [
+            'password' => 'Synthetic123!',
+        ]);
+        $sudoConfirm->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.sudo_verified', true);
+
+        // 4. WebAuthn / Passkey (FIDO2) registration and passwordless biometric login
+        $regOptRes = $this->withToken($token)->postJson('/api/v1/auth/passkeys/register-options');
+        $regOptRes->assertOk()->assertJsonPath('success', true);
+        $regChallenge = $regOptRes->json('data.challenge');
+
+        $regPasskeyRes = $this->withToken($token)->postJson('/api/v1/auth/passkeys/register', [
+            'credential_id' => 'pk_fido2_encg_touchid_01',
+            'public_key' => 'COSE_ES256_PUBLIC_KEY_TEST_PAYLOAD',
+            'device_name' => 'MacBook Pro TouchID (ENCG)',
+            'challenge' => $regChallenge,
+        ]);
+        $regPasskeyRes->assertCreated()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.credential_id', 'pk_fido2_encg_touchid_01');
+
+        $loginOptRes = $this->postJson('/api/v1/auth/passkeys/login-options');
+        $loginOptRes->assertOk()->assertJsonPath('success', true);
+        $challengeId = $loginOptRes->json('data.challenge_id');
+
+        $passkeyLoginRes = $this->postJson('/api/v1/auth/passkeys/login', [
+            'credential_id' => 'pk_fido2_encg_touchid_01',
+            'challenge_id' => $challengeId,
+            'signature' => 'fido2_valid_assertion_signature',
+            'remember' => true,
+        ]);
+        $passkeyLoginRes->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.user.email', $user->email);
+
+        // 5. Verify sessions endpoint includes passkeys, sudo_mode, and new device flag in security_history
+        $sessionsRes = $this->withToken($token)->getJson('/api/v1/auth/sessions');
+        $sessionsRes->assertOk()
+            ->assertJsonPath('sudo_mode.active', true)
+            ->assertJsonPath('passkeys.0.credential_id', 'pk_fido2_encg_touchid_01')
+            ->assertJsonPath('security_history.0.method', 'passkey_webauthn');
     }
 }

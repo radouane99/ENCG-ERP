@@ -19,6 +19,7 @@ use App\Models\Student;
 use App\Models\StudentPathway;
 use App\Models\StudentRegistration;
 use App\Models\VacationContract;
+use App\Services\Security\CryptoLedgerService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -375,5 +376,38 @@ class AdminDashboardController extends Controller
                 'id' => $l->id, 'user' => $l->user_name, 'email' => $l->user_email, 'role' => $l->user_role, 'action' => $l->action,
                 'type' => $l->action_type, 'description' => $l->description, 'ip' => $l->ip_address, 'userAgent' => $l->user_agent,
                 'date' => $l->created_at?->toIso8601String(), 'severity' => $l->severity, 'payload' => $l->payload, 'sha256_hash' => $l->sha256_hash])]);
+    }
+
+    /**
+     * Vérifier le chaînage cryptographique anti-falsification des notes & PV (Tamper-Evident Ledger).
+     */
+    public function verifyCryptoLedger(Request $request, CryptoLedgerService $ledger): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user && $user->hasAnyRole(['super-admin', 'institution-admin', 'director', 'scolarite-admin']), 403);
+
+        $verification = $ledger->verifyGradeLedger($user->institution_id ?? null);
+
+        return response()->json([
+            'success' => true,
+            'data' => $verification,
+        ]);
+    }
+
+    /**
+     * Sceller la chaîne cryptographique des notes & PV (exige le Mode Sudo 10 min).
+     */
+    public function sealCryptoLedger(Request $request, CryptoLedgerService $ledger): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user && $user->hasAnyRole(['super-admin', 'institution-admin', 'director', 'scolarite-admin']), 403);
+
+        $seal = $ledger->sealGradeLedger($user->institution_id ?? null, $user->id);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Chaîne cryptographique des notes et PV scellée avec succès (HMAC-SHA256).',
+            'data' => $seal,
+        ]);
     }
 }

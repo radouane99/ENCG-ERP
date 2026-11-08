@@ -23,6 +23,7 @@ use App\Services\Academic\StudentPortalService;
 use App\Services\Academic\StudentSubGroupDispatcherService;
 use App\Services\Library\KohaLibraryClient;
 use App\Services\Notification\NotificationDispatcherService;
+use App\Services\Security\CryptoLedgerService;
 use Carbon\Carbon;
 use Database\Seeders\LibrarySeeder;
 use Illuminate\Http\JsonResponse;
@@ -356,14 +357,24 @@ class StudentPortalController extends Controller
         $apogee = $student->student_number ?: (string) $student->id;
         $sealHash = strtoupper(substr(hash('sha256', "QUITUS-ENCG-{$student->id}-{$apogee}-{$yearLabel}"), 0, 12));
         $referenceCode = "QUITUS-ENCG-{$apogee}-{$sealHash}";
+        $studentFullName = trim("{$user->first_name} {$user->last_name}") ?: ($user->name ?? 'Étudiant ENCG');
+        $signedRecord = app(CryptoLedgerService::class)->signOfficialDocument(
+            'quitus_numerique_4_services',
+            $referenceCode,
+            $studentFullName,
+            $student->cne ?: $apogee,
+            ['academic_year' => $yearLabel, 'is_fully_cleared' => $isFullyCleared]
+        );
 
         return response()->json([
             'success' => true,
             'data' => [
                 'reference_code' => $referenceCode,
                 'verification_code' => $referenceCode,
+                'signature_code' => $signedRecord['signature_code'],
+                'hmac_sha256' => $signedRecord['hmac_sha256'],
                 'academic_year' => $yearLabel,
-                'student_name' => trim("{$user->first_name} {$user->last_name}") ?: $user->name,
+                'student_name' => $studentFullName,
                 'cne' => $student->cne,
                 'apogee' => $apogee,
                 'is_fully_cleared' => $isFullyCleared,
@@ -493,6 +504,14 @@ class StudentPortalController extends Controller
         $prof = $module->professors?->first();
         $profName = $prof?->user ? "Pr. {$prof->user->first_name} {$prof->user->last_name}" : 'Pr. Responsable du Module';
         $refCode = 'REC-ENCG-'.$student->id.'-M'.$module->id.'-'.strtoupper(substr(hash('sha256', "{$student->id}:{$module->id}:{$score}"), 0, 8));
+        $studentFullName = trim("{$user->first_name} {$user->last_name}") ?: ($user->name ?? 'Étudiant ENCG');
+        $signedRec = app(CryptoLedgerService::class)->signOfficialDocument(
+            'lettre_recommandation_academique',
+            $refCode,
+            $studentFullName,
+            $student->cne ?: ($student->student_number ?: (string) $student->id),
+            ['module_code' => $module->code, 'module_name' => $module->name, 'score' => $score]
+        );
 
         $entry = [
             'id' => count(Cache::get("student_recommendation_requests:{$studentId}", [])) + 1,
@@ -505,6 +524,8 @@ class StudentPortalController extends Controller
             'purpose' => $validated['purpose'] ?? $validated['target_program'] ?? 'Master / Mobilité Internationale',
             'target_institution' => $validated['target_institution'] ?? $validated['target_program'] ?? 'Programme Master / Mobilité Internationale',
             'reference_code' => $refCode,
+            'signature_code' => $signedRec['signature_code'],
+            'hmac_sha256' => $signedRec['hmac_sha256'],
             'status' => 'certified',
             'issued_at' => now()->toIso8601String(),
             'verification_url' => url("/verify-document/{$refCode}"),
@@ -701,6 +722,15 @@ class StudentPortalController extends Controller
         $honorCertificateCode = $isHonorRoll
             ? 'HONNEUR-ENCG-'.$apogee.'-'.strtoupper(substr(hash('sha256', "HONNEUR:{$student->id}:{$gpa}"), 0, 8))
             : null;
+        $honorSigned = $honorCertificateCode
+            ? app(CryptoLedgerService::class)->signOfficialDocument(
+                'tableau_honneur_directeur',
+                $honorCertificateCode,
+                $user->name ?: trim("{$user->first_name} {$user->last_name}"),
+                $student->cne ?: $apogee,
+                ['gpa' => $gpa, 'mention' => $mention]
+            )
+            : null;
 
         return response()->json([
             'success' => true,
@@ -720,6 +750,7 @@ class StudentPortalController extends Controller
                 'excellence_encg' => [
                     'is_director_honor_roll' => $isHonorRoll,
                     'certificate_code' => $honorCertificateCode,
+                    'signature_code' => $honorSigned['signature_code'] ?? null,
                     'verification_url' => $honorCertificateCode ? url("/verify-document/{$honorCertificateCode}") : null,
                 ],
             ],

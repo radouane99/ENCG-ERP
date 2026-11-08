@@ -30,6 +30,7 @@ Route::prefix('public/admissions')->middleware('throttle:10,1')->group(function 
     Route::post('activate', [AdmissionWorkflowController::class, 'activate']);
 });
 Route::get('public/admissions/documents/{document}', [AdmissionWorkflowController::class, 'download'])->name('admissions.document');
+Route::get('v1/public/verify-document/{code}', [SessionController::class, 'verifyPublicOfficialDocument'])->middleware('throttle:30,1');
 
 Route::prefix('admissions/workflow')->middleware(['auth:sanctum', 'institution.context'])->group(function () {
     $workflow = AdmissionWorkflowController::class;
@@ -102,6 +103,8 @@ Route::prefix('v1/auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
     Route::post('/otp/request', [AuthController::class, 'requestEmailOtp'])->middleware('throttle:login');
     Route::post('/otp/verify', [AuthController::class, 'verifyEmailOtp'])->middleware('throttle:login');
+    Route::post('/passkeys/login-options', [SessionController::class, 'passkeyLoginOptions'])->middleware('throttle:login');
+    Route::post('/passkeys/login', [SessionController::class, 'loginWithPasskey'])->middleware('throttle:login');
 
     Route::post('/two-factor/verify', [AuthController::class, 'verifyTwoFactor'])->middleware('throttle:login');
 
@@ -121,6 +124,12 @@ Route::prefix('v1/auth')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/sessions', [SessionController::class, 'index']);
         Route::get('/security-history', [SessionController::class, 'history']);
+        Route::get('/sudo-status', [SessionController::class, 'sudoStatus']);
+        Route::post('/sudo-confirm', [SessionController::class, 'confirmSudoMode'])->middleware('throttle:login');
+        Route::get('/passkeys', [SessionController::class, 'listPasskeys']);
+        Route::post('/passkeys/register-options', [SessionController::class, 'passkeyRegisterOptions']);
+        Route::post('/passkeys/register', [SessionController::class, 'registerPasskey']);
+        Route::delete('/passkeys/{credentialId}', [SessionController::class, 'revokePasskey']);
         Route::delete('/sessions/others', [SessionController::class, 'others']);
         Route::delete('/sessions/{id}', [SessionController::class, 'destroy'])->whereNumber('id');
         Route::post('/logout', [AuthController::class, 'logout']);
