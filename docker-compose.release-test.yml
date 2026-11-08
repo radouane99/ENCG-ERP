@@ -1,0 +1,85 @@
+name: encg-release-test
+
+x-app: &app
+  image: ${ERP_BACKEND_IMAGE:?Release backend digest required}
+  environment: &environment
+    APP_ENV: staging
+    APP_DEBUG: 'false'
+    APP_KEY: ${RELEASE_TEST_APP_KEY:?Synthetic key required}
+    APP_URL: http://127.0.0.1:18088
+    FRONTEND_URL: http://127.0.0.1:18088
+    DB_CONNECTION: pgsql
+    DB_HOST: postgres
+    DB_PORT: 5432
+    DB_DATABASE: encg_release_test
+    DB_USERNAME: encg_release_test
+    DB_PASSWORD: release-test-only
+    REDIS_HOST: redis
+    REDIS_PASSWORD: 'null'
+    CACHE_STORE: redis
+    SESSION_DRIVER: redis
+    SESSION_SECURE_COOKIE: 'false'
+    QUEUE_CONNECTION: redis
+    MAIL_MAILER: log
+    AI_DRIVER: stub
+    LOG_CHANNEL: stderr
+    REVERB_HOST: reverb
+    REVERB_PORT: 8080
+    REVERB_SCHEME: http
+  volumes:
+    - release_test_storage:/var/www/html/storage
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: encg_release_test
+      POSTGRES_USER: encg_release_test
+      POSTGRES_PASSWORD: release-test-only
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U encg_release_test -d encg_release_test']
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  backend:
+    <<: *app
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ['CMD', '/usr/local/bin/healthcheck.sh']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  queue-worker:
+    <<: *app
+    command: php artisan horizon
+    depends_on:
+      backend: { condition: service_healthy }
+  scheduler:
+    <<: *app
+    command: php artisan schedule:work
+    depends_on:
+      backend: { condition: service_healthy }
+  reverb:
+    <<: *app
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    depends_on: [redis]
+  nginx:
+    image: ${ERP_WEB_IMAGE:?Release web digest required}
+    ports: ['127.0.0.1:18088:80']
+    volumes:
+      - release_test_storage:/var/www/html/storage:ro
+    depends_on:
+      backend: { condition: service_healthy }
+      reverb: { condition: service_started }
+
+volumes:
+  release_test_storage:

@@ -7,5 +7,9 @@
             "matchCommandLine": true
         }
     },
-    "css.lint.unknownAtRules": "ignore"
+    "css.lint.unknownAtRules": "ignore",
+    "yaml.customTags": [
+        "!reset scalar",
+        "!override sequence"
+    ]
 }

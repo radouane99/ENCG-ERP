@@ -1,4 +1,5 @@
 .git
+.deploy
 .agents
 .codex
 frontend/node_modules
@@ -6,6 +7,9 @@ frontend/dist
 backend/vendor
 backend/.env
 backend/.env.*
+frontend/.env
+frontend/.env.*
+backend/public/storage
 !backend/.env.example
 backend/storage
 backend/bootstrap/cache/*.php

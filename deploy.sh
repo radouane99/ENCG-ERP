@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # ENCG ERP — production deploy (VPS + Docker Compose)
 set -euo pipefail
+if [ "${1:-}" = "--release" ] || [ "${1:-}" = "--rollback" ]; then
+  exec bash "$(dirname "$0")/scripts/deploy-release.sh" "$@"
+fi
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 cd "$ROOT"

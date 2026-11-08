@@ -1,0 +1,21 @@
+FROM node:22-alpine@sha256:0e1754758c2df4cfa3e68d59e2e1b7374bb7fd9ea6328eaaacf15cc934af8202 AS frontend
+WORKDIR /build
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ ./
+ENV VITE_API_URL=/api
+# This public identifier is embedded in the browser bundle.
+ARG PUBLIC_REVERB_APP_ID
+ARG VITE_REVERB_HOST
+ARG VITE_REVERB_PORT
+ARG VITE_REVERB_SCHEME=https
+ARG VITE_SENTRY_DSN
+ARG VITE_SENTRY_ENVIRONMENT=production
+RUN VITE_REVERB_APP_KEY="$PUBLIC_REVERB_APP_ID" npm run build && npm run build:stats
+
+FROM nginx:alpine@sha256:713fc2ebfd92e8217db451477182ee91944b123d2b1ee9fd5a8c6e91ca6c3a11
+COPY --from=frontend /build/dist /var/www/html/dist
+COPY backend/public/ /var/www/html/public/
+COPY docker/nginx/prod-bootstrap.conf /etc/nginx/conf.d/default.conf
+HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=5 \
+  CMD wget -q -O /dev/null http://127.0.0.1/healthz || exit 1

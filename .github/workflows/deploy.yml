@@ -2,116 +2,211 @@ name: Deploy ENCG-ERP to Production
 
 on:
   workflow_dispatch:
-    inputs:
-      skip_frontend:
-        description: 'Reuse existing frontend/dist on the VPS'
-        type: boolean
-        default: false
+
+permissions:
+  contents: read
 
 concurrency:
   group: production-deploy
   cancel-in-progress: false
 
 jobs:
-  test-and-build:
-    name: Gate — tests + production frontend build
+  quality:
+    name: Full CI quality gate
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/docker-v2'
+    uses: ./.github/workflows/ci.yml
+
+  images:
+    name: Build, scan and publish release images
+    needs: quality
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: encg_erp_test
-          POSTGRES_USER: encg_user
-          POSTGRES_PASSWORD: encg_password
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      backend: ${{ steps.references.outputs.backend }}
+      web: ${{ steps.references.outputs.web }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
-          php-version: '8.4'
-          extensions: pdo_pgsql, pgsql, mbstring, dom, fileinfo, gd, zip, bcmath, intl
-          coverage: none
-      - name: Install PHP Dependencies
-        working-directory: ./backend
-        run: composer install --no-ansi --no-interaction --no-progress --prefer-dist
-      - name: Configure testing env
-        working-directory: ./backend
-        run: |
-          cp .env.example .env.testing
-          php artisan key:generate --env=testing
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Release repository
+        id: repository
         env:
-          DB_CONNECTION: pgsql
-          DB_HOST: 127.0.0.1
-          DB_PORT: 5432
-          DB_DATABASE: encg_erp_test
-          DB_USERNAME: encg_user
-          DB_PASSWORD: encg_password
-      - name: Migrate & test
-        working-directory: ./backend
-        run: |
-          php artisan migrate --force --env=testing
-          php artisan test --configuration=phpunit.postgres.xml --env=testing
+          REPOSITORY: ${{ github.repository }}
+        run: echo "name=ghcr.io/${REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+      - name: Build backend
+        id: backend
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: docker/php/Dockerfile.prod
+          push: true
+          tags: ${{ steps.repository.outputs.name }}/backend:${{ github.sha }}
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+      - name: Build web
+        id: web
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: docker/nginx/Dockerfile.release
+          push: true
+          build-args: |
+            PUBLIC_REVERB_APP_ID=${{ vars.VITE_REVERB_APP_KEY }}
+            VITE_REVERB_HOST=${{ vars.VITE_REVERB_HOST }}
+            VITE_REVERB_PORT=${{ vars.VITE_REVERB_PORT }}
+            VITE_REVERB_SCHEME=https
+            VITE_SENTRY_DSN=${{ vars.VITE_SENTRY_DSN }}
+            VITE_SENTRY_ENVIRONMENT=production
+          tags: ${{ steps.repository.outputs.name }}/web:${{ github.sha }}
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+      - name: Digest references
+        id: references
         env:
-          DB_CONNECTION: pgsql
-          DB_HOST: 127.0.0.1
-          DB_PORT: 5432
-          DB_DATABASE: encg_erp_test
-          DB_USERNAME: encg_user
-          DB_PASSWORD: encg_password
-      - uses: actions/setup-node@v6
+          REPOSITORY: ${{ steps.repository.outputs.name }}
+          BACKEND_DIGEST: ${{ steps.backend.outputs.digest }}
+          WEB_DIGEST: ${{ steps.web.outputs.digest }}
+        run: |
+          echo "backend=$REPOSITORY/backend@$BACKEND_DIGEST" >> "$GITHUB_OUTPUT"
+          echo "web=$REPOSITORY/web@$WEB_DIGEST" >> "$GITHUB_OUTPUT"
+      - name: Scan backend image
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: ${{ steps.references.outputs.backend }}
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      - name: Scan web image
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
+        with:
+          image-ref: ${{ steps.references.outputs.web }}
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+
+  staging:
+    name: Validate release on isolated staging
+    needs: images
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: staging
+    permissions:
+      contents: read
+      packages: read
+    env:
+      ERP_BACKEND_IMAGE: ${{ needs.images.outputs.backend }}
+      ERP_WEB_IMAGE: ${{ needs.images.outputs.web }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Start isolated database and migrate release
+        run: |
+          RELEASE_TEST_APP_KEY="base64:$(openssl rand -base64 32)"
+          export RELEASE_TEST_APP_KEY
+          echo "RELEASE_TEST_APP_KEY=$RELEASE_TEST_APP_KEY" >> "$GITHUB_ENV"
+          docker compose -f docker-compose.release-test.yml pull
+          docker compose -f docker-compose.release-test.yml up -d --wait postgres redis
+          docker compose -f docker-compose.release-test.yml run --rm --no-deps backend php artisan migrate --force --no-interaction
+          docker compose -f docker-compose.release-test.yml run --rm --no-deps -e APP_ENV=testing backend php artisan db:seed --class=E2eSmokeSeeder --force
+      - name: Validate HTTP and worker processing
+        run: |
+          docker compose -f docker-compose.release-test.yml up -d --wait --wait-timeout 180
+          bash scripts/release-smoke.sh http://127.0.0.1:18088
+          docker compose -f docker-compose.release-test.yml exec -T backend php artisan operations:check-deployment-queue --timeout=90
+          docker compose -f docker-compose.release-test.yml exec -T scheduler php artisan schedule:list
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '22'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - name: Frontend production build
-        working-directory: ./frontend
+      - name: Verify login and permissions through the release web server
+        working-directory: frontend
+        env:
+          CI: true
+          E2E_LIVE: '1'
+          E2E_STAGING: '1'
+          E2E_STAGING_URL: http://127.0.0.1:18088
+          E2E_API_URL: http://127.0.0.1:18088/api
         run: |
           npm ci
-          npx tsc --noEmit
-          npm run test:unit
-          npm audit --audit-level=high
-          npm run build
-          npm run build:stats
+          npx playwright install --with-deps chromium
+          npm run test:e2e -- e2e/live.spec.ts --project=chromium
+      - name: Preserve staging browser reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-staging-report
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+          retention-days: 7
+          if-no-files-found: ignore
+      - name: Staging diagnostics
+        if: failure()
+        run: docker compose -f docker-compose.release-test.yml logs --tail=100
+      - name: Remove isolated staging
+        if: always()
+        run: docker compose -f docker-compose.release-test.yml down --volumes
 
   deploy:
-    needs: test-and-build
+    name: Deploy validated digests to production
+    needs: [images, staging]
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     environment: production
+    env:
+      ERP_BACKEND_IMAGE: ${{ needs.images.outputs.backend }}
+      ERP_WEB_IMAGE: ${{ needs.images.outputs.web }}
+      ERP_RELEASE_COMMIT: ${{ github.sha }}
     steps:
-      - name: Require VPS secrets
+      - name: Require deployment credentials and host fingerprint
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST_FINGERPRINT: ${{ secrets.DEPLOY_HOST_FINGERPRINT }}
         run: |
-          missing=0
-          [ -n "$DEPLOY_HOST" ] || { echo "Missing secret DEPLOY_HOST"; missing=1; }
-          [ -n "$DEPLOY_USER" ] || { echo "Missing secret DEPLOY_USER"; missing=1; }
-          [ -n "$DEPLOY_SSH_KEY" ] || { echo "Missing secret DEPLOY_SSH_KEY"; missing=1; }
-          exit "$missing"
-
-      - name: SSH deploy
-        uses: appleboy/ssh-action@v1.2.0
+          for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY DEPLOY_HOST_FINGERPRINT; do
+            [ -n "${!name}" ] || { echo "Missing deployment setting $name"; exit 1; }
+          done
+      - name: Deploy exact validated images
+        uses: appleboy/ssh-action@7eaf76671a0d7eec5d98ee897acda4f968735a17 # v1.2.0
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script_stop: true
+          fingerprint: ${{ secrets.DEPLOY_HOST_FINGERPRINT }}
+          envs: ERP_BACKEND_IMAGE,ERP_WEB_IMAGE,ERP_RELEASE_COMMIT
+          command_timeout: 30m
           script: |
-            set -euo pipefail
-            cd ~/ENCG-ERP-V1 || cd /opt/encg-erp || cd /var/www/encg-erp || exit 1
+            set -eu
+            cd /opt/encg-erp
             git diff --quiet && git diff --cached --quiet
-            git fetch origin ${{ github.sha }}
-            git checkout --detach ${{ github.sha }}
-            chmod +x deploy.sh scripts/deploy-preflight.sh scripts/provision-ssl.sh scripts/backup-postgres.sh
-            if [ "${{ github.event.inputs.skip_frontend }}" = "true" ]; then
-              ./deploy.sh --no-git --skip-frontend docker-v2
-            else
-              ./deploy.sh --no-git docker-v2
-            fi
+            git fetch origin "$ERP_RELEASE_COMMIT"
+            git checkout --detach "$ERP_RELEASE_COMMIT"
+            mkdir -p .deploy
+            umask 077
+            printf 'ERP_RELEASE_COMMIT=%s\nERP_BACKEND_IMAGE=%s\nERP_WEB_IMAGE=%s\n' \
+              "$ERP_RELEASE_COMMIT" "$ERP_BACKEND_IMAGE" "$ERP_WEB_IMAGE" > .deploy/candidate.env
+            bash deploy.sh --release .deploy/candidate.env

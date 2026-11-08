@@ -1,11 +1,12 @@
 x-application: &application
-  image: encg-erp-backend:${ERP_IMAGE_TAG:-local}
+  image: ${ERP_BACKEND_IMAGE:-encg-erp-backend:${ERP_IMAGE_TAG:-local}}
   build:
     context: .
     dockerfile: docker/php/Dockerfile.prod
   restart: always
+  stop_grace_period: 90s
   env_file:
-    - ./backend/.env.production
+    - ${ERP_PRODUCTION_ENV_FILE:-./backend/.env.production}
   environment:
     APP_ENV: production
     APP_DEBUG: 'false'
@@ -20,7 +21,7 @@ x-application: &application
 
 services:
   nginx:
-    image: nginx:alpine
+    image: ${ERP_WEB_IMAGE:-nginx:alpine}
     container_name: encg_prod_nginx
     restart: always
     ports:

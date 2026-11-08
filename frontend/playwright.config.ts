@@ -3,7 +3,7 @@ import fs from 'node:fs'
 
 const port = 4173
 const staging = process.env.E2E_STAGING === '1'
-const baseURL = staging ? 'http://127.0.0.1:8088' : `http://127.0.0.1:${port}`
+const baseURL = staging ? (process.env.E2E_STAGING_URL || 'http://127.0.0.1:8088') : `http://127.0.0.1:${port}`
 
 const chromiumPath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
   || (process.platform === 'linux' && fs.existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined)

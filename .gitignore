@@ -67,3 +67,4 @@ Thumbs.db
 .env.database-maintenance
 .env.staging.database-maintenance
 k8s/secrets.yaml
+/.deploy/
