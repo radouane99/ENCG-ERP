@@ -1,3 +1,5 @@
+import i18n from '@/app/i18n'
+
 export const SUPPORTED_LOCALES = ['fr', 'ar', 'en'] as const
 export type AppLocale = (typeof SUPPORTED_LOCALES)[number]
 
@@ -24,7 +26,6 @@ export function applyDocumentLocale(lng: string) {
 
 export async function changeAppLanguage(lng: string) {
   const locale = normalizeLocale(lng)
-  const { default: i18n } = await import('@/app/i18n')
   await i18n.changeLanguage(locale)
   applyDocumentLocale(locale)
 }

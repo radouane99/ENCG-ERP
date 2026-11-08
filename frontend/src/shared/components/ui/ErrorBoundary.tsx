@@ -1,5 +1,6 @@
 import i18n from '@app/i18n';
-import { Component,type ErrorInfo,type ReactNode } from 'react';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { captureException } from '@shared/lib/sentry';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ErrorBoundary.tsx
@@ -64,9 +65,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       console.groupEnd();
     }
 
-    void import('@shared/lib/sentry').then(({ captureException }) => {
-      captureException(error, { componentStack: errorInfo.componentStack ?? '' })
-    })
+    captureException(error, { componentStack: errorInfo.componentStack ?? '' });
   }
 
   private handleReload = (): void => {

@@ -246,6 +246,8 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::get('/apogee/preview', [ApogeeEngineController::class, 'getApogeePreview']);
     Route::get('/admin/apogee/export-csv', [ApogeeEngineController::class, 'exportApogeeCsv']);
     Route::get('/admin/apogee/preview', [ApogeeEngineController::class, 'getApogeePreview']);
+    Route::get('/v1/admin/apogee/export-csv', [ApogeeEngineController::class, 'exportApogeeCsv']);
+    Route::get('/v1/admin/apogee/preview', [ApogeeEngineController::class, 'getApogeePreview']);
 
     Route::prefix('internships')->group(function () {
         Route::get('/', [AdminInternshipController::class, 'index']);

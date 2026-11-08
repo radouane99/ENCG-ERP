@@ -44,7 +44,7 @@ export default function ApogeeExportModal({ isOpen, onClose, defaultFiliereId }:
     if (selectedFiliere) params.append('filiere_id', selectedFiliere);
     if (selectedSemester) params.append('semester_id', selectedSemester);
 
-    const url = `/api/v1/admin/apogee/export-csv?${params.toString()}`;
+    const url = `/api/admin/apogee/export-csv?${params.toString()}`;
     
     toast.success('📥 Téléchargement du fichier APOGEE officiel en cours...', {
       description: 'Format CSV conforme aux spécifications du MESRSFC (Royaume du Maroc).'
