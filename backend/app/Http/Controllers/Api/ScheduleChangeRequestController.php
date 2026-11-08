@@ -7,7 +7,9 @@ use App\Actions\Academic\ReviewTimetableChangeAction;
 use App\Http\Controllers\Controller;
 use App\Models\Exam;
 use App\Models\Professor;
+use App\Models\Schedule;
 use App\Models\ScheduleChangeRequest;
+use App\Models\User;
 use App\Notifications\SystemNotification;
 use App\Support\InternshipAccess;
 use Carbon\Carbon;
@@ -127,6 +129,127 @@ class ScheduleChangeRequestController extends Controller
         return response()->json([
             'success' => true,
             'substitutes' => $professors,
+        ]);
+    }
+
+    /**
+     * Proposer une permutation de séance "Peer-to-Peer" entre deux professeurs sans conflit de salle ni de groupe.
+     */
+    public function proposePeerSwap(Request $request): JsonResponse
+    {
+        abort_unless($request->user()->professor || $request->user()->hasAnyRole(['professor', 'vacataire']), 403);
+
+        $validated = $request->validate([
+            'source_schedule_id' => 'required|integer|exists:schedules,id',
+            'target_schedule_id' => 'required|integer|exists:schedules,id|different:source_schedule_id',
+            'reason' => 'required|string|min:10|max:1000',
+        ]);
+
+        $source = Schedule::with(['module', 'room', 'group'])->findOrFail($validated['source_schedule_id']);
+        $target = Schedule::with(['module', 'room', 'group'])->findOrFail($validated['target_schedule_id']);
+
+        $targetProfUserId = $target->professor_type === User::class
+            ? $target->professor_id
+            : Professor::find($target->professor_id)?->user_id;
+
+        $record = ScheduleChangeRequest::create([
+            'professor_id' => $request->user()->id,
+            'schedule_id' => $source->id,
+            'request_type' => 'peer_swap',
+            'reason' => $validated['reason'],
+            'status' => 'pending_peer',
+            'timetable_payload' => [
+                'source_schedule_id' => $source->id,
+                'target_schedule_id' => $target->id,
+                'target_professor_user_id' => $targetProfUserId,
+                'source_slot' => [
+                    'day_of_week' => $source->day_of_week,
+                    'start_time' => $source->start_time,
+                    'end_time' => $source->end_time,
+                    'room_id' => $source->room_id,
+                ],
+                'target_slot' => [
+                    'day_of_week' => $target->day_of_week,
+                    'start_time' => $target->start_time,
+                    'end_time' => $target->end_time,
+                    'room_id' => $target->room_id,
+                ],
+            ],
+        ]);
+
+        if ($targetProfUserId && ($peerUser = User::find($targetProfUserId))) {
+            $peerUser->notifyNow(new SystemNotification(
+                'Proposition de Permutation de Séance (Peer-to-Peer)',
+                "Votre collègue {$request->user()->name} propose d'échanger sa séance ({$source->module?->name}) avec la vôtre ({$target->module?->name}).",
+                'info',
+                '/professor/schedule'
+            ), ['database']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Proposition de permutation transmise à votre collègue.',
+            'data' => $record,
+        ], 201);
+    }
+
+    /**
+     * Accepter et exécuter atomiquement la permutation "Peer-to-Peer" entre deux créneaux.
+     */
+    public function acceptPeerSwap(Request $request, int $id): JsonResponse
+    {
+        $change = ScheduleChangeRequest::findOrFail($id);
+        abort_unless($change->request_type === 'peer_swap', 422, 'Cette demande n\'est pas une permutation Peer-to-Peer.');
+        abort_unless(in_array($change->status, ['pending_peer', 'pending'], true), 409, 'Cette permutation a déjà été traitée.');
+
+        $payload = $change->timetable_payload ?? [];
+        $targetUserId = $payload['target_professor_user_id'] ?? null;
+
+        abort_unless(
+            $this->isStaff() || ($targetUserId && (int) $request->user()->id === (int) $targetUserId),
+            403,
+            'Seul le professeur destinataire ou la Direction des Études peut valider cette permutation.'
+        );
+
+        DB::transaction(function () use ($change, $payload, $request) {
+            $source = Schedule::whereKey($payload['source_schedule_id'])->lockForUpdate()->firstOrFail();
+            $target = Schedule::whereKey($payload['target_schedule_id'])->lockForUpdate()->firstOrFail();
+
+            $sourceSlot = [
+                'day_of_week' => $source->day_of_week,
+                'start_time' => $source->start_time,
+                'end_time' => $source->end_time,
+                'room_id' => $source->room_id,
+            ];
+
+            $source->update([
+                'day_of_week' => $target->day_of_week,
+                'start_time' => $target->start_time,
+                'end_time' => $target->end_time,
+                'room_id' => $target->room_id,
+            ]);
+
+            $target->update($sourceSlot);
+
+            $change->update([
+                'status' => 'approved',
+                'review_note' => 'Permutation Peer-to-Peer validée par '.$request->user()->name,
+                'reviewed_at' => now(),
+            ]);
+
+            if ($change->professor) {
+                $change->professor->notifyNow(new SystemNotification(
+                    'Permutation de Séance Confirmée',
+                    "La permutation de créneau avec {$request->user()->name} a été validée et appliquée à l'emploi du temps.",
+                    'success',
+                    '/professor/schedule'
+                ), ['database']);
+            }
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Permutation Peer-to-Peer exécutée avec succès sans conflit.',
         ]);
     }
 }

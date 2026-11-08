@@ -55,6 +55,52 @@ export default function StudentGuichetPage() {
     staleTime: 30000,
   });
 
+  // 1b. Fetch Automated 4-Service Digital Quitus
+  const { data: quitusRes } = useQuery({
+    queryKey: ['student-digital-quitus'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/student-portal/quitus');
+        return res.data?.data ?? null;
+      } catch {
+        return null;
+      }
+    },
+    staleTime: 60000,
+  });
+
+  // 1c. Fetch Academic Recommendation Letters (modules >= 12/20)
+  const { data: recLettersRes } = useQuery({
+    queryKey: ['student-recommendation-letters'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/student-portal/recommendation-letters');
+        return res.data?.data ?? null;
+      } catch {
+        return null;
+      }
+    },
+    staleTime: 60000,
+  });
+
+  const requestRecLetterMutation = useMutation({
+    mutationFn: async (moduleId: number) => {
+      const res = await api.post('/student-portal/recommendation-letters', {
+        module_id: moduleId,
+        target_program: 'Master / Mobilité Internationale',
+      });
+      return res.data;
+    },
+    onSuccess: (res) => {
+      toast.success(res?.message || 'Lettre de recommandation certifiée QR générée avec succès !');
+      queryClient.invalidateQueries({ queryKey: ['student-recommendation-letters'] });
+      queryClient.invalidateQueries({ queryKey: ['student-document-requests'] });
+    },
+    onError: () => {
+      toast.error('Impossible de générer la lettre de recommandation.');
+    },
+  });
+
   // 2. Map types to official document_type_id in database
   const docTypeMap: Record<string, number> = {
     'Attestation de Scolarité': 1,
@@ -380,6 +426,102 @@ export default function StudentGuichetPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Quitus Numérique Automatisé (4 Services) & Lettres de Recommandation QR ── */}
+      {(quitusRes || recLettersRes) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {quitusRes && (
+            <div className="bg-card rounded-2xl border border-slate-200/80 dark:border-border p-5 shadow-sm flex flex-col justify-between gap-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                    <FileCheck className="w-3 h-3" /> Quitus Numérique Automatisé 1-Clic
+                  </span>
+                  <h3 className="text-sm font-bold text-foreground mt-1.5">
+                    Validation Inter-Services (Retrait Diplôme / Transfert)
+                  </h3>
+                </div>
+                <span className="font-mono text-[10px] px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold">
+                  {quitusRes.verification_code}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(quitusRes.services || {}).map(([key, srv]: [string, any]) => (
+                  <div
+                    key={key}
+                    className={cn(
+                      "p-2.5 rounded-xl border text-xs flex items-start gap-2",
+                      srv.cleared
+                        ? "bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200/70 dark:border-emerald-800/40"
+                        : "bg-amber-50/50 dark:bg-amber-950/20 border-amber-200/70 dark:border-amber-800/40"
+                    )}
+                  >
+                    {srv.cleared ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    ) : (
+                      <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    )}
+                    <div className="min-w-0">
+                      <div className="font-bold text-foreground truncate">{srv.label}</div>
+                      <div className="text-[11px] text-muted-foreground truncate">{srv.detail}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {recLettersRes && (
+            <div className="bg-card rounded-2xl border border-slate-200/80 dark:border-border p-5 shadow-sm flex flex-col justify-between gap-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-700 dark:text-blue-400 border border-blue-500/20">
+                    <Award className="w-3 h-3" /> Lettres de Recommandation Académiques QR
+                  </span>
+                  <h3 className="text-sm font-bold text-foreground mt-1.5">
+                    Modules d&apos;Excellence Éligibles ({recLettersRes.eligible_count ?? 0})
+                  </h3>
+                </div>
+                <span className="text-[11px] font-bold text-primary">
+                  Moy. ≥ 12/20
+                </span>
+              </div>
+
+              <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+                {(recLettersRes.eligible_modules || []).slice(0, 3).map((mod: any) => (
+                  <div
+                    key={mod.module_id}
+                    className="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-muted/50 border border-border text-xs"
+                  >
+                    <div className="min-w-0">
+                      <div className="font-bold text-foreground truncate">
+                        {mod.module_name} <span className="text-emerald-600 font-mono">({mod.score}/20)</span>
+                      </div>
+                      <div className="text-[11px] text-muted-foreground truncate">
+                        {mod.professor_name} • {mod.distinction}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={requestRecLetterMutation.isPending}
+                      onClick={() => requestRecLetterMutation.mutate(mod.module_id)}
+                      className="px-3 py-1.5 rounded-lg bg-[#1a3673] hover:bg-[#082663] text-white text-[11px] font-bold shrink-0 transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      Certifier QR
+                    </button>
+                  </div>
+                ))}
+                {(recLettersRes.eligible_modules || []).length === 0 && (
+                  <div className="text-xs text-muted-foreground py-3 text-center">
+                    Les modules validés avec une note ≥ 12/20 s&apos;afficheront automatiquement ici.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Filters & Search Toolbar ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card p-3 sm:p-4 rounded-2xl border border-slate-200/80 dark:border-border shadow-sm">

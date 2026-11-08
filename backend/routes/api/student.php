@@ -143,7 +143,13 @@ $studentPortalRoutes = function () {
     Route::prefix('orientation')->group(function () {
         Route::get('/profile', [OrientationAdvisorController::class, 'getStudentProfile']);
         Route::post('/simulate-compensation', [OrientationAdvisorController::class, 'simulateCompensation']);
+        Route::get('/live-ranking', [OrientationAdvisorController::class, 'getLiveQuotaRanking']);
     });
+
+    // Quitus Numérique Automatisé en 1 Clic & Lettres de Recommandation Certifiées QR
+    Route::get('/quitus', [StudentPortalController::class, 'getDigitalQuitus']);
+    Route::get('/recommendation-letters', [StudentPortalController::class, 'getRecommendationLetters']);
+    Route::post('/recommendation-letters', [StudentPortalController::class, 'requestRecommendationLetter']);
 
     // Grade Appeals (Guichet Numérique LMD 48h)
     Route::get('/grade-appeals', [GradeAppealController::class, 'studentIndex']);

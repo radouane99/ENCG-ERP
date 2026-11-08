@@ -107,6 +107,8 @@ Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
 
     Route::get('/timetable/change-requests', [ScheduleChangeRequestController::class, 'index']);
     Route::post('/timetable/change-requests', [ScheduleChangeRequestController::class, 'storeTimetable']);
+    Route::post('/timetable/change-requests/peer-swap', [ScheduleChangeRequestController::class, 'proposePeerSwap']);
+    Route::post('/timetable/change-requests/{id}/accept-swap', [ScheduleChangeRequestController::class, 'acceptPeerSwap']);
     Route::patch('/timetable/change-requests/{id}/status', [ScheduleChangeRequestController::class, 'updateStatus']);
     Route::get('/documents/registry', [DocumentRegistryController::class, 'index']);
     Route::get('/documents/registry/{id}/download', [DocumentRegistryController::class, 'download']);

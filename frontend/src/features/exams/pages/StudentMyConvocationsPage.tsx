@@ -1,16 +1,51 @@
 import { useState,useEffect } from 'react'
-import { FileText,Download,CalendarDays,Clock,MapPin,Smartphone,AlertTriangle,PlusCircle,Upload,Loader2,Bot,X } from 'lucide-react'
+import { FileText,Download,CalendarDays,Clock,MapPin,Smartphone,AlertTriangle,PlusCircle,Upload,Loader2,Bot,X,ShieldCheck,WifiOff } from 'lucide-react'
 import { useQuery,useMutation } from '@tanstack/react-query'
 import { examsApi } from '@shared/api/exams'
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
 import { toast } from 'sonner'
 import { validateUploadFile } from '@shared/lib/fileUpload'
+import { loadConvocationsFromOfflineVault, saveConvocationsToOfflineVault } from '@shared/lib/offlineExamVault'
 
 export default function StudentMyConvocationsPage() {
-  const { data: convocations, isLoading } = useQuery({
+  const [offlineVault, setOfflineVault] = useState(() => loadConvocationsFromOfflineVault())
+  const [isOffline, setIsOffline] = useState(() => typeof navigator !== 'undefined' ? !navigator.onLine : false)
+
+  useEffect(() => {
+    const onOnline = () => setIsOffline(false)
+    const onOffline = () => setIsOffline(true)
+    window.addEventListener('online', onOnline)
+    window.addEventListener('offline', onOffline)
+    return () => {
+      window.removeEventListener('online', onOnline)
+      window.removeEventListener('offline', onOffline)
+    }
+  }, [])
+
+  const { data: liveConvocations, isLoading } = useQuery({
     queryKey: ['my-convocations'],
-    queryFn: () => examsApi.getStudentConvocations(),
+    queryFn: async () => {
+      try {
+        const res = await examsApi.getStudentConvocations()
+        if (Array.isArray(res) && res.length > 0) {
+          const saved = saveConvocationsToOfflineVault(res)
+          setOfflineVault(saved)
+        }
+        return res
+      } catch {
+        const cached = loadConvocationsFromOfflineVault()
+        if (cached) {
+          setOfflineVault(cached)
+          return cached.records
+        }
+        return []
+      }
+    },
   })
+
+  const convocations = (liveConvocations && liveConvocations.length > 0)
+    ? liveConvocations
+    : (offlineVault?.records ?? [])
 
   // State for AI Assistant
   const [activeAiExamId, setActiveAiExamId] = useState<number | null>(null)
@@ -105,15 +140,39 @@ export default function StudentMyConvocationsPage() {
 
   return (
     <div className="space-y-6 animate-in max-w-5xl mx-auto pb-20 relative">
-      <div className="flex items-center gap-4 mb-8">
-        <div className="w-12 h-12 rounded-xl bg-primary/5 text-primary flex items-center justify-center">
-          <FileText className="w-6 h-6" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-primary/5 text-primary flex items-center justify-center">
+            <FileText className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-[#0f2863] italic erp-page-title">Mes Convocations Pro</h1>
+            <p className="text-xs text-muted-foreground">
+              Retrouvez vos convocations, alertez en cas d'absence et interagissez avec l'assistant IA
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-[#0f2863] italic erp-page-title">Mes Convocations Pro</h1>
-          <p className="text-xs text-muted-foreground">
-            Retrouvez vos convocations, alertez en cas d'absence et interagissez avec l'assistant IA
-          </p>
+        <div className="flex items-center gap-2">
+          {isOffline ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold">
+              <WifiOff className="w-3.5 h-3.5" /> Mode Examen Hors-Ligne Actif
+            </span>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                const saved = saveConvocationsToOfflineVault(convocations || [])
+                setOfflineVault(saved)
+                toast.success('Coffre-fort Examen Hors-Ligne synchronisé sur cet appareil !')
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-xs font-bold transition-colors"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              {offlineVault?.records?.length
+                ? `Hors-Ligne Prêt (${offlineVault.records.length})`
+                : 'Activer Cache Hors-Ligne'}
+            </button>
+          )}
         </div>
       </div>
 

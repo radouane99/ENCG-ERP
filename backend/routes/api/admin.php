@@ -122,6 +122,8 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     Route::post('/admin/finance/reminders', [TuitionFinanceController::class, 'remind']);
     Route::post('/admin/finance/invoices/{id}/reminder', [TuitionFinanceController::class, 'remind']);
     Route::get('/reports/ministry-audit', [AdminDashboardController::class, 'generateMinistryReport']);
+    Route::get('/admin/dashboard/aneaq-report', [AdminDashboardController::class, 'generateMinistryReport']);
+    Route::get('/dashboard/aneaq-report', [AdminDashboardController::class, 'generateMinistryReport']);
 
     // Admin Custom Routes
     Route::get('/admin/analytics', [AdminAnalyticsController::class, 'index']);

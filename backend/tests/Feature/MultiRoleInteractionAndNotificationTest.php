@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Models\Assessment;
 use App\Models\Department;
 use App\Models\DocumentRequest;
 use App\Models\DocumentType;
 use App\Models\Filiere;
+use App\Models\Grade;
 use App\Models\Institution;
 use App\Models\Module;
 use App\Models\Professor;
@@ -272,5 +274,91 @@ class MultiRoleInteractionAndNotificationTest extends TestCase
         // Unsubscribe from PWA Push
         $unsubResponse = $this->deleteJson('/api/notifications/push-subscribe');
         $unsubResponse->assertOk()->assertJsonPath('push_subscribed', false);
+    }
+
+    /**
+     * 6. Quitus Numérique 4-Services, Lettres de Recommandation QR, Orientation Live & Rapport ANEAQ.
+     */
+    public function test_encg_digital_quitus_recommendations_live_orientation_and_aneaq_report(): void
+    {
+        $academicYear = $this->ensureAcademicYear([
+            'institution_id' => $this->institution->id,
+        ]);
+
+        $filiere = Filiere::firstOrCreate(
+            ['code' => 'GFC'],
+            [
+                'name' => 'Gestion Financière et Comptable',
+                'type' => 'grande_ecole',
+                'duration_years' => 5,
+                'institution_id' => $this->institution->id,
+                'is_active' => true,
+            ]
+        );
+
+        $module = Module::create([
+            'code' => 'GFC-AUDIT-S8',
+            'name' => 'Audit Financier & Commissariat aux Comptes',
+            'filiere_id' => $filiere->id,
+            'semester_number' => 8,
+            'coefficient' => 3,
+            'credit_hours' => 45,
+            'is_active' => true,
+            'institution_id' => $this->institution->id,
+        ]);
+
+        $assessment = Assessment::create([
+            'module_id' => $module->id,
+            'academic_year_id' => $academicYear->id,
+            'type' => 'final',
+            'weight' => 100,
+        ]);
+
+        Grade::create([
+            'student_id' => $this->student->id,
+            'assessment_id' => $assessment->id,
+            'value' => 16.5,
+        ]);
+
+        Sanctum::actingAs($this->studentUser);
+
+        // 1. Quitus Numérique Automatisé en 1 Clic (4 services)
+        $quitusRes = $this->getJson('/api/student-portal/quitus');
+        $quitusRes->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.services.library.cleared', true)
+            ->assertJsonPath('data.services.scolarite.cleared', true)
+            ->assertJsonPath('data.services.discipline.cleared', true);
+        $this->assertStringStartsWith('QUITUS-ENCG-', $quitusRes->json('data.verification_code'));
+
+        // 2. Lettres de Recommandation Académiques Certifiées QR (note >= 12/20)
+        $recListRes = $this->getJson('/api/student-portal/recommendation-letters');
+        $recListRes->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.eligible_count', 1);
+
+        $recPostRes = $this->postJson('/api/student-portal/recommendation-letters', [
+            'module_id' => $module->id,
+            'target_program' => 'Master Audit & Contrôle de Gestion',
+        ]);
+        $recPostRes->assertCreated()
+            ->assertJsonPath('success', true);
+        $this->assertStringStartsWith('REC-ENCG-', $recPostRes->json('data.reference_code'));
+
+        // 3. Simulateur Live de Rang & Quota d'Orientation (S4 -> S5)
+        $liveRankRes = $this->getJson('/api/student-portal/orientation/live-ranking');
+        $liveRankRes->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.student_gpa', 16.5);
+        $this->assertCount(5, $liveRankRes->json('data.specialties_live_quota'));
+
+        // 4. Rapport d'Accréditation ANEAQ / MESRSFC (Admin)
+        Sanctum::actingAs($this->adminUser);
+        $aneaqRes = $this->getJson('/api/admin/dashboard/aneaq-report');
+        $aneaqRes->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('report.status', 'CONFORME_MESRSFC')
+            ->assertJsonPath('report.aneaq_accreditation.referentiel_version', 'ANEAQ-MESRSFC-2026')
+            ->assertJsonPath('report.aneaq_accreditation.gouvernance_et_securite.retenue_igr_vacataires_cgi_73_ii_f', '17%');
     }
 }
