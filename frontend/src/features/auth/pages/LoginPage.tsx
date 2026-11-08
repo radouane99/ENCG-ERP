@@ -1,22 +1,38 @@
 import { useForm } from 'react-hook-form'
-
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useNavigate,useSearchParams,useLocation } from 'react-router-dom'
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { admissionReturnPath } from '../model/admissionReturnPath'
 import { useTranslation } from 'react-i18next'
-import { useEffect,useState } from 'react'
-import { Eye,EyeOff,LogIn,Mail,Lock,Sparkles,UserCheck,Shield } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Eye, EyeOff, LogIn, Mail, Lock, Sparkles, UserCheck, Shield, CheckCircle2, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuthStore } from '@stores/authStore'
 import { Button } from '@shared/components/ui/Button'
 import { Input } from '@shared/components/ui/Input'
 import { cn } from '@shared/lib/utils'
 import { CndpPrivacyModal } from '@shared/components/ui/CndpPrivacyModal'
-import { fetchSsoProviders,type SsoProvider } from '@features/auth/api/sso'
+import {
+  buildSsoRedirectUrl,
+  DEFAULT_SSO_PROVIDERS,
+  fetchSsoProviders,
+  type SsoProvider,
+} from '@features/auth/api/sso'
+import {
+  clearRememberedLogin,
+  loadRememberedLogin,
+  saveRememberedLogin,
+} from '../model/rememberMeStorage'
 
 const loginSchema = z.object({
-  email: z.string().email('Email invalide'),
+  email: z
+    .string()
+    .trim()
+    .min(4, 'Identifiant invalide (Email, Code Apogée, CNE ou CIN)')
+    .refine(
+      (val) => val.includes('@') ? /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val) : /^[A-Za-z0-9_-]{4,32}$/.test(val),
+      'Veuillez saisir un email valide ou votre CNE / Code Apogée / CIN'
+    ),
   password: z.string().min(8, 'Minimum 8 caractères'),
   remember: z.boolean().optional(),
 })
@@ -31,7 +47,9 @@ export default function LoginPage() {
   const { login } = useAuthStore()
   const [showPassword, setShowPassword] = useState(false)
   const [showCndpModal, setShowCndpModal] = useState(false)
-  const [ssoProviders, setSsoProviders] = useState<SsoProvider[]>([])
+  const [ssoProviders, setSsoProviders] = useState<SsoProvider[]>(DEFAULT_SSO_PROVIDERS)
+  const [initialRemembered] = useState(() => loadRememberedLogin())
+  const [hasSavedDeviceLogin, setHasSavedDeviceLogin] = useState(() => Boolean(initialRemembered.remember && initialRemembered.identifier))
   const isAr = i18n.language === 'ar'
 
   useEffect(() => {
@@ -44,6 +62,7 @@ export default function LoginPage() {
       unknown_account: t('sso_error_unknown_account'),
       sso: t('sso_error_generic'),
       google: t('sso_error_generic'),
+      github: t('sso_error_generic'),
     }
     toast.error(messages[error] || t('sso_error_generic'))
     navigate('/login', { replace: true })
@@ -51,30 +70,72 @@ export default function LoginPage() {
 
   useEffect(() => {
     fetchSsoProviders()
-      .then(setSsoProviders)
-      .catch(() => setSsoProviders([]))
+      .then((list) => {
+        if (list.length > 0) {
+          setSsoProviders(list)
+        }
+      })
+      .catch(() => setSsoProviders(DEFAULT_SSO_PROVIDERS))
   }, [])
 
   const {
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors, isSubmitting },
     setError,
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { remember: false },
+    defaultValues: {
+      email: initialRemembered.identifier || '',
+      remember: initialRemembered.remember || false,
+    },
   })
 
+  const rememberChecked = Boolean(watch('remember'))
+
   const handleQuickDemoFill = (email: string) => {
-    setValue('email', email)
-    setValue('password', 'password')
+    setValue('email', email, { shouldValidate: true })
+    setValue('password', 'password', { shouldValidate: true })
     toast.info(isAr ? `تم اختيار حساب التجربة: ${email}` : `Compte démo sélectionné : ${email}`)
+  }
+
+  const handleForgetDevice = () => {
+    clearRememberedLogin()
+    setHasSavedDeviceLogin(false)
+    setValue('remember', false)
+    setValue('email', '')
+    toast.success(isAr ? 'تم مسح بيانات التذكر من هذا الجهاز' : 'Identifiant mémorisé effacé de cet appareil.')
+  }
+
+  const handleSsoConnect = (provider: SsoProvider) => {
+    const currentEmail = watch('email')
+    if (rememberChecked && currentEmail) {
+      saveRememberedLogin(currentEmail, true)
+    }
+    if (provider.configured === false) {
+      const envHint =
+        provider.id === 'github'
+          ? 'GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET'
+          : provider.id === 'google'
+            ? 'GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET'
+            : 'AZURE_AD_CLIENT_ID / AZURE_AD_CLIENT_SECRET'
+      toast.info(
+        isAr
+          ? `الدخول عبر ${provider.label} جاهز — يرجى تفعيل مفاتيح OAuth (${envHint}) في ملف البيئة.`
+          : `Connexion ${provider.label} prête : configurez ${envHint} dans .env pour activer la redirection OAuth.`
+      )
+      return
+    }
+    window.location.href = buildSsoRedirectUrl(provider.redirect, rememberChecked)
   }
 
   const onSubmit = async (data: LoginForm) => {
     try {
       const result = await login(data.email, data.password, data.remember)
+      saveRememberedLogin(data.email, Boolean(data.remember))
+      setHasSavedDeviceLogin(Boolean(data.remember))
       if (result.requiresTwoFactor) {
         navigate('/two-factor', { state: location.state })
       } else {
@@ -93,7 +154,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div data-testid="login-page" dir={isAr ? 'rtl' : 'ltr'} className={cn("space-y-6 font-sans", isAr && "text-right")}>
+    <div data-testid="login-page" dir={isAr ? 'rtl' : 'ltr'} className={cn('space-y-5 font-sans', isAr && 'text-right')}>
       {/* Header Title */}
       <div>
         <div className="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider mb-2 border border-primary/20">
@@ -107,47 +168,88 @@ export default function LoginPage() {
         </p>
       </div>
 
-      {import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_LOGIN === 'true' && (
-      <div className="p-3 bg-muted/50 dark:bg-muted/30 border border-border/70 rounded-2xl space-y-2">
-        <div className="flex items-center justify-between text-[10px] font-bold uppercase text-muted-foreground tracking-wider">
-          <span className="flex items-center gap-1"><Sparkles className="w-3 h-3 text-amber-500" /> {isAr ? 'حسابات التجربة السريعة' : 'Comptes Démo Rapides'}</span>
-          <span className="text-[9px] text-primary">{isAr ? 'تعبئة تلقائية' : '1-Click AutoFill'}</span>
+      {/* Multi-Provider Social & Institutional OAuth Options (Google, GitHub, Microsoft 365) */}
+      <div className="space-y-2.5">
+        <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          <span>{isAr ? 'خيارات الدخول السريع (OAuth / SSO)' : 'Connexion Rapide Multi-Options'}</span>
+          <span className="text-[9px] text-primary font-semibold">OAuth 2.0 + PKCE</span>
         </div>
-        <div className="grid grid-cols-3 gap-1.5 text-[11px]">
-          <button
-            type="button"
-            onClick={() => handleQuickDemoFill('admin@encg-fes.ma')}
-            className="px-2 py-1.5 rounded-xl bg-card hover:bg-primary/10 hover:border-primary/40 border border-border font-bold text-foreground transition-all cursor-pointer text-center truncate"
-            title={isAr ? 'دخول الإدارة' : 'Connexion Admin'}
-          >
-            👨‍💼 {isAr ? 'إدارة' : 'Admin'}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleQuickDemoFill('prof@encg-fes.ma')}
-            className="px-2 py-1.5 rounded-xl bg-card hover:bg-primary/10 hover:border-primary/40 border border-border font-bold text-foreground transition-all cursor-pointer text-center truncate"
-            title={isAr ? 'دخول الأستاذ' : 'Connexion Professeur'}
-          >
-            👨‍🏫 {isAr ? 'أستاذ' : 'Prof'}
-          </button>
-          <button
-            type="button"
-            onClick={() => handleQuickDemoFill('student@encg-fes.ma')}
-            className="px-2 py-1.5 rounded-xl bg-card hover:bg-primary/10 hover:border-primary/40 border border-border font-bold text-foreground transition-all cursor-pointer text-center truncate"
-            title={isAr ? 'دخول الطالب' : 'Connexion Étudiant'}
-          >
-            🎓 {isAr ? 'طالب' : 'Étudiant'}
-          </button>
+        <div className="grid grid-cols-3 gap-2">
+          {ssoProviders.map((provider) => (
+            <button
+              key={provider.id}
+              type="button"
+              data-testid={`sso-provider-${provider.id}`}
+              onClick={() => handleSsoConnect(provider)}
+              className="group relative flex flex-col items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl border border-border/80 bg-background/70 hover:bg-muted/80 hover:border-primary/40 text-foreground transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] cursor-pointer shadow-2xs"
+              title={t('sso_continue_with', { provider: provider.label })}
+            >
+              <SsoProviderIcon providerId={provider.id} />
+              <span className="text-[11px] font-bold tracking-tight truncate max-w-full">
+                {provider.id === 'google' ? 'Google' : provider.id === 'github' ? 'GitHub' : provider.id === 'microsoft' ? 'Microsoft' : provider.label}
+              </span>
+              {provider.configured && (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 absolute top-2 end-2" title="SSO Actif" />
+              )}
+            </button>
+          ))}
+        </div>
+
+        <div className="relative my-2">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-border/80"></span>
+          </div>
+          <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
+            <span className="bg-card px-3 py-0.5 rounded-full border border-border/60">
+              {isAr ? 'أو عبر البريد المؤسسي / رمز مسار / أبوجي' : 'Ou avec Email / CNE / Code Apogée'}
+            </span>
+          </div>
         </div>
       </div>
+
+      {import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_LOGIN === 'true' && (
+        <div className="p-3 bg-muted/50 dark:bg-muted/30 border border-border/70 rounded-2xl space-y-2">
+          <div className="flex items-center justify-between text-[10px] font-bold uppercase text-muted-foreground tracking-wider">
+            <span className="flex items-center gap-1"><Sparkles className="w-3 h-3 text-amber-500" /> {isAr ? 'حسابات التجربة السريعة' : 'Comptes Démo Rapides'}</span>
+            <span className="text-[9px] text-primary">{isAr ? 'تعبئة تلقائية' : '1-Click AutoFill'}</span>
+          </div>
+          <div className="grid grid-cols-3 gap-1.5 text-[11px]">
+            <button
+              type="button"
+              onClick={() => handleQuickDemoFill('admin@encg-fes.ma')}
+              className="px-2 py-1.5 rounded-xl bg-card hover:bg-primary/10 hover:border-primary/40 border border-border font-bold text-foreground transition-all cursor-pointer text-center truncate"
+              title={isAr ? 'دخول الإدارة' : 'Connexion Admin'}
+            >
+              👨‍💼 {isAr ? 'إدارة' : 'Admin'}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickDemoFill('prof@encg-fes.ma')}
+              className="px-2 py-1.5 rounded-xl bg-card hover:bg-primary/10 hover:border-primary/40 border border-border font-bold text-foreground transition-all cursor-pointer text-center truncate"
+              title={isAr ? 'دخول الأستاذ' : 'Connexion Professeur'}
+            >
+              👨‍🏫 {isAr ? 'أستاذ' : 'Prof'}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleQuickDemoFill('student@encg-fes.ma')}
+              className="px-2 py-1.5 rounded-xl bg-card hover:bg-primary/10 hover:border-primary/40 border border-border font-bold text-foreground transition-all cursor-pointer text-center truncate"
+              title={isAr ? 'دخول الطالب' : 'Connexion Étudiant'}
+            >
+              🎓 {isAr ? 'طالب' : 'Étudiant'}
+            </button>
+          </div>
+        </div>
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Email Field with Lead Icon */}
+        {/* Email / CNE / Apogée Field */}
         <div className="space-y-1.5">
           <label className="text-[11px] font-bold uppercase tracking-wider text-foreground flex items-center justify-between" htmlFor="email">
             <span>{t('email')}</span>
-            <span className="text-[10px] text-muted-foreground font-normal">{isAr ? 'nom@encg-fes.ma' : 'Format: nom@encg-fes.ma'}</span>
+            <span className="text-[10px] text-muted-foreground font-normal">
+              {isAr ? 'البريد أو CNE / Apogée' : 'Email, CNE ou Code Apogée'}
+            </span>
           </label>
           <div className="relative">
             <div className="absolute inset-y-0 start-0 ps-3.5 flex items-center pointer-events-none text-muted-foreground">
@@ -155,12 +257,12 @@ export default function LoginPage() {
             </div>
             <Input
               id="email"
-              type="email"
-              autoComplete="email"
+              type="text"
+              autoComplete="username"
               {...register('email')}
               error={!!errors.email}
-              placeholder="nom@encg-fes.ma"
-              className={cn("w-full transition-all focus:ring-2 focus:ring-primary/20 bg-background/80 rounded-xl", isAr ? "pr-10 pl-3" : "ps-10")}
+              placeholder="nom@encg-fes.ac.ma ou CNE / Apogée"
+              className={cn('w-full transition-all focus:ring-2 focus:ring-primary/20 bg-background/80 rounded-xl', isAr ? 'pr-10 pl-3' : 'ps-10')}
             />
           </div>
           {errors.email && (
@@ -193,13 +295,13 @@ export default function LoginPage() {
               {...register('password')}
               error={!!errors.password}
               placeholder="••••••••"
-              className={cn("w-full transition-all focus:ring-2 focus:ring-primary/20 bg-background/80 rounded-xl", isAr ? "pr-10 pl-10" : "ps-10 pe-10")}
+              className={cn('w-full transition-all focus:ring-2 focus:ring-primary/20 bg-background/80 rounded-xl', isAr ? 'pr-10 pl-10' : 'ps-10 pe-10')}
             />
             <button
               type="button"
               aria-label={showPassword ? (isAr ? 'إخفاء كلمة المرور' : 'Masquer le mot de passe') : (isAr ? 'إظهار كلمة المرور' : 'Afficher le mot de passe')}
               onClick={() => setShowPassword(!showPassword)}
-              className={cn("absolute top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 cursor-pointer", isAr ? "left-3" : "end-3")}
+              className={cn('absolute top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 cursor-pointer', isAr ? 'left-3' : 'end-3')}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -209,18 +311,58 @@ export default function LoginPage() {
           )}
         </div>
 
-        {/* Remember Me */}
-        <div className="flex items-center justify-between pt-1">
-          <label className="flex items-center gap-2.5 cursor-pointer select-none">
+        {/* Enhanced Remember Me Card (30 Days Persistent Token + Device Identifier Storage) */}
+        <div
+          className={cn(
+            'p-2.5 rounded-xl border transition-all flex items-center justify-between gap-2',
+            rememberChecked
+              ? 'bg-primary/5 border-primary/30'
+              : 'bg-background/40 border-border/70'
+          )}
+        >
+          <label className="flex items-center gap-2.5 cursor-pointer select-none flex-1">
             <input
               type="checkbox"
-              {...register('remember')}
+              data-testid="remember-me-checkbox"
+              {...register('remember', {
+                onChange: (e) => {
+                  if (!e.target.checked) {
+                    clearRememberedLogin()
+                    setHasSavedDeviceLogin(false)
+                  }
+                },
+              })}
               className="w-4 h-4 rounded border-border bg-transparent text-primary focus:ring-primary accent-primary cursor-pointer"
             />
-            <span className="text-xs font-semibold text-muted-foreground">
-              {t('remember_me')}
-            </span>
+            <div className="flex flex-col">
+              <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                {t('remember_me')}
+                <span className="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase bg-primary/10 text-primary">
+                  {isAr ? '30 يوماً' : '30 Jours'}
+                </span>
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                {rememberChecked
+                  ? (isAr ? 'سيتم حفظ جلستك ومعرفك لمدة 30 يوماً على هذا الجهاز' : 'Session maintenue 30 jours & identifiant mémorisé sur cet appareil')
+                  : (isAr ? 'جلسة قياسية (8 ساعات)' : 'Session standard sécurisée (8 heures)')}
+              </span>
+            </div>
           </label>
+
+          {hasSavedDeviceLogin && (
+            <button
+              type="button"
+              onClick={handleForgetDevice}
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer shrink-0"
+              title={isAr ? 'مسح الحساب المحفوظ' : 'Oublier cet appareil'}
+            >
+              <Trash2 className="w-3 h-3" />
+              <span>{isAr ? 'مسح' : 'Oublier'}</span>
+            </button>
+          )}
+          {!hasSavedDeviceLogin && rememberChecked && (
+            <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+          )}
         </div>
 
         {/* Main Submit Button */}
@@ -234,38 +376,6 @@ export default function LoginPage() {
           {!isSubmitting && <LogIn className="w-4 h-4 me-2" />}
           {isSubmitting ? t('logging_in') : t('login_button')}
         </Button>
-
-        {ssoProviders.length > 0 && (
-          <>
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border/80"></span>
-              </div>
-              <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
-                <span className="bg-card px-3 py-0.5 rounded-full border border-border/60">
-                  {t('sso_divider')}
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              {ssoProviders.map((provider) => (
-                <Button
-                  key={provider.id}
-                  type="button"
-                  variant="outline"
-                  className="w-full font-bold border-border/80 bg-background/60 hover:bg-muted text-foreground rounded-xl transition-all duration-200 flex items-center justify-center gap-2.5 hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
-                  onClick={() => {
-                    window.location.href = provider.redirect
-                  }}
-                >
-                  <SsoProviderIcon providerId={provider.id} />
-                  <span className="text-xs">{t('sso_continue_with', { provider: provider.label })}</span>
-                </Button>
-              ))}
-            </div>
-          </>
-        )}
       </form>
 
       {/* CNDP Footer Link */}
@@ -294,6 +404,18 @@ function SsoProviderIcon({ providerId }: { providerId: string }) {
         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+      </svg>
+    )
+  }
+
+  if (providerId === 'github') {
+    return (
+      <svg className="w-4 h-4 shrink-0 fill-current text-foreground" viewBox="0 0 24 24" aria-hidden>
+        <path
+          fillRule="evenodd"
+          clipRule="evenodd"
+          d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"
+        />
       </svg>
     )
   }

@@ -41,7 +41,29 @@ class SsoAuthenticationService
         return $out;
     }
 
-    public function redirect(string $provider): RedirectResponse
+    /**
+     * @return list<array{id: string, label: string, redirect: string, configured: bool}>
+     */
+    public function availableProvidersCatalog(): array
+    {
+        $out = [];
+        foreach (array_keys(config('sso.providers', [])) as $id) {
+            if (! is_string($id)) {
+                continue;
+            }
+            $label = (string) (config('sso.providers.'.$id.'.label') ?: $id);
+            $out[] = [
+                'id' => $id,
+                'label' => $label,
+                'redirect' => '/api/v1/auth/sso/'.$id.'/redirect',
+                'configured' => $this->oidcClient->isConfigured($id),
+            ];
+        }
+
+        return $out;
+    }
+
+    public function redirect(string $provider, bool $remember = false): RedirectResponse
     {
         $this->assertKnownProvider($provider);
         $request = $this->oidcClient->authorizationRequest($provider);
@@ -50,6 +72,7 @@ class SsoAuthenticationService
             'provider' => $provider,
             'nonce' => $request['nonce'],
             'verifier' => $request['verifier'],
+            'remember' => $remember,
         ], now()->addMinutes(10));
 
         return redirect()->away($request['url'])->withCookie(cookie('encg_sso_state', $request['state'], 10, '/', null, parse_url(config('app.url'), PHP_URL_SCHEME) === 'https' || app()->environment('production'), true, false, 'lax'));
@@ -83,9 +106,10 @@ class SsoAuthenticationService
             $this->linkIdentity($user, $identity);
 
             $exchange = Str::random(64);
-            Cache::put('oauth_exchange_'.$exchange, ['user_id' => $user->id, 'stamp' => LoginChallengeService::stamp($user), 'browser_state' => $state], now()->addMinutes(2));
+            $remember = (bool) ($session['remember'] ?? false);
+            Cache::put('oauth_exchange_'.$exchange, ['user_id' => $user->id, 'stamp' => LoginChallengeService::stamp($user), 'browser_state' => $state, 'remember' => $remember], now()->addMinutes(2));
 
-            return redirect()->to($frontend.'/auth/callback?code='.$exchange);
+            return redirect()->to($frontend.'/auth/callback?code='.$exchange.($remember ? '&remember=1' : ''));
         } catch (SsoAuthenticationException $e) {
             return redirect()->to($frontend.'/login?error='.urlencode($e->errorCode));
         } catch (\Throwable) {
@@ -100,11 +124,14 @@ class SsoAuthenticationService
             throw new SsoAuthenticationException('sso', 'Code d’échange invalide ou expiré.');
         }
 
-        return Cache::lock('oauth_exchange_lock_'.hash('sha256', $code), 10)->get(function () use ($code) {
+        return Cache::lock('oauth_exchange_lock_'.hash('sha256', $code), 10)->get(function () use ($code, $request) {
             $data = Cache::pull('oauth_exchange_'.$code);
             $user = is_array($data) ? User::find($data['user_id']) : null;
             if (! $user || ! $user->is_active || ! hash_equals($data['stamp'], LoginChallengeService::stamp($user))) {
                 throw new SsoAuthenticationException('sso', 'Session SSO invalide.');
+            }
+            if (! empty($data['remember'])) {
+                $request->merge(['remember' => true]);
             }
 
             return $user;

@@ -36,6 +36,14 @@ class OidcClient
                 'userinfo_endpoint' => 'https://openidconnect.googleapis.com/v1/userinfo',
                 'jwks_uri' => 'https://www.googleapis.com/oauth2/v3/certs',
             ],
+            'github' => [
+                'issuer' => 'https://github.com',
+                'authorization_endpoint' => 'https://github.com/login/oauth/authorize',
+                'token_endpoint' => 'https://github.com/login/oauth/access_token',
+                'userinfo_endpoint' => 'https://api.github.com/user',
+                'emails_endpoint' => 'https://api.github.com/user/emails',
+                'jwks_uri' => null,
+            ],
             'microsoft' => $this->microsoftEndpoints((string) ($config['tenant'] ?? 'organizations')),
             'oidc' => $this->discover((string) ($config['issuer'] ?? '')),
             default => throw new SsoAuthenticationException('sso', 'Fournisseur SSO inconnu.'),
@@ -59,11 +67,13 @@ class OidcClient
         $verifier = $this->base64Url(random_bytes(32));
         $challenge = $this->base64Url(hash('sha256', $verifier, true));
 
+        $scope = $provider === 'github' ? 'read:user user:email' : 'openid email profile';
+
         $query = http_build_query([
             'client_id' => $ep['client_id'],
             'redirect_uri' => $ep['redirect'],
             'response_type' => 'code',
-            'scope' => 'openid email profile',
+            'scope' => $scope,
             'state' => $state,
             'nonce' => $nonce,
             'code_challenge' => $challenge,
@@ -81,6 +91,10 @@ class OidcClient
 
     public function redeem(string $provider, string $code, string $verifier, string $nonce): OidcIdentity
     {
+        if ($provider === 'github') {
+            return $this->redeemGithub($code, $verifier);
+        }
+
         $ep = $this->endpoints($provider);
 
         $response = Http::asForm()
@@ -173,6 +187,75 @@ class OidcClient
             subject: $subject,
             email: strtolower($email),
             name: $name,
+        );
+    }
+
+    private function redeemGithub(string $code, string $verifier): OidcIdentity
+    {
+        $ep = $this->endpoints('github');
+
+        $tokenResponse = Http::asForm()
+            ->acceptJson()
+            ->timeout(20)
+            ->post($ep['token_endpoint'], [
+                'client_id' => $ep['client_id'],
+                'client_secret' => $ep['client_secret'],
+                'code' => $code,
+                'redirect_uri' => $ep['redirect'],
+                'code_verifier' => $verifier,
+            ]);
+
+        $accessToken = (string) $tokenResponse->json('access_token', '');
+        if (! $tokenResponse->successful() || $accessToken === '') {
+            throw new SsoAuthenticationException('sso', 'Échange du code GitHub OAuth refusé.');
+        }
+
+        $userResponse = Http::withToken($accessToken)
+            ->withHeaders(['Accept' => 'application/vnd.github+json', 'User-Agent' => 'ENCG-ERP'])
+            ->timeout(15)
+            ->get((string) $ep['userinfo_endpoint']);
+
+        if (! $userResponse->successful()) {
+            throw new SsoAuthenticationException('sso', 'Impossible de récupérer le profil GitHub.');
+        }
+
+        $profile = $userResponse->json() ?? [];
+        $subject = isset($profile['id']) ? (string) $profile['id'] : '';
+        $name = isset($profile['name']) && is_string($profile['name']) ? $profile['name'] : ($profile['login'] ?? null);
+        $email = isset($profile['email']) && is_string($profile['email']) ? strtolower(trim($profile['email'])) : '';
+        $emailVerified = false;
+
+        $emailsResponse = Http::withToken($accessToken)
+            ->withHeaders(['Accept' => 'application/vnd.github+json', 'User-Agent' => 'ENCG-ERP'])
+            ->timeout(15)
+            ->get('https://api.github.com/user/emails');
+
+        if ($emailsResponse->successful() && is_array($emailsResponse->json())) {
+            foreach ($emailsResponse->json() as $entry) {
+                if (! is_array($entry) || empty($entry['verified']) || empty($entry['email'])) {
+                    continue;
+                }
+                if (! empty($entry['primary']) || $email === '') {
+                    $email = strtolower(trim((string) $entry['email']));
+                    $emailVerified = true;
+                    if (! empty($entry['primary'])) {
+                        break;
+                    }
+                }
+            }
+        } elseif ($email !== '') {
+            $emailVerified = true;
+        }
+
+        if ($subject === '' || $email === '' || ! $emailVerified) {
+            throw new SsoAuthenticationException('sso', 'Aucune adresse email vérifiée associée à ce compte GitHub.');
+        }
+
+        return new OidcIdentity(
+            provider: 'github',
+            subject: $subject,
+            email: $email,
+            name: is_string($name) ? $name : null,
         );
     }
 

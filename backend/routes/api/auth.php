@@ -104,13 +104,17 @@ Route::prefix('v1/auth')->group(function () {
     Route::post('/two-factor/verify', [AuthController::class, 'verifyTwoFactor'])->middleware('throttle:login');
 
     Route::get('/sso/providers', [SsoController::class, 'providers'])->middleware('throttle:30,1');
-    Route::get('/sso/{provider}/redirect', [SsoController::class, 'redirect'])->middleware('throttle:30,1')->whereIn('provider', ['google', 'microsoft', 'oidc']);
-    Route::get('/sso/{provider}/callback', [SsoController::class, 'callback'])->middleware('throttle:30,1')->whereIn('provider', ['google', 'microsoft', 'oidc']);
+    Route::get('/sso/{provider}/redirect', [SsoController::class, 'redirect'])->middleware('throttle:30,1')->whereIn('provider', ['google', 'github', 'microsoft', 'oidc']);
+    Route::get('/sso/{provider}/callback', [SsoController::class, 'callback'])->middleware('throttle:30,1')->whereIn('provider', ['google', 'github', 'microsoft', 'oidc']);
     Route::post('/sso/exchange', [SsoController::class, 'exchange'])->middleware('throttle:30,1');
 
-    Route::get('/google/redirect', fn () => app(SsoController::class)->redirect('google'))->middleware('throttle:30,1');
+    Route::get('/google/redirect', fn (Request $request) => app(SsoController::class)->redirect('google', $request))->middleware('throttle:30,1');
     Route::get('/google/callback', fn (Request $request) => app(SsoController::class)->callback('google', $request))->middleware('throttle:30,1');
     Route::post('/google/exchange', [SsoController::class, 'exchange'])->middleware('throttle:30,1');
+
+    Route::get('/github/redirect', fn (Request $request) => app(SsoController::class)->redirect('github', $request))->middleware('throttle:30,1');
+    Route::get('/github/callback', fn (Request $request) => app(SsoController::class)->callback('github', $request))->middleware('throttle:30,1');
+    Route::post('/github/exchange', [SsoController::class, 'exchange'])->middleware('throttle:30,1');
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/sessions', [SessionController::class, 'index']);

@@ -14,6 +14,7 @@ export default function SsoCallbackPage() {
 
   useEffect(() => {
     const code = searchParams.get('code')
+    const remember = searchParams.get('remember') === '1'
     if (!code) {
       navigate('/login?error=sso', { replace: true })
       return
@@ -22,7 +23,7 @@ export default function SsoCallbackPage() {
     let cancelled = false
     ;(async () => {
       try {
-        if (!exchanges.has(code)) exchanges.set(code, api.post('/v1/auth/sso/exchange', { code }).finally(() => setTimeout(() => exchanges.delete(code), 0)))
+        if (!exchanges.has(code)) exchanges.set(code, api.post('/v1/auth/sso/exchange', { code, remember }).finally(() => setTimeout(() => exchanges.delete(code), 0)))
         const response = await exchanges.get(code)!
         if (cancelled) return
         if (response.data?.data?.requires_two_factor) {

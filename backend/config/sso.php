@@ -29,6 +29,13 @@ return [
             'redirect' => env('GOOGLE_REDIRECT_URI', env('APP_URL', 'http://localhost').'/api/v1/auth/sso/google/callback'),
             'issuer' => 'https://accounts.google.com',
         ],
+        'github' => [
+            'label' => 'GitHub',
+            'client_id' => env('GITHUB_CLIENT_ID'),
+            'client_secret' => env('GITHUB_CLIENT_SECRET'),
+            'redirect' => env('GITHUB_REDIRECT_URI', env('APP_URL', 'http://localhost').'/api/v1/auth/sso/github/callback'),
+            'issuer' => 'https://github.com',
+        ],
         'microsoft' => [
             'label' => 'Microsoft 365',
             'client_id' => env('AZURE_AD_CLIENT_ID', env('AZURE_CLIENT_ID')),

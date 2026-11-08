@@ -29,19 +29,21 @@ class AuthController extends Controller
     ) {}
 
     /**
-     * Connexion.
+     * Connexion (Email institutionnel, CNE, Code Apogée ou CIN + Option Se souvenir de moi 30 jours).
      */
     public function login(Request $request): JsonResponse
     {
         $request->validate([
-            'email' => 'required|email',
+            'email' => 'required|string|max:255',
             'password' => 'required|string|max:4096',
             'remember' => 'sometimes|boolean',
         ]);
 
-        $request->merge(['email' => strtolower(trim($request->email))]);
+        $rawIdentifier = trim((string) $request->email);
+        $normalizedEmail = strtolower($rawIdentifier);
+        $request->merge(['email' => $normalizedEmail]);
 
-        $user = User::with('roles', 'permissions')->where('email', $request->email)->first();
+        $user = $this->resolveUserByIdentifier($rawIdentifier);
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
@@ -53,13 +55,16 @@ class AuthController extends Controller
             return response()->json(['message' => 'Votre compte a été désactivé.'], 403);
         }
 
+        $remember = $request->boolean('remember');
+
         if ($user->two_factor_enabled) {
-            return response()->json(['data' => app(LoginChallengeService::class)->create($user, $request->boolean('remember'))])->withCookie(AuthCookie::forget());
+            return response()->json(['data' => app(LoginChallengeService::class)->create($user, $remember)])->withCookie(AuthCookie::forget());
         }
 
-        $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
+        $expiresAt = $remember ? now()->addDays(AuthCookie::REMEMBER_DAYS) : now()->addHours(8);
+        $token = $user->createToken($remember ? 'auth-token-remember' : 'auth-token', ['*'], $expiresAt)->plainTextToken;
 
-        event(new Login('sanctum', $user, false));
+        event(new Login('sanctum', $user, $remember));
 
         return $this->authenticatedResponse($request, $user, $token);
     }
@@ -79,10 +84,12 @@ class AuthController extends Controller
             return response()->json(['message' => 'Code 2FA invalide ou expiré.'], 422);
         }
         $user = $result['user'];
-        $request->merge(['remember' => $result['remember']]);
+        $remember = (bool) ($result['remember'] ?? false);
+        $request->merge(['remember' => $remember]);
 
-        $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
-        event(new Login('sanctum', $user, false));
+        $expiresAt = $remember ? now()->addDays(AuthCookie::REMEMBER_DAYS) : now()->addHours(8);
+        $token = $user->createToken($remember ? 'auth-token-remember' : 'auth-token', ['*'], $expiresAt)->plainTextToken;
+        event(new Login('sanctum', $user, $remember));
 
         return $this->authenticatedResponse($request, $user, $token);
     }
@@ -291,6 +298,30 @@ class AuthController extends Controller
         ]);
     }
 
+    private function resolveUserByIdentifier(string $identifier): ?User
+    {
+        $normalized = strtolower(trim($identifier));
+        if (str_contains($normalized, '@')) {
+            return User::with('roles', 'permissions')->where('email', $normalized)->first();
+        }
+
+        $upper = strtoupper(trim($identifier));
+        $user = User::with('roles', 'permissions')
+            ->where('email', $normalized)
+            ->orWhere('cin', $upper)
+            ->first();
+
+        if ($user) {
+            return $user;
+        }
+
+        $student = Student::where('cne', $upper)
+            ->orWhere('student_number', $upper)
+            ->first();
+
+        return $student ? User::with('roles', 'permissions')->find($student->user_id) : null;
+    }
+
     private function revokeOtherTokens(Request $request): void
     {
         $token = $request->user()->currentAccessToken();
@@ -300,8 +331,10 @@ class AuthController extends Controller
 
     private function authenticatedResponse(Request $request, User $user, string $token, ?string $message = null): JsonResponse
     {
+        $remember = $request->boolean('remember');
         $data = [
             'requires_two_factor' => false,
+            'remember' => $remember,
             'user' => $this->buildUserData($user),
         ];
 

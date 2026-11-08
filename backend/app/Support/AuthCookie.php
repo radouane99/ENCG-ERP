@@ -11,6 +11,8 @@ class AuthCookie
 {
     public const NAME = 'encg_auth_token';
 
+    public const REMEMBER_DAYS = 30;
+
     public static function name(): string
     {
         return app()->bound('config') ? (string) config('auth.cookie_name', self::NAME) : self::NAME;
@@ -49,7 +51,7 @@ class AuthCookie
         return cookie(
             self::name(),
             self::encode($plainTextToken),
-            $remember ? 8 * 60 : 0,
+            $remember ? self::REMEMBER_DAYS * 24 * 60 : 0,
             '/',
             env('AUTH_COOKIE_DOMAIN') ?: null,
             $secure,

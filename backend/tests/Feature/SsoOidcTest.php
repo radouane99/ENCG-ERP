@@ -225,3 +225,57 @@ it('binds exchange to the browser and preserves local two factor for SSO', funct
     expect($user->tokens()->count())->toBe(0);
     postJson('/api/v1/auth/sso/exchange', ['code' => 'synthetic'])->assertStatus(422);
 });
+
+it('completes GitHub OAuth login with PKCE and Remember Me 30-day session', function () {
+    config([
+        'sso.allowed_domains' => ['encg-fes.ac.ma'],
+        'sso.providers.github.client_id' => 'gh-client-id',
+        'sso.providers.github.client_secret' => 'gh-client-secret',
+        'sso.providers.github.redirect' => 'http://localhost/api/v1/auth/sso/github/callback',
+        'app.frontend_url' => 'http://localhost:5173',
+    ]);
+
+    $redirectResponse = get('/api/v1/auth/sso/github/redirect?remember=1');
+    $redirectResponse->assertRedirect();
+    expect($redirectResponse->headers->get('Location'))->toContain('https://github.com/login/oauth/authorize');
+
+    $user = User::factory()->create([
+        'email' => 'dev.student@encg-fes.ac.ma',
+        'is_active' => true,
+    ]);
+
+    $state = 'state-gh-ok';
+    Cache::put('sso_oidc_'.$state, [
+        'provider' => 'github',
+        'nonce' => 'nonce-gh',
+        'verifier' => 'verifier-gh',
+        'remember' => true,
+    ], now()->addMinutes(10));
+
+    Http::preventStrayRequests();
+    Http::fake([
+        'github.com/login/oauth/access_token' => Http::response(['access_token' => 'gho_test_token']),
+        'api.github.com/user' => Http::response(['id' => 987654, 'login' => 'encg-dev', 'name' => 'Étudiant ENCG']),
+        'api.github.com/user/emails' => Http::response([
+            ['email' => 'dev.student@encg-fes.ac.ma', 'primary' => true, 'verified' => true],
+        ]),
+    ]);
+
+    $this->withUnencryptedCookie('encg_sso_state', $state);
+    $callback = get('/api/v1/auth/sso/github/callback?code=gh-code&state='.$state);
+    $callback->assertRedirect();
+    $location = (string) $callback->headers->get('Location');
+    expect($location)->toContain('remember=1');
+
+    parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
+
+    $this->withCredentials();
+    postJson('/api/v1/auth/sso/exchange', ['code' => $query['code']])
+        ->assertOk()
+        ->assertJsonPath('data.authenticated', true)
+        ->assertJsonPath('data.remember', true);
+
+    expect($user->fresh()->sso_provider)->toBe('github')
+        ->and($user->fresh()->sso_subject)->toBe('987654')
+        ->and($user->tokens()->first()->name)->toBe('auth-token-remember');
+});

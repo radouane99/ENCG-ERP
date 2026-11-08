@@ -25,14 +25,15 @@ class SsoController extends Controller
         return response()->json([
             'data' => [
                 'providers' => $this->sso->enabledProviders(),
+                'catalog' => $this->sso->availableProvidersCatalog(),
             ],
         ]);
     }
 
-    public function redirect(string $provider): RedirectResponse|JsonResponse
+    public function redirect(string $provider, Request $request): RedirectResponse|JsonResponse
     {
         try {
-            return $this->sso->redirect($provider);
+            return $this->sso->redirect($provider, $request->boolean('remember'));
         } catch (SsoAuthenticationException $e) {
             return response()->json(['message' => $e->getMessage()], 404);
         }
@@ -47,6 +48,7 @@ class SsoController extends Controller
     {
         $validated = $request->validate([
             'code' => 'required|string|max:128',
+            'remember' => 'sometimes|boolean',
         ]);
 
         try {
@@ -55,16 +57,19 @@ class SsoController extends Controller
             return response()->json(['message' => $e->getMessage()], 422);
         }
 
+        $remember = $request->boolean('remember');
         if ($user->two_factor_enabled) {
-            return response()->json(['data' => app(LoginChallengeService::class)->create($user)])->withCookie(AuthCookie::forget());
+            return response()->json(['data' => app(LoginChallengeService::class)->create($user, $remember)])->withCookie(AuthCookie::forget());
         }
-        $token = $user->createToken('auth-token', ['*'], now()->addHours(8))->plainTextToken;
-        event(new Login('sanctum', $user, false));
+        $expiresAt = $remember ? now()->addDays(AuthCookie::REMEMBER_DAYS) : now()->addHours(8);
+        $token = $user->createToken($remember ? 'auth-token-remember' : 'auth-token', ['*'], $expiresAt)->plainTextToken;
+        event(new Login('sanctum', $user, $remember));
 
         return AuthCookie::attach(response()->json([
             'data' => [
                 'authenticated' => true,
+                'remember' => $remember,
             ],
-        ]), $token);
+        ]), $token, $remember);
     }
 }

@@ -177,4 +177,30 @@ class AuthSecurityWorkflowTest extends TestCase
         $unknown = $this->postJson('/api/v1/auth/forgot-password', ['email' => 'missing@example.test'])->assertOk()->json();
         $this->assertSame($known, $unknown);
     }
+
+    public function test_login_supports_remember_me_30_days_and_cin_identifier(): void
+    {
+        $user = User::factory()->create([
+            'cin' => 'CD998877',
+            'password' => 'Synthetic123!',
+            'is_active' => true,
+            'must_change_password' => false,
+            'two_factor_enabled' => false,
+        ]);
+
+        $response = $this->postJson('/api/v1/auth/login', [
+            'email' => 'cd998877',
+            'password' => 'Synthetic123!',
+            'remember' => true,
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.remember', true)
+            ->assertJsonPath('data.user.email', $user->email);
+
+        $token = $user->tokens()->latest('id')->first();
+        $this->assertNotNull($token);
+        $this->assertSame('auth-token-remember', $token->name);
+        $this->assertTrue($token->expires_at->greaterThan(now()->addDays(25)));
+    }
 }
