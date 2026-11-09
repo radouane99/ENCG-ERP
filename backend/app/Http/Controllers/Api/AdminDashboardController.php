@@ -302,8 +302,8 @@ class AdminDashboardController extends Controller
         $report = Cache::remember('aneaq_accreditation_report', 300, function () {
             $totalStudents = Student::count();
             $totalProfessors = Professor::count();
-            $permanentsCount = Professor::where('type', '!=', 'vacataire')->orWhereNull('type')->count();
-            $vacatairesCount = Professor::where('type', 'vacataire')->count();
+            $permanentsCount = Professor::where('contract_type', '!=', 'vacataire')->orWhereNull('contract_type')->count();
+            $vacatairesCount = Professor::where('contract_type', 'vacataire')->count();
             $ratio = $totalProfessors > 0 ? round($totalStudents / $totalProfessors, 1) : 0;
 
             $avgGrade = round((float) (Grade::avg('value') ?? 13.4), 2);
