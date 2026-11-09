@@ -16,6 +16,8 @@ use App\Models\Group;
 use App\Models\Module;
 use App\Models\Schedule;
 use App\Models\Student;
+use App\Models\Textbook;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Services\Academic\AcademicContext;
 use App\Services\Academic\AttendanceService;
 use App\Services\Security\ClassroomAccessService;
@@ -184,7 +186,27 @@ class ProfessorAttendanceController extends Controller
         }
         $records = $session ? Attendance::where('attendance_session_id', $session->id)->get()->keyBy('student_id') : collect();
 
-        return response()->json(['data' => $students->map(fn ($s) => ['id' => $s->id, 'name' => $s->user->name, 'cne' => $s->cne, 'apogee' => $s->student_number, 'status' => $records[$s->id]->status ?? 'absent', 'version' => (int) ($records[$s->id]->version ?? 0)])->values(), 'module_id' => $module->id, 'group_id' => $group->id]);
+        // Calcul des alertes d'assiduité officielles ENCG Fès (2 abs = warning, >= 3 abs = risque d'exclusion)
+        $absenceCounts = Attendance::whereHas('session', fn ($q) => $q->where('module_id', $module->id))
+            ->where('status', 'absent')
+            ->whereIn('student_id', $students->pluck('id'))
+            ->selectRaw('student_id, count(*) as count')
+            ->groupBy('student_id')
+            ->pluck('count', 'student_id');
+
+        return response()->json([
+            'data' => $students->map(fn ($s) => [
+                'id' => $s->id,
+                'name' => $s->user->name,
+                'cne' => $s->cne,
+                'apogee' => $s->student_number,
+                'status' => $records[$s->id]->status ?? 'absent',
+                'absence_count' => (int) ($absenceCounts[$s->id] ?? 0),
+                'version' => (int) ($records[$s->id]->version ?? 0),
+            ])->values(),
+            'module_id' => $module->id,
+            'group_id' => $group->id,
+        ]);
     }
 
     /**
@@ -245,6 +267,9 @@ class ProfessorAttendanceController extends Controller
             'records.*.status' => 'required|in:present,absent,late,excused',
             'records.*.version' => 'nullable|integer|min:0',
             'close_session' => 'sometimes|boolean',
+            'sync_textbook' => 'sometimes|boolean',
+            'chapter_title' => 'nullable|string|max:255',
+            'key_concepts' => 'nullable|string|max:1000',
         ]);
 
         $session = DB::transaction(function () use ($request, $validated) {
@@ -268,6 +293,39 @@ class ProfessorAttendanceController extends Controller
             }
             if ($validated['close_session'] ?? false) {
                 $this->attendanceService->closeSession($session->id);
+
+                // Synergie Pédagogique ENCG Fès : Clôture d'appel ➔ Synchronisation Cahier de Texte
+                if (! empty($validated['sync_textbook'])) {
+                    $prof = $request->user()->professor ?? \App\Models\Professor::where('user_id', $request->user()->id)->first();
+                    if ($prof) {
+                        $moduleObj = Module::find($session->module_id);
+                        $totalPresent = Attendance::where('attendance_session_id', $session->id)->whereIn('status', ['present', 'late'])->count();
+                        $totalAbsent = Attendance::where('attendance_session_id', $session->id)->where('status', 'absent')->count();
+                        $defaultTitle = $validated['chapter_title'] ?? "Séance — ".($moduleObj?->name ?? 'Enseignement');
+                        $defaultConcepts = $validated['key_concepts'] ?? "Séance officielle {$session->session_type} en {$session->room}. Effectif : {$totalPresent} présents, {$totalAbsent} absents.";
+
+                        $existingTextbooksCount = Textbook::where('module_id', $session->module_id)->count();
+
+                        Textbook::updateOrCreate(
+                            [
+                                'professor_id' => $prof->id,
+                                'module_id' => $session->module_id,
+                                'session_date' => $session->session_date,
+                                'session_type' => $session->session_type ?? 'cours',
+                            ],
+                            [
+                                'user_id' => $request->user()->id,
+                                'group_id' => $session->group_id,
+                                'session_duration_hours' => 2.0,
+                                'chapter_title' => $defaultTitle,
+                                'key_concepts' => $defaultConcepts,
+                                'pedagogical_goals' => "Progression du syllabus officiel & contrôle d'assiduité",
+                                'syllabus_percentage' => min(100, ($existingTextbooksCount + 1) * 7),
+                                'status' => 'submitted',
+                            ]
+                        );
+                    }
+                }
             }
 
             return $session;
@@ -278,6 +336,68 @@ class ProfessorAttendanceController extends Controller
             'message' => 'Émargement enregistré.',
             'session_id' => $session->id,
         ]);
+    }
+
+    /**
+     * Téléchargement de la fiche d'émargement officielle de la session en PDF A4.
+     */
+    public function downloadSessionPdf(int $sessionId, Request $request)
+    {
+        $session = AttendanceSession::with(['module.filiere', 'group.academicYear'])->findOrFail($sessionId);
+        $user = $request->user();
+        $module = $session->module;
+        $group = $session->group;
+        app(ClassroomAccessService::class)->authorize($user, $module, $group);
+
+        $records = Attendance::where('attendance_session_id', $session->id)->get()->keyBy('student_id');
+        $absentIds = $records->where('status', 'absent')->pluck('student_id')->toArray();
+
+        $students = Student::with(['user', 'latestPathway'])
+            ->select('students.*')
+            ->leftJoin('users', 'students.user_id', '=', 'users.id')
+            ->where(fn ($q) => $q->whereHas('pathways', fn ($p) => $p->where('academic_year_id', $group->academic_year_id)->where('group_id', $group->id))
+                ->orWhereHas('registrations', fn ($r) => $r->where('academic_year_id', $group->academic_year_id)->where('group_id', $group->id))
+            )
+            ->orderBy('users.last_name', 'asc')
+            ->orderBy('users.first_name', 'asc')
+            ->get()
+            ->map(fn ($s) => [
+                'id' => $s->id,
+                'student_number' => $s->student_number,
+                'cne' => $s->cne ?: ($s->massar_code ?: '—'),
+                'cin' => $s->cin ?: ($s->user?->cin ?: '—'),
+                'first_name' => $s->user?->first_name ?? '',
+                'last_name' => $s->user?->last_name ?? '',
+                'status' => $records[$s->id]->status ?? 'absent',
+                'sub_group' => $s->latestPathway?->sub_group ?? ($s->sub_group ?? '—'),
+            ]);
+
+        $prof = $user->professor;
+        $professorName = $user ? trim(($user->first_name ?? '').' '.($user->last_name ?? '')) : 'Professeur ENCG';
+        $statusLabel = ($user->hasRole('vacataire') || $prof?->contract_type === 'vacataire') ? 'Enseignant Vacataire' : 'Professeur Titulaire (Permanent)';
+
+        $trackingCode = 'EMG-'.date('Y').'-'.str_pad($session->id, 5, '0', STR_PAD_LEFT);
+        $securityHash = hash('sha256', "{$session->id}_{$module->id}_{$group->id}_{$session->session_date}_{$user->id}");
+
+        $pdf = Pdf::loadView('pdf.fiche_emargement_professeur', [
+            'professorName' => $professorName,
+            'professorStatus' => $statusLabel,
+            'groupName' => $group->name,
+            'filiereCode' => $module->filiere?->code ?? $group->filiere?->code ?? 'TC',
+            'filiereName' => $module->filiere?->name ?? $group->filiere?->name ?? 'Tronc Commun',
+            'semester' => $group->semester_number ?? $module->semester_number ?? 1,
+            'moduleName' => $module->name ?? 'Module Pédagogique',
+            'subGroup' => null,
+            'academicYear' => $group->academicYear?->name ?? '2026/2027',
+            'mode' => 'emargement',
+            'orientation' => 'portrait',
+            'absentIds' => $absentIds,
+            'students' => $students,
+            'trackingCode' => $trackingCode,
+            'securityHash' => $securityHash,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download("fiche_emargement_session_{$session->id}_{$session->session_date}.pdf");
     }
 
     /**

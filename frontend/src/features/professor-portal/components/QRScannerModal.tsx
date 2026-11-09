@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useRef, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import api from '@shared/lib/api'
+import { openAuthenticatedUrl } from '@shared/lib/documentAccess'
 import { Modal } from '@shared/components/ui/Modal'
 import { Button } from '@shared/components/ui/Button'
 import {
@@ -20,7 +21,9 @@ import {
   AlertTriangle,
   GraduationCap,
   Save,
-  Check
+  Check,
+  Printer,
+  BookOpen
 } from 'lucide-react'
 
 interface Props {
@@ -67,6 +70,7 @@ interface StudentRosterItem {
   name: string
   cne: string
   apogee?: string
+  absence_count?: number
   version?: number; status: Status
 }
 
@@ -197,6 +201,14 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
   const [showSchedulePicker, setShowSchedulePicker] = useState(false)
   const [lastScannedStudent, setLastScannedStudent] = useState<{ name: string; warning?: string | null } | null>(null)
   const scanInputRef = useRef<HTMLInputElement>(null)
+  const [syncTextbook, setSyncTextbook] = useState(true)
+  const [chapterTitle, setChapterTitle] = useState('')
+
+  const handleDownloadPdf = () => {
+    if (activeId) {
+      openAuthenticatedUrl(`/api/v1/professor/attendance/sessions/${activeId}/pdf`)
+    }
+  }
 
   // Fetch official assignments
   const context = useQuery({
@@ -282,6 +294,14 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
       setSessionDate(getDateForScheduleDay(scheduleDay))
     }
   }, [selectedSchedule, attendanceSessionId])
+
+  // Initialize chapter title for textbook
+  useEffect(() => {
+    const mod = sessionData?.module || sessionData?.title || selectedSchedule?.moduleName
+    if (mod) {
+      setChapterTitle(`Séance — ${mod}`)
+    }
+  }, [sessionData?.module, sessionData?.title, selectedSchedule?.moduleName])
 
   // Start attendance session
   async function handleStartSession() {
@@ -374,12 +394,18 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
         session_id: activeId,
         close_session: true,
         date: sessionDate,
+        sync_textbook: syncTextbook,
+        chapter_title: chapterTitle || undefined,
         records: Object.entries(statuses).map(([student_id, status]) => ({
           student_id: Number(student_id), version: versions.current[Number(student_id)] ?? 0,
           status,
         })),
       })
-      toast.success('Feuille d’émargement officielle enregistrée et session clôturée avec succès !')
+      toast.success(
+        syncTextbook
+          ? 'Feuille d’émargement clôturée et Cahier de Texte synchronisé avec succès (+2h) !'
+          : 'Feuille d’émargement officielle enregistrée et session clôturée avec succès !'
+      )
       onClose()
     } catch {
       setError('Une erreur est survenue lors de l’enregistrement. Vos choix sont conservés.')
@@ -870,10 +896,31 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                           {initials || 'ET'}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-bold text-xs text-foreground dark:text-white truncate">
-                            {student.name}
-                          </p>
-                          <div className="flex items-center gap-2 text-[11px] text-slate-400 font-mono">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-bold text-xs text-foreground dark:text-white truncate">
+                              {student.name}
+                            </p>
+                            {student.absence_count !== undefined && student.absence_count >= 2 && (
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase inline-flex items-center gap-1 ${
+                                  student.absence_count >= 3
+                                    ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-300 dark:border-rose-800 animate-pulse'
+                                    : 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
+                                }`}
+                                title={
+                                  student.absence_count >= 3
+                                    ? `Attention : ${student.absence_count} absences cumulées dans ce module (Risque d'exclusion aux examens)`
+                                    : 'Avertissement officiel : 2 absences déjà enregistrées dans ce module'
+                                }
+                              >
+                                <AlertTriangle className="w-3 h-3" />
+                                {student.absence_count >= 3
+                                  ? `${student.absence_count} abs. (Exclusion)`
+                                  : '2 abs. (Avertissement)'}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-[11px] text-slate-400 font-mono mt-0.5">
                             <span>{student.cne}</span>
                             {student.apogee && (
                               <span className="text-slate-300 dark:text-slate-600">• {student.apogee}</span>
@@ -946,6 +993,39 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
               </div>
             )}
 
+            {/* 4.5. Synergie Pédagogique ENCG Fès : Clôture & Cahier de Texte */}
+            <div className="bg-slate-50/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-3.5 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 cursor-pointer font-bold text-xs text-slate-800 dark:text-slate-200">
+                  <input
+                    type="checkbox"
+                    checked={syncTextbook}
+                    onChange={(e) => setSyncTextbook(e.target.checked)}
+                    className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 cursor-pointer"
+                  />
+                  <span className="flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    Synchroniser avec le Cahier de Texte Numérique (+2h au volume horaire)
+                  </span>
+                </label>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/60">
+                  Recommandé
+                </span>
+              </div>
+
+              {syncTextbook && (
+                <div className="pt-1 flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="text"
+                    value={chapterTitle}
+                    onChange={(e) => setChapterTitle(e.target.value)}
+                    placeholder="Titre du cours / chapitre traité (ex: Chapitre 1 — Introduction)..."
+                    className="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  />
+                </div>
+              )}
+            </div>
+
             {/* 5. Sticky Footer Bar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-border">
               <div className="flex items-center gap-2 text-xs">
@@ -957,7 +1037,18 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                 </span>
               </div>
 
-              <div className="flex items-center gap-2 justify-end">
+              <div className="flex items-center gap-2 justify-end flex-wrap">
+                <button
+                  type="button"
+                  onClick={handleDownloadPdf}
+                  disabled={!activeId}
+                  className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/70 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-xs font-bold transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                  title="Télécharger la Feuille d'Émargement Officielle en PDF"
+                >
+                  <Printer className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+                  <span>Imprimer PDF</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={handleCloseModal}
@@ -966,6 +1057,7 @@ export function QRScannerModal({ isOpen, onClose, sessionId, sessionData, attend
                 >
                   Fermer
                 </button>
+
                 <Button
                   onClick={handleSaveSession}
                   isLoading={busy}
