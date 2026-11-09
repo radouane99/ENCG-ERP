@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import UserActionCenter from '@features/dashboard/components/UserActionCenter';
-import { BookOpen, Users, Calendar, CheckCircle, Clock, QrCode, Building2, Eye, Zap, FileSignature, RotateCcw, Sparkles, PenTool, ShieldCheck, Download, X, UserX, ArrowRight, BrainCircuit, Mic, ArrowRightLeft, MapPin, TrendingUp, CheckCircle2, GraduationCap, RefreshCcw, FileEdit } from 'lucide-react';
+import { BookOpen, Users, Calendar, CheckCircle, Clock, QrCode, Building2, Eye, Zap, FileSignature, RotateCcw, Sparkles, PenTool, ShieldCheck, Download, X, ArrowRight, BrainCircuit, Mic, ArrowRightLeft, MapPin, TrendingUp, CheckCircle2, GraduationCap, RefreshCcw, FileEdit } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@stores/authStore';
@@ -277,8 +277,6 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
 
   return (
     <div className="space-y-6 font-sans animate-in fade-in duration-500 text-foreground pb-16 max-w-[1600px] mx-auto p-2">
-      <UserActionCenter actor="professor" />
-
       {/* ── Top Header Bar (Breadcrumb & Live Actions) ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-1">
         <div>
@@ -421,45 +419,48 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
 
           {/* Card 1: Modules Attribués */}
-          <div className="bg-card rounded-2xl p-5 shadow-xs border border-border relative overflow-hidden group hover:shadow-md transition-all">
+          <div className="bg-card rounded-2xl p-5 shadow-xs border border-border border-t-4 border-t-[#1a3673] relative overflow-hidden group hover:shadow-md transition-all">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Modules Attribués</span>
-              <span className="p-2 rounded-xl bg-primary/5 dark:bg-blue-950/60 text-primary dark:text-blue-400">
+              <span className="p-2.5 rounded-xl bg-primary/5 dark:bg-blue-950/60 text-primary dark:text-blue-400">
                 <BookOpen className="w-4 h-4" />
               </span>
             </div>
             <div className="text-2xl sm:text-3xl font-bold text-[#1a3673] dark:text-white mt-2">
               {stats.total_modules}
             </div>
-            <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mt-2 flex items-center gap-1.5">
+            <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mt-2.5 flex items-center gap-1.5">
               <CheckCircle2 className="w-3.5 h-3.5" />
               <span>{stats.total_groups > 0 ? `${stats.total_groups} Groupes / Sections` : 'Affectations Actives'}</span>
             </div>
           </div>
 
           {/* Card 2: Total Étudiants */}
-          <div className="bg-card rounded-2xl p-5 shadow-xs border border-border relative overflow-hidden group hover:shadow-md transition-all">
+          <div className="bg-card rounded-2xl p-5 shadow-xs border border-border border-t-4 border-t-indigo-600 relative overflow-hidden group hover:shadow-md transition-all">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Étudiants Suivis</span>
-              <span className="p-2 rounded-xl bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-400">
+              <span className="p-2.5 rounded-xl bg-primary/5 dark:bg-indigo-950/60 text-primary dark:text-indigo-400">
                 <Users className="w-4 h-4" />
               </span>
             </div>
             <div className="text-2xl sm:text-3xl font-bold text-[#1a3673] dark:text-white mt-2">
               {stats.total_students}
             </div>
-            <div className="text-[10px] font-bold text-primary dark:text-indigo-400 uppercase tracking-widest mt-2 flex items-center gap-1.5">
+            <div className="text-[10px] font-bold text-primary dark:text-indigo-400 uppercase tracking-widest mt-2.5 flex items-center gap-1.5">
               <TrendingUp className="w-3.5 h-3.5" />
               <span>Promotion Active ENCG</span>
             </div>
           </div>
 
           {/* Card 3: Notes Apogée en Attente */}
-          <div className="bg-card rounded-2xl p-5 shadow-xs border border-border relative overflow-hidden group hover:shadow-md transition-all">
+          <div className={cn(
+            "bg-card rounded-2xl p-5 shadow-xs border border-border border-t-4 relative overflow-hidden group hover:shadow-md transition-all",
+            stats.pending_grades > 0 ? "border-t-rose-500" : "border-t-emerald-500"
+          )}>
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Notes à Saisir</span>
               <span className={cn(
-                "p-2 rounded-xl",
+                "p-2.5 rounded-xl",
                 stats.pending_grades > 0 ? "bg-rose-50 dark:bg-rose-950/60 text-rose-600" : "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600"
               )}>
                 <FileEdit className="w-4 h-4" />
@@ -474,7 +475,7 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
             <Link
               to="/admin/grades"
               className={cn(
-                "text-[10px] font-bold hover:underline mt-2 inline-flex items-center gap-1 uppercase tracking-widest",
+                "text-[10px] font-bold hover:underline mt-2.5 inline-flex items-center gap-1 uppercase tracking-widest",
                 stats.pending_grades > 0 ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"
               )}
             >
@@ -483,20 +484,26 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
           </div>
 
           {/* Card 4: Charge Statutaire RH */}
-          <div className="bg-card rounded-2xl p-5 shadow-xs border border-border relative overflow-hidden group hover:shadow-md transition-all">
+          <div className="bg-card rounded-2xl p-5 shadow-xs border border-border border-t-4 border-t-amber-500 relative overflow-hidden group hover:shadow-md transition-all">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Charge Statutaire</span>
-              <span className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600">
+              <span className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600">
                 <Clock className="w-4 h-4" />
               </span>
             </div>
             <div className="text-2xl sm:text-3xl font-bold text-amber-600 dark:text-amber-400 mt-2">
               {stats.statutory_hours_done}h <span className="text-xs font-bold text-slate-400">/ {stats.statutory_hours_total}h</span>
             </div>
-            <div className="mt-2 flex items-center justify-between text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+            <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden mt-2">
+              <div
+                className="bg-gradient-to-r from-amber-500 to-amber-400 h-1.5 rounded-full transition-all duration-500"
+                style={{ width: `${statutoryPercent}%` }}
+              />
+            </div>
+            <div className="mt-1.5 flex items-center justify-between text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
               <span>{statutoryPercent}% Réalisé</span>
               <Link to="/professor/workload" className="text-amber-700 dark:text-amber-400 hover:underline">
-                Détail Vacations →
+                {stats.has_contract ? 'Détail Vacations →' : 'Détail Charge →'}
               </Link>
             </div>
           </div>
@@ -504,85 +511,203 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
         </div>
       )}
 
-      {/* ── Direct Shortcuts Ribbon (Clean 6-Icon Grid) ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-        <Link
-          to="/professor/absences"
-          className="flex items-center gap-2.5 p-3 rounded-xl bg-card border border-border hover:border-blue-500/40 shadow-2xs hover:shadow-sm transition-all group cursor-pointer"
-        >
-          <div className="w-8 h-8 rounded-lg bg-primary/5 dark:bg-blue-950/60 text-primary dark:text-blue-300 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-            <UserX className="w-4 h-4" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-xs font-bold text-foreground dark:text-white truncate">Faire l'Appel</div>
-            <div className="text-[10px] text-slate-400 truncate">Scanner QR</div>
-          </div>
-        </Link>
+      {/* ── Pôle d'Actions & Pilotage Pédagogique (Action Center + 6 Executive Quick Actions) ── */}
+      <div className="space-y-4">
+        <UserActionCenter actor="professor" />
 
-        <Link
-          to="/admin/grades"
-          className="flex items-center gap-2.5 p-3 rounded-xl bg-card border border-border hover:border-emerald-500/40 shadow-2xs hover:shadow-sm transition-all group cursor-pointer"
-        >
-          <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-            <Zap className="w-4 h-4" />
+        <div className="bg-card rounded-2xl p-5 sm:p-6 shadow-xs border border-border space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-border">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-[#1a3673]/10 dark:bg-blue-950/60 text-[#1a3673] dark:text-amber-300 flex items-center justify-center shrink-0">
+                <Zap className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm sm:text-base font-bold text-[#1a3673] dark:text-white">
+                    Guichet d'Actions Rapides & Outils de Séance
+                  </h2>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                    Accès Direct
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Lancez vos opérations pédagogiques quotidiennes en un clic (Appel QR, Notes Apogée, Cahier IA, Salles)
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/professor/documents"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-muted/70 hover:bg-muted text-xs font-bold text-[#1a3673] dark:text-blue-300 transition-colors self-start sm:self-center"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Guichet RH & Attestations →</span>
+            </Link>
           </div>
-          <div className="min-w-0">
-            <div className="text-xs font-bold text-foreground dark:text-white truncate">Saisie Notes CC</div>
-            <div className="text-[10px] text-slate-400 truncate">Notes & CC</div>
-          </div>
-        </Link>
 
-        <Link
-          to="/professor/schedules"
-          className="flex items-center gap-2.5 p-3 rounded-xl bg-card border border-border hover:border-amber-500/40 shadow-2xs hover:shadow-sm transition-all group cursor-pointer"
-        >
-          <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-            <Calendar className="w-4 h-4" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-xs font-bold text-foreground dark:text-white truncate">Emploi du Temps</div>
-            <div className="text-[10px] text-slate-400 truncate">Séances & Salles</div>
-          </div>
-        </Link>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
+            {/* Action 1: Faire l'Appel QR */}
+            <Link
+              to="/professor/absences"
+              className="group relative flex flex-col justify-between p-4 rounded-2xl bg-gradient-to-br from-slate-50/90 to-blue-50/30 dark:from-slate-900/70 dark:to-blue-950/20 border border-slate-200/80 dark:border-slate-800 hover:border-[#1a3673] dark:hover:border-blue-400 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden"
+            >
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#1a3673] to-blue-600 text-white shadow-sm flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <QrCode className="w-5 h-5 text-amber-300" />
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-blue-500/10 text-[#1a3673] dark:text-blue-300 border border-blue-500/20">
+                    QR Live
+                  </span>
+                </div>
+                <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#1a3673] dark:group-hover:text-blue-300 transition-colors">
+                  Faire l'Appel
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
+                  Scanner QR & émargement numérique
+                </p>
+              </div>
+              <div className="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold text-[#1a3673] dark:text-blue-400 uppercase tracking-wider">
+                <span>Ouvrir l'appel</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
 
-        <Link
-          to="/professor/proctoring"
-          className="flex items-center gap-2.5 p-3 rounded-xl bg-card border border-border hover:border-purple-500/40 shadow-2xs hover:shadow-sm transition-all group cursor-pointer"
-        >
-          <div className="w-8 h-8 rounded-lg bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-            <Eye className="w-4 h-4" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-xs font-bold text-foreground dark:text-white truncate">Surveillance</div>
-            <div className="text-[10px] text-slate-400 truncate">Convocations</div>
-          </div>
-        </Link>
+            {/* Action 2: Saisie Notes CC */}
+            <Link
+              to="/admin/grades"
+              className="group relative flex flex-col justify-between p-4 rounded-2xl bg-gradient-to-br from-slate-50/90 to-emerald-50/30 dark:from-slate-900/70 dark:to-emerald-950/20 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-600 dark:hover:border-emerald-400 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden"
+            >
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-600 text-white shadow-sm flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <FileEdit className="w-5 h-5 text-emerald-100" />
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                    Apogée
+                  </span>
+                </div>
+                <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white group-hover:text-emerald-700 dark:group-hover:text-emerald-300 transition-colors">
+                  Saisie Notes CC
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
+                  Contrôle continu, TP & PV officiels
+                </p>
+              </div>
+              <div className="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                <span>Saisir les notes</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
 
-        <Link
-          to="/professor/voice-textbook"
-          className="flex items-center gap-2.5 p-3 rounded-xl bg-card border border-border hover:border-rose-500/40 shadow-2xs hover:shadow-sm transition-all group cursor-pointer"
-        >
-          <div className="w-8 h-8 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-            <Mic className="w-4 h-4" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-xs font-bold text-foreground dark:text-white truncate">Cahier Vocal</div>
-            <div className="text-[10px] text-slate-400 truncate">Texte IA</div>
-          </div>
-        </Link>
+            {/* Action 3: Emploi du Temps */}
+            <Link
+              to="/professor/schedules"
+              className="group relative flex flex-col justify-between p-4 rounded-2xl bg-gradient-to-br from-slate-50/90 to-amber-50/30 dark:from-slate-900/70 dark:to-amber-950/20 border border-slate-200/80 dark:border-slate-800 hover:border-amber-500 dark:hover:border-amber-400 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden"
+            >
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-sm flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <Calendar className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                    Planning
+                  </span>
+                </div>
+                <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white group-hover:text-amber-700 dark:group-hover:text-amber-300 transition-colors">
+                  Emploi du Temps
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
+                  Séances CM/TD, salles & permutations
+                </p>
+              </div>
+              <div className="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+                <span>Voir le planning</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
 
-        <Link
-          to="/professor/rooms/availability"
-          className="flex items-center gap-2.5 p-3 rounded-xl bg-card border border-border hover:border-teal-500/40 shadow-2xs hover:shadow-sm transition-all group cursor-pointer"
-        >
-          <div className="w-8 h-8 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-            <MapPin className="w-4 h-4" />
+            {/* Action 4: Surveillance & PV */}
+            <Link
+              to="/professor/proctoring"
+              className="group relative flex flex-col justify-between p-4 rounded-2xl bg-gradient-to-br from-slate-50/90 to-purple-50/30 dark:from-slate-900/70 dark:to-purple-950/20 border border-slate-200/80 dark:border-slate-800 hover:border-purple-600 dark:hover:border-purple-400 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden"
+            >
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 text-white shadow-sm flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <Eye className="w-5 h-5 text-purple-100" />
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20">
+                    Examens
+                  </span>
+                </div>
+                <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white group-hover:text-purple-700 dark:group-hover:text-purple-300 transition-colors">
+                  Surveillance
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
+                  Convocations d'examens & affectations
+                </p>
+              </div>
+              <div className="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wider">
+                <span>Convocations</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
+
+            {/* Action 5: Cahier Vocal IA */}
+            <Link
+              to="/professor/voice-textbook"
+              className="group relative flex flex-col justify-between p-4 rounded-2xl bg-gradient-to-br from-slate-50/90 to-rose-50/30 dark:from-slate-900/70 dark:to-rose-950/20 border border-slate-200/80 dark:border-slate-800 hover:border-rose-600 dark:hover:border-rose-400 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden"
+            >
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-rose-600 to-pink-600 text-white shadow-sm flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <Mic className="w-5 h-5 text-rose-100" />
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20">
+                    IA Vocale
+                  </span>
+                </div>
+                <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white group-hover:text-rose-700 dark:group-hover:text-rose-300 transition-colors">
+                  Cahier Vocal
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
+                  Dictée vocale & suivi du syllabus
+                </p>
+              </div>
+              <div className="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase tracking-wider">
+                <span>Dicter séance</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
+
+            {/* Action 6: Salles Libres */}
+            <Link
+              to="/professor/rooms/availability"
+              className="group relative flex flex-col justify-between p-4 rounded-2xl bg-gradient-to-br from-slate-50/90 to-teal-50/30 dark:from-slate-900/70 dark:to-teal-950/20 border border-slate-200/80 dark:border-slate-800 hover:border-teal-600 dark:hover:border-teal-400 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer overflow-hidden"
+            >
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-teal-600 to-cyan-600 text-white shadow-sm flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <MapPin className="w-5 h-5 text-teal-100" />
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/20">
+                    Dispo Live
+                  </span>
+                </div>
+                <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white group-hover:text-teal-700 dark:group-hover:text-teal-300 transition-colors">
+                  Salles Libres
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
+                  Réservation séance extra & rattrapage
+                </p>
+              </div>
+              <div className="mt-3 pt-2.5 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-between text-[10px] font-bold text-teal-700 dark:text-teal-400 uppercase tracking-wider">
+                <span>Trouver salle</span>
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Link>
           </div>
-          <div className="min-w-0">
-            <div className="text-xs font-bold text-foreground dark:text-white truncate">Salles Libres</div>
-            <div className="text-[10px] text-slate-400 truncate">Rattrapages</div>
-          </div>
-        </Link>
+        </div>
       </div>
 
       {/* ── Main 2-Column Responsive Workspace ── */}
@@ -877,6 +1002,56 @@ const { data: statsData, isLoading, refetch, isFetching } = useQuery<ProfessorSt
                   <span>Salles Libres (Rattrapages)</span>
                 </span>
                 <ArrowRight className="w-3.5 h-3.5 text-purple-300" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Widget 4: Guichet RH, Documents & Permutations */}
+          <div className="bg-card rounded-2xl p-5 sm:p-6 shadow-xs border border-border space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Guichet Administratif & RH
+                </h3>
+                <p className="text-xs font-bold text-foreground mt-0.5">
+                  {stats.has_contract ? 'Dossier Vacataire & Décomptes CGI' : 'Dossier Statutaire & Permutations'}
+                </p>
+              </div>
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            </div>
+
+            <div className="space-y-2.5">
+              <Link
+                to="/professor/documents"
+                className="flex items-center justify-between p-3 rounded-xl bg-muted/50 hover:bg-muted dark:bg-slate-800/40 dark:hover:bg-slate-800 border border-border transition-all text-xs font-bold text-foreground group"
+              >
+                <span className="flex items-center gap-2.5">
+                  <FileSignature className="w-4 h-4 text-[#1a3673] dark:text-blue-400" />
+                  <span>{stats.has_contract ? 'Attestations & Ordres de Mission' : 'Attestations & Ordres de Mission RH'}</span>
+                </span>
+                <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+
+              <Link
+                to="/professor/workload"
+                className="flex items-center justify-between p-3 rounded-xl bg-muted/50 hover:bg-muted dark:bg-slate-800/40 dark:hover:bg-slate-800 border border-border transition-all text-xs font-bold text-foreground group"
+              >
+                <span className="flex items-center gap-2.5">
+                  <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  <span>{stats.has_contract ? 'Suivi Vacations & IGR (17%)' : 'Bilan Charge & Service Fait'}</span>
+                </span>
+                <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+
+              <Link
+                to="/professor/schedules"
+                className="flex items-center justify-between p-3 rounded-xl bg-muted/50 hover:bg-muted dark:bg-slate-800/40 dark:hover:bg-slate-800 border border-border transition-all text-xs font-bold text-foreground group"
+              >
+                <span className="flex items-center gap-2.5">
+                  <ArrowRightLeft className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span>Bourse de Permutation de Séances</span>
+                </span>
+                <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
               </Link>
             </div>
           </div>
