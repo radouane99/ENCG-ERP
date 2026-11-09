@@ -1634,104 +1634,108 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
           </div>
         </div>
 
-        {/* Hero Quick Action Buttons */}
-        <div className="flex items-center gap-2 relative z-10 flex-wrap">
-          {/* Table / Cards View Mode Toggle */}
-          <div className="flex rounded-xl overflow-hidden border border-white/20 bg-white/10 p-0.5 backdrop-blur-md">
+        {/* Hero Quick Action Buttons — Executive ENCG Layout */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 relative z-10 shrink-0">
+          {/* Table / Cards / Voice View Mode Toggle */}
+          <div className="flex rounded-xl overflow-hidden border border-white/20 bg-white/10 p-1 backdrop-blur-md shadow-sm">
             <button
               onClick={() => setViewMode('table')}
-              title="Vue Tableau Officiel"
               className={cn(
-                'p-2 rounded-lg transition-all',
-                viewMode === 'table' ? "bg-card text-[#1a3673] shadow font-bold" : 'text-slate-300 hover:text-white'
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                viewMode === 'table' ? "bg-white text-[#1a3673] shadow-md" : 'text-slate-200 hover:text-white'
               )}
             >
-              <LayoutList className="w-4 h-4" />
+              <LayoutList className="w-3.5 h-3.5" />
+              <span>Tableau</span>
             </button>
             <button
               onClick={() => setViewMode('cards')}
-              title="Vue Cartes / Trombinoscope"
               className={cn(
-                'p-2 rounded-lg transition-all',
-                viewMode === 'cards' ? "bg-card text-[#1a3673] shadow font-bold" : 'text-slate-300 hover:text-white'
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                viewMode === 'cards' ? "bg-white text-[#1a3673] shadow-md" : 'text-slate-200 hover:text-white'
               )}
             >
-              <LayoutGrid className="w-4 h-4" />
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span>Trombi</span>
             </button>
             <button
               onClick={() => setViewMode('voice')}
-              title="Appel Vocal IA"
               className={cn(
-                'p-2 rounded-lg transition-all',
-                viewMode === 'voice' ? 'bg-rose-500 text-white shadow font-bold' : 'text-slate-300 hover:text-white'
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer',
+                viewMode === 'voice' ? 'bg-rose-500 text-white shadow-md' : 'text-slate-200 hover:text-white'
               )}
             >
-              <Mic className="w-4 h-4" />
+              <Mic className="w-3.5 h-3.5" />
+              <span>Vocal IA</span>
             </button>
           </div>
 
-          <button
-            onClick={() => setShowStats(v => !v)}
-            className={cn(
-              'flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border backdrop-blur-md cursor-pointer',
-              showStats ? 'bg-violet-500 text-white border-violet-400' : 'bg-white/10 border-white/20 text-slate-200 hover:bg-white/20'
-            )}
-          >
-            <BarChart3 className="w-3.5 h-3.5" />
-            <span>Stats</span>
-          </button>
+          {/* Quick Utility Actions */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setShowStats(v => !v)}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border backdrop-blur-md cursor-pointer',
+                showStats ? 'bg-violet-500 text-white border-violet-400 shadow-sm' : 'bg-white/10 border-white/20 text-slate-200 hover:bg-white/20'
+              )}
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
+              <span>Stats</span>
+            </button>
 
-          <button
-            onClick={() => setShowQrCol(v => !v)}
-            className={cn(
-              'flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border backdrop-blur-md cursor-pointer',
-              showQrCol ? 'bg-cyan-500 text-white border-cyan-400' : 'bg-white/10 border-white/20 text-slate-200 hover:bg-white/20'
-            )}
-          >
-            <QrCode className="w-3.5 h-3.5" />
-            <span>QR</span>
-          </button>
+            <button
+              onClick={() => setShowQrCol(v => !v)}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border backdrop-blur-md cursor-pointer',
+                showQrCol ? 'bg-cyan-500 text-white border-cyan-400 shadow-sm' : 'bg-white/10 border-white/20 text-slate-200 hover:bg-white/20'
+              )}
+            >
+              <QrCode className="w-3.5 h-3.5" />
+              <span>QR</span>
+            </button>
 
-          <button
-            onClick={toggleLock}
-            className={cn(
-              'flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border backdrop-blur-md cursor-pointer',
-              isLocked
-                ? 'bg-amber-500 text-slate-950 border-amber-400'
-                : 'bg-white/10 border-white/20 text-slate-200 hover:bg-white/20'
-            )}
-            title={isLocked ? 'Déverrouiller la feuille de présence' : 'Geler la liste pour éviter les modifications accidentelles'}
-          >
-            {isLocked ? <Lock className="w-3.5 h-3.5 text-slate-950" /> : <Unlock className="w-3.5 h-3.5 text-slate-300" />}
-            <span>{isLocked ? 'Verrouillé' : 'Verrouiller'}</span>
-          </button>
+            <button
+              onClick={toggleLock}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border backdrop-blur-md cursor-pointer',
+                isLocked
+                  ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-sm'
+                  : 'bg-white/10 border-white/20 text-slate-200 hover:bg-white/20'
+              )}
+              title={isLocked ? 'Déverrouiller la feuille de présence' : 'Geler la liste pour éviter les modifications accidentelles'}
+            >
+              {isLocked ? <Lock className="w-3.5 h-3.5 text-slate-950" /> : <Unlock className="w-3.5 h-3.5 text-slate-300" />}
+              <span>{isLocked ? 'Verrouillé' : 'Verrouiller'}</span>
+            </button>
 
-          <button
-            onClick={handleOpenPdfPreview}
-            disabled={!selectedGroupId || students.length === 0}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-bold text-white transition-all backdrop-blur-md cursor-pointer disabled:opacity-40"
-          >
-            <Eye className="w-4 h-4 text-cyan-300" />
-            <span className="hidden sm:inline">Aperçu PDF</span>
-          </button>
+            <button
+              onClick={handleOpenPdfPreview}
+              disabled={!selectedGroupId || students.length === 0}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-bold text-white transition-all backdrop-blur-md cursor-pointer disabled:opacity-40"
+            >
+              <Eye className="w-3.5 h-3.5 text-cyan-300" />
+              <span>Aperçu</span>
+            </button>
 
-          <button
-            onClick={() => setShowPdfModal(true)}
-            disabled={!selectedGroupId || students.length === 0}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer disabled:opacity-40"
-          >
-            <Printer className="w-4 h-4" />
-            <span>Imprimer</span>
-          </button>
+            <button
+              onClick={() => setShowPdfModal(true)}
+              disabled={!selectedGroupId || students.length === 0}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white text-xs font-extrabold uppercase tracking-wider shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-40"
+            >
+              <Printer className="w-4 h-4" />
+              <span>Imprimer PDF</span>
+            </button>
 
-          <button
-            onClick={() => setShowWhatsAppModal(true)}
-            disabled={students.length === 0}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#25D366]/20 hover:bg-[#25D366]/30 border border-[#25D366]/40 text-xs font-bold text-emerald-200 transition-all cursor-pointer disabled:opacity-40"
-          >
-            <MessageCircle className="w-4 h-4 text-[#25D366]" />
-            <span className="hidden sm:inline">WhatsApp</span>
-          </button>
+            <button
+              onClick={() => setShowWhatsAppModal(true)}
+              disabled={students.length === 0}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#25D366]/20 hover:bg-[#25D366]/30 border border-[#25D366]/40 text-xs font-bold text-emerald-200 transition-all cursor-pointer disabled:opacity-40"
+              title="Partager le bilan d'absence via WhatsApp"
+            >
+              <MessageCircle className="w-4 h-4 text-[#25D366]" />
+              <span className="hidden md:inline">WhatsApp</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -2141,10 +2145,14 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                           setSelectedScheduleId(sch.id);
                           setSelectedModuleId(sch.module_id);
                           setSelectedGroupId(sch.group_id);
-                          setListMode(isTd ? 'subgroup' : 'section');
-                          if (sch.sub_groups?.length) setSelectedSubGroup(sch.sub_groups[0]);
-                          else setSelectedSubGroup('');
+                          const newMode = isTd ? 'subgroup' : 'section';
+                          const newSub = sch.sub_groups?.length ? sch.sub_groups[0] : '';
+                          setListMode(newMode);
+                          setSelectedSubGroup(newSub);
                           setSeanceDate(schedDate);
+                          setTimeout(() => {
+                            fetchStudents();
+                          }, 10);
                         }}
                         className={cn(
                           'relative text-left p-4 rounded-2xl border transition-all duration-200 hover:scale-[1.01] cursor-pointer overflow-hidden shadow-2xs',
@@ -2175,9 +2183,30 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                           <span className="text-[11px] text-muted-foreground capitalize">{dateLabel}</span>
                         </div>
                         {isTd && sch.sub_groups && sch.sub_groups.length > 0 && (
-                          <div className="mt-2.5 flex gap-1.5 flex-wrap">
+                          <div className="mt-2.5 flex gap-1.5 flex-wrap items-center">
+                            <span className="text-[10px] uppercase font-bold text-muted-foreground">Sous-groupes :</span>
                             {sch.sub_groups.map(sg => (
-                              <span key={sg} onClick={e => { e.stopPropagation(); if (isSelected) setSelectedSubGroup(sg); }} className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full border cursor-pointer transition-all', isSelected && selectedSubGroup === sg ? 'bg-[#1a3673] border-[#1a3673] text-white dark:bg-violet-600 dark:border-violet-500' : "bg-card border-border text-muted-foreground dark:text-foreground hover:border-[#1a3673]")}>{sg}</span>
+                              <span
+                                key={sg}
+                                onClick={e => {
+                                  e.stopPropagation();
+                                  setSelectedScheduleId(sch.id);
+                                  setSelectedModuleId(sch.module_id);
+                                  setSelectedGroupId(sch.group_id);
+                                  setListMode('subgroup');
+                                  setSelectedSubGroup(sg);
+                                  setSeanceDate(schedDate);
+                                  setTimeout(() => fetchStudents(), 10);
+                                }}
+                                className={cn(
+                                  'text-[10px] font-bold px-2.5 py-0.5 rounded-full border cursor-pointer transition-all shadow-2xs',
+                                  isSelected && selectedSubGroup === sg
+                                    ? 'bg-[#1a3673] border-[#1a3673] text-white dark:bg-violet-600 dark:border-violet-500 ring-2 ring-violet-400/20'
+                                    : "bg-card border-border text-muted-foreground hover:text-foreground hover:border-[#1a3673]"
+                                )}
+                              >
+                                {sg}
+                              </span>
                             ))}
                           </div>
                         )}
@@ -2254,6 +2283,38 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                   </button>
                 </div>
 
+                {/* 1-Click Fast Attendance Actions */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => {
+                      setAbsentIds(new Set());
+                      persistCurrentSeance(new Set(), annotations, isLocked, seanceDate);
+                      toast.success('Tous les étudiants sont marqués présents');
+                    }}
+                    disabled={isLocked || students.length === 0}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 transition-colors disabled:opacity-40 cursor-pointer shadow-2xs"
+                    title="Marquer tous les étudiants inscrits comme présents"
+                  >
+                    <CheckCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Tout Présent</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      const allIds = new Set(students.map(s => s.id));
+                      setAbsentIds(allIds);
+                      persistCurrentSeance(allIds, annotations, isLocked, seanceDate);
+                      toast.info('Tous les étudiants sont marqués absents');
+                    }}
+                    disabled={isLocked || students.length === 0}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-rose-50 hover:bg-rose-100 text-rose-800 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-300 dark:border-rose-800 transition-colors disabled:opacity-40 cursor-pointer shadow-2xs"
+                    title="Marquer tous les étudiants comme absents"
+                  >
+                    <UserX className="w-3.5 h-3.5 text-rose-600" />
+                    <span>Tout Absent</span>
+                  </button>
+                </div>
+
                 {absentIds.size > 0 && (
                   <button
                     onClick={resetAbsences}
@@ -2313,16 +2374,39 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                   <p className="text-muted-foreground text-sm font-medium">Chargement de la liste officielle…</p>
                 </div>
               ) : filteredStudents.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20 gap-3">
-                  <UserCheck className="w-12 h-12 text-slate-300 dark:text-slate-700" />
-                  <p className="text-muted-foreground text-sm font-medium">Aucun étudiant ne correspond aux filtres sélectionnés</p>
-                  {(searchQuery || attendanceFilter !== 'all') && (
+                <div className="flex flex-col items-center justify-center py-20 gap-3 text-center px-4">
+                  <div className="w-16 h-16 rounded-2xl bg-muted/60 flex items-center justify-center text-muted-foreground">
+                    <UserCheck className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <p className="text-foreground text-sm font-bold">
+                      {students.length === 0 
+                        ? "Aucun étudiant enregistré pour ce créneau d'enseignement." 
+                        : "Aucun étudiant ne correspond aux filtres sélectionnés"}
+                    </p>
+                    <p className="text-muted-foreground text-xs mt-0.5">
+                      {students.length === 0 
+                        ? "Sélectionnez un autre créneau dans la grille ci-dessus ou actualisez la synchronisation."
+                        : "Modifiez votre recherche ou réinitialisez le filtre de présence."}
+                    </p>
+                  </div>
+                  {students.length === 0 ? (
                     <button
-                      onClick={() => { setSearchQuery(''); setAttendanceFilter('all'); }}
-                      className="text-primary dark:text-emerald-400 text-xs hover:underline font-bold cursor-pointer"
+                      onClick={() => fetchStudents()}
+                      className="px-4 py-2 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary/90 cursor-pointer shadow-sm flex items-center gap-1.5 mt-2"
                     >
-                      Réinitialiser les filtres
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>Actualiser la liste</span>
                     </button>
+                  ) : (
+                    (searchQuery || attendanceFilter !== 'all') && (
+                      <button
+                        onClick={() => { setSearchQuery(''); setAttendanceFilter('all'); }}
+                        className="text-primary text-xs hover:underline font-bold cursor-pointer mt-1"
+                      >
+                        Réinitialiser les filtres
+                      </button>
+                    )
                   )}
                 </div>
               ) : viewMode === 'voice' ? (

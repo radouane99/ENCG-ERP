@@ -2172,44 +2172,72 @@ class ProfessorPortalController extends Controller
             ], 403);
         }
 
-        $query = Student::with(['user', 'latestPathway.filiere', 'latestPathway.group'])
-            ->select('students.*')
-            ->leftJoin('users', 'students.user_id', '=', 'users.id')
-            ->whereHas('pathways', function ($p) use ($groupId, $subGroup) {
-                $p->where('group_id', $groupId)->where('is_current', true);
-                if (! empty($subGroup)) {
-                    $p->where('sub_group', $subGroup);
-                }
-            });
+        $baseStudentQuery = function ($targetGroupId) use ($subGroup, $search) {
+            $query = Student::with(['user', 'latestPathway.filiere', 'latestPathway.group'])
+                ->select('students.*')
+                ->leftJoin('users', 'students.user_id', '=', 'users.id')
+                ->where(function ($q) use ($targetGroupId, $subGroup) {
+                    $q->whereHas('pathways', function ($p) use ($targetGroupId, $subGroup) {
+                        $p->where('group_id', $targetGroupId);
+                        if (! empty($subGroup)) {
+                            $p->where('sub_group', $subGroup);
+                        }
+                    })->orWhereHas('registrations', function ($r) use ($targetGroupId) {
+                        $r->where('group_id', $targetGroupId);
+                    });
+                });
 
-        if (! empty($search)) {
-            $query->where(function ($q) use ($search) {
-                $q->whereILike('students.student_number', "%{$search}%")
-                    ->orWhereILike('students.cne', "%{$search}%")
-                    ->orWhereILike('users.first_name', "%{$search}%")
-                    ->orWhereILike('users.last_name', "%{$search}%")
-                    ->orWhereILike('users.cin', "%{$search}%");
-            });
+            if (! empty($search)) {
+                $query->where(function ($q) use ($search) {
+                    $q->whereILike('students.student_number', "%{$search}%")
+                        ->orWhereILike('students.cne', "%{$search}%")
+                        ->orWhereILike('users.first_name', "%{$search}%")
+                        ->orWhereILike('users.last_name', "%{$search}%")
+                        ->orWhereILike('users.cin', "%{$search}%");
+                });
+            }
+
+            return $query->orderBy('users.last_name', 'asc')
+                ->orderBy('users.first_name', 'asc')
+                ->get();
+        };
+
+        $rawStudents = $baseStudentQuery($groupId);
+
+        // Règle Académique ENCG Fès : Inscription Annuelle (S1/S2, S3/S4, S5/S6)
+        // Si le groupe actuel n'a pas encore de fiches distinctes, récupérer automatiquement la section jumelle de la même année
+        if ($rawStudents->isEmpty() && preg_match('/^(.*?)-(S\d+)-(G\d+.*)$/i', (string) $group->name, $matches)) {
+            $prefix = $matches[1];
+            $section = $matches[3];
+            $twinGroup = Group::where('academic_year_id', $group->academic_year_id)
+                ->where('filiere_id', $group->filiere_id)
+                ->where('id', '!=', $group->id)
+                ->where('name', 'like', "{$prefix}-%-{$section}")
+                ->first();
+
+            if ($twinGroup) {
+                $rawStudents = $baseStudentQuery($twinGroup->id);
+            }
         }
 
-        $students = $query->orderBy('users.last_name', 'asc')
-            ->orderBy('users.first_name', 'asc')
-            ->get()
-            ->map(function ($s) use ($group) {
-                return [
-                    'id' => $s->id,
-                    'student_number' => $s->student_number,
-                    'matricule' => $s->student_number ?: '—',
-                    'cne' => $s->cne ?: ($s->massar_code ?: '—'),
-                    'massar_code' => $s->massar_code,
-                    'cin' => $s->cin ?: ($s->user?->cin ?: '—'),
-                    'first_name' => $s->user?->first_name ?? '—',
-                    'last_name' => $s->user?->last_name ?? '—',
-                    'email' => $s->user?->email ?? '—',
-                    'section' => $group->name,
-                    'sub_group' => $s->latestPathway?->sub_group ?? ($s->sub_group ?? '—'),
-                ];
-            });
+        $effectiveGroupId = $rawStudents->isNotEmpty() ? $groupId : ($twinGroup?->id ?? $groupId);
+
+        $students = $rawStudents->map(function ($s) use ($group, $effectiveGroupId) {
+            $pathway = $s->pathways->firstWhere('group_id', $effectiveGroupId) ?? $s->latestPathway;
+            return [
+                'id' => $s->id,
+                'student_number' => $s->student_number,
+                'matricule' => $s->student_number ?: '—',
+                'cne' => $s->cne ?: ($s->massar_code ?: '—'),
+                'massar_code' => $s->massar_code,
+                'cin' => $s->cin ?: ($s->user?->cin ?: '—'),
+                'first_name' => $s->user?->first_name ?? '—',
+                'last_name' => $s->user?->last_name ?? '—',
+                'email' => $s->user?->email ?? '—',
+                'section' => $group->name,
+                'sub_group' => $pathway?->sub_group ?? ($s->sub_group ?? '—'),
+            ];
+        });
 
         return response()->json([
             'success' => true,
