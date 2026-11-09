@@ -111,6 +111,7 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:professor|vacata
     Route::post('/professor-portal/grade-rectifications', [ProfessorPortalController::class, 'requestGradeRectification']);
     Route::get('/professor-portal/research', [ProfessorPortalController::class, 'getResearchDashboard']);
     Route::get('/professor-portal/double-grading', [ProfessorPortalController::class, 'getDoubleGrading']);
+    Route::post('/professor-portal/double-grading/save', [ProfessorPortalController::class, 'saveDoubleGrading']);
     // Documents & Attestations RH
     Route::get('/professor-portal/documents', [ProfessorPortalController::class, 'getDocumentRequests']);
     Route::post('/professor-portal/documents', [ProfessorPortalController::class, 'storeDocumentRequest']);

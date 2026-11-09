@@ -583,50 +583,189 @@ class ProfessorPortalController extends Controller
      */
     public function getDoubleGrading(Request $request): JsonResponse
     {
+        $moduleId = $request->query('module_id', '64');
+        $moduleName = $moduleId == '64' 
+            ? 'Statistiques et Probabilités (S2)' 
+            : 'Audit Financier & Contrôle de Gestion (S7)';
+        $filiere = $moduleId == '64'
+            ? 'Diplôme ENCG - Tronc Commun'
+            : 'Diplôme ENCG - Gestion Financière et Comptable (GFC)';
+
+        $copies = [
+            [
+                'copy_id' => 'COP-781',
+                'student_anonymous_id' => 'ANON-S2-012',
+                'grade_corrector_1' => 14.50,
+                'grade_corrector_2' => 15.00,
+                'delta' => 0.50,
+                'status' => 'conforme',
+                'final_grade' => 14.75,
+                'arbitration_note' => null,
+                'arbitrated_by' => null,
+            ],
+            [
+                'copy_id' => 'COP-782',
+                'student_anonymous_id' => 'ANON-S2-024',
+                'grade_corrector_1' => 16.00,
+                'grade_corrector_2' => 11.50,
+                'delta' => 4.50,
+                'status' => 'arbitrage_requis',
+                'final_grade' => null,
+                'arbitration_note' => null,
+                'arbitrated_by' => null,
+            ],
+            [
+                'copy_id' => 'COP-783',
+                'student_anonymous_id' => 'ANON-S2-035',
+                'grade_corrector_1' => 12.00,
+                'grade_corrector_2' => 13.00,
+                'delta' => 1.00,
+                'status' => 'conforme',
+                'final_grade' => 12.50,
+                'arbitration_note' => null,
+                'arbitrated_by' => null,
+            ],
+            [
+                'copy_id' => 'COP-784',
+                'student_anonymous_id' => 'ANON-S2-049',
+                'grade_corrector_1' => 15.50,
+                'grade_corrector_2' => 11.00,
+                'delta' => 4.50,
+                'status' => 'arbitrage_requis',
+                'final_grade' => null,
+                'arbitration_note' => null,
+                'arbitrated_by' => null,
+            ],
+            [
+                'copy_id' => 'COP-785',
+                'student_anonymous_id' => 'ANON-S2-053',
+                'grade_corrector_1' => 13.50,
+                'grade_corrector_2' => 14.00,
+                'delta' => 0.50,
+                'status' => 'conforme',
+                'final_grade' => 13.75,
+                'arbitration_note' => null,
+                'arbitrated_by' => null,
+            ],
+            [
+                'copy_id' => 'COP-786',
+                'student_anonymous_id' => 'ANON-S2-061',
+                'grade_corrector_1' => 10.00,
+                'grade_corrector_2' => 10.50,
+                'delta' => 0.50,
+                'status' => 'conforme',
+                'final_grade' => 10.25,
+                'arbitration_note' => null,
+                'arbitrated_by' => null,
+            ],
+            [
+                'copy_id' => 'COP-787',
+                'student_anonymous_id' => 'ANON-S2-078',
+                'grade_corrector_1' => 17.00,
+                'grade_corrector_2' => 16.50,
+                'delta' => 0.50,
+                'status' => 'conforme',
+                'final_grade' => 16.75,
+                'arbitration_note' => null,
+                'arbitrated_by' => null,
+            ],
+            [
+                'copy_id' => 'COP-788',
+                'student_anonymous_id' => 'ANON-S2-082',
+                'grade_corrector_1' => 08.50,
+                'grade_corrector_2' => 09.00,
+                'delta' => 0.50,
+                'status' => 'conforme',
+                'final_grade' => 8.75,
+                'arbitration_note' => null,
+                'arbitrated_by' => null,
+            ],
+            [
+                'copy_id' => 'COP-789',
+                'student_anonymous_id' => 'ANON-S2-094',
+                'grade_corrector_1' => 14.00,
+                'grade_corrector_2' => 10.00,
+                'delta' => 4.00,
+                'status' => 'arbitrage_requis',
+                'final_grade' => null,
+                'arbitration_note' => null,
+                'arbitrated_by' => null,
+            ],
+            [
+                'copy_id' => 'COP-790',
+                'student_anonymous_id' => 'ANON-S2-105',
+                'grade_corrector_1' => 11.50,
+                'grade_corrector_2' => 12.50,
+                'delta' => 1.00,
+                'status' => 'conforme',
+                'final_grade' => 12.00,
+                'arbitration_note' => null,
+                'arbitrated_by' => null,
+            ],
+            [
+                'copy_id' => 'COP-791',
+                'student_anonymous_id' => 'ANON-S2-118',
+                'grade_corrector_1' => 13.00,
+                'grade_corrector_2' => 13.50,
+                'delta' => 0.50,
+                'status' => 'conforme',
+                'final_grade' => 13.25,
+                'arbitration_note' => null,
+                'arbitrated_by' => null,
+            ],
+            [
+                'copy_id' => 'COP-792',
+                'student_anonymous_id' => 'ANON-S2-129',
+                'grade_corrector_1' => 15.00,
+                'grade_corrector_2' => 15.00,
+                'delta' => 0.00,
+                'status' => 'conforme',
+                'final_grade' => 15.00,
+                'arbitration_note' => null,
+                'arbitrated_by' => null,
+            ],
+        ];
+
         return response()->json([
             'success' => true,
             'data' => [
-                'module_name' => 'Audit Financier & Contrôle de Gestion (S7)',
-                'exam_session' => 'Session Ordinaire d\'Automne 2026',
-                'copies' => [
-                    [
-                        'copy_id' => 'COP-781',
-                        'student_anonymous_id' => 'ANON-S7-012',
-                        'grade_corrector_1' => 14.5,
-                        'grade_corrector_2' => 15.0,
-                        'delta' => 0.5,
-                        'status' => 'conforme', // Ecart <= 3.0
-                        'final_grade' => 14.75,
-                    ],
-                    [
-                        'copy_id' => 'COP-782',
-                        'student_anonymous_id' => 'ANON-S7-024',
-                        'grade_corrector_1' => 16.0,
-                        'grade_corrector_2' => 11.5,
-                        'delta' => 4.5, // > 3.0 => Arbitrage
-                        'status' => 'arbitrage_requis',
-                        'final_grade' => null,
-                    ],
-                    [
-                        'copy_id' => 'COP-783',
-                        'student_anonymous_id' => 'ANON-S7-035',
-                        'grade_corrector_1' => 12.0,
-                        'grade_corrector_2' => 13.0,
-                        'delta' => 1.0,
-                        'status' => 'conforme',
-                        'final_grade' => 12.5,
-                    ],
-                    [
-                        'copy_id' => 'COP-784',
-                        'student_anonymous_id' => 'ANON-S7-049',
-                        'grade_corrector_1' => 15.5,
-                        'grade_corrector_2' => 11.0,
-                        'delta' => 4.5, // > 3.0 => Arbitrage
-                        'status' => 'arbitrage_requis',
-                        'final_grade' => null,
-                    ],
+                'module_id' => (int) $moduleId,
+                'module_name' => $moduleName,
+                'filiere' => $filiere,
+                'semester' => $moduleId == '64' ? 'S2' : 'S7',
+                'exam_session' => 'Session Ordinaire - Printemps 2026/2027',
+                'corrector_1' => 'Pr. Mohamed Benjelloun',
+                'corrector_2' => 'Pr. Fatima Zahra Alami',
+                'arbitrator' => 'Commission d\'Évaluation & Arbitrage LMD (Président: Pr. Youssef Idrissi)',
+                'discrepancy_threshold' => 3.0,
+                'modules' => [
+                    ['id' => 64, 'name' => 'Statistiques et Probabilités (S2)', 'filiere' => 'Tronc Commun', 'semester' => 'S2'],
+                    ['id' => 72, 'name' => 'Audit Financier & Contrôle de Gestion (S7)', 'filiere' => 'GFC', 'semester' => 'S7'],
+                    ['id' => 88, 'name' => 'Management Stratégique & Décisionnel (S6)', 'filiere' => 'Management', 'semester' => 'S6'],
                 ],
+                'copies' => $copies,
             ],
+        ]);
+    }
+
+    /**
+     * Sauvegarder les notes arbitrées de la double correction.
+     */
+    public function saveDoubleGrading(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'module_id' => 'nullable|integer',
+            'copies' => 'required|array',
+            'copies.*.copy_id' => 'required|string',
+            'copies.*.final_grade' => 'nullable|numeric|min:0|max:20',
+            'copies.*.status' => 'nullable|string',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Les notes de double correction et arbitrages ont été enregistrées avec succès et transmises au jury Apogée.',
+            'saved_at' => now()->toIso8601String(),
+            'total_copies' => count($validated['copies']),
         ]);
     }
 
