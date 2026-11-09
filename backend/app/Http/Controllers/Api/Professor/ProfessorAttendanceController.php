@@ -166,6 +166,22 @@ class ProfessorAttendanceController extends Controller
         }
         app(ClassroomAccessService::class)->authorize($request->user(), $module, $group, write: true);
         $students = Student::with('user')->where('institution_id', $request->user()->institution_id)->where(fn ($q) => $q->whereHas('pathways', fn ($p) => $p->where('academic_year_id', $group->academic_year_id)->where('group_id', $group->id))->orWhereHas('registrations', fn ($r) => $r->where('academic_year_id', $group->academic_year_id)->where('group_id', $group->id)))->get()->sortBy(fn ($s) => $s->user->name);
+
+        // Règle Académique ENCG Fès : Inscription Annuelle (S1/S2, S3/S4, S5/S6)
+        // Si le groupe actuel n'a pas encore de fiches distinctes, récupérer automatiquement la section jumelle de la même année
+        if ($students->isEmpty() && preg_match('/^(.*?)-(S\d+)-(G\d+.*)$/i', (string) $group->name, $matches)) {
+            $prefix = $matches[1];
+            $section = $matches[3];
+            $twinGroup = Group::where('academic_year_id', $group->academic_year_id)
+                ->where('filiere_id', $group->filiere_id)
+                ->where('id', '!=', $group->id)
+                ->where('name', 'like', "{$prefix}-%-{$section}")
+                ->first();
+
+            if ($twinGroup) {
+                $students = Student::with('user')->where('institution_id', $request->user()->institution_id)->where(fn ($q) => $q->whereHas('pathways', fn ($p) => $p->where('academic_year_id', $twinGroup->academic_year_id)->where('group_id', $twinGroup->id))->orWhereHas('registrations', fn ($r) => $r->where('academic_year_id', $twinGroup->academic_year_id)->where('group_id', $twinGroup->id)))->get()->sortBy(fn ($s) => $s->user->name);
+            }
+        }
         $records = $session ? Attendance::where('attendance_session_id', $session->id)->get()->keyBy('student_id') : collect();
 
         return response()->json(['data' => $students->map(fn ($s) => ['id' => $s->id, 'name' => $s->user->name, 'cne' => $s->cne, 'apogee' => $s->student_number, 'status' => $records[$s->id]->status ?? 'absent', 'version' => (int) ($records[$s->id]->version ?? 0)])->values(), 'module_id' => $module->id, 'group_id' => $group->id]);
