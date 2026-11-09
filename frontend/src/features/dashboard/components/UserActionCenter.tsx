@@ -28,7 +28,7 @@ export default function UserActionCenter({ actor }: { actor: 'student' | 'profes
       : [
           { href: '/professor/grades', label: 'Mes notes', icon: FileSpreadsheet },
           { href: '/professor/internships', label: 'Encadrements', icon: GraduationCap },
-          { href: '/professor/schedule', label: 'Emploi du temps', icon: Calendar },
+          { href: '/professor/schedules', label: 'Emploi du temps', icon: Calendar },
         ]
 
   return (

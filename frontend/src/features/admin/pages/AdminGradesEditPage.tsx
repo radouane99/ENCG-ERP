@@ -53,7 +53,7 @@ const { data: auditLogs, isLoading: isLoadingLogs } = useQuery({
   // Fetch assessments for the given module
 const { data: assessmentsData, isLoading: isLoadingAssessments } = useQuery({
     queryKey: ['assessments', moduleId],
-    queryFn: () => api.get(`/modules/${moduleId}/assessments`).then(res => res.data.data),
+    queryFn: () => api.get(`/modules/${moduleId}/assessments`).then(res => (Array.isArray(res.data?.data) ? res.data.data : (Array.isArray(res.data) ? res.data : []))),
     enabled: !!moduleId,
 });
 
@@ -68,7 +68,7 @@ const { data: gradesResponse, isLoading: isLoadingStudents } = useQuery({
 });
 
   const studentsData = useMemo(() => (Array.isArray(gradesResponse?.data) ? gradesResponse.data : (Array.isArray(gradesResponse) ? gradesResponse : [])), [gradesResponse])
-  const selectedAssessment = assessmentsData?.find((a: any) => a.id === selectedAssessmentId)
+  const selectedAssessment = Array.isArray(assessmentsData) ? assessmentsData.find((a: any) => a.id === selectedAssessmentId) : null
   const assessmentType = (selectedAssessment?.type || '').trim().toLowerCase()
   const isExamAssessment = assessmentType.includes('exam') || assessmentType.includes('rattrapage') || assessmentType === 'ef' || assessmentType === 'eo'
 
@@ -80,7 +80,7 @@ const { data: gradesResponse, isLoading: isLoadingStudents } = useQuery({
   const signatureInfo = gradesResponse?.signature
 
   useEffect(() => {
-    if (assessmentsData) {
+    if (Array.isArray(assessmentsData)) {
       setModalityAssessments(
         assessmentsData.map((a: any) => ({
           id: a.id,
@@ -137,7 +137,7 @@ const { data: gradesResponse, isLoading: isLoadingStudents } = useQuery({
 
   // Select the appropriate assessment by default if available
   useEffect(() => {
-    if (assessmentsData && assessmentsData.length > 0 && !selectedAssessmentId) {
+    if (Array.isArray(assessmentsData) && assessmentsData.length > 0 && !selectedAssessmentId) {
       const sessionParam = searchParams.get('session')
       if (sessionParam === 'rattrapage') {
         const rat = assessmentsData.find((a: any) => (a.type || '').toLowerCase().includes('rattrapage'))
@@ -206,7 +206,7 @@ const { data: moduleDetails } = useQuery({
 
   const handleExportExcel = async () => {
     try {
-      const selectedAssessment = assessmentsData?.find((a: any) => a.id === selectedAssessmentId)
+      const selectedAssessment = Array.isArray(assessmentsData) ? assessmentsData.find((a: any) => a.id === selectedAssessmentId) : null
       const assessmentType = selectedAssessment ? selectedAssessment.type : 'Saisie'
       const moduleCode = moduleDetails?.code || `MOD_${moduleId}`
       const rawModuleName = moduleDetails?.name || 'Module'
@@ -531,7 +531,7 @@ const { data: moduleDetails } = useQuery({
                       <td className="agp-td">
                         <div className="agp-student">
                           <div className={cn("agp-avatar", isFraud && (isExamAssessment ? "agp-avatar--red" : "agp-avatar--amber"))}>
-                            {student.first_name[0]}{student.last_name[0]}
+                            {((student.first_name?.[0] || '') + (student.last_name?.[0] || '')) || 'ET'}
                           </div>
                           <div className="agp-student__info">
                             <div className="agp-student__name">{student.first_name} {student.last_name}</div>

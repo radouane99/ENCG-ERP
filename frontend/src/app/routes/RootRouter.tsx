@@ -369,8 +369,6 @@ export default function RootRouter() {
             <Route path="/academic/modules" element={<ModulesListPage />} />
             <Route path="/academic/deliberations" element={<DeliberationManager />} />
             <Route path="/professors" element={<ProfessorsListPage />} />
-            <Route path="/admin/grades/edit" element={<AdminGradesEditPage />} />
-            <Route path="/admin/grades/pv" element={<AdminGradesPVPage />} />
             <Route path="/admin/specialty-allocation" element={<AdminSpecialtyAllocationPage />} />
             <Route path="/admin/ai-timetable-scheduler" element={<AdminAiTimetableSchedulerPage />} />
             <Route path="/admin/schedules/engine" element={<AdminAiTimetableSchedulerPage />} />
@@ -385,7 +383,11 @@ export default function RootRouter() {
           {/* Grades & PV Routes */}
           <Route element={<ProtectedRoute roles={TEACHING_ROLES} />}>
             <Route path="/admin/grades" element={<AdminGradesPage />} />
+            <Route path="/admin/grades/edit" element={<AdminGradesEditPage />} />
+            <Route path="/admin/grades/pv" element={<AdminGradesPVPage />} />
             <Route path="/professor/grades" element={<AdminGradesPage />} />
+            <Route path="/professor/grades/edit" element={<AdminGradesEditPage />} />
+            <Route path="/professor/grades/pv" element={<AdminGradesPVPage />} />
             <Route path="/admin/grade-appeals" element={<AdminGradeAppealsPage />} />
             <Route path="/professor/grade-appeals" element={<AdminGradeAppealsPage />} />
           </Route>
