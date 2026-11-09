@@ -25,7 +25,7 @@ psql_in() {
 }
 created=0
 cleanup() {
-  if [ "$created" -eq 1 ]; then psql_in postgres -c "DROP DATABASE \"$DRILL_DB\";"; fi
+  if [ "$created" -eq 1 ]; then psql_in postgres -c "DROP DATABASE IF EXISTS \"$DRILL_DB\" WITH (FORCE);" || true; fi
 }
 trap cleanup EXIT
 # CREATE fails if the name exists: never terminate sessions or replace somebody else's database.

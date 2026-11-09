@@ -354,7 +354,12 @@ jobs:
           docker run -d --name encg_ci_drill -e POSTGRES_PASSWORD=test-only postgres:16-alpine
           trap 'docker rm -f encg_ci_drill' EXIT
           for _ in $(seq 1 30); do
-            docker exec encg_ci_drill pg_isready -U postgres && break
+            if docker exec encg_ci_drill psql -U postgres -c 'SELECT 1;' >/dev/null 2>&1; then
+              sleep 2
+              if docker exec encg_ci_drill psql -U postgres -c 'SELECT 1;' >/dev/null 2>&1; then
+                break
+              fi
+            fi
             sleep 1
           done
           docker exec encg_ci_drill psql -U postgres -c 'CREATE TABLE users(id int); CREATE TABLE students(id int); CREATE TABLE grades(id int); INSERT INTO users VALUES (1);'
