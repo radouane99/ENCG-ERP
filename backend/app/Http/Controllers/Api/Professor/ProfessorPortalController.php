@@ -2173,7 +2173,7 @@ class ProfessorPortalController extends Controller
         }
 
         $baseStudentQuery = function ($targetGroupId) use ($subGroup, $search) {
-            $query = Student::with(['user', 'latestPathway.filiere', 'latestPathway.group'])
+            $query = Student::with(['user', 'pathways', 'latestPathway.filiere', 'latestPathway.group'])
                 ->select('students.*')
                 ->leftJoin('users', 'students.user_id', '=', 'users.id')
                 ->where(function ($q) use ($targetGroupId, $subGroup) {
@@ -2223,7 +2223,9 @@ class ProfessorPortalController extends Controller
         $effectiveGroupId = $rawStudents->isNotEmpty() ? $groupId : ($twinGroup?->id ?? $groupId);
 
         $students = $rawStudents->map(function ($s) use ($group, $effectiveGroupId) {
-            $pathway = $s->pathways->firstWhere('group_id', $effectiveGroupId) ?? $s->latestPathway;
+            $pathway = $s->relationLoaded('pathways')
+                ? ($s->pathways->firstWhere('group_id', $effectiveGroupId) ?? $s->latestPathway)
+                : $s->latestPathway;
             return [
                 'id' => $s->id,
                 'student_number' => $s->student_number,
