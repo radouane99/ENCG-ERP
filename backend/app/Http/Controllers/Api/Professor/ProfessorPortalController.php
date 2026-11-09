@@ -243,7 +243,7 @@ class ProfessorPortalController extends Controller
         foreach ($schedules as $s) {
             $start = Carbon::parse($s->start_time);
             $end = Carbon::parse($s->end_time);
-            $durationMinutes = max(60, $end->diffInMinutes($start));
+            $durationMinutes = abs($end->diffInMinutes($start, false));
             $weeklyMinutes += $durationMinutes;
 
             $weeklyScheduleList[] = [
@@ -279,7 +279,9 @@ class ProfessorPortalController extends Controller
             $modTp = 0;
 
             foreach ($modSchedules as $ms) {
-                $durHours = Carbon::parse($ms->end_time)->diffInMinutes(Carbon::parse($ms->start_time)) / 60;
+                $startMs = Carbon::parse($ms->start_time);
+                $endMs = Carbon::parse($ms->end_time);
+                $durHours = abs($endMs->diffInMinutes($startMs, false)) / 60;
                 $semHours = $durHours * $teachingWeeks;
                 $type = strtolower($ms->session_type ?? 'cm');
                 if ($type === 'cm' || $type === 'cours') {
@@ -424,7 +426,7 @@ class ProfessorPortalController extends Controller
 
         $cahierCompliance = ($attendanceCount >= $totalSessions && $totalSessions > 0)
             ? '100% à jour'
-            : ($attendanceCount > 0 ? round(($attendanceCount / max(1, $totalSessions)) * 100).'% renseigné' : ($totalSessions > 0 ? '0% renseigné' : 'Aucune séance'));
+            : ($totalSessions > 0 ? min(100, (int) round(($attendanceCount / $totalSessions) * 100)).'% renseigné' : ($attendanceCount > 0 ? '100% renseigné' : 'Aucune séance'));
 
         return response()->json([
             'success' => true,

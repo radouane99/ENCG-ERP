@@ -245,25 +245,25 @@ export default function ProfessorWorkloadPage() {
             <div className="space-y-3">
               <div className="flex justify-between items-baseline text-sm font-bold">
                 <span className="text-foreground dark:text-white">
-                  Heures Enseignées Réalisées : <strong className="text-primary dark:text-blue-400 text-lg">{w.hours_done ?? 0}h</strong>
+                  Heures Enseignées Réalisées : <strong className="text-primary dark:text-blue-400 text-lg">{Math.max(0, w.hours_done ?? 0)}h</strong>
                 </span>
                 <span className="text-muted-foreground font-mono text-xs">
-                  Objectif Statutaire Annuel : <strong>{w.statutory_hours ?? 200}h</strong> ({w.remaining_hours ?? 0}h restantes)
+                  Objectif Statutaire Annuel : <strong>{w.statutory_hours ?? 200}h</strong> ({Math.max(0, w.remaining_hours ?? 0)}h restantes)
                 </span>
               </div>
 
               <div className="w-full bg-muted dark:bg-card rounded-full h-4 p-0.5 border border-border overflow-hidden">
                 <div 
                   className="bg-gradient-to-r from-blue-600 to-emerald-500 h-full rounded-full transition-all duration-500" 
-                  style={{ width: `${Math.min(100, w.completion_percent ?? 0)}%` }}
+                  style={{ width: `${Math.max(0, Math.min(100, w.completion_percent ?? 0))}%` }}
                 ></div>
               </div>
 
               <div className="flex justify-between text-xs font-bold text-muted-foreground pt-1">
-                <span>Cours Magistraux (CM) : <strong className="text-foreground dark:text-white">{w.hours_cm ?? 0}h</strong></span>
-                <span>Travaux Dirigés (TD) : <strong className="text-foreground dark:text-white">{w.hours_td ?? 0}h</strong></span>
-                <span>Travaux Pratiques (TP) : <strong className="text-foreground dark:text-white">{w.hours_tp ?? 0}h</strong></span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold">{w.completion_percent ?? 0}% complété</span>
+                <span>Cours Magistraux (CM) : <strong className="text-foreground dark:text-white">{Math.max(0, w.hours_cm ?? 0)}h</strong></span>
+                <span>Travaux Dirigés (TD) : <strong className="text-foreground dark:text-white">{Math.max(0, w.hours_td ?? 0)}h</strong></span>
+                <span>Travaux Pratiques (TP) : <strong className="text-foreground dark:text-white">{Math.max(0, w.hours_tp ?? 0)}h</strong></span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">{Math.max(0, Math.min(100, w.completion_percent ?? 0))}% complété</span>
               </div>
             </div>
           </div>
@@ -383,21 +383,21 @@ export default function ProfessorWorkloadPage() {
                   <div className="p-5 rounded-2xl bg-blue-50/50 dark:bg-blue-950/30 border border-primary/20 dark:border-blue-900/40 space-y-2">
                     <div className="text-[10px] font-bold uppercase text-primary dark:text-blue-400 tracking-wider">Volume CM Réalisé</div>
                     <div className="text-2xl font-bold text-foreground dark:text-white">
-                      {w.hours_cm ?? 0}h <span className="text-xs font-normal text-muted-foreground">/ {Math.round((w.hours_cm ?? 0) / 2)} séances</span>
+                      {Math.max(0, w.hours_cm ?? 0)}h <span className="text-xs font-normal text-muted-foreground">/ {Math.max(0, Math.round((w.hours_cm ?? 0) / 2))} séances</span>
                     </div>
                     <p className="text-xs text-muted-foreground">Cours Magistraux en amphithéâtre et grandes promotions.</p>
                   </div>
                   <div className="p-5 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-primary/20 dark:border-indigo-900/40 space-y-2">
                     <div className="text-[10px] font-bold uppercase text-primary dark:text-indigo-400 tracking-wider">Volume TD Réalisé</div>
                     <div className="text-2xl font-bold text-foreground dark:text-white">
-                      {w.hours_td ?? 0}h <span className="text-xs font-normal text-muted-foreground">/ {Math.round((w.hours_td ?? 0) / 2)} séances</span>
+                      {Math.max(0, w.hours_td ?? 0)}h <span className="text-xs font-normal text-muted-foreground">/ {Math.max(0, Math.round((w.hours_td ?? 0) / 2))} séances</span>
                     </div>
                     <p className="text-xs text-muted-foreground">Travaux Dirigés dispensés par groupes d'études réduits.</p>
                   </div>
                   <div className="p-5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 space-y-2">
                     <div className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 tracking-wider">Volume TP & Ateliers</div>
                     <div className="text-2xl font-bold text-foreground dark:text-white">
-                      {w.hours_tp ?? 0}h <span className="text-xs font-normal text-muted-foreground">/ {Math.round((w.hours_tp ?? 0) / 2)} séances</span>
+                      {Math.max(0, w.hours_tp ?? 0)}h <span className="text-xs font-normal text-muted-foreground">/ {Math.max(0, Math.round((w.hours_tp ?? 0) / 2))} séances</span>
                     </div>
                     <p className="text-xs text-muted-foreground">Travaux Pratiques en laboratoires informatiques & études de cas.</p>
                   </div>
