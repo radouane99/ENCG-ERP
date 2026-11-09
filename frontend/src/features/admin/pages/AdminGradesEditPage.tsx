@@ -425,7 +425,7 @@ export default function AdminGradesEditPage() {
   const groupLabel = currentGroupId && currentGroupId !== 'null' ? `Groupe ${currentGroupId}` : 'Tous les groupes';
 
   return (
-    <div className="space-y-6 font-sans text-foreground pb-28 max-w-[1600px] mx-auto p-2">
+    <div className="space-y-6 font-sans text-foreground pb-12 max-w-[1600px] mx-auto p-2">
 
       {/* ── Breadcrumb Navigation ── */}
       <nav className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -492,6 +492,25 @@ export default function AdminGradesEditPage() {
               <ArrowLeft className={cn("w-3.5 h-3.5", isRtl && "rotate-180")} />
               <span>Retour</span>
             </Link>
+
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={saveMutation.isPending || isAssessmentLocked || !selectedAssessmentId}
+              className={cn(
+                "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider text-white shadow-sm transition-all cursor-pointer",
+                isAssessmentLocked || !selectedAssessmentId
+                  ? "bg-slate-400 cursor-not-allowed"
+                  : "bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 shadow-emerald-950/20"
+              )}
+            >
+              {saveMutation.isPending ? (
+                <Spinner className="w-3.5 h-3.5 text-white" />
+              ) : (
+                <Save className="w-3.5 h-3.5" />
+              )}
+              <span>Enregistrer</span>
+            </button>
           </div>
         </div>
       </div>
@@ -1044,8 +1063,8 @@ export default function AdminGradesEditPage() {
                 </div>
               </div>
 
-              {/* ── Sticky Floating Save & Navigation Bar ── */}
-              <div className="sticky bottom-4 z-30 bg-card/95 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              {/* ── Action & Summary Footer (In-flow, non-fixed) ── */}
+              <div className="bg-card rounded-2xl p-4 sm:p-5 border border-border shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-4">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
