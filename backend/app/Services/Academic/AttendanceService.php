@@ -9,6 +9,7 @@ use App\Models\Group;
 use App\Models\Module;
 use App\Models\ModuleProfessor;
 use App\Models\Professor;
+use App\Models\Schedule;
 use App\Models\Student;
 use App\Services\Security\ClassroomAccessService;
 use Carbon\Carbon;
@@ -28,10 +29,24 @@ class AttendanceService
             abort_unless($actor && (int) $actor->id === $professorId, 403);
             $module = Module::findOrFail($moduleId);
             app(ClassroomAccessService::class)->authorize($actor, $module, $group, write: true);
-            $teacherId = $actor->professor?->id;
+            $teacherId = $actor->professor?->id ?? Professor::where('user_id', $actor->id)->value('id');
             if (! $teacherId) {
-                $teachers = ModuleProfessor::where('module_id', $moduleId)->where('academic_year_id', $group->academic_year_id)->where(fn ($q) => $q->where('group_id', $groupId)->orWhereNull('group_id'))->pluck('professor_id')->unique();
-                abort_unless($teachers->count() === 1, 422, 'Un enseignant unique doit être affecté au groupe pour démarrer l’appel administratif.');
+                $teachers = ModuleProfessor::where('module_id', $moduleId)
+                    ->where('academic_year_id', $group->academic_year_id)
+                    ->where(fn ($q) => $q->where('group_id', $groupId)->orWhereNull('group_id'))
+                    ->pluck('professor_id')
+                    ->unique();
+
+                if ($teachers->isEmpty()) {
+                    $teachers = Schedule::where('module_id', $moduleId)
+                        ->where('academic_year_id', $group->academic_year_id)
+                        ->where(fn ($q) => $q->where('group_id', $groupId)->orWhereNull('group_id'))
+                        ->whereNotNull('professor_id')
+                        ->pluck('professor_id')
+                        ->unique();
+                }
+
+                abort_unless($teachers->count() >= 1, 422, 'Un enseignant unique doit être affecté au groupe pour démarrer l’appel administratif.');
                 $teacherId = $teachers->first();
             }
             abort_if($group->academicYear->is_locked, 409, 'Année académique verrouillée.');
