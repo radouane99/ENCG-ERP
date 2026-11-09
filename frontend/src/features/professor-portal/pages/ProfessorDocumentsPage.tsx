@@ -22,17 +22,9 @@ import {
   CreditCard,
   Copy,
   Check,
-  QrCode,
   Search,
-  Filter,
-  ArrowRight,
   FileCheck2,
-  HelpCircle,
   Shield,
-  Car,
-  Train,
-  Plane,
-  Bus,
 } from 'lucide-react';
 import api from '@/shared/lib/api';
 import { openAuthenticatedUrl } from '@shared/lib/documentAccess';

@@ -334,7 +334,7 @@ class StudentPortalController extends Controller
         // 1. Bibliothèque : 0 ouvrage non restitué
         $activeBorrowingsCount = Borrowing::where('user_id', $user->id)
             ->where('status', '!=', 'returned')
-            ->whereNull('returned_at')
+            ->whereNull('return_date')
             ->count();
         $libraryCleared = $activeBorrowingsCount === 0;
 

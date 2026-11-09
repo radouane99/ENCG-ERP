@@ -9,9 +9,7 @@ import {
   Scale,
   FileSpreadsheet,
   Printer,
-  Download,
   Eye,
-  RefreshCw,
   SlidersHorizontal,
   Layers,
   Lock,
@@ -57,7 +55,7 @@ export default function ProfessorDoubleGradingPage() {
     { copy_id: 'COP-785', student_anonymous_id: 'ANON-S2-053', grade_corrector_1: 13.50, grade_corrector_2: 14.00, delta: 0.50, status: 'conforme', final_grade: 13.75 },
     { copy_id: 'COP-786', student_anonymous_id: 'ANON-S2-061', grade_corrector_1: 10.00, grade_corrector_2: 10.50, delta: 0.50, status: 'conforme', final_grade: 10.25 },
     { copy_id: 'COP-787', student_anonymous_id: 'ANON-S2-078', grade_corrector_1: 17.00, grade_corrector_2: 16.50, delta: 0.50, status: 'conforme', final_grade: 16.75 },
-    { copy_id: 'COP-788', student_anonymous_id: 'ANON-S2-082', grade_corrector_1: 08.50, grade_corrector_2: 09.00, delta: 0.50, status: 'conforme', final_grade: 8.75 },
+    { copy_id: 'COP-788', student_anonymous_id: 'ANON-S2-082', grade_corrector_1: 8.50, grade_corrector_2: 9.00, delta: 0.50, status: 'conforme', final_grade: 8.75 },
     { copy_id: 'COP-789', student_anonymous_id: 'ANON-S2-094', grade_corrector_1: 14.00, grade_corrector_2: 10.00, delta: 4.00, status: 'arbitrage_requis', final_grade: null },
     { copy_id: 'COP-790', student_anonymous_id: 'ANON-S2-105', grade_corrector_1: 11.50, grade_corrector_2: 12.50, delta: 1.00, status: 'conforme', final_grade: 12.00 },
     { copy_id: 'COP-791', student_anonymous_id: 'ANON-S2-118', grade_corrector_1: 13.00, grade_corrector_2: 13.50, delta: 0.50, status: 'conforme', final_grade: 13.25 },
@@ -67,7 +65,7 @@ export default function ProfessorDoubleGradingPage() {
   const [copies, setCopies] = useState<DoubleGradingCopy[]>(defaultCopies);
 
   // Fetch real/mock data from backend
-  const { data: serverData, isLoading, refetch } = useQuery({
+  const { data: serverData } = useQuery({
     queryKey: ['double-grading-data', selectedModuleId],
     queryFn: async () => {
       try {

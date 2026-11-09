@@ -243,7 +243,7 @@ export function SessionManager() {
                 <div className="space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <h3 className="font-semibold text-sm">
-                      {session.is_current ? 'Session actuelle' : `Session #${session.id}`}
+                      {session.is_current ? 'Session actuelle' : `Session ${session.id}`}
                     </h3>
                     {session.is_current && (
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">

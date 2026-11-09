@@ -22,8 +22,7 @@ import {
   GraduationCap,
   Save,
   Check,
-  Printer,
-  BookOpen
+  Printer
 } from 'lucide-react'
 
 interface Props {
