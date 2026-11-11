@@ -2205,6 +2205,7 @@ class ProfessorPortalController extends Controller
         };
 
         $rawStudents = $baseStudentQuery($groupId);
+        $twinGroup = null;
 
         // Règle Académique ENCG Fès : Inscription Annuelle (S1/S2, S3/S4, S5/S6)
         // Si le groupe actuel n'a pas encore de fiches distinctes, récupérer automatiquement la section jumelle de la même année
