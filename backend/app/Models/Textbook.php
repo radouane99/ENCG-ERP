@@ -13,6 +13,7 @@ class Textbook extends Model
     protected $table = 'textbooks';
 
     protected $fillable = [
+        'attendance_session_id',
         'professor_id',
         'user_id',
         'module_id',

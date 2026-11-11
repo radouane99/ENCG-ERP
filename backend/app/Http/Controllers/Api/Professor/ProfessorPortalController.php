@@ -2334,6 +2334,10 @@ class ProfessorPortalController extends Controller
      */
     public function saveStudentListAttendance(Request $request): JsonResponse
     {
+        $request->validate([
+            'session_duration_hours' => 'required_if:sync_textbook,true|nullable|numeric|min:0.25|max:12',
+        ]);
+        $durationHours = $request->input('session_duration_hours');
         $groupId = (int) $request->input('group_id');
         $moduleId = (int) $request->input('module_id');
         $subGroup = trim((string) $request->input('sub_group', ''));
@@ -2394,12 +2398,21 @@ class ProfessorPortalController extends Controller
         $academicYearId = $group->academic_year_id ?: (AcademicYear::where('is_current', true)->value('id') ?: 1);
         $sessionType = ! empty($subGroup) ? 'td' : 'cm';
 
-        $session = AttendanceSession::firstOrNew([
+        $session = $request->filled('attendance_session_id')
+            ? AttendanceSession::findOrFail($request->integer('attendance_session_id'))
+            : AttendanceSession::firstOrNew([
             'module_id' => $moduleId,
             'group_id' => $groupId,
             'session_date' => $sessionDate,
             'session_type' => $sessionType,
+            'room' => $seanceCode,
         ]);
+
+        if ($session->exists) {
+            abort_unless((int) $session->module_id === $moduleId && (int) $session->group_id === $groupId
+                && (int) $session->academic_year_id === (int) $academicYearId
+                && $session->session_date->toDateString() === $sessionDate, 422, 'Session hors du contexte sélectionné.');
+        }
 
         // Vérification de sécurité IDOR : empêcher un enseignant de modifier les séances d'un autre
         if ($session->exists && $session->created_by && $session->created_by !== $user->id) {
@@ -2409,7 +2422,7 @@ class ProfessorPortalController extends Controller
             }
         }
 
-        return DB::transaction(function () use ($session, $academicYearId, $profId, $profType, $user, $seanceCode, $isLocked, $groupId, $subGroup, $absentIds, $annotations, $sessionDate, $syncTextbook, $prof, $moduleId, $sessionType, $chapterTitle, $keyConcepts) {
+        return DB::transaction(function () use ($session, $academicYearId, $profId, $profType, $user, $seanceCode, $isLocked, $groupId, $subGroup, $absentIds, $annotations, $sessionDate, $syncTextbook, $prof, $moduleId, $sessionType, $chapterTitle, $keyConcepts, $durationHours, $group) {
             if (! $session->exists) {
                 $session->academic_year_id = $academicYearId;
                 $session->professor_id = $profId;
@@ -2421,15 +2434,17 @@ class ProfessorPortalController extends Controller
 
             $session->room = $seanceCode;
             $session->is_locked = $isLocked;
+            if ($isLocked) {
+                $session->status = 'completed';
+                $session->qr_token = null;
+            }
             $session->save();
 
             // Récupérer uniquement les étudiants inscrits dans ce groupe / sous-groupe (isolation stricte)
-            $students = Student::where('institution_id', $user->institution_id)->whereHas('pathways', function ($p) use ($groupId, $subGroup) {
-                $p->where('group_id', $groupId)->where('is_current', true);
-                if (! empty($subGroup)) {
-                    $p->where('sub_group', $subGroup);
-                }
-            })->pluck('id');
+            $students = app(\App\Services\Academic\ClassroomRosterService::class)->students($group, $user->institution_id)
+                ->when($subGroup !== '', fn ($q) => $q->whereHas('pathways', fn ($p) => $p->where('academic_year_id', $group->academic_year_id)->where('sub_group', $subGroup)))
+                ->pluck('id');
+            abort_unless(empty(array_diff($absentIds, $students->all())), 422, 'Étudiant absent hors du groupe.');
 
             $absentSet = array_flip($absentIds);
 
@@ -2467,7 +2482,6 @@ class ProfessorPortalController extends Controller
             $textbookSynced = false;
             if ($syncTextbook && $prof) {
                 $moduleObj = Module::find($moduleId);
-                $cleanNum = preg_replace('/[^0-9]/', '', $seanceCode) ?: '1';
                 $isRattrapage = str_contains(strtoupper($seanceCode), 'RAT');
                 $actualSessionType = $isRattrapage ? 'rattrapage' : $sessionType;
                 $defaultTitle = $isRattrapage
@@ -2479,19 +2493,20 @@ class ProfessorPortalController extends Controller
 
                 Textbook::updateOrCreate(
                     [
+                        'attendance_session_id' => $session->id,
+                    ],
+                    [
                         'professor_id' => $prof->id,
                         'module_id' => $moduleId,
                         'session_date' => $sessionDate,
                         'session_type' => $actualSessionType,
-                    ],
-                    [
                         'user_id' => $user->id,
                         'group_id' => $groupId,
-                        'session_duration_hours' => 2.0,
+                        'session_duration_hours' => $durationHours,
+                        'syllabus_percentage' => Textbook::where('attendance_session_id', $session->id)->value('syllabus_percentage') ?? 0,
                         'chapter_title' => $chapterTitle ?: $defaultTitle,
                         'key_concepts' => $keyConcepts ?: $defaultConcepts,
                         'pedagogical_goals' => $isRattrapage ? "Rattrapage pédagogique officiel & régularisation d'absences (Art. 14)" : "Progression du syllabus officiel & contrôle d'assiduité",
-                        'syllabus_percentage' => min(100, (int) $cleanNum * 8 ?: 15),
                         'status' => 'submitted',
                     ]
                 );
@@ -2706,6 +2721,16 @@ class ProfessorPortalController extends Controller
      */
     public function sendRattrapageConvocation(Request $request): JsonResponse
     {
+        $request->validate([
+            'group_id' => 'required|integer',
+            'module_id' => 'required|integer',
+            'student_ids' => 'required|array|min:1|max:500',
+            'student_ids.*' => 'required|integer|distinct',
+            'notes' => 'nullable|string|max:2000',
+        ]);
+        $group = Group::findOrFail($request->integer('group_id'));
+        $module = Module::findOrFail($request->integer('module_id'));
+        app(\App\Services\Security\ClassroomAccessService::class)->authorize($request->user(), $module, $group, write: true);
         $groupId = (int) $request->input('group_id');
         $moduleId = (int) $request->input('module_id');
         $seanceCode = trim((string) $request->input('seance_code', 'S1'));
@@ -2725,7 +2750,9 @@ class ProfessorPortalController extends Controller
         $moduleName = $module?->name ?? 'Module Pédagogique';
         $moduleCode = $module?->code ?? 'MOD';
 
-        $students = Student::with('user')->whereIn('id', $studentIds)->get();
+        $students = app(\App\Services\Academic\ClassroomRosterService::class)->students($group, $module->institution_id)
+            ->whereIn('id', $studentIds)->get();
+        abort_unless($students->count() === count($studentIds), 422, 'La sélection contient un étudiant hors du groupe.');
         $sentCount = 0;
 
         foreach ($students as $student) {
@@ -2773,16 +2800,19 @@ class ProfessorPortalController extends Controller
         }
 
         $group = Group::with('filiere')->findOrFail($groupId);
+        $module = $request->filled('module_id') ? Module::findOrFail($request->integer('module_id')) : null;
+        if ($module) {
+            app(\App\Services\Security\ClassroomAccessService::class)->authorize($request->user(), $module, $group, write: true);
+        } else {
+            abort_unless($request->user()->hasAnyRole(['super-admin', 'institution-admin', 'director'])
+                && ($request->user()->hasRole('super-admin') || (int) $group->filiere->institution_id === (int) $request->user()->institution_id), 403);
+        }
 
-        $students = Student::with(['user', 'latestPathway'])
+        $students = app(\App\Services\Academic\ClassroomRosterService::class)->students($group, $group->filiere->institution_id)
+            ->with(['user', 'latestPathway'])
             ->select('students.*')
             ->leftJoin('users', 'students.user_id', '=', 'users.id')
-            ->whereHas('pathways', function ($p) use ($groupId, $subGroup) {
-                $p->where('group_id', $groupId)->where('is_current', true);
-                if (! empty($subGroup)) {
-                    $p->where('sub_group', $subGroup);
-                }
-            })
+            ->when($subGroup !== '', fn ($q) => $q->whereHas('pathways', fn ($p) => $p->where('academic_year_id', $group->academic_year_id)->where('sub_group', $subGroup)))
             ->orderBy('users.last_name', 'asc')
             ->orderBy('users.first_name', 'asc')
             ->get();
@@ -2791,6 +2821,7 @@ class ProfessorPortalController extends Controller
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
+            'Cache-Control' => 'private, no-store',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
         ];
 

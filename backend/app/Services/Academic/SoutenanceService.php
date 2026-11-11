@@ -46,15 +46,23 @@ class SoutenanceService
     /**
      * Evaluate the internship (Professor).
      */
-    public function evaluate(int $soutenanceId, float $grade, ?string $remarks = null): Soutenance
+    public function evaluate(int $soutenanceId, float $grade, ?string $remarks = null, ?array $criteria = null): Soutenance
     {
-        return DB::transaction(function () use ($soutenanceId, $grade, $remarks) {
+        return DB::transaction(function () use ($soutenanceId, $grade, $remarks, $criteria) {
             $soutenance = Soutenance::whereKey($soutenanceId)->lockForUpdate()->firstOrFail();
             abort_unless(auth()->user(), 403);
             InternshipAccess::defense(auth()->user(), $soutenance);
             abort_unless($soutenance->status === 'scheduled', 409, 'Cette soutenance a déjà été traitée ou annulée.');
             abort_if($soutenance->date_time && $soutenance->date_time->isFuture(), 422, 'La soutenance n’a pas encore eu lieu.');
+            if ($criteria !== null) {
+                $limits = ['written_report' => 5, 'methodology' => 6, 'oral_defense' => 4, 'defense_answers' => 5];
+                foreach ($limits as $key => $limit) {
+                    abort_unless(isset($criteria[$key]) && is_numeric($criteria[$key]) && $criteria[$key] >= 0 && $criteria[$key] <= $limit, 422, 'Barème invalide.');
+                }
+                abort_unless(abs(array_sum($criteria) - $grade) < 0.005, 422, 'La note doit correspondre au total du barème.');
+            }
             $soutenance->update([
+                'evaluation_criteria' => $criteria,
                 'grade' => $grade,
                 'remarks' => $remarks,
                 'status' => 'completed',

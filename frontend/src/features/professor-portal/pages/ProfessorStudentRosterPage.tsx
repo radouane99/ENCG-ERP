@@ -1,3 +1,4 @@
+import { useAttendanceQrSession } from '../hooks/useAttendanceQrSession';
 import { QRCodeSVG } from 'qrcode.react';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Users, BookOpen, FileSpreadsheet, Search, Loader2, ChevronDown, GraduationCap, Layers, ClipboardList, UserCheck, ShieldAlert, RefreshCw, Printer, Info, FileText, FileDown, X, CheckCircle2, BarChart3, Download, Copy, LayoutGrid, LayoutList, UserX, RotateCcw, QrCode, Lock, Unlock, MessageCircle, Eye, Calendar, Pencil, Tag, PrinterIcon, Save, Sparkles, AlertTriangle, Clock, Radio, Smartphone, CheckCheck, Maximize2, Minimize2, Zap, Mic, MicOff, Volume2, CheckSquare, CalendarDays, Play, Check, Wifi, WifiOff, History, Trash2, Send, Scale } from 'lucide-react';
@@ -226,6 +227,7 @@ const [individualStudent, setIndividualStudent] = useState<StudentRow | null>(nu
 const [savingAttendance, setSavingAttendance] = useState(false);
   const [, setLoadingAttendanceHistory] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [sessionDurationHours, setSessionDurationHours] = useState('');
   const [syncTextbook, setSyncTextbook] = useState(true);
   const [customChapterTitle, setCustomChapterTitle] = useState('');
   const [customKeyConcepts, setCustomKeyConcepts] = useState('');
@@ -240,8 +242,8 @@ const [isGeneratingAiSuggestion, setIsGeneratingAiSuggestion] = useState(false);
   // 10. Solutions 1, 2, 3: Live Auto-Detection, Timeline & Smart QR Check-in
   // 10. Solutions 1, 2, 3: Live Auto-Detection, Timeline & Smart QR Check-in
 const [showLiveQrModal, setShowLiveQrModal] = useState(false);
-  const [qrCountdown, setQrCountdown] = useState(15);
-  const [qrRotator, setQrRotator] = useState(0);
+  const [qrSourceSessionId, setQrSourceSessionId] = useState<number | undefined>();
+  const [rattrapageQrSourceSessionId, setRattrapageQrSourceSessionId] = useState<number | undefined>();
   const [qrCheckedInIds, setQrCheckedInIds] = useState<Set<number>>(new Set());
   const [isFullscreenQr, setIsFullscreenQr] = useState(false);
 
@@ -506,6 +508,13 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
     return firstUncompleted || 'S1';
 }, [completedSeances]);
 
+  const slotDurationHours = (start?: string, end?: string) => {
+    if (!start || !end) return undefined;
+    const minutes = (value: string) => { const [h, m] = value.trim().split(':').map(Number); return h * 60 + m; };
+    const duration = (minutes(end) - minutes(start)) / 60;
+    return Number.isFinite(duration) && duration >= 0.25 && duration <= 12 ? duration : undefined;
+  };
+
   // Is the current selected timetable slot live right now?
   const isLiveSessionNow = useMemo(() => {
     if (!selectedSchedule) return false;
@@ -525,54 +534,27 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
     return false;
   }, [selectedSchedule]);
 
-  // ─── Solution 3: Dynamic Live QR Check-in Rotator & Simulator ───
   useEffect(() => {
-    if (!showLiveQrModal) return;
-    const interval = setInterval(() => {
-      setQrCountdown(prev => {
-        if (prev <= 1) {
-          setQrRotator(r => r + 1);
-          return 15;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [showLiveQrModal]);
-
-  // QR token changes dynamically every 15s to prevent sharing
-  const qrPayloadUrl = useMemo(() => {
-    const baseUrl = window.location.origin;
-    const token = btoa(`${selectedGroupId}:${selectedModuleId}:${selectedSeance}:${qrRotator}`);
-    return `${baseUrl}/student/checkin?token=${token}`;
-  }, [selectedGroupId, selectedModuleId, selectedSeance, qrRotator]);
-
-  // Handle student check-in simulation / scan
-  const handleSimulateQrScan = () => {
-    const unscanned = students.filter(s => !qrCheckedInIds.has(s.id) && absentIds.has(s.id));
-    if (unscanned.length === 0) {
-      const anyUnscanned = students.filter(s => !qrCheckedInIds.has(s.id));
-      if (anyUnscanned.length === 0) {
-        toast.info('Tous les étudiants de ce groupe ont déjà scanné le QR Code !');
-        return;
-      }
-      const randomSt = anyUnscanned[Math.floor(Math.random() * anyUnscanned.length)];
-      setQrCheckedInIds(prev => new Set(prev).add(randomSt.id));
-      toast.success(`⚡ Scan reçu : ${randomSt.first_name} ${randomSt.last_name} (${randomSt.matricule || 'Étudiant'})`);
-      return;
-    }
-    const randomSt = unscanned[Math.floor(Math.random() * unscanned.length)];
-    setQrCheckedInIds(prev => new Set(prev).add(randomSt.id));
-    setAbsentIds(prev => {
-      const next = new Set(prev);
-      next.delete(randomSt.id);
-      return next;
-    });
-    toast.success(`⚡ Présence validée par QR : ${randomSt.first_name} ${randomSt.last_name}`);
-  };
+    setQrSourceSessionId(undefined);
+    setRattrapageQrSourceSessionId(undefined);
+    setSessionDurationHours('');
+  }, [selectedGroupId, selectedModuleId, selectedSeance, seanceDate, rattrapageDate]);
+  const qrSession = useAttendanceQrSession(showLiveQrModal, selectedModuleId, selectedGroupId, 'Salle de cours', seanceDate);
+  const rattrapageQrSession = useAttendanceQrSession(showRattrapageModal && rattrapageTab === 'qr', selectedModuleId, selectedGroupId, rattrapageRoom, rattrapageDate);
+  const qrCountdown = qrSession.expiresIn;
+  const qrPayloadUrl = qrSession.token ? `${window.location.origin}/attendance/scan?token=${encodeURIComponent(qrSession.token)}` : '';
+  useEffect(() => {
+    setQrCheckedInIds(new Set(qrSession.presentIds));
+  }, [qrSession.presentIds]);
+  useEffect(() => {
+    if (rattrapageQrSession.sessionId) setRattrapageQrSourceSessionId(rattrapageQrSession.sessionId);
+    const ids = new Set(rattrapageQrSession.presentIds);
+    setRattrapageStudents(prev => prev.map(item => ids.has(item.student.id) ? { ...item, status: 'present' as const } : item));
+  }, [rattrapageQrSession.presentIds, rattrapageQrSession.sessionId]);
 
   // Apply all QR check-ins
   const handleApplyLiveQr = () => {
+    setQrSourceSessionId(qrSession.sessionId);
     setAbsentIds(prev => {
       const next = new Set(prev);
       qrCheckedInIds.forEach(id => next.delete(id));
@@ -663,22 +645,6 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
   const handleRemoveStudentFromRattrapage = (studentId: number) => {
     setRattrapageStudents(prev => prev.filter(item => item.student.id !== studentId));
-  };
-
-  const handleSimulateRattrapageQrScan = () => {
-    const unChecked = rattrapageStudents.filter(item => item.status === 'absent');
-    if (unChecked.length === 0) {
-      toast.info('Tous les étudiants de ce rattrapage sont déjà pointés présents !');
-      return;
-    }
-    const randomItem = unChecked[Math.floor(Math.random() * unChecked.length)];
-    setRattrapageStudents(prev =>
-      prev.map(item =>
-        item.student.id === randomItem.student.id ? { ...item, status: 'present' as const } : item
-      )
-    );
-    setRattrapageQrCheckedInIds(prev => new Set(prev).add(randomItem.student.id));
-    toast.success(`⚡ Scan QR Rattrapage validé : ${randomItem.student.first_name} ${randomItem.student.last_name}`);
   };
 
   const handleSaveRattrapageSession = async () => {
@@ -781,12 +747,15 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
           is_locked: false,
           absent_ids: rattrapageStudents.filter(s => s.status === 'absent').map(s => s.student.id),
           annotations: updatedAnnotations,
+          attendance_session_id: rattrapageQrSourceSessionId,
           sync_textbook: syncRattrapageTextbook,
+          session_duration_hours: slotDurationHours(...(rattrapageTime.split(/\s*[-–]\s*/) as [string, string])),
           chapter_title: `Séance de Rattrapage — ${rattrapageTargetSeance}`,
           key_concepts: `Rattrapage officiel pour ${rattrapageTargetSeance}. ${presentCount} étudiants régularisés. Salle: ${rattrapageRoom}. Heures effectives certifiées.`,
         });
       } catch (err) {
-        console.warn('Backend sync saved locally:', err);
+        console.warn('Backend sync failed:', err);
+        throw err;
       }
 
       toast.success(
@@ -1125,7 +1094,9 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
         is_locked: isLocked,
         absent_ids: Array.from(absentIds),
         annotations,
+        attendance_session_id: qrSourceSessionId,
         sync_textbook: syncTextbook,
+        session_duration_hours: Number(sessionDurationHours) || slotDurationHours(selectedSchedule?.start_time, selectedSchedule?.end_time),
         chapter_title: customChapterTitle.trim() || undefined,
         key_concepts: customKeyConcepts.trim() || undefined,
       };
@@ -1309,6 +1280,30 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
     return () => clearInterval(iv);
   }, [isSessionActive, liveQrExpiresAt]);
 
+  useEffect(() => {
+    if (!isSessionActive || !liveSessionId) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      try {
+        const { data } = await api.get(`/attendance/session/${liveSessionId}/stats`);
+        if (cancelled) return;
+        const scanned = new Map<number, { status: string; version: number }>((data.data.students || [])
+          .filter((student: { scanned_at?: string; status: string }) => student.scanned_at && ['present', 'late'].includes(student.status))
+          .map((student: { id: number; status: string; version: number }) => [student.id, student]));
+        setLiveStudents(previous => previous.map(student => {
+          const record = scanned.get(student.id);
+          return record && record.version > (student.version || 0)
+            ? { ...student, status: record.status === 'late' ? 'retard' as const : 'present' as const, version: record.version }
+            : student;
+        }));
+      } catch { /* Preserve unsaved teacher edits when the connection is interrupted. */ }
+      if (!cancelled) timer = setTimeout(poll, 4000);
+    };
+    void poll();
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [isSessionActive, liveSessionId]);
+
   // Start Live Session (from schedule card or current selection)
   const handleStartLiveSession = async (overrideGroupId?: number, overrideModuleId?: number) => {
     if (activeExamPeriodForSeance) {
@@ -1334,7 +1329,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
         first_name: s.name?.split(' ')[0] ?? s.first_name ?? '',
         last_name: s.name?.split(' ').slice(1).join(' ') ?? s.last_name ?? '',
         cne: s.cne ?? '',
-        status: 'present' as const,
+        status: (s.status === 'late' ? 'retard' : s.status === 'excused' ? 'excuse' : s.status || 'absent') as 'present' | 'absent' | 'retard' | 'excuse',
         version: s.version,
       }));
       setLiveStudents(mapped);
@@ -2380,12 +2375,12 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                   </div>
                   <div>
                     <p className="text-foreground text-sm font-bold">
-                      {students.length === 0 
-                        ? "Aucun étudiant enregistré pour ce créneau d'enseignement." 
+                      {students.length === 0
+                        ? "Aucun étudiant enregistré pour ce créneau d'enseignement."
                         : "Aucun étudiant ne correspond aux filtres sélectionnés"}
                     </p>
                     <p className="text-muted-foreground text-xs mt-0.5">
-                      {students.length === 0 
+                      {students.length === 0
                         ? "Sélectionnez un autre créneau dans la grille ci-dessus ou actualisez la synchronisation."
                         : "Modifiez votre recherche ou réinitialisez le filtre de présence."}
                     </p>
@@ -2582,7 +2577,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                           </div>
                           <div className="relative p-6 bg-card rounded-2xl border-2 border-dashed border-primary inline-block shadow-sm mx-auto">
                             {liveQrToken && liveQrCountdown > 0
-                              ? <QRCodeSVG value={liveQrToken} size={220} className="mx-auto rounded-xl bg-card p-2" />
+                              ? <QRCodeSVG value={`${window.location.origin}/attendance/scan?token=${encodeURIComponent(liveQrToken)}`} size={220} className="mx-auto rounded-xl bg-card p-2" />
                               : <div className="w-[220px] h-[220px] flex items-center justify-center text-slate-400 text-xs font-bold">Token expiré — relancez la session</div>
                             }
                             <div className="mt-4 flex items-center justify-center gap-2 text-xs font-bold text-primary dark:text-indigo-300">
@@ -3589,6 +3584,13 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 {/* Additional Textbook Inputs */}
                 {syncTextbook && (
                   <div className="mt-4 pt-3 border-t border-emerald-200 dark:border-emerald-500/20 space-y-3 animate-in fade-in">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
+                      Durée effective de la séance (heures)
+                      <input type="number" min="0.25" max="12" step="0.25"
+                        value={sessionDurationHours || slotDurationHours(selectedSchedule?.start_time, selectedSchedule?.end_time) || ''}
+                        onChange={event => setSessionDurationHours(event.target.value)}
+                        className="mt-1 w-full rounded-xl border border-border bg-card p-2" required />
+                    </label>
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <label className="block text-xs font-bold text-slate-700 dark:text-foreground">
@@ -3874,18 +3876,18 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 {/* QR Code Centerpiece */}
                 <div className="flex flex-col items-center justify-center p-6 bg-muted/50 dark:bg-background border border-border rounded-2xl relative shadow-inner">
                   <div className="p-4 bg-card rounded-2xl shadow-lg border border-border">
-                    <QRCodeSVG
-                      value={qrPayloadUrl}
+                    {qrPayloadUrl ? <QRCodeSVG
+                      value={qrPayloadUrl || 'Session QR indisponible'}
                       size={240}
                       level="H"
                       includeMargin={true}
-                    />
+                    /> : <p role="status">{qrSession.error || 'Préparation de la session QR…'}</p>}
                   </div>
 
                   {/* Anti-fraud rotating timer badge */}
                   <div className="mt-4 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300 text-xs font-bold">
                     <Clock className="w-3.5 h-3.5 animate-spin" />
-                    <span>Renouvellement dans <strong className="font-mono">{qrCountdown}s</strong> (Anti-Partage WhatsApp)</span>
+                    <span>Expiration dans <strong className="font-mono">{qrCountdown}s</strong></span>
                   </div>
                 </div>
 
@@ -3903,10 +3905,10 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
                     <div className="flex items-baseline gap-2">
                       <span className="text-3xl font-bold text-foreground dark:text-white">
-                        {students.length - absentIds.size + qrCheckedInIds.size}
+                        {students.length - Array.from(absentIds).filter(id => !qrCheckedInIds.has(id)).length}
                       </span>
                       <span className="text-sm font-semibold text-muted-foreground">
-                        / {students.length} étudiants ({Math.round(((students.length - absentIds.size + qrCheckedInIds.size) / Math.max(1, students.length)) * 100)}%)
+                        / {students.length} étudiants ({Math.round(((students.length - Array.from(absentIds).filter(id => !qrCheckedInIds.has(id)).length) / Math.max(1, students.length)) * 100)}%)
                       </span>
                     </div>
 
@@ -3915,7 +3917,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       <div
                         className="bg-emerald-500 h-full rounded-full transition-all duration-500"
                         style={{
-                          width: `${Math.min(100, Math.round(((students.length - absentIds.size + qrCheckedInIds.size) / Math.max(1, students.length)) * 100))}%`
+                          width: `${Math.min(100, Math.round(((students.length - Array.from(absentIds).filter(id => !qrCheckedInIds.has(id)).length) / Math.max(1, students.length)) * 100))}%`
                         }}
                       />
                     </div>
@@ -3936,15 +3938,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
                   {/* Simulator button for quick test */}
                   <div className="pt-2">
-                    <button
-                      type="button"
-                      onClick={handleSimulateQrScan}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/50 border border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300 text-xs font-bold transition-all cursor-pointer"
-                      title="Simuler un scan étudiant instantané pour tester le fonctionnement"
-                    >
-                      <Sparkles className="w-4 h-4 text-purple-500" />
-                      <span>Simuler un scan étudiant (Test Immédiat)</span>
-                    </button>
+
                   </div>
                 </div>
               </div>
@@ -4510,12 +4504,12 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center p-2">
                   <div className="flex flex-col items-center justify-center p-6 bg-muted/50 dark:bg-background border border-purple-200 dark:border-purple-900/60 rounded-2xl relative shadow-inner">
                     <div className="p-4 bg-card rounded-2xl shadow-lg border border-purple-200">
-                      <QRCodeSVG
-                        value={`${window.location.origin}/student/attendance/check-in?seance=${rattrapageTargetSeance}-RAT&group=${selectedGroupId}&date=${rattrapageDate}&time=${Date.now()}`}
+                      {rattrapageQrSession.token ? <QRCodeSVG
+                        value={rattrapageQrSession.token ? `${window.location.origin}/attendance/scan?token=${encodeURIComponent(rattrapageQrSession.token)}` : 'Session QR indisponible'}
                         size={220}
                         level="H"
                         includeMargin={true}
-                      />
+                      /> : <p role="status">{rattrapageQrSession.error || "Préparation de la session QR…"}</p>}
                     </div>
 
                     <div className="mt-4 flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-50 dark:bg-purple-950/60 border border-purple-300 dark:border-purple-700 text-purple-800 dark:text-purple-300 text-xs font-bold">
@@ -4554,14 +4548,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
                       </p>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={handleSimulateRattrapageQrScan}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/50 border border-purple-200 dark:border-purple-700 text-purple-700 dark:text-purple-300 text-xs font-bold transition-all cursor-pointer"
-                    >
-                      <Sparkles className="w-4 h-4 text-purple-500" />
-                      <span>Simuler un scan étudiant (Test Immédiat)</span>
-                    </button>
+
                   </div>
                 </div>
               )}

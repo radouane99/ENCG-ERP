@@ -89,8 +89,7 @@ class AttendanceService
             ]);
 
             // Créer les enregistrements d'absence par défaut
-            $studentIds = Student::where('institution_id', $module->institution_id)->where(fn ($q) => $q->whereHas('pathways', fn ($p) => $p->where('academic_year_id', $group->academic_year_id)->where('group_id', $groupId))
-                ->orWhereHas('registrations', fn ($r) => $r->where('academic_year_id', $group->academic_year_id)->where('group_id', $groupId)))->pluck('id')->all();
+            $studentIds = app(ClassroomRosterService::class)->students($group, $module->institution_id)->pluck('id')->all();
             $records = array_map(fn ($studentId) => [
                 'attendance_session_id' => $session->id,
                 'student_id' => $studentId,
@@ -125,8 +124,7 @@ class AttendanceService
             $this->authorizeSession($session);
             abort_unless($session->status === 'active', 409, 'Session fermée.');
             $student = Student::findOrFail($studentId);
-            $member = $student->pathways()->where('academic_year_id', $session->academic_year_id)->where('group_id', $session->group_id)->exists()
-                || $student->registrations()->where('academic_year_id', $session->academic_year_id)->where('group_id', $session->group_id)->exists();
+            $member = app(ClassroomRosterService::class)->students(Group::findOrFail($session->group_id), (int) $session->module->institution_id)->whereKey($studentId)->exists();
             abort_unless($member, 403, 'Étudiant hors du groupe de cette session.');
             if (auth()->user()->hasRole('student')) {
                 abort_unless((int) auth()->user()->student?->id === $studentId && $status === 'present', 403);

@@ -94,6 +94,7 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:professor|vacata
     // Internships
     Route::prefix('professor/internships')->group(function () {
         Route::get('/supervised', [ProfessorInternshipController::class, 'supervised']);
+        Route::get('/soutenances/{id}/pv', [ProfessorInternshipController::class, 'downloadPv']);
         Route::post('/soutenances/{id}/evaluate', [ProfessorInternshipController::class, 'evaluate']);
         Route::post('/update-status', [ProfessorInternshipController::class, 'updateStatus']);
     });

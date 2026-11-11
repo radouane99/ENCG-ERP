@@ -23,7 +23,7 @@ class ProfessorInternshipController extends Controller
      */
     public function supervised(Request $request): JsonResponse
     {
-        $internships = InternshipAccess::query($request->user())->with(['student.user', 'soutenance.room', 'internshipDocuments'])->orderByDesc('id')->get();
+        $internships = InternshipAccess::query($request->user())->with(['student.user', 'soutenance.room', 'soutenance.president.user', 'soutenance.examiner.user', 'student.latestPathway.filiere', 'internshipDocuments'])->orderByDesc('id')->get();
         foreach ($internships as $stage) {
             $profile = $request->user()->professor?->id;
             $stage->setAttribute('can_review_documents', InternshipAccess::staff($request->user()) || ($profile && (int) $stage->supervisor_id === (int) $profile));
@@ -46,7 +46,8 @@ class ProfessorInternshipController extends Controller
         $soutenance = $this->soutenanceService->evaluate(
             $soutenanceId,
             $request->validated('grade'),
-            $request->validated('remarks')
+            $request->validated('remarks'),
+            $request->validated('criteria')
         );
 
         return response()->json([
@@ -54,6 +55,24 @@ class ProfessorInternshipController extends Controller
             'message' => 'Soutenance évaluée avec succès.',
             'soutenance' => $soutenance,
         ]);
+    }
+
+    public function downloadPv(int $id, Request $request)
+    {
+        $s = Soutenance::with('internship.student.user', 'president.user', 'examiner.user', 'supervisor.user', 'room')->findOrFail($id);
+        InternshipAccess::defense($request->user(), $s);
+        abort_unless($s->status === 'completed', 409, 'Évaluation non validée.');
+        $student = $s->internship->student;
+        $facts = ['Référence' => 'PFE-PV-'.$s->id, 'Étudiant' => $student->user->name, 'CNE' => $student->cne,
+            'Date' => $s->date_time?->format('d/m/Y H:i'), 'Salle' => $s->room?->name,
+            'Présidence' => $s->president?->user?->name, 'Examinateur' => $s->examiner?->user?->name,
+            'Encadrant' => $s->supervisor?->user?->name, 'Note / 20' => $s->grade, 'Observations' => $s->remarks];
+        foreach ($s->evaluation_criteria ?? [] as $criterion => $score) {
+            $facts[$criterion] = $score;
+        }
+        $bytes = app(\App\Services\Document\WorkflowDocumentExportService::class)->pdf('Procès-verbal de soutenance PFE', $facts, [], [], 'Évaluation enregistrée dans le portail. Les visas du jury suivent la procédure de l’établissement.');
+
+        return response($bytes)->header('Content-Type', 'application/pdf')->header('Content-Disposition', 'inline; filename="PV_PFE_'.$id.'.pdf"')->header('Cache-Control', 'private, no-store');
     }
 
     /**

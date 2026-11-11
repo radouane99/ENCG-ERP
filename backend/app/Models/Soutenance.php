@@ -17,6 +17,7 @@ class Soutenance extends Model
         return [
             'date_time' => 'datetime',
             'scheduled_at' => 'datetime',
+            'evaluation_criteria' => 'array',
             'grade' => 'decimal:2',
         ];
     }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/shared/lib/api';
 import {
@@ -20,6 +20,14 @@ import { openAuthenticatedUrl } from '@shared/lib/documentAccess';
 
 interface PfeCandidate {
   id: number;
+  defenseId?: number;
+  canEvaluate: boolean;
+  completed: boolean;
+  grade?: number;
+  criteria?: Record<string, number>;
+  remarks?: string;
+  president: string;
+  examiner: string;
   student: {
     first_name: string;
     last_name: string;
@@ -36,78 +44,55 @@ interface PfeCandidate {
   room: string;
 }
 
-const defaultCandidates: PfeCandidate[] = [
-  {
-    id: 1,
-    student: { first_name: 'Amine', last_name: 'Bennani', cne: 'N130094821', student_number: '2022-GFC-041' },
-    filiere: 'Gestion Financière & Comptable (GFC)',
-    semester: 'S10 (Master / Diplôme ENCG)',
-    company_name: 'PwC Maroc (Casablanca)',
-    company_department: 'Département Audit & Advisory',
-    supervisor_company: 'M. Karim Alami (Directeur Associé)',
-    topic: "Impact de l'adoption des normes IFRS 16 sur l'évaluation financière et la solvabilité des entreprises cotées à la Bourse de Casablanca.",
-    date_soutenance: '09 Novembre 2026 à 10:00',
-    room: 'Salle des Thèses LarMaFig',
-  },
-  {
-    id: 2,
-    student: { first_name: 'Salma', last_name: 'El Idrissi', cne: 'N134087112', student_number: '2022-MAC-018' },
-    filiere: 'Management, Audit & Contrôle de Gestion (MAC)',
-    semester: 'S10 (Master / Diplôme ENCG)',
-    company_name: 'Attijariwafa Bank (Siège Rabat)',
-    company_department: 'Direction du Contrôle de Gestion Groupe',
-    supervisor_company: 'Mme Houda Mansouri (Responsable Reporting)',
-    topic: "Mise en place d'un tableau de bord prospectif (Balanced Scorecard) appliqué à la performance RSE des banques marocaines.",
-    date_soutenance: '09 Novembre 2026 à 11:30',
-    room: 'Salle des Thèses LarMaFig',
-  },
-  {
-    id: 3,
-    student: { first_name: 'Youssef', last_name: 'Tahiri', cne: 'N139012445', student_number: '2022-MCI-029' },
-    filiere: 'Marketing & Commerce International (MCI)',
-    semester: 'S10 (Master / Diplôme ENCG)',
-    company_name: 'Tanger Med Special Agency (TMSA)',
-    company_department: 'Direction Commerciale & Logistics Hub',
-    supervisor_company: 'M. Omar Cherkaoui (Chef de Département)',
-    topic: "Digitalisation des corridors logistiques et compétitivité à l'export des PME marocaines vers l'Afrique de l'Ouest.",
-    date_soutenance: '09 Novembre 2026 à 14:30',
-    room: 'Amphithéâtre 1',
-  },
-];
-
 export default function ProfessorPfeEvaluationPage() {
-  const [selectedCandidateId, setSelectedCandidateId] = useState<number>(1);
+  const [selectedCandidateId, setSelectedCandidateId] = useState<number>(0);
 
   // 4 Official Criteria (Sum = 20 pts)
-  const [writtenReport, setWrittenReport] = useState<number>(4.25);   // / 5.00
-  const [methodology, setMethodology] = useState<number>(5.25);       // / 6.00
-  const [oralDefense, setOralDefense] = useState<number>(3.50);       // / 4.00
-  const [defenseAnswers, setDefenseAnswers] = useState<number>(4.25); // / 5.00
-  const [remarks, setRemarks] = useState(
-    "Excellent travail de recherche empirique. La démarche méthodologique est rigoureuse et les recommandations managériales apportent une réelle valeur ajoutée pratique à l'entreprise d'accueil."
-  );
-
-  const [isSigned, setIsSigned] = useState(false);
-  const presidentSignature = 'Pr. Mohammed El Amrani';
-  const examinerSignature = 'Pr. Fatima Bensouda';
-
-  // Fetch supervised internships if available
-  const { data: serverInternships = [] } = useQuery<PfeCandidate[]>({
+  const [writtenReport, setWrittenReport] = useState<number>(0);   // / 5.00
+  const [methodology, setMethodology] = useState<number>(0);       // / 6.00
+  const [oralDefense, setOralDefense] = useState<number>(0);       // / 4.00
+  const [defenseAnswers, setDefenseAnswers] = useState<number>(0); // / 5.00
+  const [remarks, setRemarks] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const { data: candidatesList = [], isPending, isError, refetch } = useQuery<PfeCandidate[]>({
     queryKey: ['professor-internships-eval'],
-    queryFn: async (): Promise<PfeCandidate[]> => {
-      try {
-        const res = await api.get('/professor/internships/supervised');
-        return res.data.internships || [];
-      } catch {
-        return [];
-      }
+    queryFn: async () => {
+      const { data } = await api.get('/professor/internships/supervised');
+      return (data.internships || []).map((stage: any): PfeCandidate => ({
+        id: stage.id,
+        defenseId: stage.soutenance?.id,
+        canEvaluate: Boolean(stage.can_evaluate),
+        completed: stage.soutenance?.status === 'completed',
+        grade: stage.soutenance?.grade,
+        criteria: stage.soutenance?.evaluation_criteria,
+        remarks: stage.soutenance?.remarks || '',
+        president: stage.soutenance?.president?.user?.name || 'Non renseigné',
+        examiner: stage.soutenance?.examiner?.user?.name || 'Non renseigné',
+        student: { ...stage.student?.user, cne: stage.student?.cne || '', student_number: stage.student?.student_number || '' },
+        filiere: stage.student?.latest_pathway?.filiere?.name || 'Non renseignée',
+        semester: stage.student?.latest_pathway?.current_semester ? `S${stage.student.latest_pathway.current_semester}` : '',
+        company_name: stage.company_name || '',
+        company_department: stage.company_department || '',
+        supervisor_company: stage.company_mentor_name || stage.supervisor_name || '',
+        topic: stage.subject || stage.title || stage.topic || stage.position_title || '',
+        date_soutenance: stage.soutenance?.date_time ? new Date(stage.soutenance.date_time).toLocaleString('fr-FR') : 'Non planifiée',
+        room: stage.soutenance?.room?.name || 'Non affectée',
+      }));
     },
   });
+  const currentCandidate = candidatesList.find(c => c.id === selectedCandidateId) || candidatesList[0];
+  const isSigned = Boolean(currentCandidate?.completed);
+  const presidentSignature = currentCandidate?.president;
+  const examinerSignature = currentCandidate?.examiner;
+  useEffect(() => {
+    setWrittenReport(Number(currentCandidate?.criteria?.written_report || 0));
+    setMethodology(Number(currentCandidate?.criteria?.methodology || 0));
+    setOralDefense(Number(currentCandidate?.criteria?.oral_defense || 0));
+    setDefenseAnswers(Number(currentCandidate?.criteria?.defense_answers || 0));
+    setRemarks(currentCandidate?.remarks || '');
+  }, [currentCandidate]);
 
-  const candidatesList: PfeCandidate[] = serverInternships.length > 0 ? serverInternships : defaultCandidates;
-  const currentCandidate: PfeCandidate = candidatesList.find((c: PfeCandidate) => c.id === selectedCandidateId) || candidatesList[0];
-
-  const totalGrade = Number((writtenReport + methodology + oralDefense + defenseAnswers).toFixed(2));
+  const totalGrade = currentCandidate?.completed ? Number(currentCandidate.grade || 0) : Number((writtenReport + methodology + oralDefense + defenseAnswers).toFixed(2));
 
   const getMention = (grade: number) => {
     if (grade >= 16) {
@@ -147,22 +132,37 @@ export default function ProfessorPfeEvaluationPage() {
 
   const mention = getMention(totalGrade);
 
-  const handleValidateAndSign = () => {
-    setIsSigned(true);
-    toast.success('PV de Soutenance de PFE validé et scellé avec succès !', {
-      description: `Note finale officielle : ${totalGrade.toFixed(2)}/20 (${mention.label})`,
-    });
+  const handleValidateAndSign = async () => {
+    if (!currentCandidate?.defenseId || !currentCandidate.canEvaluate || isSaving) return;
+    setIsSaving(true);
+    try {
+      await api.post(`/professor/internships/soutenances/${currentCandidate.defenseId}/evaluate`, {
+        grade: totalGrade, remarks,
+        criteria: { written_report: writtenReport, methodology, oral_defense: oralDefense, defense_answers: defenseAnswers },
+      });
+      await refetch();
+      toast.success('Évaluation enregistrée et soutenance clôturée.');
+    } catch {
+      toast.error('Évaluation non enregistrée. Vérifiez les données et réessayez.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDownloadPv = () => {
-    openAuthenticatedUrl('/api/v1/admin/pfe/pv-soutenance-sample');
-    toast.success('Téléchargement du Procès-Verbal officiel de soutenance PFE (PDF) !');
+    if (currentCandidate?.defenseId && currentCandidate.completed) {
+      openAuthenticatedUrl(`/api/professor/internships/soutenances/${currentCandidate.defenseId}/pv`);
+    }
   };
 
-  const selectCandidate = (cand: PfeCandidate) => {
-    setSelectedCandidateId(cand.id);
-    setIsSigned(false);
-  };
+  const selectCandidate = (cand: PfeCandidate) => setSelectedCandidateId(cand.id);
+
+  if (isPending || isError || !currentCandidate) {
+    return <div className="p-6 rounded-2xl border border-border bg-card" role="status">
+      {isPending ? 'Chargement des dossiers PFE…' : isError ? 'Impossible de charger les dossiers PFE.' : 'Aucun dossier PFE affecté.'}
+      {isError && <button className="ml-4 underline" onClick={() => void refetch()}>Réessayer</button>}
+    </div>;
+  }
 
   return (
     <div className="space-y-7 max-w-[1720px] mx-auto font-sans animate-in fade-in pb-28">
@@ -186,7 +186,7 @@ export default function ProfessorPfeEvaluationPage() {
 
         <div className="flex items-center gap-3 text-xs font-semibold text-slate-500 dark:text-slate-400">
           <span className="text-[11px] font-bold text-slate-500">
-            Session de Soutenances Automne 2026-2027
+            Dossiers de soutenance affectés
           </span>
         </div>
       </div>
@@ -213,7 +213,7 @@ export default function ProfessorPfeEvaluationPage() {
                 Évaluation de Soutenance PFE &amp; Procès-Verbal de Jury
               </h1>
               <p className="text-xs md:text-sm text-blue-100/90 font-medium mt-1 max-w-2xl leading-relaxed">
-                Notation pondérée selon les 4 critères officiels, attribution instantanée de la mention et signature conjointe scellée SHA-256.
+                Notation selon les quatre critères, enregistrement du barème et génération du procès-verbal à partir du dossier validé.
               </p>
             </div>
           </div>
@@ -363,7 +363,8 @@ export default function ProfessorPfeEvaluationPage() {
               max="5"
               step="0.25"
               value={writtenReport}
-              onChange={(e) => setWrittenReport(parseFloat(e.target.value))}
+              disabled={isSigned || isSaving || !currentCandidate.canEvaluate}
+              onChange={(e) => setWrittenReport((parseFloat(e.target.value) || 0))}
               className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#1a3673]"
             />
           </div>
@@ -387,7 +388,8 @@ export default function ProfessorPfeEvaluationPage() {
               max="6"
               step="0.25"
               value={methodology}
-              onChange={(e) => setMethodology(parseFloat(e.target.value))}
+              disabled={isSigned || isSaving || !currentCandidate.canEvaluate}
+              onChange={(e) => setMethodology((parseFloat(e.target.value) || 0))}
               className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#1a3673]"
             />
           </div>
@@ -411,7 +413,8 @@ export default function ProfessorPfeEvaluationPage() {
               max="4"
               step="0.25"
               value={oralDefense}
-              onChange={(e) => setOralDefense(parseFloat(e.target.value))}
+              disabled={isSigned || isSaving || !currentCandidate.canEvaluate}
+              onChange={(e) => setOralDefense((parseFloat(e.target.value) || 0))}
               className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#1a3673]"
             />
           </div>
@@ -435,7 +438,8 @@ export default function ProfessorPfeEvaluationPage() {
               max="5"
               step="0.25"
               value={defenseAnswers}
-              onChange={(e) => setDefenseAnswers(parseFloat(e.target.value))}
+              disabled={isSigned || isSaving || !currentCandidate.canEvaluate}
+              onChange={(e) => setDefenseAnswers((parseFloat(e.target.value) || 0))}
               className="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#1a3673]"
             />
           </div>
@@ -465,7 +469,8 @@ export default function ProfessorPfeEvaluationPage() {
           <textarea
             rows={3}
             value={remarks}
-            onChange={(e) => setRemarks(e.target.value)}
+            disabled={isSigned || isSaving || !currentCandidate.canEvaluate}
+              onChange={(e) => setRemarks(e.target.value)}
             className="w-full p-4 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-800 dark:text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#1a3673]/30 resize-none leading-relaxed"
           />
         </div>
@@ -476,7 +481,7 @@ export default function ProfessorPfeEvaluationPage() {
         <div className="border-b border-slate-100 dark:border-slate-800 pb-4 flex items-center justify-between">
           <h2 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-[#1a3673] dark:text-blue-400" />
-            Émargement &amp; Signature Électronique Conjointe du Jury
+            Composition du jury &amp; validation du dossier
           </h2>
           <span className="text-xs font-bold text-slate-400">Date d'évaluation : {new Date().toLocaleDateString('fr-FR')}</span>
         </div>
@@ -486,7 +491,7 @@ export default function ProfessorPfeEvaluationPage() {
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Président du Jury</span>
             <div className="font-bold text-xs text-slate-800 dark:text-white">{presidentSignature}</div>
             <div className="h-16 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-serif text-slate-500 italic text-xs shadow-inner">
-              {isSigned ? `✓ ${presidentSignature} (Certifié SHA-256)` : "En attente de signature..."}
+              {isSigned ? `Jury : ${presidentSignature}` : "Visa du jury selon la procédure de l’établissement"}
             </div>
           </div>
 
@@ -494,7 +499,7 @@ export default function ProfessorPfeEvaluationPage() {
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Membre Examinateur / Rapporteur</span>
             <div className="font-bold text-xs text-slate-800 dark:text-white">{examinerSignature}</div>
             <div className="h-16 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center font-serif text-slate-500 italic text-xs shadow-inner">
-              {isSigned ? `✓ ${examinerSignature} (Certifié SHA-256)` : "En attente de signature..."}
+              {isSigned ? `Jury : ${examinerSignature}` : "Visa du jury selon la procédure de l’établissement"}
             </div>
           </div>
         </div>
@@ -502,6 +507,7 @@ export default function ProfessorPfeEvaluationPage() {
         <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-slate-100 dark:border-slate-800">
           <button
             onClick={handleDownloadPv}
+            disabled={!isSigned}
             className="w-full sm:w-auto px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm"
           >
             <Download className="w-4 h-4 text-[#1a3673] dark:text-blue-400" /> Prévisualiser le PV Officiel (PDF)
@@ -509,7 +515,7 @@ export default function ProfessorPfeEvaluationPage() {
 
           <button
             onClick={handleValidateAndSign}
-            disabled={isSigned}
+            disabled={isSigned || isSaving || !currentCandidate.canEvaluate}
             className={cn(
               "w-full sm:w-auto px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg cursor-pointer active:scale-95",
               isSigned 
@@ -518,7 +524,7 @@ export default function ProfessorPfeEvaluationPage() {
             )}
           >
             <CheckCircle2 className="w-4 h-4 text-amber-300" />
-            {isSigned ? "PV Officiellement Signé & Clôturé ✓" : "Valider & Signer Électroniquement le PV"}
+            {isSigned ? "Évaluation enregistrée & clôturée ✓" : "Enregistrer et clôturer l’évaluation"}
           </button>
         </div>
       </div>

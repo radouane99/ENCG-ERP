@@ -120,6 +120,7 @@ class AttendanceController extends Controller
                     'name' => $record->student?->user?->name ?? 'Étudiant',
                     'status' => $record->status->value,
                     'scanned_at' => $record->scanned_at,
+                    'version' => (int) $record->version,
                     'is_valid' => (bool) $record->is_valid,
                 ])->values(),
             ],

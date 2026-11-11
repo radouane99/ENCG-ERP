@@ -41,6 +41,7 @@ class ClassroomAccessService
             if ($profId) {
                 $pivotQuery = $module->professors()
                     ->where('professors.id', $profId)
+                    ->where('module_professor.professor_type', $prof->getMorphClass())
                     ->when($activeYearId, fn ($q) => $q->where('module_professor.academic_year_id', $activeYearId))
                     ->when($group, fn ($q) => $q->where(fn ($sq) => $sq->where('module_professor.group_id', $group->id)->orWhereNull('module_professor.group_id')));
 
@@ -50,8 +51,13 @@ class ClassroomAccessService
             }
 
             // 2. Official Timetable Schedule assignment (schedules table)
-            $scheduleQuery = Schedule::where('module_id', $module->id)
-                ->where(fn ($q) => $q->where('professor_id', $profId)->orWhere('professor_id', $user->id))
+            $scheduleQuery = Schedule::where('module_id', $module->id)->where('is_active', true)
+                ->where(function ($q) use ($profId, $user) {
+                    $q->where(fn ($identity) => $identity->where('professor_type', $user->getMorphClass())->where('professor_id', $user->id));
+                    if ($profId) {
+                        $q->orWhere(fn ($identity) => $identity->where('professor_type', (new Professor)->getMorphClass())->where('professor_id', $profId));
+                    }
+                })
                 ->when($group, fn ($q) => $q->where(fn ($sq) => $sq->where('group_id', $group->id)->orWhereNull('group_id')))
                 ->when($activeYearId, fn ($q) => $q->where('academic_year_id', $activeYearId));
 
@@ -62,9 +68,9 @@ class ClassroomAccessService
             // 3. Approved Professor Substitution (professor_substitutions table)
             if ($profId) {
                 $hasSubstitution = DB::table('professor_substitutions')
-                    ->where(fn ($q) => $q->where('substitute_professor_id', $profId)->orWhere('substitute_professor_id', $user->id))
+                    ->where('substitute_professor_id', $profId)
                     ->where('module_id', $module->id)
-                    ->where('status', 'approved')
+                    ->where('status', 'active')
                     ->whereDate('start_date', '<=', now())
                     ->whereDate('end_date', '>=', now())
                     ->exists();
@@ -79,7 +85,7 @@ class ClassroomAccessService
                 return;
             }
 
-            if ($user->hasAnyRole(['department-head', 'filiere-head']) && $module->filiere_id) {
+            if ($user->hasAnyRole(['department-head', 'filiere-head']) && $module->filiere()->where('responsable_id', $user->id)->exists()) {
                 return;
             }
         }

@@ -1,0 +1,16 @@
+{
+  "name": "@encg/deepmerge-hardened",
+  "version": "4.3.1-encg.2",
+  "private": true,
+  "description": "Local security fork of deepmerge 4.3.1 with prototype-poisoning protection",
+  "license": "MIT",
+  "main": "index.cjs",
+  "files": [
+    "index.cjs",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

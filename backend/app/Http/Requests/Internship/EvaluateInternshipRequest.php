@@ -15,6 +15,11 @@ class EvaluateInternshipRequest extends FormRequest
     {
         return [
             'grade' => 'required|numeric|min:0|max:20',
+            'criteria' => 'sometimes|array:written_report,methodology,oral_defense,defense_answers',
+            'criteria.written_report' => 'required_with:criteria|numeric|min:0|max:5',
+            'criteria.methodology' => 'required_with:criteria|numeric|min:0|max:6',
+            'criteria.oral_defense' => 'required_with:criteria|numeric|min:0|max:4',
+            'criteria.defense_answers' => 'required_with:criteria|numeric|min:0|max:5',
             'remarks' => 'nullable|string|max:1000',
         ];
     }

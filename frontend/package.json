@@ -12,9 +12,10 @@
     "design:check": "node scripts/unify-interface-design.mjs --check",
     "preview": "vite preview",
     "test": "vitest",
-    "test:unit": "vitest run",
+    "test:unit": "npm run test:dependency-security && vitest run",
     "test:e2e": "playwright test",
-    "test:e2e:mobile": "playwright test --project=mobile-chrome"
+    "test:e2e:mobile": "playwright test --project=mobile-chrome",
+    "test:dependency-security": "node --test vendor/deepmerge-hardened/security.test.cjs"
   },
   "dependencies": {
     "@fullcalendar/daygrid": "^6.1.21",
@@ -71,6 +72,14 @@
     "tailwindcss-animate": "^1.0.7",
     "typescript": "~6.0.2",
     "vite": "^8.1.0",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "deepmerge": "file:vendor/deepmerge-hardened/encg-deepmerge-hardened-4.3.1-encg.2.tgz"
+  },
+  "overrides": {
+    "workbox-build": {
+      "glob": "14.0.2"
+    },
+    "minimatch@>=7 <11.0.1": "11.0.1",
+    "deepmerge": "$deepmerge"
   }
 }

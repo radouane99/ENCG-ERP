@@ -10,7 +10,7 @@ export default function QRScannerPage() {
   const [scanResult, setScanResult] = useState<'success' | 'error' | null>(null);
   const [message, setMessage] = useState('');
   
-  const [manualToken, setManualToken] = useState('');
+  const [manualToken, setManualToken] = useState(() => new URLSearchParams(window.location.search).get('token') || '');
 
   const submitScan = async (token: string) => {
     setIsScanning(true);
@@ -18,13 +18,13 @@ export default function QRScannerPage() {
     try {
       // Get real geolocation
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject);
-      });
+        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 8000 });
+      }).catch(() => null);
       
       const res = await api.post('/v1/mobile/student/attendance/scan', {
         qr_token: token,
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude
+        latitude: position?.coords.latitude,
+        longitude: position?.coords.longitude
       });
       
       setScanResult('success');

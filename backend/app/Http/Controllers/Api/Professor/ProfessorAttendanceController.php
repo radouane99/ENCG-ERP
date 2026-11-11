@@ -167,28 +167,13 @@ class ProfessorAttendanceController extends Controller
             $group = Group::findOrFail($data['group_id']);
         }
         app(ClassroomAccessService::class)->authorize($request->user(), $module, $group, write: true);
-        $students = Student::with('user')->where('institution_id', $request->user()->institution_id)->where(fn ($q) => $q->whereHas('pathways', fn ($p) => $p->where('academic_year_id', $group->academic_year_id)->where('group_id', $group->id))->orWhereHas('registrations', fn ($r) => $r->where('academic_year_id', $group->academic_year_id)->where('group_id', $group->id)))->get()->sortBy(fn ($s) => $s->user->name);
-
-        // Règle Académique ENCG Fès : Inscription Annuelle (S1/S2, S3/S4, S5/S6)
-        // Si le groupe actuel n'a pas encore de fiches distinctes, récupérer automatiquement la section jumelle de la même année
-        if ($students->isEmpty() && preg_match('/^(.*?)-(S\d+)-(G\d+.*)$/i', (string) $group->name, $matches)) {
-            $prefix = $matches[1];
-            $section = $matches[3];
-            $twinGroup = Group::where('academic_year_id', $group->academic_year_id)
-                ->where('filiere_id', $group->filiere_id)
-                ->where('id', '!=', $group->id)
-                ->where('name', 'like', "{$prefix}-%-{$section}")
-                ->first();
-
-            if ($twinGroup) {
-                $students = Student::with('user')->where('institution_id', $request->user()->institution_id)->where(fn ($q) => $q->whereHas('pathways', fn ($p) => $p->where('academic_year_id', $twinGroup->academic_year_id)->where('group_id', $twinGroup->id))->orWhereHas('registrations', fn ($r) => $r->where('academic_year_id', $twinGroup->academic_year_id)->where('group_id', $twinGroup->id)))->get()->sortBy(fn ($s) => $s->user->name);
-            }
-        }
+        $students = app(\App\Services\Academic\ClassroomRosterService::class)->students($group, $request->user()->institution_id)->with('user')->get()->sortBy(fn ($s) => $s->user->name);
         $records = $session ? Attendance::where('attendance_session_id', $session->id)->get()->keyBy('student_id') : collect();
 
         // Calcul des alertes d'assiduité officielles ENCG Fès (2 abs = warning, >= 3 abs = risque d'exclusion)
-        $absenceCounts = Attendance::whereHas('session', fn ($q) => $q->where('module_id', $module->id))
+        $absenceCounts = Attendance::whereHas('session', fn ($q) => $q->where('module_id', $module->id)->where('academic_year_id', $group->academic_year_id))
             ->where('status', 'absent')
+            ->where('is_justified', false)
             ->whereIn('student_id', $students->pluck('id'))
             ->selectRaw('student_id, count(*) as count')
             ->groupBy('student_id')
@@ -268,6 +253,7 @@ class ProfessorAttendanceController extends Controller
             'records.*.version' => 'nullable|integer|min:0',
             'close_session' => 'sometimes|boolean',
             'sync_textbook' => 'sometimes|boolean',
+            'session_duration_hours' => 'required_if:sync_textbook,true|nullable|numeric|min:0.25|max:12',
             'chapter_title' => 'nullable|string|max:255',
             'key_concepts' => 'nullable|string|max:1000',
         ]);
@@ -304,23 +290,25 @@ class ProfessorAttendanceController extends Controller
                         $defaultTitle = $validated['chapter_title'] ?? "Séance — ".($moduleObj?->name ?? 'Enseignement');
                         $defaultConcepts = $validated['key_concepts'] ?? "Séance officielle {$session->session_type} en {$session->room}. Effectif : {$totalPresent} présents, {$totalAbsent} absents.";
 
-                        $existingTextbooksCount = Textbook::where('module_id', $session->module_id)->count();
+
 
                         Textbook::updateOrCreate(
+                            [
+                                'attendance_session_id' => $session->id,
+                            ],
                             [
                                 'professor_id' => $prof->id,
                                 'module_id' => $session->module_id,
                                 'session_date' => $session->session_date,
                                 'session_type' => $session->session_type ?? 'cours',
-                            ],
-                            [
                                 'user_id' => $request->user()->id,
                                 'group_id' => $session->group_id,
-                                'session_duration_hours' => 2.0,
+                                'session_duration_hours' => $validated['session_duration_hours'],
+                                'syllabus_percentage' => Textbook::where('attendance_session_id', $session->id)->value('syllabus_percentage') ?? 0,
                                 'chapter_title' => $defaultTitle,
                                 'key_concepts' => $defaultConcepts,
                                 'pedagogical_goals' => "Progression du syllabus officiel & contrôle d'assiduité",
-                                'syllabus_percentage' => min(100, ($existingTextbooksCount + 1) * 7),
+
                                 'status' => 'submitted',
                             ]
                         );
