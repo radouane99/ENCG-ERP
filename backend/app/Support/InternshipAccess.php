@@ -10,7 +10,7 @@ final class InternshipAccess
 {
     public static function staff(User $user): bool
     {
-        return $user->hasAnyRole(['super-admin', 'institution-admin', 'admin', 'director', 'department-head', 'filiere-head', 'pedagogy_officer']);
+        return $user->hasAnyRole(['super-admin', 'institution-admin', 'admin', 'director', 'pedagogy_officer']);
     }
 
     public static function query(User $user)

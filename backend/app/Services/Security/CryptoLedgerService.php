@@ -3,6 +3,7 @@
 namespace App\Services\Security;
 
 use App\Models\Grade;
+use App\Models\OfficialDocumentSignature;
 use Illuminate\Support\Facades\Cache;
 
 class CryptoLedgerService
@@ -162,8 +163,7 @@ class CryptoLedgerService
             'cndp_compliance' => 'Loi 09-08 (Minimisation des données personnelles)',
         ];
 
-        Cache::put('official_doc_registry:'.strtoupper(trim($referenceCode)), $record, now()->addYears(2));
-        Cache::put('official_doc_registry:'.$signatureCode, $record, now()->addYears(2));
+        $this->persistOfficialRecord($record);
 
         return $record;
     }
@@ -174,15 +174,41 @@ class CryptoLedgerService
     public function verifyOfficialDocument(string $code): ?array
     {
         $normalized = strtoupper(trim($code));
-        $cached = Cache::get('official_doc_registry:'.$normalized);
-        if (is_array($cached)) {
-            return array_merge($cached, [
-                'verified' => true,
-                'verification_timestamp' => now()->toIso8601String(),
-            ]);
+        $signature = OfficialDocumentSignature::where(fn ($q) => $q->where('signature_code', $normalized)->orWhere('reference_code', $normalized))->orderByDesc('id')->first();
+        if (! $signature) {
+            $legacy = Cache::get('official_doc_registry:'.$normalized);
+            if (is_array($legacy)) $signature = $this->persistOfficialRecord($legacy, true);
         }
+        if (! $signature || $signature->status !== 'issued'
+            || ! hash_equals($signature->integrity_mac, $this->recordIntegrity($signature->payload))) return null;
+        return array_merge($signature->payload, ['verified' => true, 'verification_timestamp' => now()->toIso8601String()]);
+    }
 
-        return null;
+    public function persistOfficialRecord(array $record, bool $legacy = false): ?OfficialDocumentSignature
+    {
+        foreach (['signature_code', 'reference_code', 'document_type', 'hmac_sha256', 'issued_at'] as $key) {
+            if (! isset($record[$key]) || ! is_string($record[$key])) return null;
+        }
+        if (! preg_match('/^SIG-ENCG-[A-F0-9]{16}$/', $record['signature_code'])) return null;
+        // Legacy vacation calculations have no proof of administrative validation.
+        $revoked = $legacy && $record['document_type'] === 'decompte_fiscal_vacation_cgi_73_ii_f';
+        return OfficialDocumentSignature::firstOrCreate(['signature_code' => $record['signature_code']], [
+            'institution_id' => auth()->user()?->institution_id ?? config('erp.institution_id', 1),
+            'reference_code' => $record['reference_code'], 'document_type' => $record['document_type'],
+            'payload' => $record, 'integrity_mac' => $this->recordIntegrity($record),
+            'status' => $revoked ? 'revoked' : 'issued',
+            'revocation_reason' => $revoked ? 'Ancien calcul sans preuve de validation administrative. Réémission contrôlée requise.' : null,
+        ]);
+    }
+
+    private function recordIntegrity(array $record): string
+    {
+        $canonical = function (array $value) use (&$canonical): array {
+            if (! array_is_list($value)) ksort($value);
+            foreach ($value as &$item) if (is_array($item)) $item = $canonical($item);
+            return $value;
+        };
+        return hash_hmac('sha256', json_encode($canonical($record), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), $this->secretKey());
     }
 
     public function maskFullName(string $name): string

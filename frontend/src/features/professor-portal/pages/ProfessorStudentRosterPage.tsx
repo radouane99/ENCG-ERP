@@ -1,3 +1,4 @@
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/shared/components/ui/dialog';
 import { useAttendanceQrSession } from '../hooks/useAttendanceQrSession';
 import { QRCodeSVG } from 'qrcode.react';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -189,6 +190,9 @@ const [selectedSeance, setSelectedSeance] = useState<string>('S1');
   // 2. Lock State
   // 2. Lock State
 const [isLocked, setIsLocked] = useState(false);
+  const [showReopenDialog, setShowReopenDialog] = useState(false);
+  const [reopenReason, setReopenReason] = useState('');
+  const [isReopening, setIsReopening] = useState(false);
 
   // 3. Annotations State
   // 3. Annotations State
@@ -1210,6 +1214,15 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
   // Lock / Unlock toggle
   const toggleLock = () => {
+    if (isLocked && seanceStore[selectedSeance]?.session_id) {
+      if (!user?.roles?.some(role => ['super-admin', 'admin', 'institution-admin', 'director', 'scolarite'].includes(role))) {
+        toast.info('Séance clôturée. La scolarité doit autoriser et tracer sa réouverture.');
+        return;
+      }
+      setReopenReason('');
+      setShowReopenDialog(true);
+      return;
+    }
     const nextLock = !isLocked;
     setIsLocked(nextLock);
     persistCurrentSeance(absentIds, annotations, nextLock, seanceDate);
@@ -1218,6 +1231,21 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
     } else {
       toast.success(`🔓 Séance ${selectedSeance} déverrouillée`);
     }
+  };
+
+  const reopenCurrentSession = async () => {
+    const sessionId = seanceStore[selectedSeance]?.session_id;
+    if (!sessionId || reopenReason.trim().length < 10) return;
+    setIsReopening(true);
+    try {
+      await api.post(`/professor/attendance/${sessionId}/reopen`, { reason: reopenReason.trim() });
+      setIsLocked(false);
+      persistCurrentSeance(absentIds, annotations, false, seanceDate);
+      setShowReopenDialog(false);
+      toast.success('Réouverture administrative enregistrée.');
+    } catch {
+      toast.error('Réouverture refusée. Vérifiez les droits et le contexte académique.');
+    } finally { setIsReopening(false); }
   };
 
   // Annotations Editor
@@ -1588,6 +1616,20 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
   return (
     <div className="space-y-6 font-sans animate-in fade-in duration-500 text-foreground pb-20 max-w-[1600px] mx-auto p-2">
+      <Dialog open={showReopenDialog} onOpenChange={setShowReopenDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Réouverture administrative de la séance</DialogTitle>
+            <DialogDescription>Le motif et l’identité de l’agent seront conservés dans le journal d’audit.</DialogDescription>
+          </DialogHeader>
+          <label className="text-sm font-medium" htmlFor="attendance-reopen-reason">Motif de réouverture</label>
+          <textarea id="attendance-reopen-reason" value={reopenReason} onChange={event => setReopenReason(event.target.value)} minLength={10} maxLength={1000} rows={3} className="w-full rounded-xl border border-border bg-card p-3" />
+          <DialogFooter>
+            <button type="button" onClick={() => setShowReopenDialog(false)} disabled={isReopening} className="rounded-xl border border-border px-4 py-2">Annuler</button>
+            <button type="button" onClick={() => void reopenCurrentSession()} disabled={isReopening || reopenReason.trim().length < 10} className="rounded-xl bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">Confirmer la réouverture</button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {/* ── Top Role & Institution Header Pill ── */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-card p-3 rounded-2xl border border-border shadow-2xs">
         <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-foreground pl-1">

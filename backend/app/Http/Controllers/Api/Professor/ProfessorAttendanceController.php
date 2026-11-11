@@ -409,6 +409,13 @@ class ProfessorAttendanceController extends Controller
     /**
      * Fermer une session de présence.
      */
+    public function reopenSession(AttendanceSession $session, Request $request): JsonResponse
+    {
+        $data = $request->validate(['reason' => 'required|string|min:10|max:1000']);
+        $session = app(\App\Actions\Attendance\ReopenAttendanceSessionAction::class)->execute($request->user(), $session->id, $data['reason']);
+        return response()->json(['success' => true, 'session' => $session]);
+    }
+
     public function closeSession(AttendanceSession $session): JsonResponse
     {
         $closedSession = $this->attendanceService->closeSession($session->id);

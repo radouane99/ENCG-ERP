@@ -2423,6 +2423,13 @@ class ProfessorPortalController extends Controller
         }
 
         return DB::transaction(function () use ($session, $academicYearId, $profId, $profType, $user, $seanceCode, $isLocked, $groupId, $subGroup, $absentIds, $annotations, $sessionDate, $syncTextbook, $prof, $moduleId, $sessionType, $chapterTitle, $keyConcepts, $durationHours, $group) {
+            Group::whereKey($groupId)->lockForUpdate()->firstOrFail();
+            $session = $session->exists
+                ? AttendanceSession::whereKey($session->id)->lockForUpdate()->firstOrFail()
+                : (AttendanceSession::where('module_id', $moduleId)->where('group_id', $groupId)
+                    ->whereDate('session_date', $sessionDate)->where('session_type', $sessionType)
+                    ->where('room', $seanceCode)->lockForUpdate()->first() ?? $session);
+            abort_if($session->exists && ($session->status === 'completed' || $session->is_locked), 409, 'Session clôturée : une réouverture administrative est requise.');
             if (! $session->exists) {
                 $session->academic_year_id = $academicYearId;
                 $session->professor_id = $profId;
@@ -2858,64 +2865,14 @@ class ProfessorPortalController extends Controller
      */
     public function getVacationPaymentTracker(Request $request, CryptoLedgerService $ledger): JsonResponse
     {
-        $user = $request->user();
-        $prof = $user ? Professor::where('user_id', $user->id)->first() : null;
-        $isVacataire = ($prof?->contract_type === 'vacataire') || ($prof?->type === 'vacataire') || $user?->hasRole('vacataire');
-
-        if (! $isVacataire) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Accès refusé (403) : le suivi des indemnités de vacation et de la retenue IGR 17% (Art. 73-II-F CGI) est strictement réservé aux enseignants vacataires.',
-            ], 403);
-        }
-
-        $contracts = $prof
-            ? VacationContract::where('professor_id', $prof->id)->get()
-            : collect();
-
-        $totalHours = (float) ($request->query('simulated_hours') ?? ($contracts->sum('agreed_hours') ?: 45));
-        $hourlyRate = (float) ($request->query('simulated_rate') ?? ($contracts->avg('hourly_rate') ?: 300.0));
-        $grossMad = round($totalHours * $hourlyRate, 2);
-        $igrRatePct = 17; // Strict Moroccan CGI Article 73-II-F rate
-        $igrWithholdingMad = round($grossMad * ($igrRatePct / 100), 2);
-        $netPayableMad = round($grossMad - $igrWithholdingMad, 2);
-
-        $refCode = 'VAC-ENCG-'.($prof?->id ?? $user->id).'-'.date('Y');
-        $signed = $ledger->signOfficialDocument(
-            'decompte_fiscal_vacation_cgi_73_ii_f',
-            $refCode,
-            trim("{$user->first_name} {$user->last_name}") ?: ($user->name ?? 'Vacataire ENCG'),
-            $user->cin ?: (string) $user->id,
-            [
-                'hours' => $totalHours,
-                'gross_mad' => $grossMad,
-                'igr_rate_pct' => 17,
-                'igr_withholding_mad' => $igrWithholdingMad,
-                'net_mad' => $netPayableMad,
-            ]
-        );
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'reference_code' => $refCode,
-                'signature_code' => $signed['signature_code'],
-                'legal_basis' => 'Article 73-II-F du Code Général des Impôts (CGI Maroc) — Retenue à la source libératoire de 17%',
-                'total_hours' => $totalHours,
-                'hourly_rate_mad' => $hourlyRate,
-                'gross_amount_mad' => $grossMad,
-                'igr_rate_pct' => $igrRatePct,
-                'igr_withholding_mad' => $igrWithholdingMad,
-                'net_payable_mad' => $netPayableMad,
-                'contracts_count' => $contracts->count(),
-                'pipeline_steps' => [
-                    ['step' => 1, 'label' => 'Certification du Service Fait (Chef de Département)', 'status' => 'completed'],
-                    ['step' => 2, 'label' => 'Visa Direction & Bordereau de Décompte', 'status' => 'completed'],
-                    ['step' => 3, 'label' => 'Liquidation DAF & Retenue IGR 17% (CGI Art. 73-II-F)', 'status' => 'in_progress'],
-                    ['step' => 4, 'label' => 'Virement Trésorerie Générale du Royaume (TGR)', 'status' => 'pending'],
-                ],
-            ],
+        $validated = $request->validate([
+            'simulated_hours' => 'nullable|numeric|min:0|max:10000',
+            'simulated_rate' => 'nullable|numeric|min:0|max:100000',
         ]);
+        $simulation = $request->hasAny(['simulated_hours', 'simulated_rate'])
+            ? ['hours' => $validated['simulated_hours'] ?? 0, 'rate' => $validated['simulated_rate'] ?? 0] : null;
+        $data = app(\App\Services\HR\VacationPaymentTrackerService::class)->summary($request->user(), $simulation);
+        return response()->json(['success' => true, 'data' => $data]);
     }
 
     /**
@@ -2929,44 +2886,10 @@ class ProfessorPortalController extends Controller
             'justification' => ['required', 'string', 'min:8', 'max:500'],
         ]);
 
-        $user = $request->user();
-        $grade = Grade::withoutGlobalScopes()->findOrFail((int) $validated['grade_id']);
-
-        $rectId = 'RECT-ENCG-'.$grade->id.'-'.strtoupper(substr(bin2hex(random_bytes(4)), 0, 8));
-        $profSig = hash_hmac(
-            'sha256',
-            "{$rectId}|{$grade->id}|{$grade->value}|{$validated['proposed_value']}|{$user->id}",
-            (string) config('app.key', 'encg-secret')
+        $entry = app(\App\Services\Security\GradeRectificationService::class)->request(
+            $request->user(), (int) $validated['grade_id'], (float) $validated['proposed_value'], $validated['justification']
         );
-
-        $entry = [
-            'id' => $rectId,
-            'grade_id' => (int) $grade->id,
-            'student_id' => (int) $grade->student_id,
-            'assessment_id' => (int) $grade->assessment_id,
-            'old_value' => (float) $grade->value,
-            'proposed_value' => round((float) $validated['proposed_value'], 2),
-            'justification' => $validated['justification'],
-            'requested_by_user_id' => $user->id,
-            'requested_by_name' => trim("{$user->first_name} {$user->last_name}") ?: $user->email,
-            'professor_signature_hmac' => 'SIG-PROF-'.strtoupper(substr($profSig, 0, 16)),
-            'director_signature_hmac' => null,
-            'approved_by_user_id' => null,
-            'status' => 'pending_second_approver',
-            'created_at' => now()->toIso8601String(),
-        ];
-
-        $all = Cache::get('encg_four_eyes_grade_rectifications', []);
-        if (! is_array($all)) {
-            $all = [];
-        }
-        $all[$rectId] = $entry;
-        Cache::put('encg_four_eyes_grade_rectifications', $all, now()->addDays(90));
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Demande de rectification signée (1/2). En attente de co-signature par la Direction des Études (Contrôle à 4 Yeux).',
-            'data' => $entry,
-        ], 201);
+        return response()->json(['success' => true, 'message' => 'Demande enregistrée. Une seconde validation est requise.', 'data' => $entry], 201);
     }
+
 }

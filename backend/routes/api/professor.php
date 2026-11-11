@@ -87,6 +87,7 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:professor|vacata
         Route::get('/sessions/{session}/pdf', [ProfessorAttendanceController::class, 'downloadSessionPdf']);
         Route::post('/{session}/manual-call', [ProfessorAttendanceController::class, 'manualCall']);
         Route::post('/{session}/scan', [ProfessorAttendanceController::class, 'scanQrCode']);
+        Route::post('/{session}/reopen', [ProfessorAttendanceController::class, 'reopenSession']);
         Route::post('/{session}/close', [ProfessorAttendanceController::class, 'closeSession']);
     });
     Route::get('/v1/professor/attendance/sessions/{session}/pdf', [ProfessorAttendanceController::class, 'downloadSessionPdf']);

@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 
 class VerifyDatabaseIntegrity extends Command
 {
@@ -13,7 +14,7 @@ class VerifyDatabaseIntegrity extends Command
      *
      * @var string
      */
-    protected $signature = 'erp:verify-integrity {--pre : Run pre-migration snapshot} {--post : Run post-migration verification}';
+    protected $signature = 'erp:verify-integrity {--pre : Run pre-migration snapshot} {--post : Run post-migration verification} {--snapshot= : Snapshot filename under storage/app}';
 
     /**
      * The console command description.
@@ -30,24 +31,27 @@ class VerifyDatabaseIntegrity extends Command
         $isPre = $this->option('pre');
         $isPost = $this->option('post');
 
-        if (! $isPre && ! $isPost) {
-            $this->error('You must specify either --pre or --post.');
+        if ($isPre === $isPost) {
+            $this->error('Specify exactly one of --pre or --post.');
 
             return 1;
         }
 
-        $snapshotFile = storage_path('app/db_integrity_snapshot.json');
+        $filename = $this->option('snapshot') ?: 'db_integrity_snapshot.json';
+        if (! preg_match('/^[a-zA-Z0-9_.-]+\.json$/', $filename)) {
+            $this->error('Invalid snapshot filename.');
+            return 1;
+        }
+        $snapshotFile = storage_path('app/'.$filename);
 
-        $tables = DB::select('SHOW TABLES');
-        $dbName = env('DB_DATABASE', 'encg_erp');
+        $tables = Schema::getTables();
 
         $currentState = [];
 
         $this->info('Scanning database...');
 
         foreach ($tables as $tableObj) {
-            $tableArray = (array) $tableObj;
-            $tableName = array_values($tableArray)[0];
+            $tableName = $tableObj['name'];
 
             // Skip system tables
             if (in_array($tableName, ['migrations', 'cache', 'cache_locks', 'failed_jobs', 'jobs', 'personal_access_tokens', 'telescope_entries'])) {
@@ -56,7 +60,7 @@ class VerifyDatabaseIntegrity extends Command
 
             $count = DB::table($tableName)->count();
 
-            $indexes = DB::select("SHOW INDEX FROM `$tableName`");
+            $indexes = Schema::getIndexes($tableName);
             $indexCount = count($indexes);
 
             $currentState[$tableName] = [
@@ -66,7 +70,9 @@ class VerifyDatabaseIntegrity extends Command
         }
 
         if ($isPre) {
-            File::put($snapshotFile, json_encode($currentState, JSON_PRETTY_PRINT));
+            $temporary = $snapshotFile.'.tmp';
+            File::put($temporary, json_encode($currentState, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
+            File::move($temporary, $snapshotFile);
             $this->info('✅ Pre-migration snapshot saved.');
 
             return 0;
@@ -79,7 +85,7 @@ class VerifyDatabaseIntegrity extends Command
                 return 1;
             }
 
-            $snapshot = json_decode(File::get($snapshotFile), true);
+            $snapshot = json_decode(File::get($snapshotFile), true, 512, JSON_THROW_ON_ERROR);
             $errors = 0;
 
             $this->info('Verifying data retention...');
@@ -101,7 +107,7 @@ class VerifyDatabaseIntegrity extends Command
             }
 
             if ($errors === 0) {
-                $this->info('✅ Post-migration verification successful. Zero data loss detected.');
+                $this->info('✅ Post-migration row-count verification successful.');
 
                 return 0;
             } else {

@@ -5,9 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
 {
@@ -21,14 +20,14 @@ class ProfileController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'name_ar' => 'nullable|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
+            'email' => ['required', 'string', 'email', 'max:255', Rule::in([$user->email])],
             'phone' => 'nullable|string|max:20',
-            'password' => ['nullable', 'confirmed', Password::defaults()],
+            'password' => 'prohibited',
+            'password_confirmation' => 'prohibited',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $user->name = $validated['name'];
-        $user->email = $validated['email'];
 
         if (isset($validated['name_ar'])) {
             $user->name_ar = $validated['name_ar'];
@@ -36,10 +35,6 @@ class ProfileController extends Controller
 
         if (isset($validated['phone'])) {
             $user->phone = $validated['phone'];
-        }
-
-        if (! empty($validated['password'])) {
-            $user->password = Hash::make($validated['password']);
         }
 
         if ($request->hasFile('avatar')) {

@@ -419,12 +419,8 @@ class AdminDashboardController extends Controller
         $user = $request->user();
         abort_unless($user && $user->hasAnyRole(['super-admin', 'institution-admin', 'director', 'scolarite-admin']), 403);
 
-        $all = Cache::get('encg_four_eyes_grade_rectifications', []);
-
-        return response()->json([
-            'success' => true,
-            'data' => array_values(is_array($all) ? $all : []),
-        ]);
+        $records = \App\Models\GradeRectification::where('institution_id', $user->institution_id)->latest()->limit(500)->get();
+        return response()->json(['success' => true, 'data' => $records->pluck('payload')->values()]);
     }
 
     /**
@@ -432,53 +428,8 @@ class AdminDashboardController extends Controller
      */
     public function approveGradeRectification(Request $request, string $rectificationId, CryptoLedgerService $ledger): JsonResponse
     {
-        $user = $request->user();
-        abort_unless($user && $user->hasAnyRole(['super-admin', 'institution-admin', 'director', 'scolarite-admin']), 403);
-
-        $all = Cache::get('encg_four_eyes_grade_rectifications', []);
-        abort_unless(is_array($all) && isset($all[$rectificationId]), 404, 'Demande de rectification introuvable.');
-
-        $entry = $all[$rectificationId];
-        abort_unless(($entry['status'] ?? '') === 'pending_second_approver', 409, 'Cette demande a déjà été traitée.');
-
-        if ((int) ($entry['requested_by_user_id'] ?? 0) === (int) $user->id) {
-            return response()->json([
-                'success' => false,
-                'code' => 'FOUR_EYES_VIOLATION',
-                'message' => 'Violation du Contrôle à 4 Yeux (Four-Eyes Principle) : le demandeur initial ne peut pas co-signer sa propre rectification.',
-            ], 403);
-        }
-
-        $grade = Grade::withoutGlobalScopes()->findOrFail((int) $entry['grade_id']);
-        $grade->update([
-            'value' => (float) $entry['proposed_value'],
-        ]);
-
-        $dirSig = hash_hmac(
-            'sha256',
-            "{$rectificationId}|{$entry['professor_signature_hmac']}|{$user->id}|".now()->toIso8601String(),
-            (string) config('app.key', 'encg-secret')
-        );
-
-        $entry['director_signature_hmac'] = 'SIG-DIR-'.strtoupper(substr($dirSig, 0, 16));
-        $entry['approved_by_user_id'] = $user->id;
-        $entry['approved_by_name'] = trim("{$user->first_name} {$user->last_name}") ?: $user->email;
-        $entry['approved_at'] = now()->toIso8601String();
-        $entry['status'] = 'approved_and_sealed';
-
-        $all[$rectificationId] = $entry;
-        Cache::put('encg_four_eyes_grade_rectifications', $all, now()->addDays(90));
-
-        $seal = $ledger->sealGradeLedger($user->institution_id ?? null, $user->id);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Rectification co-signée (2/2) et chaîne cryptographique des notes re-scellée avec succès.',
-            'data' => [
-                'rectification' => $entry,
-                'ledger_seal' => $seal,
-            ],
-        ]);
+        $data = app(\App\Services\Security\GradeRectificationService::class)->approve($request->user(), $rectificationId);
+        return response()->json(['success' => true, 'message' => 'Rectification approuvée et enregistrée.', 'data' => $data]);
     }
 
     /**
@@ -492,7 +443,7 @@ class AdminDashboardController extends Controller
         $ledgerStatus = $ledger->verifyGradeLedger($user->institution_id ?? null);
         $rememberCount = DB::table('personal_access_tokens')->where('name', 'auth-token-remember')->count();
         $standardCount = DB::table('personal_access_tokens')->where('name', '!=', 'auth-token-remember')->count();
-        $rectifications = Cache::get('encg_four_eyes_grade_rectifications', []);
+        $rectifications = \App\Models\GradeRectification::where('institution_id', $user->institution_id)->count();
 
         return response()->json([
             'success' => true,
@@ -505,7 +456,7 @@ class AdminDashboardController extends Controller
                     'standard_8h_count' => $standardCount,
                     'total_active_tokens' => $rememberCount + $standardCount,
                 ],
-                'four_eyes_rectifications_count' => is_array($rectifications) ? count($rectifications) : 0,
+                'four_eyes_rectifications_count' => $rectifications,
                 'security_controls' => [
                     'owasp_security_headers' => true,
                     'webauthn_passkeys_fido2' => true,

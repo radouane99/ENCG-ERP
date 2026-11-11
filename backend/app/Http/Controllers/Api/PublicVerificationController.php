@@ -332,7 +332,6 @@ class PublicVerificationController extends Controller
                 'group' => $group->name,
                 'signed_by' => $signature->signer->name ?? $signature->signer->email,
                 'signed_at' => $signature->signed_at->toIso8601String(),
-                'ip_address' => $signature->ip_address,
             ],
         ]);
     }
