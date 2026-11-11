@@ -165,6 +165,7 @@ class AttendanceService
             }
             $session->update([
                 'status' => 'completed',
+                'is_locked' => true,
                 'end_time' => Carbon::now()->format('H:i:s'),
                 'qr_token' => null,
             ]);

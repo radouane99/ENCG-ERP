@@ -438,7 +438,8 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
     newAnnotations: Record<number, StudentAnnotation>,
     newLocked: boolean,
     newDate: string,
-    markSavedToDb: boolean = false
+    markSavedToDb: boolean = false,
+    savedSessionId?: number
   ) => {
     if (!storageKey) return;
     const existing = seanceStore[selectedSeance];
@@ -455,7 +456,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
           date: newDate,
           savedAt: existing?.savedAt || (isSaved ? new Date().toISOString() : undefined),
           isSavedToDb: isSaved,
-          session_id: existing?.session_id,
+          session_id: savedSessionId ?? existing?.session_id,
           rattrapages: existing?.rattrapages,
         }
       };
@@ -1098,7 +1099,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
         is_locked: isLocked,
         absent_ids: Array.from(absentIds),
         annotations,
-        attendance_session_id: qrSourceSessionId,
+        attendance_session_id: qrSourceSessionId ?? seanceStore[selectedSeance]?.session_id,
         sync_textbook: syncTextbook,
         session_duration_hours: Number(sessionDurationHours) || slotDurationHours(selectedSchedule?.start_time, selectedSchedule?.end_time),
         chapter_title: customChapterTitle.trim() || undefined,
@@ -1111,7 +1112,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
           ? `Feuille de présence ${selectedSeance} et Cahier de Texte enregistrés avec succès !`
           : (res.data?.message || `Feuille de présence ${selectedSeance} enregistrée en base de données`)
       );
-      persistCurrentSeance(absentIds, annotations, isLocked, seanceDate, true);
+      persistCurrentSeance(absentIds, annotations, isLocked, seanceDate, true, res.data?.data?.session_id);
       setShowSaveModal(false);
     } catch (err: any) {
       if (err.response?.data?.code === 'EXAM_PERIOD_LOCKED') {

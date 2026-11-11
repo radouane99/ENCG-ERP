@@ -278,7 +278,7 @@ class ProfessorAttendanceController extends Controller
                 $this->attendanceService->markPresence($session->id, (int) $row['student_id'], $row['status']);
             }
             if ($validated['close_session'] ?? false) {
-                $this->attendanceService->closeSession($session->id);
+                $session = $this->attendanceService->closeSession($session->id);
 
                 // Synergie Pédagogique ENCG Fès : Clôture d'appel ➔ Synchronisation Cahier de Texte
                 if (! empty($validated['sync_textbook'])) {
