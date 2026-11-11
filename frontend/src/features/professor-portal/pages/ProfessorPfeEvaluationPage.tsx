@@ -92,9 +92,9 @@ export default function ProfessorPfeEvaluationPage() {
   const examinerSignature = 'Pr. Fatima Bensouda';
 
   // Fetch supervised internships if available
-  const { data: serverInternships = [] } = useQuery({
+  const { data: serverInternships = [] } = useQuery<PfeCandidate[]>({
     queryKey: ['professor-internships-eval'],
-    queryFn: async () => {
+    queryFn: async (): Promise<PfeCandidate[]> => {
       try {
         const res = await api.get('/professor/internships/supervised');
         return res.data.internships || [];
@@ -104,8 +104,8 @@ export default function ProfessorPfeEvaluationPage() {
     },
   });
 
-  const candidatesList = serverInternships.length > 0 ? serverInternships : defaultCandidates;
-  const currentCandidate = candidatesList.find(c => c.id === selectedCandidateId) || candidatesList[0];
+  const candidatesList: PfeCandidate[] = serverInternships.length > 0 ? serverInternships : defaultCandidates;
+  const currentCandidate: PfeCandidate = candidatesList.find((c: PfeCandidate) => c.id === selectedCandidateId) || candidatesList[0];
 
   const totalGrade = Number((writtenReport + methodology + oralDefense + defenseAnswers).toFixed(2));
 
@@ -238,7 +238,7 @@ export default function ProfessorPfeEvaluationPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {candidatesList.map((cand) => (
+          {candidatesList.map((cand: PfeCandidate) => (
             <div
               key={cand.id}
               onClick={() => selectCandidate(cand)}
