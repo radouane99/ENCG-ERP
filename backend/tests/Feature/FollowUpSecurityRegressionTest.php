@@ -1,17 +1,37 @@
 <?php
+
 namespace Tests\Feature;
 
-use App\Models\{Group, Grade, Internship, Soutenance, StudentPathway};
+use App\Models\Grade;
+use App\Models\GradeRectification;
+use App\Models\Group;
+use App\Models\Institution;
+use App\Models\Internship;
+use App\Models\ModulePvSignature;
+use App\Models\OfficialDocumentSignature;
+use App\Models\Professor;
+use App\Models\Soutenance;
+use App\Models\StudentPathway;
+use App\Models\User;
+use App\Models\VacationContract;
+use App\Models\VacationPayment;
 use App\Services\Security\CryptoLedgerService;
+use App\Services\Security\GradeRectificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\{Hash, Mail};
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\Sanctum;
 use Spatie\Permission\Models\Role;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class FollowUpSecurityRegressionTest extends TestCase
 {
     use RefreshDatabase;
+
     private function context(string $role = 'professor'): array
     {
         Mail::fake();
@@ -23,6 +43,7 @@ class FollowUpSecurityRegressionTest extends TestCase
         $prof = $this->makeTestProfessor();
         $prof->user->assignRole(Role::findOrCreate($role, 'sanctum'));
         Sanctum::actingAs($prof->user);
+
         return [$year, $filiere, $module, $group, $prof];
     }
 
@@ -61,7 +82,7 @@ class FollowUpSecurityRegressionTest extends TestCase
     public function test_completed_attendance_cannot_be_unlocked_and_rewritten_by_save_endpoint(): void
     {
         [$year, $filiere, $module, $group, $prof] = $this->context();
-        $module->professors()->attach($prof->id, ['academic_year_id' => $year->id, 'group_id' => $group->id, 'professor_type' => \App\Models\Professor::class, 'session_type' => 'cm']);
+        $module->professors()->attach($prof->id, ['academic_year_id' => $year->id, 'group_id' => $group->id, 'professor_type' => Professor::class, 'session_type' => 'cm']);
         $student = $this->makeTestStudent();
         StudentPathway::create(['student_id' => $student->id, 'academic_year_id' => $year->id, 'filiere_id' => $filiere->id, 'group_id' => $group->id, 'current_semester' => 1, 'is_current' => true]);
         $payload = ['group_id' => $group->id, 'module_id' => $module->id, 'session_date' => now()->toDateString(), 'seance_code' => 'S1', 'is_locked' => true, 'absent_ids' => []];
@@ -87,6 +108,7 @@ class FollowUpSecurityRegressionTest extends TestCase
         $this->assertSame(0, $response->json('data.contracts_count'));
         $this->assertNull($response->json('data.signature_code'), 'Un calcul simulé sans contrat ne doit pas être signé comme document officiel.');
     }
+
     public function test_public_pv_verification_does_not_expose_the_signer_ip(): void
     {
         $year = $this->makeTestAcademicYear(['is_current' => true]);
@@ -94,19 +116,20 @@ class FollowUpSecurityRegressionTest extends TestCase
         $module = $this->makeTestModule($filiere->id, ['semester_number' => 1]);
         $group = Group::create(['name' => 'AUDIT-S1-G1', 'filiere_id' => $filiere->id, 'academic_year_id' => $year->id, 'semester_number' => 1]);
         $signer = $this->makeTestProfessor();
-        \App\Models\ModulePvSignature::create(['module_id' => $module->id, 'group_id' => $group->id, 'academic_year_id' => $year->id, 'signed_by' => $signer->user_id, 'signed_at' => now(), 'signature_data' => 'audit', 'digital_seal' => hash('sha256', 'audit'), 'ip_address' => '192.0.2.42']);
+        ModulePvSignature::create(['module_id' => $module->id, 'group_id' => $group->id, 'academic_year_id' => $year->id, 'signed_by' => $signer->user_id, 'signed_at' => now(), 'signature_data' => 'audit', 'digital_seal' => hash('sha256', 'audit'), 'ip_address' => '192.0.2.42']);
         $this->getJson('/api/verify/pv/'.$module->id.'/'.$group->id)->assertOk()->assertJsonMissingPath('data.ip_address');
     }
 
     private function assignedGrade(): array
     {
         [$year, $filiere, $module, $group, $prof] = $this->context();
-        $module->professors()->attach($prof->id, ['academic_year_id' => $year->id, 'group_id' => $group->id, 'professor_type' => \App\Models\Professor::class, 'session_type' => 'cm']);
+        $module->professors()->attach($prof->id, ['academic_year_id' => $year->id, 'group_id' => $group->id, 'professor_type' => Professor::class, 'session_type' => 'cm']);
         $student = $this->makeTestStudent();
         StudentPathway::create(['student_id' => $student->id, 'academic_year_id' => $year->id, 'filiere_id' => $filiere->id, 'group_id' => $group->id, 'current_semester' => 1, 'is_current' => true]);
         $assessment = $this->createTestAssessment(['module_id' => $module->id, 'academic_year_id' => $year->id, 'type' => 'Exam', 'weight' => 100]);
         $grade = Grade::create(['assessment_id' => $assessment->id, 'student_id' => $student->id, 'value' => 8, 'absent' => false]);
-        \App\Models\Institution::find(1)->update(['settings' => ['exam_lock_phase' => 'Ordinaire Automne']]);
+        Institution::find(1)->update(['settings' => ['exam_lock_phase' => 'Ordinaire Automne']]);
+
         return [$grade, $prof, $group];
     }
 
@@ -115,30 +138,34 @@ class FollowUpSecurityRegressionTest extends TestCase
         [$grade, $prof] = $this->assignedGrade();
         $response = $this->postJson('/api/professor-portal/grade-rectifications', ['grade_id' => $grade->id, 'proposed_value' => 15, 'justification' => 'Correction documentée après contrôle de copie'])->assertCreated();
         $reference = $response->json('data.id');
-        \Illuminate\Support\Facades\Cache::flush();
+        Cache::flush();
         $this->assertDatabaseHas('grade_rectifications', ['reference' => $reference, 'status' => 'pending_second_approver']);
-        $admin = \App\Models\User::factory()->create(['institution_id' => 1]);
+        $admin = User::factory()->create(['institution_id' => 1]);
         $admin->assignRole(Role::findOrCreate('institution-admin', 'sanctum'));
         Sanctum::actingAs($admin);
         $this->getJson('/api/admin/security/grade-rectifications')->assertOk()->assertJsonPath('data.0.id', $reference);
-        $result = app(\App\Services\Security\GradeRectificationService::class)->approve($admin, $reference);
+        $result = app(GradeRectificationService::class)->approve($admin, $reference);
         $this->assertSame('approved_and_sealed', $result['rectification']['status']);
         $this->assertEquals(15, $grade->fresh()->value);
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
-        app(\App\Services\Security\GradeRectificationService::class)->approve($admin, $reference);
+        $this->expectException(HttpException::class);
+        app(GradeRectificationService::class)->approve($admin, $reference);
     }
 
     public function test_a_stale_rectification_cannot_overwrite_a_new_grade(): void
     {
         [$grade, $prof] = $this->assignedGrade();
-        $service = app(\App\Services\Security\GradeRectificationService::class);
+        $service = app(GradeRectificationService::class);
         $entry = $service->request($prof->user, $grade->id, 15, 'Correction documentée après contrôle');
         $grade->refresh()->update(['value' => 11]);
-        $admin = \App\Models\User::factory()->create(['institution_id' => 1]);
+        $admin = User::factory()->create(['institution_id' => 1]);
         $admin->assignRole(Role::findOrCreate('institution-admin', 'sanctum'));
         Sanctum::actingAs($admin);
-        try { $service->approve($admin, $entry['id']); $this->fail('Stale approval accepted'); }
-        catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) { $this->assertSame(409, $exception->getStatusCode()); }
+        try {
+            $service->approve($admin, $entry['id']);
+            $this->fail('Stale approval accepted');
+        } catch (HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+        }
         $this->assertEquals(11, $grade->fresh()->value);
     }
 
@@ -147,10 +174,10 @@ class FollowUpSecurityRegressionTest extends TestCase
         $this->context();
         $ledger = app(CryptoLedgerService::class);
         $record = $ledger->signOfficialDocument('attestation', 'AUDIT-DOC-1', 'Synthetic Holder', 'SYNTHETIC', ['value' => 10]);
-        \Illuminate\Support\Facades\Cache::flush();
+        Cache::flush();
         $this->assertTrue($ledger->verifyOfficialDocument($record['signature_code'])['verified']);
         $this->assertTrue($ledger->verifyOfficialDocument('AUDIT-DOC-1')['verified']);
-        $signature = \App\Models\OfficialDocumentSignature::where('signature_code', $record['signature_code'])->firstOrFail();
+        $signature = OfficialDocumentSignature::where('signature_code', $record['signature_code'])->firstOrFail();
         $payload = $signature->payload;
         $payload['claims']['value'] = 999;
         $signature->update(['payload' => $payload]);
@@ -160,19 +187,21 @@ class FollowUpSecurityRegressionTest extends TestCase
     public function test_legacy_import_preserves_history_and_revokes_unverified_fiscal_simulations(): void
     {
         [$grade, $prof] = $this->assignedGrade();
-        $entry = app(\App\Services\Security\GradeRectificationService::class)->request($prof->user, $grade->id, 15, 'Correction synthétique à préserver');
-        \App\Models\GradeRectification::where('reference', $entry['id'])->delete();
-        \Illuminate\Support\Facades\Cache::put('encg_four_eyes_grade_rectifications', [$entry['id'] => $entry], 600);
+        $entry = app(GradeRectificationService::class)->request($prof->user, $grade->id, 15, 'Correction synthétique à préserver');
+        GradeRectification::where('reference', $entry['id'])->delete();
+        Cache::put('encg_four_eyes_grade_rectifications', [$entry['id'] => $entry], 600);
         $ledger = app(CryptoLedgerService::class);
         $record = $ledger->signOfficialDocument('attestation', 'AUDIT-LEGACY-DOC', 'Synthetic Holder', 'SYNTHETIC');
         $fiscal = $ledger->signOfficialDocument('decompte_fiscal_vacation_cgi_73_ii_f', 'AUDIT-LEGACY-FISCAL', 'Synthetic Holder', 'SYNTHETIC');
-        \App\Models\OfficialDocumentSignature::query()->delete();
-        foreach ([$record, $fiscal] as $document) \Illuminate\Support\Facades\Cache::put('official_doc_registry:'.$document['signature_code'], $document, 600);
+        OfficialDocumentSignature::query()->delete();
+        foreach ([$record, $fiscal] as $document) {
+            Cache::put('official_doc_registry:'.$document['signature_code'], $document, 600);
+        }
         $this->artisan('encg:import-security-records')->assertSuccessful();
         $this->artisan('encg:import-security-records')->assertSuccessful();
-        $this->assertSame(1, \App\Models\GradeRectification::count());
-        $this->assertSame(2, \App\Models\OfficialDocumentSignature::count());
-        \Illuminate\Support\Facades\Cache::flush();
+        $this->assertSame(1, GradeRectification::count());
+        $this->assertSame(2, OfficialDocumentSignature::count());
+        Cache::flush();
         $this->assertTrue($ledger->verifyOfficialDocument($record['signature_code'])['verified']);
         $this->assertNull($ledger->verifyOfficialDocument($fiscal['signature_code']));
     }
@@ -180,16 +209,16 @@ class FollowUpSecurityRegressionTest extends TestCase
     public function test_integrity_command_uses_portable_schema_and_detects_row_loss(): void
     {
         $filename = 'audit-integrity-'.bin2hex(random_bytes(8)).'.json';
-        \Illuminate\Support\Facades\Schema::create('audit_row_fixture', fn ($table) => $table->id());
-        \Illuminate\Support\Facades\DB::table('audit_row_fixture')->insert(['id' => 1]);
+        Schema::create('audit_row_fixture', fn ($table) => $table->id());
+        DB::table('audit_row_fixture')->insert(['id' => 1]);
         try {
             $this->artisan('erp:verify-integrity', ['--pre' => true, '--snapshot' => $filename])->assertSuccessful();
             $this->artisan('erp:verify-integrity', ['--post' => true, '--snapshot' => $filename])->assertSuccessful();
-            \Illuminate\Support\Facades\DB::table('audit_row_fixture')->delete();
+            DB::table('audit_row_fixture')->delete();
             $this->artisan('erp:verify-integrity', ['--post' => true, '--snapshot' => $filename])->assertFailed();
         } finally {
-            \Illuminate\Support\Facades\File::delete(storage_path('app/'.$filename));
-            \Illuminate\Support\Facades\Schema::dropIfExists('audit_row_fixture');
+            File::delete(storage_path('app/'.$filename));
+            Schema::dropIfExists('audit_row_fixture');
         }
     }
 
@@ -203,10 +232,14 @@ class FollowUpSecurityRegressionTest extends TestCase
         $payload = ['grade_id' => $outsideGrade->id, 'proposed_value' => 15, 'justification' => 'Demande hors du groupe affecté'];
         $this->postJson('/api/professor-portal/grade-rectifications', $payload)->assertForbidden();
         $prof->user->assignRole(Role::findOrCreate('institution-admin', 'sanctum'));
-        $service = app(\App\Services\Security\GradeRectificationService::class);
+        $service = app(GradeRectificationService::class);
         $entry = $service->request($prof->user, $grade->id, 15, 'Contrôle de la séparation des deux acteurs');
-        try { $service->approve($prof->user, $entry['id']); $this->fail('Self-approval accepted'); }
-        catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) { $this->assertSame(403, $exception->getStatusCode()); }
+        try {
+            $service->approve($prof->user, $entry['id']);
+            $this->fail('Self-approval accepted');
+        } catch (HttpException $exception) {
+            $this->assertSame(403, $exception->getStatusCode());
+        }
         $this->assertEquals(8, $grade->fresh()->value);
     }
 
@@ -215,10 +248,10 @@ class FollowUpSecurityRegressionTest extends TestCase
         [$grade, $prof, $group] = $this->assignedGrade();
         $payload = ['group_id' => $group->id, 'module_id' => $grade->assessment->module_id, 'session_date' => now()->toDateString(), 'seance_code' => 'S1', 'is_locked' => true, 'absent_ids' => []];
         $id = $this->postJson('/api/professor-portal/student-lists/attendance', $payload)->assertOk()->json('data.session_id');
-        $url = '/api/professor/attendance/'.$id.'/reopen';
+        $url = '/api/attendance/sessions/'.$id.'/reopen';
         $this->postJson($url, ['reason' => 'Réouverture motivée pour correction matérielle'])->assertForbidden();
-        $admin = \App\Models\User::factory()->create(['institution_id' => 1]);
-        $admin->assignRole(Role::findOrCreate('institution-admin', 'sanctum'));
+        $admin = User::factory()->create(['institution_id' => 1]);
+        $admin->assignRole(Role::findOrCreate('scolarite', 'sanctum'));
         Sanctum::actingAs($admin);
         $this->postJson($url, ['reason' => 'Réouverture motivée pour correction matérielle'])->assertOk()->assertJsonPath('session.status', 'active');
         $this->assertDatabaseHas('activity_log', ['description' => 'attendance_session_reopened', 'causer_id' => $admin->id]);
@@ -226,4 +259,60 @@ class FollowUpSecurityRegressionTest extends TestCase
         $this->postJson('/api/professor-portal/student-lists/attendance', [...$payload, 'is_locked' => false, 'absent_ids' => [$grade->student_id]])->assertOk();
     }
 
+    public function test_vacation_tracker_uses_recorded_payments_and_real_approvals(): void
+    {
+        [$year, , $module, $group, $prof] = $this->context('vacataire');
+        $prof->update(['contract_type' => 'vacataire']);
+        $contract = VacationContract::create(['institution_id' => 1, 'academic_year_id' => $year->id, 'professor_id' => $prof->id, 'user_id' => $prof->user_id, 'module_id' => $module->id, 'group_id' => $group->id, 'first_name' => 'Audit', 'last_name' => 'Teacher', 'email' => 'audit-vacation@example.test', 'session_type' => 'cm', 'agreed_hours' => 20, 'hourly_rate' => 300, 'status' => 'active', 'contract_start' => now()->subMonth(), 'contract_end' => now()->addMonth()]);
+        $payment = VacationPayment::create(['institution_id' => 1, 'vacation_contract_id' => $contract->id, 'reference_number' => 'AUDIT-PAYMENT', 'payment_year' => now()->year, 'payment_month' => now()->month, 'total_hours' => 5, 'hourly_rate' => 300, 'gross_amount' => 1500, 'tax_deduction' => 255, 'net_amount' => 1245, 'status' => 'pending']);
+        $url = '/api/professor-portal/vacation-payment-tracker';
+        $this->getJson($url)->assertOk()->assertJsonPath('data.mode', 'recorded_payments')->assertJsonPath('data.gross_amount_mad', 1500)->assertJsonPath('data.signature_code', null)->assertJsonPath('data.pipeline_steps.0.status', 'pending')->assertJsonPath('data.pipeline_steps.3.status', 'pending');
+        $contract->update(['approved_by_dept_at' => now(), 'approved_by_hr_at' => now()]);
+        $payment->update(['status' => 'paid', 'approved_at' => now(), 'paid_at' => now()]);
+        $this->getJson($url)->assertOk()->assertJsonPath('data.pipeline_steps.0.status', 'completed')->assertJsonPath('data.pipeline_steps.3.status', 'completed');
+        $this->assertSame(0, OfficialDocumentSignature::count());
+    }
+
+    public function test_file_cache_legacy_signatures_are_copied_without_deleting_the_original(): void
+    {
+        $this->context();
+        $ledger = app(CryptoLedgerService::class);
+        $record = $ledger->signOfficialDocument('attestation', 'AUDIT-FILE-CACHE', 'Synthetic Holder', 'SYNTHETIC');
+        OfficialDocumentSignature::query()->delete();
+        $directory = storage_path('framework/cache/audit-signature-'.bin2hex(random_bytes(8)));
+        config(['cache.stores.file.path' => $directory, 'cache.default' => 'file']);
+        app('cache')->forgetDriver('file');
+        try {
+            Cache::put('official_doc_registry:'.$record['signature_code'], $record, 600);
+            $this->artisan('encg:import-security-records')->assertSuccessful();
+            $this->assertNotNull(Cache::get('official_doc_registry:'.$record['signature_code']));
+            $this->assertSame(1, OfficialDocumentSignature::count());
+            Cache::flush();
+            $this->assertTrue($ledger->verifyOfficialDocument($record['signature_code'])['verified']);
+        } finally {
+            config(['cache.default' => 'array']);
+            app('cache')->forgetDriver('file');
+            File::deleteDirectory($directory);
+        }
+    }
+
+    public function test_database_cache_legacy_signatures_are_copied_before_cache_expiration(): void
+    {
+        $this->context();
+        $ledger = app(CryptoLedgerService::class);
+        $record = $ledger->signOfficialDocument('attestation', 'AUDIT-DATABASE-CACHE', 'Synthetic Holder', 'SYNTHETIC');
+        OfficialDocumentSignature::query()->delete();
+        config(['cache.default' => 'audit_database', 'cache.stores.audit_database' => ['driver' => 'database', 'connection' => 'sqlite', 'table' => 'cache', 'prefix' => 'audit-'.bin2hex(random_bytes(8)).'-']]);
+        app('cache')->forgetDriver('audit_database');
+        try {
+            Cache::put('official_doc_registry:'.$record['signature_code'], $record, 600);
+            $this->artisan('encg:import-security-records')->assertSuccessful();
+            $this->assertSame(1, OfficialDocumentSignature::count());
+            Cache::forget('official_doc_registry:'.$record['signature_code']);
+            $this->assertTrue($ledger->verifyOfficialDocument($record['signature_code'])['verified']);
+        } finally {
+            config(['cache.default' => 'array']);
+            app('cache')->forgetDriver('audit_database');
+        }
+    }
 }

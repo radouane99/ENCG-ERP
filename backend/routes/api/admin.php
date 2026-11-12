@@ -380,6 +380,7 @@ Route::middleware(['auth:sanctum', 'institution.context', 'role:admin|super-admi
     // Student Scanned Document Vault Routes
     Route::get('students/{student}/documents', [StudentController::class, 'getDocuments']);
     Route::post('students/{student}/documents', [StudentController::class, 'uploadDocument']);
+    Route::post('students/{student}/documents/{document}/verify', [StudentController::class, 'verifyStudentDocument']);
     Route::get('admin/students/{student}/documents', [StudentController::class, 'getDocuments']);
     Route::post('admin/students/{student}/documents', [StudentController::class, 'uploadDocument']);
 
@@ -1323,9 +1324,9 @@ Route::middleware(['auth:sanctum', 'institution.context', $staffRoles])->group(f
 // ──────────────────────────────────────────────────────────────────────────────
 Route::middleware('throttle:20,1')->group(function () {
 
-    Route::get('/public/recepisse-tafem-pdf', [PdfExportController::class, 'exportRecepisseTafemPdf']);
-    Route::get('/public/engagement-pdf', [PdfExportController::class, 'engagementPdf']);
-    Route::get('/public/fiche-medicale-pdf', [PdfExportController::class, 'ficheMedicalePdf']);
+    Route::get('/public/recepisse-tafem-pdf', [PdfExportController::class, 'exportRecepisseTafemPdf'])->middleware(['auth:sanctum', 'institution.context']);
+    Route::get('/public/engagement-pdf', [PdfExportController::class, 'engagementPdf'])->middleware(['auth:sanctum', 'institution.context']);
+    Route::get('/public/fiche-medicale-pdf', [PdfExportController::class, 'ficheMedicalePdf'])->middleware(['auth:sanctum', 'institution.context']);
     Route::get('/public/serve-document/{type}/{cne}', [AdmissionController::class, 'serveCandidateDocumentPublic']);
     Route::get('/public/inscription/status', [StudentController::class, 'getInscriptionStatusPublic']);
     Route::post('/public/validate-photo-quality', [StudentController::class, 'validatePhotoQuality'])->middleware('throttle:uploads');

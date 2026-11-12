@@ -108,104 +108,8 @@ class PdfExportController extends Controller
 
     public function exportRecepisseTafemPdf(Request $request)
     {
-        $cne = strtoupper(trim((string) $request->query('cne', '')));
-        $cin = strtoupper(trim((string) $request->query('cin', '')));
-
-        if (! empty($cne) || ! empty($cin) || $request->filled('application_id') || $request->filled('student_id')) {
-            $candidate = null;
-            if ($request->filled('application_id')) {
-                $candidate = DB::table('applications')->where('id', $request->integer('application_id'))->first();
-            } elseif (! empty($cne) || ! empty($cin)) {
-                $candidate = DB::table('applications')
-                    ->where(function ($q) use ($cne, $cin) {
-                        if (! empty($cne)) {
-                            $q->whereRaw('UPPER(TRIM(cne)) = ?', [$cne]);
-                        }
-                        if (! empty($cin)) {
-                            $q->orWhereRaw('UPPER(TRIM(cin)) = ?', [$cin]);
-                        }
-                    })->first();
-            }
-
-            if (! $candidate && (! empty($cne) || ! empty($cin) || $request->filled('student_id'))) {
-                $std = DB::table('students')
-                    ->join('users', 'students.user_id', '=', 'users.id')
-                    ->leftJoin('student_pathways', function ($j) {
-                        $j->on('students.id', '=', 'student_pathways.student_id')->where('student_pathways.is_current', true);
-                    })
-                    ->leftJoin('filieres', 'student_pathways.filiere_id', '=', 'filieres.id')
-                    ->where(function ($q) use ($cne, $cin, $request) {
-                        if ($request->filled('student_id')) {
-                            $q->where('students.id', $request->integer('student_id'));
-                        }
-                        if (! empty($cne)) {
-                            $q->orWhereRaw('UPPER(TRIM(students.cne)) = ?', [$cne]);
-                        }
-                        if (! empty($cin)) {
-                            $q->orWhereRaw('UPPER(TRIM(users.cin)) = ?', [$cin]);
-                        }
-                    })->select(
-                        'users.first_name', 'users.last_name', 'users.name', 'students.cne', 'users.cin',
-                        'filieres.name as filiere_name', 'students.status'
-                    )->first();
-
-                if ($std) {
-                    $candidate = (object) [
-                        'first_name' => $std->first_name ?: $std->name,
-                        'last_name' => $std->last_name ?: '',
-                        'cne' => $std->cne,
-                        'cin' => $std->cin,
-                        'reference_number' => $std->filiere_name ?? 'Deux années préparatoires (TAFEM S1)',
-                        'status' => 'valide',
-                        'selection_score' => 150.00,
-                    ];
-                }
-            }
-
-            abort_unless($candidate, 403, 'Aucun dossier correspondant : récépissé non délivré.');
-            if ($candidate) {
-                $statusLabel = 'Admis sur Liste Principale';
-                $statusRaw = strtolower((string) ($candidate->status ?? ''));
-                if (str_contains($statusRaw, 'attente_1') || str_contains($statusRaw, 'attente 1')) {
-                    $statusLabel = 'Admis sur Liste d’Attente 1';
-                } elseif (str_contains($statusRaw, 'attente_2') || str_contains($statusRaw, 'attente 2')) {
-                    $statusLabel = 'Admis sur Liste d’Attente 2';
-                } elseif (in_array($statusRaw, ['valide', 'active', 'enrolled', 'approved'])) {
-                    $statusLabel = 'Inscription Définitive Validée';
-                }
-
-                $data = [
-                    'name' => trim(($candidate->first_name ?? 'CANDIDAT').' '.($candidate->last_name ?? '')),
-                    'cne' => $candidate->cne ?? ($cne ?: 'N142088916'),
-                    'cin' => $candidate->cin ?? ($cin ?: 'C3967857'),
-                    'filiere' => $candidate->reference_number ?? 'Deux années préparatoires (TAFEM S1)',
-                    'score' => number_format((float) ($candidate->selection_score ?? 150.00), 2).' pts',
-                    'statusLabel' => $statusLabel,
-                    'verifyUrl' => url('/public/track-dossier?cne='.($candidate->cne ?? $cne)),
-                ];
-
-                $pdf = $this->getPdfInstance('pdf.recepisse_tafem', $data);
-
-                return $pdf->stream('Recepisse_Inscription_'.($data['cne']).'.pdf');
-            }
-        }
-
-        try {
-            return app(AdmissionWorkflowPdfController::class)->receipt($request);
-        } catch (\Throwable $e) {
-            $data = [
-                'name' => 'CANDIDAT ADMIS TAFEM',
-                'cne' => $cne ?: 'N140091375',
-                'cin' => $cin ?: 'CD540912',
-                'filiere' => 'Deux années préparatoires (TAFEM S1)',
-                'score' => '155.00 pts',
-                'statusLabel' => 'Inscription Définitive Validée',
-                'verifyUrl' => url('/public/inscription/status?cne='.($cne ?: 'N140091375')),
-            ];
-            $pdf = $this->getPdfInstance('pdf.recepisse_tafem', $data);
-
-            return $pdf->stream('Recepisse_TAFEM.pdf');
-        }
+        // Use the canonical owner/campaign-bound receipt, never a fabricated fallback.
+        return app(AdmissionWorkflowPdfController::class)->receipt($request);
     }
 
     // ─── CONVOCATIONS ÉTUDIANTS ──────────────────────────────────
@@ -2802,33 +2706,57 @@ class PdfExportController extends Controller
      *  📜 ENGAGEMENT (تعهد) — Formulaire d'engagement officiel ENCG Fès
      * ═══════════════════════════════════════════════════════════════════
      */
+    private function personalPdfSubject(Request $request): array
+    {
+        abort_unless($request->user(), 401);
+        $request->validate([
+            'student_id' => 'nullable|integer|min:1',
+            'cne' => 'nullable|string|max:32',
+            'cin' => 'nullable|string|max:32',
+            'application_id' => 'nullable|integer|min:1',
+        ]);
+        $query = Student::with(['user', 'pathways.filiere', 'pathways.academicYear']);
+        $selected = false;
+        foreach (['student_id', 'cne', 'cin'] as $field) {
+            if (! $request->filled($field)) {
+                continue;
+            }
+            $selected = true;
+            if ($field === 'student_id') {
+                $query->whereKey($request->integer($field));
+            } elseif ($field === 'cin') {
+                $query->whereHas('user', fn ($q) => $q->where('cin', $request->input($field)));
+            } else {
+                $query->where('cne', $request->input($field));
+            }
+        }
+        if (! $selected) {
+            $query->where('user_id', $request->user()->id);
+        }
+        $student = $query->first();
+        if ($student) {
+            $this->authorize('viewSensitive', $student);
+            // Never match an unrelated application by a missing/NULL identity.
+            $application = Application::where('owner_user_id', $student->user_id)
+                ->whereHas('campaign', fn ($q) => $q->where('institution_id', $student->institution_id))
+                ->latest('id')->first();
+
+            return [$student, $application];
+        }
+        // Applicants without a student record retain access to their own dossier.
+        $application = \App\Support\AdmissionAccess::dossier($request);
+        abort_if($selected && $request->filled('student_id'), 404);
+        abort_if($request->filled('cin') && (string) $application->cin !== (string) $request->input('cin'), 404);
+
+        return [null, $application];
+    }
+
     public function engagementPdf(Request $request)
     {
-        $studentId = $request->query('student_id');
-        $cne = $request->query('cne');
-        $cin = $request->query('cin');
-
-        $student = null;
-        if ($cne) {
-            $student = Student::with(['user', 'pathways.filiere', 'pathways.academicYear'])->where('cne', $cne)->first();
-        }
-        if (! $student && $cin) {
-            $student = Student::with(['user', 'pathways.filiere', 'pathways.academicYear'])->whereHas('user', fn ($q) => $q->where('cin', $cin))->first();
-        }
-        if (! $student && $studentId) {
-            $student = Student::with(['user', 'pathways.filiere', 'pathways.academicYear'])->find($studentId);
-        }
-
+        [$student, $application] = $this->personalPdfSubject($request);
         $user = $student?->user;
-        $application = Application::where('cne', $cne ?: $student?->cne)
-            ->orWhere('cin', $cin ?: $user?->cin)
-            ->latest('id')
-            ->first();
-
-        if (! $student && ! $user && ! $application) {
-            $student = Student::with(['user', 'pathways.filiere', 'pathways.academicYear'])->first();
-            $user = $student?->user;
-        }
+        $cne = $student?->cne ?? $application?->cne;
+        $cin = $user?->cin ?? $application?->cin;
 
         $lastName = strtoupper($user?->last_name ?? $student?->last_name ?? $application?->last_name ?? '');
         $firstName = strtoupper($user?->first_name ?? $student?->first_name ?? $application?->first_name ?? '');
@@ -2906,31 +2834,10 @@ class PdfExportController extends Controller
      */
     public function ficheMedicalePdf(Request $request)
     {
-        $studentId = $request->query('student_id');
-        $cne = $request->query('cne');
-        $cin = $request->query('cin');
-
-        $student = null;
-        if ($cne) {
-            $student = Student::with(['user', 'pathways.filiere', 'pathways.academicYear'])->where('cne', $cne)->first();
-        }
-        if (! $student && $cin) {
-            $student = Student::with(['user', 'pathways.filiere', 'pathways.academicYear'])->whereHas('user', fn ($q) => $q->where('cin', $cin))->first();
-        }
-        if (! $student && $studentId) {
-            $student = Student::with(['user', 'pathways.filiere', 'pathways.academicYear'])->find($studentId);
-        }
-
+        [$student, $application] = $this->personalPdfSubject($request);
         $user = $student?->user;
-        $application = Application::where('cne', $cne ?: $student?->cne)
-            ->orWhere('cin', $cin ?: $user?->cin)
-            ->latest('id')
-            ->first();
-
-        if (! $student && ! $user && ! $application) {
-            $student = Student::with(['user', 'pathways.filiere', 'pathways.academicYear'])->first();
-            $user = $student?->user;
-        }
+        $cne = $student?->cne ?? $application?->cne;
+        $cin = $user?->cin ?? $application?->cin;
 
         $lastName = strtoupper($user?->last_name ?? $student?->last_name ?? $application?->last_name ?? '');
         $firstName = strtoupper($user?->first_name ?? $student?->first_name ?? $application?->first_name ?? '');

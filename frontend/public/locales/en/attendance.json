@@ -63,5 +63,15 @@
       "placeholder": "Coller le token QR...",
       "btn": "Simuler"
     }
+  },
+  "administrative_reopen": {
+    "title": "Administrative reopening of attendance",
+    "description": "The reason and the staff member’s identity are retained in the audit log.",
+    "reason": "Reason for reopening",
+    "confirm": "Confirm reopening",
+    "cancel": "Cancel",
+    "success": "Administrative reopening recorded.",
+    "denied": "Reopening refused. Check permissions and the academic context.",
+    "staff_required": "This session is closed. Student administration must authorize and record its reopening."
   }
 }

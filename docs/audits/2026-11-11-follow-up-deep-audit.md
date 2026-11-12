@@ -2,6 +2,25 @@
 
 Scope: current checkout at `3052b2eb`; API authorization, account lifecycle, academic integrity, document authenticity and local PostgreSQL integrity. This is a targeted source review with isolated reproductions, not a penetration-test certification or complete browser acceptance test.
 
+## Remediation applied — 2026-11-12
+
+All eight findings below have been addressed; the original evidence remains for traceability.
+
+- **R01:** the general profile endpoint rejects password mutations and changes to the institution-managed academic email. Password changes use the existing reauthenticated auth workflow, which rotates sessions. The current frontend already treats the academic email as read-only.
+- **R02:** rectification requests verify institution, academic year, teaching assignment and student group before exposing a grade. Approval rechecks both actors, grade version/value, academic locks and signed PV state inside a database transaction. Self-approval, stale approval and replay are rejected. The administration list is institution-scoped and paginated.
+- **R03:** filiere/department leadership no longer receives global PFE evaluation privileges. Jury assignment or an institutional administration role is required.
+- **R04:** both attendance write paths respect closure. Reopening requires an authorized administrative role, a reason and an audit entry; it does not restore an old QR token. The professor roster uses the existing shared modal and includes French, Arabic and English labels for this action.
+- **R05:** simulation responses are explicitly unsigned. Tracker amounts and approval states come from recorded payments and administrative validations. No fabricated default hours/rate or completed approvals are returned.
+- **R06:** the public PV verification response no longer returns the signer IP.
+- **R07:** the integrity command uses Laravel schema introspection for tables/indexes and supports a separate snapshot filename. Row-count loss detection is tested. The command also completed successfully on the local PostgreSQL instance before and after migration.
+- **R08:** additive tables retain grade rectifications, approval history and official document signature records. Signature payload integrity is checked. Imports preserve legacy entries without deleting cache contents, supporting database, file, array and Redis stores. Legacy fiscal simulation signatures are retained as revoked because they lack proof of administrative validation.
+
+Migration `2026_11_11_000002_persist_security_workflow_records.php` was applied using the configured maintenance account. The runtime account keeps its restricted schema privileges. Local legacy import found zero records requiring transfer and removed no cached records.
+
+Validation: 18 dedicated follow-up regression tests passed, alongside the existing authentication, classroom, role-workflow and multi-role integration suites. Seven focused frontend tests passed. TypeScript, targeted lint and production Vite/PWA compilation were checked. Existing PHP 8.4 deprecation notices from the third-party QR libraries remain technical debt; the tested PDF flows succeed.
+
+Permanent regression coverage: `backend/tests/Feature/FollowUpSecurityRegressionTest.php`. The earlier ignored diagnostic probes intentionally assert the old security expectations and are superseded by this permanent suite.
+
 ## Confirmed findings
 
 ### R01 — High: profile endpoint bypasses account security workflow

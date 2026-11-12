@@ -85,5 +85,15 @@
       "placeholder": "Coller le token QR...",
       "btn": "Simuler"
     }
+  },
+  "administrative_reopen": {
+    "title": "Réouverture administrative de la séance",
+    "description": "Le motif et l’identité de l’agent seront conservés dans le journal d’audit.",
+    "reason": "Motif de réouverture",
+    "confirm": "Confirmer la réouverture",
+    "cancel": "Annuler",
+    "success": "Réouverture administrative enregistrée.",
+    "denied": "Réouverture refusée. Vérifiez les droits et le contexte académique.",
+    "staff_required": "Séance clôturée. La scolarité doit autoriser et tracer sa réouverture."
   }
 }

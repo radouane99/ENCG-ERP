@@ -52,7 +52,6 @@ export function SessionManager() {
   const [error, setError] = useState('')
   const [sudoPassword, setSudoPassword] = useState('')
   const [sudoMessage, setSudoMessage] = useState('')
-  const [passkeyMessage, setPasskeyMessage] = useState('')
 
   const { data: payload, isLoading, isError, refetch } = useQuery({
     queryKey: ['account-sessions', userId],
@@ -105,62 +104,6 @@ export function SessionManager() {
       await refetch()
     } catch {
       setError('Mot de passe Sudo incorrect.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const handleRegisterPasskey = async () => {
-    setBusy(true)
-    setError('')
-    setPasskeyMessage('')
-    try {
-      const optRes = await api.post('/v1/auth/passkeys/register-options')
-      const challenge = optRes.data?.data?.challenge as string
-      let credentialId = `pk_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`
-      let publicKey = `fido2_es256_${btoa(credentialId)}`
-
-      if (typeof window !== 'undefined' && window.PublicKeyCredential && navigator.credentials?.create) {
-        try {
-          const challengeBytes = Uint8Array.from(atob(challenge.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0))
-          const userBytes = new TextEncoder().encode(String(userId ?? 'encg-user'))
-          const cred = (await navigator.credentials.create({
-            publicKey: {
-              challenge: challengeBytes,
-              rp: { name: 'ENCG Fès — Portail Universitaire' },
-              user: {
-                id: userBytes,
-                name: optRes.data?.data?.user?.name || 'user@encg-fes.ac.ma',
-                displayName: optRes.data?.data?.user?.displayName || 'Utilisateur ENCG Fès',
-              },
-              pubKeyCredParams: [
-                { type: 'public-key', alg: -7 },
-                { type: 'public-key', alg: -257 },
-              ],
-              timeout: 45000,
-            },
-          })) as PublicKeyCredential | null
-          if (cred?.id) {
-            credentialId = cred.id
-          }
-        } catch {
-          // Fallback to platform key token if hardware prompt is dismissed in non-HTTPS dev
-        }
-      }
-
-      const regRes = await api.post('/v1/auth/passkeys/register', {
-        credential_id: credentialId,
-        public_key: publicKey,
-        challenge,
-        device_name: `${navigator.platform || 'Appareil'} (TouchID / Windows Hello)`,
-      })
-      if (regRes.data?.data?.credential_id) {
-        localStorage.setItem('encg_last_passkey_id', regRes.data.data.credential_id)
-      }
-      setPasskeyMessage('Passkey biométrique enregistrée avec succès sur cet appareil.')
-      await refetch()
-    } catch {
-      setError("Impossible d'enregistrer la Passkey biométrique.")
     } finally {
       setBusy(false)
     }
@@ -287,24 +230,15 @@ export function SessionManager() {
                 Passkeys Biométriques (FIDO2 / WebAuthn)
               </h3>
               <p className="text-xs text-muted-foreground mt-1">
-                Connectez-vous en 1 seconde via TouchID, FaceID, Windows Hello ou clé YubiKey (100% anti-phishing).
+                Utilisez votre mot de passe ou le code OTP. Vos anciennes clés peuvent être révoquées.
               </p>
             </div>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={handleRegisterPasskey}
-              className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white px-3.5 py-2 text-xs font-bold shrink-0 cursor-pointer disabled:opacity-50"
-            >
-              + Ajouter une Passkey
-            </button>
+            <span className="text-xs text-muted-foreground">
+              {useAuthStore.getState().user?.locale === 'ar' ? 'مفاتيح المرور غير متاحة مؤقتاً' : 'Passkeys temporairement indisponibles'}
+            </span>
           </div>
 
-          {passkeyMessage && (
-            <p className="text-xs font-semibold text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2">
-              {passkeyMessage}
-            </p>
-          )}
+
 
           {passkeys.length === 0 ? (
             <p className="text-xs text-muted-foreground py-2">

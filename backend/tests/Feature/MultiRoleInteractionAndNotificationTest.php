@@ -8,10 +8,12 @@ use App\Models\DocumentRequest;
 use App\Models\DocumentType;
 use App\Models\Filiere;
 use App\Models\Grade;
+use App\Models\Group;
 use App\Models\Institution;
 use App\Models\Module;
 use App\Models\Professor;
 use App\Models\Student;
+use App\Models\StudentPathway;
 use App\Models\User;
 use App\Models\VacationContract;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -423,7 +425,9 @@ class MultiRoleInteractionAndNotificationTest extends TestCase
         $sealWithoutSudo = $this->postJson('/api/admin/security/ledger-seal');
         $sealWithoutSudo->assertStatus(423)->assertJsonPath('code', 'SUDO_REQUIRED');
 
-        $this->postJson('/api/v1/auth/sudo-confirm', ['password' => 'password'])->assertOk();
+        $this->adminUser->withAccessToken($this->adminUser->createToken('sudo-workflow')->accessToken);
+        $sudo = $this->postJson('/api/v1/auth/sudo-confirm', ['password' => 'password'])->assertOk();
+        $this->withHeader('X-Sudo-Token', $sudo->json('data.sudo_token'));
 
         $sealWithSudo = $this->postJson('/api/admin/security/ledger-seal');
         $sealWithSudo->assertOk()->assertJsonPath('data.status', 'SEALED');
@@ -464,6 +468,13 @@ class MultiRoleInteractionAndNotificationTest extends TestCase
             ->assertJsonPath('data.net_payable_mad', 9960);
 
         // 12. Contrôle à 4 Yeux (Four-Eyes Principle) pour Rectification de Note + SOC Posture Summary
+        // The rectification workflow is exercised with a genuinely assigned teacher/group.
+        $academicYear->update(['is_locked' => false]);
+        app()->instance('academic.context.year', $academicYear->id);
+        $rectGroup = Group::create(['name' => 'GFC-S8-G1', 'filiere_id' => $filiere->id, 'academic_year_id' => $academicYear->id, 'semester_number' => 8]);
+        $module->professors()->attach($this->professor->id, ['academic_year_id' => $academicYear->id, 'group_id' => $rectGroup->id, 'professor_type' => Professor::class, 'session_type' => 'cm']);
+        StudentPathway::create(['student_id' => $this->student->id, 'filiere_id' => $filiere->id, 'academic_year_id' => $academicYear->id, 'group_id' => $rectGroup->id, 'current_semester' => 8, 'is_current' => true]);
+        $this->institution->update(['settings' => ['exam_lock_phase' => 'Ordinaire Printemps']]);
         $grade = Grade::where('student_id', $this->student->id)->first();
         $rectReq = $this->postJson('/api/professor-portal/grade-rectifications', [
             'grade_id' => $grade->id,
@@ -474,8 +485,11 @@ class MultiRoleInteractionAndNotificationTest extends TestCase
         $rectId = $rectReq->json('data.id');
 
         Sanctum::actingAs($this->adminUser);
-        $this->postJson('/api/v1/auth/sudo-confirm', ['password' => 'password'])->assertOk();
+        $this->adminUser->withAccessToken($this->adminUser->createToken('sudo-workflow')->accessToken);
+        $sudo = $this->postJson('/api/v1/auth/sudo-confirm', ['password' => 'password'])->assertOk();
+        $this->withHeader('X-Sudo-Token', $sudo->json('data.sudo_token'));
         $rectApprove = $this->postJson("/api/admin/security/grade-rectifications/{$rectId}/approve");
+        $this->assertSame(200, $rectApprove->status(), $rectApprove->getContent());
         $rectApprove->assertOk()
             ->assertJsonPath('data.rectification.status', 'approved_and_sealed')
             ->assertJsonPath('data.ledger_seal.status', 'SEALED');

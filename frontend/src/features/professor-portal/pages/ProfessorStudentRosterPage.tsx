@@ -1,4 +1,5 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/shared/components/ui/dialog';
+import { useTranslation } from 'react-i18next';
+import { Modal } from '@/shared/components/ui/Modal';
 import { useAttendanceQrSession } from '../hooks/useAttendanceQrSession';
 import { QRCodeSVG } from 'qrcode.react';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -152,6 +153,7 @@ function getDateForScheduleDay(dayOfWeek: number): string {
 
 export default function ProfessorStudentRosterPage() {
   const { user } = useAuthStore();
+  const { t: tAttendance } = useTranslation('attendance');
   const u = user as any;
   const profName = u ? `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.name || '' : '';
 
@@ -1217,7 +1219,7 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
   const toggleLock = () => {
     if (isLocked && seanceStore[selectedSeance]?.session_id) {
       if (!user?.roles?.some(role => ['super-admin', 'admin', 'institution-admin', 'director', 'scolarite'].includes(role))) {
-        toast.info('Séance clôturée. La scolarité doit autoriser et tracer sa réouverture.');
+        toast.info(tAttendance('administrative_reopen.staff_required'));
         return;
       }
       setReopenReason('');
@@ -1239,13 +1241,13 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
     if (!sessionId || reopenReason.trim().length < 10) return;
     setIsReopening(true);
     try {
-      await api.post(`/professor/attendance/${sessionId}/reopen`, { reason: reopenReason.trim() });
+      await api.post(`/attendance/sessions/${sessionId}/reopen`, { reason: reopenReason.trim() });
       setIsLocked(false);
       persistCurrentSeance(absentIds, annotations, false, seanceDate);
       setShowReopenDialog(false);
-      toast.success('Réouverture administrative enregistrée.');
+      toast.success(tAttendance('administrative_reopen.success'));
     } catch {
-      toast.error('Réouverture refusée. Vérifiez les droits et le contexte académique.');
+      toast.error(tAttendance('administrative_reopen.denied'));
     } finally { setIsReopening(false); }
   };
 
@@ -1617,20 +1619,15 @@ const [showRattrapageModal, setShowRattrapageModal] = useState(false);
 
   return (
     <div className="space-y-6 font-sans animate-in fade-in duration-500 text-foreground pb-20 max-w-[1600px] mx-auto p-2">
-      <Dialog open={showReopenDialog} onOpenChange={setShowReopenDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Réouverture administrative de la séance</DialogTitle>
-            <DialogDescription>Le motif et l’identité de l’agent seront conservés dans le journal d’audit.</DialogDescription>
-          </DialogHeader>
-          <label className="text-sm font-medium" htmlFor="attendance-reopen-reason">Motif de réouverture</label>
-          <textarea id="attendance-reopen-reason" value={reopenReason} onChange={event => setReopenReason(event.target.value)} minLength={10} maxLength={1000} rows={3} className="w-full rounded-xl border border-border bg-card p-3" />
-          <DialogFooter>
-            <button type="button" onClick={() => setShowReopenDialog(false)} disabled={isReopening} className="rounded-xl border border-border px-4 py-2">Annuler</button>
-            <button type="button" onClick={() => void reopenCurrentSession()} disabled={isReopening || reopenReason.trim().length < 10} className="rounded-xl bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">Confirmer la réouverture</button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <Modal open={showReopenDialog} onClose={() => !isReopening && setShowReopenDialog(false)} preventBackdropClose={isReopening} preventEscapeClose={isReopening}
+        title={tAttendance('administrative_reopen.title')} description={tAttendance('administrative_reopen.description')}
+        footer={<>
+          <button type="button" onClick={() => setShowReopenDialog(false)} disabled={isReopening} className="rounded-xl border border-border px-4 py-2">{tAttendance('administrative_reopen.cancel')}</button>
+          <button type="button" onClick={() => void reopenCurrentSession()} disabled={isReopening || reopenReason.trim().length < 10} className="rounded-xl bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50">{tAttendance('administrative_reopen.confirm')}</button>
+        </>}>
+        <label className="text-sm font-medium" htmlFor="attendance-reopen-reason">{tAttendance('administrative_reopen.reason')}</label>
+        <textarea id="attendance-reopen-reason" value={reopenReason} onChange={event => setReopenReason(event.target.value)} minLength={10} maxLength={1000} rows={3} className="w-full rounded-xl border border-border bg-card p-3" />
+      </Modal>
       {/* ── Top Role & Institution Header Pill ── */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-card p-3 rounded-2xl border border-border shadow-2xs">
         <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-foreground pl-1">

@@ -251,7 +251,7 @@ class AuthSecurityWorkflowTest extends TestCase
             ->assertJsonPath('security_history.0.remember', true);
     }
 
-    public function test_new_device_anomaly_alert_passkey_webauthn_sudo_mode_and_security_headers(): void
+    public function test_new_device_alert_sudo_and_unverified_passkey_containment(): void
     {
         $user = $this->account(false);
 
@@ -295,41 +295,21 @@ class AuthSecurityWorkflowTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.sudo_verified', true);
 
-        // 4. WebAuthn / Passkey (FIDO2) registration and passwordless biometric login
-        $regOptRes = $this->withToken($token)->postJson('/api/v1/auth/passkeys/register-options');
-        $regOptRes->assertOk()->assertJsonPath('success', true);
-        $regChallenge = $regOptRes->json('data.challenge');
+        $this->withHeader('X-Sudo-Token', $sudoConfirm->json('data.sudo_token'));
 
-        $regPasskeyRes = $this->withToken($token)->postJson('/api/v1/auth/passkeys/register', [
-            'credential_id' => 'pk_fido2_encg_touchid_01',
-            'public_key' => 'COSE_ES256_PUBLIC_KEY_TEST_PAYLOAD',
-            'device_name' => 'MacBook Pro TouchID (ENCG)',
-            'challenge' => $regChallenge,
-        ]);
-        $regPasskeyRes->assertCreated()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('data.credential_id', 'pk_fido2_encg_touchid_01');
-
-        $loginOptRes = $this->postJson('/api/v1/auth/passkeys/login-options');
-        $loginOptRes->assertOk()->assertJsonPath('success', true);
-        $challengeId = $loginOptRes->json('data.challenge_id');
-
-        $passkeyLoginRes = $this->postJson('/api/v1/auth/passkeys/login', [
-            'credential_id' => 'pk_fido2_encg_touchid_01',
-            'challenge_id' => $challengeId,
-            'signature' => 'fido2_valid_assertion_signature',
-            'remember' => true,
-        ]);
-        $passkeyLoginRes->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('data.user.email', $user->email);
-
-        // 5. Verify sessions endpoint includes passkeys, sudo_mode, and new device flag in security_history
-        $sessionsRes = $this->withToken($token)->getJson('/api/v1/auth/sessions');
-        $sessionsRes->assertOk()
-            ->assertJsonPath('sudo_mode.active', true)
-            ->assertJsonPath('passkeys.0.credential_id', 'pk_fido2_encg_touchid_01')
-            ->assertJsonPath('security_history.0.method', 'passkey_webauthn');
+        // Unverified assertions must never create credentials or authentication tokens.
+        $count = $user->tokens()->count();
+        $this->withToken($token)->postJson('/api/v1/auth/passkeys/register-options')->assertStatus(503);
+        $this->withToken($token)->postJson('/api/v1/auth/passkeys/register', [
+            'credential_id' => 'dummy', 'public_key' => 'unverified',
+        ])->assertStatus(503);
+        $this->postJson('/api/v1/auth/passkeys/login-options')->assertStatus(503);
+        $this->postJson('/api/v1/auth/passkeys/login', [
+            'credential_id' => 'dummy', 'challenge_id' => 'dummy', 'signature' => 'invalid',
+        ])->assertStatus(503)->assertJsonMissingPath('data.token');
+        $this->assertSame($count, $user->tokens()->count());
+        $this->withToken($token)->getJson('/api/v1/auth/sessions')->assertOk()
+            ->assertJsonPath('sudo_mode.active', true)->assertJsonPath('passkey_available', false);
 
         // 6. Password history (last 5) & contextual identifier breach prevention (DGSSI)
         $reuseRes = $this->withToken($token)->postJson('/api/v1/auth/change-password', [

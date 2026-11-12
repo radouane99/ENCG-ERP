@@ -1,10 +1,12 @@
 import { useQuery,useMutation,useQueryClient } from '@tanstack/react-query';
 import api from '@shared/lib/api';
+import { useAuthStore } from '@stores/authStore';
 import { Internship,InternshipDocument } from '../model/types';
 
 export const useStudentInternships = () => {
+  const user = useAuthStore((state) => state.user);
   return useQuery({
-    queryKey: ['studentInternships'],
+    queryKey: ['studentInternships', user?.institution_id, user?.id],
     queryFn: async () => {
       const { data } = await api.get('/v1/student-portal/internships');
       return data.internships ?? data.data ?? [];

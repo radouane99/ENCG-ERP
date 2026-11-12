@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Professor;
 
+use App\Actions\Attendance\ReopenAttendanceSessionAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Academic\ManualCallRequest;
 use App\Http\Requests\Academic\StartAttendanceSessionRequest;
@@ -14,14 +15,16 @@ use App\Models\ExamSession;
 use App\Models\ExamSurveillance;
 use App\Models\Group;
 use App\Models\Module;
+use App\Models\Professor;
 use App\Models\Schedule;
 use App\Models\Student;
 use App\Models\Textbook;
-use Barryvdh\DomPDF\Facade\Pdf;
 use App\Services\Academic\AcademicContext;
 use App\Services\Academic\AttendanceService;
+use App\Services\Academic\ClassroomRosterService;
 use App\Services\Security\ClassroomAccessService;
 use App\Support\InternshipAccess;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -167,7 +170,7 @@ class ProfessorAttendanceController extends Controller
             $group = Group::findOrFail($data['group_id']);
         }
         app(ClassroomAccessService::class)->authorize($request->user(), $module, $group, write: true);
-        $students = app(\App\Services\Academic\ClassroomRosterService::class)->students($group, $request->user()->institution_id)->with('user')->get()->sortBy(fn ($s) => $s->user->name);
+        $students = app(ClassroomRosterService::class)->students($group, $request->user()->institution_id)->with('user')->get()->sortBy(fn ($s) => $s->user->name);
         $records = $session ? Attendance::where('attendance_session_id', $session->id)->get()->keyBy('student_id') : collect();
 
         // Calcul des alertes d'assiduité officielles ENCG Fès (2 abs = warning, >= 3 abs = risque d'exclusion)
@@ -282,15 +285,13 @@ class ProfessorAttendanceController extends Controller
 
                 // Synergie Pédagogique ENCG Fès : Clôture d'appel ➔ Synchronisation Cahier de Texte
                 if (! empty($validated['sync_textbook'])) {
-                    $prof = $request->user()->professor ?? \App\Models\Professor::where('user_id', $request->user()->id)->first();
+                    $prof = $request->user()->professor ?? Professor::where('user_id', $request->user()->id)->first();
                     if ($prof) {
                         $moduleObj = Module::find($session->module_id);
                         $totalPresent = Attendance::where('attendance_session_id', $session->id)->whereIn('status', ['present', 'late'])->count();
                         $totalAbsent = Attendance::where('attendance_session_id', $session->id)->where('status', 'absent')->count();
-                        $defaultTitle = $validated['chapter_title'] ?? "Séance — ".($moduleObj?->name ?? 'Enseignement');
+                        $defaultTitle = $validated['chapter_title'] ?? 'Séance — '.($moduleObj?->name ?? 'Enseignement');
                         $defaultConcepts = $validated['key_concepts'] ?? "Séance officielle {$session->session_type} en {$session->room}. Effectif : {$totalPresent} présents, {$totalAbsent} absents.";
-
-
 
                         Textbook::updateOrCreate(
                             [
@@ -412,7 +413,8 @@ class ProfessorAttendanceController extends Controller
     public function reopenSession(AttendanceSession $session, Request $request): JsonResponse
     {
         $data = $request->validate(['reason' => 'required|string|min:10|max:1000']);
-        $session = app(\App\Actions\Attendance\ReopenAttendanceSessionAction::class)->execute($request->user(), $session->id, $data['reason']);
+        $session = app(ReopenAttendanceSessionAction::class)->execute($request->user(), $session->id, $data['reason']);
+
         return response()->json(['success' => true, 'session' => $session]);
     }
 

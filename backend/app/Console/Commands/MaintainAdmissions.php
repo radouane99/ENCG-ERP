@@ -13,6 +13,8 @@ class MaintainAdmissions extends Command
 
     public function handle(): int
     {
+        $temporaryDirectories = \App\OCR\Engines\TesseractEngine::cleanAbandonedDirectories();
+        $this->info("Abandoned OCR temporary directories cleaned: {$temporaryDirectories}.");
         $stalled = DB::table('admission_ocr_runs')->whereIn('status', ['queued', 'processing'])->where('updated_at', '<', now()->subMinutes(10))
             ->update(['status' => 'failed', 'error_code' => 'processing_expired', 'finished_at' => now(), 'updated_at' => now()]);
         $redacted = DB::table('admission_ocr_runs')->whereNotNull('fields')->whereNotNull('finished_at')

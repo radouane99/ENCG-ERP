@@ -40,7 +40,7 @@ export default function StudentConvocationsPage() {
 
   // Query real student exam seatings & convocations
   const { data: convData, isLoading } = useQuery({
-    queryKey: ['studentConvocations', activeSession],
+    queryKey: ['studentConvocations', user?.institution_id, user?.id, activeSession],
     queryFn: async () => {
       const res = await api.get(`/v1/student-portal/convocations?session_type=${activeSession}`);
       return res.data;

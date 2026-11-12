@@ -40,6 +40,7 @@ class VerifyDatabaseIntegrity extends Command
         $filename = $this->option('snapshot') ?: 'db_integrity_snapshot.json';
         if (! preg_match('/^[a-zA-Z0-9_.-]+\.json$/', $filename)) {
             $this->error('Invalid snapshot filename.');
+
             return 1;
         }
         $snapshotFile = storage_path('app/'.$filename);

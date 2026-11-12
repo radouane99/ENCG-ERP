@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\OperationalWorkspaceController;
 use App\Http\Controllers\Api\PdfExportController;
 use App\Http\Controllers\Api\PilotageController;
 use App\Http\Controllers\Api\PrivacyController;
+use App\Http\Controllers\Api\Professor\ProfessorAttendanceController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\PublicVerificationController;
 use App\Http\Controllers\Api\ReinscriptionController;
@@ -68,6 +69,8 @@ Route::match(['get', 'post'], '/blockchain/public-verify', [AdminBlockchainContr
 Route::match(['get', 'post'], '/verify/blockchain', [AdminBlockchainController::class, 'verify']);
 
 Route::middleware(['auth:sanctum', 'institution.context'])->group(function () {
+    Route::post('/attendance/sessions/{session}/reopen', [ProfessorAttendanceController::class, 'reopenSession'])
+        ->middleware('role:super-admin|admin|institution-admin|director|scolarite');
     Route::prefix('smart-scheduling')->group(function () {
         Route::post('/simulate', [SmartSchedulingController::class, 'simulate']);
         Route::post('/generate', [SmartSchedulingController::class, 'generate']);

@@ -24,7 +24,10 @@ final class OcrProcess
         if ($remaining <= 0) {
             throw new \RuntimeException('OCR processing deadline reached.');
         }
-        $p = Process::fromShellCommandline($command);
+        // Linux worker limits inherited by native parsers, before untrusted bytes are read.
+        // Fail closed if the worker shell cannot establish the limits.
+        $boundedCommand = 'ulimit -v 786432 && ulimit -f 65536 && ulimit -t 12 && { '.$command.'; }';
+        $p = Process::fromShellCommandline($boundedCommand);
         $p->setTimeout(min(12, $remaining));
         $p->run();
         $exitCode = $p->getExitCode() ?? 1;

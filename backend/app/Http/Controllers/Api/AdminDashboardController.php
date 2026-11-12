@@ -11,6 +11,7 @@ use App\Models\DocumentRequest;
 use App\Models\Exam;
 use App\Models\Filiere;
 use App\Models\Grade;
+use App\Models\GradeRectification;
 use App\Models\Module;
 use App\Models\Professor;
 use App\Models\ProfessorDocumentRequest;
@@ -20,6 +21,7 @@ use App\Models\StudentPathway;
 use App\Models\StudentRegistration;
 use App\Models\VacationContract;
 use App\Services\Security\CryptoLedgerService;
+use App\Services\Security\GradeRectificationService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -419,8 +421,11 @@ class AdminDashboardController extends Controller
         $user = $request->user();
         abort_unless($user && $user->hasAnyRole(['super-admin', 'institution-admin', 'director', 'scolarite-admin']), 403);
 
-        $records = \App\Models\GradeRectification::where('institution_id', $user->institution_id)->latest()->limit(500)->get();
-        return response()->json(['success' => true, 'data' => $records->pluck('payload')->values()]);
+        $records = GradeRectification::where('institution_id', $user->institution_id)
+            ->orderByDesc('id')->paginate(min(100, max(1, $request->integer('per_page', 50))));
+
+        return response()->json(['success' => true, 'data' => $records->getCollection()->pluck('payload')->values(),
+            'meta' => ['total' => $records->total(), 'current_page' => $records->currentPage(), 'last_page' => $records->lastPage(), 'per_page' => $records->perPage()]]);
     }
 
     /**
@@ -428,7 +433,8 @@ class AdminDashboardController extends Controller
      */
     public function approveGradeRectification(Request $request, string $rectificationId, CryptoLedgerService $ledger): JsonResponse
     {
-        $data = app(\App\Services\Security\GradeRectificationService::class)->approve($request->user(), $rectificationId);
+        $data = app(GradeRectificationService::class)->approve($request->user(), $rectificationId);
+
         return response()->json(['success' => true, 'message' => 'Rectification approuvée et enregistrée.', 'data' => $data]);
     }
 
@@ -443,7 +449,7 @@ class AdminDashboardController extends Controller
         $ledgerStatus = $ledger->verifyGradeLedger($user->institution_id ?? null);
         $rememberCount = DB::table('personal_access_tokens')->where('name', 'auth-token-remember')->count();
         $standardCount = DB::table('personal_access_tokens')->where('name', '!=', 'auth-token-remember')->count();
-        $rectifications = \App\Models\GradeRectification::where('institution_id', $user->institution_id)->count();
+        $rectifications = GradeRectification::where('institution_id', $user->institution_id)->count();
 
         return response()->json([
             'success' => true,
@@ -459,7 +465,7 @@ class AdminDashboardController extends Controller
                 'four_eyes_rectifications_count' => $rectifications,
                 'security_controls' => [
                     'owasp_security_headers' => true,
-                    'webauthn_passkeys_fido2' => true,
+                    'webauthn_passkeys_fido2' => false,
                     'step_up_sudo_10m' => true,
                     'four_eyes_dual_control_grades' => true,
                     'new_device_anomaly_alerts' => true,

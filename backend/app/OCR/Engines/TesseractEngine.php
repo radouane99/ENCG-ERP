@@ -59,7 +59,14 @@ class TesseractEngine implements OcrEngineInterface
 
     public function extract(string $filePath, string $mimeType, string $docType = ''): OcrResult
     {
-        $tmpDir = sys_get_temp_dir();
+        $root = storage_path('app/private/ocr-tmp');
+        if (! is_dir($root) && ! @mkdir($root, 0700, true) && ! is_dir($root)) {
+            return new OcrResult('');
+        }
+        $tmpDir = $root.'/run_'.bin2hex(random_bytes(16));
+        if (! @mkdir($tmpDir, 0700)) {
+            return new OcrResult('');
+        }
         $allText = '';
         $createdFiles = [];
 
@@ -96,52 +103,33 @@ class TesseractEngine implements OcrEngineInterface
         } catch (\Throwable $e) {
             return new OcrResult('');
         } finally {
-            foreach ($createdFiles as $file) {
-                if (file_exists($file)) {
-                    @unlink($file);
-                }
-            }
+            // The directory exists before any producer; partial outputs are included on failure.
+            self::removeTemporaryDirectory($tmpDir);
         }
     }
 
     private function toImages(string $filePath, string $mimeType, string $tmpDir, array &$createdFiles): array
     {
         if ($this->isPdf($mimeType, $filePath)) {
-            // 1. Try extracting direct embedded images via pdfimages (fastest and highest quality for scans)
-            $imgPrefix = $tmpDir.'/pdf_raw_'.$this->processId;
-            OcrProcess::run(sprintf('pdfimages -png %s %s 2>/dev/null', escapeshellarg($filePath), escapeshellarg($imgPrefix)));
-            $rawImages = glob("{$imgPrefix}*.png") ?: [];
-            $validScans = array_filter($rawImages, fn ($img) => @filesize($img) > 25000);
-
-            if (! empty($validScans)) {
-                foreach ($rawImages as $img) {
-                    $createdFiles[] = $img;
-                }
-
-                return array_slice(array_values($validScans), 0, min(8, $this->config['max_pages']));
+            // Rasterize only a bounded page range at bounded geometry. Never expand
+            // every embedded image before deciding which pages to process.
+            $maxPages = max(1, min(8, (int) $this->config['max_pages']));
+            $tmpPrefix = $tmpDir.'/page';
+            OcrProcess::run(sprintf(
+                'pdftoppm -png -f 1 -l %d -r 150 -scale-to 2048 %s %s 2>/dev/null',
+                $maxPages, escapeshellarg($filePath), escapeshellarg($tmpPrefix)
+            ));
+            $pages = glob($tmpPrefix.'-*.png') ?: [];
+            natsort($pages);
+            $pages = array_slice(array_values($pages), 0, $maxPages);
+            foreach ($pages as $page) {
+                $this->assertImageBounds($page);
             }
 
-            // 2. Fallback to pdftoppm
-            if (! $this->hasCommand('pdftoppm')) {
-                return [];
-            }
-
-            $tmpPrefix = $tmpDir.'/pdf_pg_'.$this->processId;
-            $cmd = sprintf('pdftoppm -png -r 200 -l %d %s %s 2>/dev/null',
-                min(8, $this->config['max_pages']),
-                escapeshellarg($filePath),
-                escapeshellarg($tmpPrefix)
-            );
-            OcrProcess::run($cmd);
-
-            $pages = glob("{$tmpPrefix}*.png") ?: [];
-            foreach ($pages as $p) {
-                $createdFiles[] = $p;
-            }
-
-            return array_slice($pages, 0, min(8, $this->config['max_pages']));
+            return $pages;
         }
 
+        $this->assertImageBounds($filePath);
         $tmpImg = $tmpDir.'/ocr_img_'.$this->processId.'.png';
         if (@copy($filePath, $tmpImg)) {
             $createdFiles[] = $tmpImg;
@@ -150,6 +138,40 @@ class TesseractEngine implements OcrEngineInterface
         }
 
         return [];
+    }
+
+    private function assertImageBounds(string $path): void
+    {
+        $size = @getimagesize($path);
+        if (! $size || $size[0] > 10000 || $size[1] > 10000 || $size[0] * $size[1] > 16000000) {
+            throw new \RuntimeException('OCR image geometry exceeds the processing budget.');
+        }
+    }
+
+    public static function removeTemporaryDirectory(string $directory): void
+    {
+        // Only direct regular outputs are produced; do not follow links or recurse.
+        foreach (glob($directory.'/*') ?: [] as $file) {
+            if (is_file($file) || is_link($file)) {
+                @unlink($file);
+            }
+        }
+        @rmdir($directory);
+    }
+
+    public static function cleanAbandonedDirectories(): int
+    {
+        $root = storage_path('app/private/ocr-tmp');
+        $count = 0;
+        foreach (glob($root.'/run_*', GLOB_ONLYDIR) ?: [] as $directory) {
+            if (! is_link($directory) && preg_match('/^run_[a-f0-9]{32}$/', basename($directory))
+                && filemtime($directory) < time() - 3600) {
+                self::removeTemporaryDirectory($directory);
+                $count++;
+            }
+        }
+
+        return $count;
     }
 
     private function runTesseractPass(
@@ -174,7 +196,7 @@ class TesseractEngine implements OcrEngineInterface
 
         if (file_exists($txtFile)) {
             $createdFiles[] = $txtFile;
-            $text = file_get_contents($txtFile) ?: '';
+            $text = file_get_contents($txtFile, false, null, 0, 1024 * 1024) ?: '';
             @unlink($txtFile);
 
             return $text;

@@ -24,6 +24,7 @@ Layers
 import { cn } from '@shared/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import api from '@shared/lib/api';
+import { useAuthStore } from '@stores/authStore';
 import { Spinner } from '@shared/components/ui/Spinner';
 import LmdLegend from '@shared/components/academic/LmdLegend';
 import LmdBadge from '@shared/components/academic/LmdBadge';
@@ -58,17 +59,18 @@ function cleanMojibake(str?: string | null): string {
 }
 
 export default function StudentGrades() {
+  const user = useAuthStore((state) => state.user);
   const { i18n } = useTranslation(['students', 'common']);
   const isRtl = i18n.language === 'ar';
 
   const [academicYearId, setAcademicYearId] = useState('');
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['student-grades', academicYearId],
+    queryKey: ['student-grades', user?.institution_id, user?.id, academicYearId],
     queryFn: () => api.get('/student-portal/grades', {params: academicYearId ? {academic_year_id: academicYearId} : {}}).then(res => res.data)
   });
 
   const { data: appealsData, refetch: refetchAppeals } = useQuery({
-    queryKey: ['student-grade-appeals'],
+    queryKey: ['student-grade-appeals', user?.institution_id, user?.id],
     queryFn: () => api.get('/student-portal/grade-appeals', { suppressToast: true } as any)
       .then(res => res.data.data)
   });

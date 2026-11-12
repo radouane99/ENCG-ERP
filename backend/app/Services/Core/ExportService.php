@@ -22,6 +22,28 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ExportService
 {
+    public function authorizeModel(string $model, bool $write = false): void
+    {
+        $resources = [
+            'students' => 'students', 'professors' => 'professors', 'vacataires' => 'vacataires',
+            'modules' => 'academic', 'filieres' => 'academic', 'groups' => 'academic',
+            'rooms' => 'infrastructure',
+        ];
+        $model = strtolower(trim($model));
+        abort_unless(isset($resources[$model]), 422, 'Registre non pris en charge.');
+        $user = Auth::user();
+        abort_unless($user && $user->institution_id, 403);
+        $resource = $resources[$model];
+        $permissions = $write ? [$resource.'.create', $resource.'.edit'] : [$resource.'.view'];
+        if (! $write && $model === 'students') {
+            $permissions[] = 'students.export';
+            $permissions[] = 'students.view-sensitive';
+        }
+        foreach ($permissions as $permission) {
+            abort_unless($user->can($permission), 403, 'Permission requise : '.$permission);
+        }
+    }
+
     /**
      * Map model names to their corresponding Export classes.
      */
@@ -52,6 +74,8 @@ class ExportService
      */
     public function exportToExcel(string $modelName, array $filters = [])
     {
+        $this->authorizeModel($modelName, false);
+
         $normalized = strtolower(trim($modelName));
 
         if (! isset($this->exportMap[$normalized])) {
@@ -63,9 +87,8 @@ class ExportService
 
         // Audit Trail
         $user = Auth::user();
-        $institutionId = isset($filters['institution_id']) && $filters['institution_id']
-            ? (int) $filters['institution_id']
-            : ($user?->institution_id ? (int) $user->institution_id : null);
+        $institutionId = (int) $user->institution_id;
+        $filters['institution_id'] = $institutionId;
 
         if (class_exists(AuditLog::class)) {
             AuditLog::record([
@@ -90,6 +113,8 @@ class ExportService
      */
     public function templateToExcel(string $modelName)
     {
+        $this->authorizeModel($modelName, true);
+
         $normalized = strtolower(trim($modelName));
 
         if (! isset($this->exportMap[$normalized])) {
@@ -107,6 +132,8 @@ class ExportService
      */
     public function processImport(string $modelName, $file): array
     {
+        $this->authorizeModel($modelName, true);
+
         $normalized = strtolower(trim($modelName));
 
         if (! isset($this->importMap[$normalized])) {

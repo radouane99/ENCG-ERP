@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\UserResource;
 use App\Mail\NewDeviceLoginAlertMail;
 use App\Models\User;
 use App\Services\Security\CryptoLedgerService;
@@ -123,19 +122,25 @@ class SessionController extends Controller
         return $event;
     }
 
+    private static function sudoCacheKey(User $user, Request $request): ?string
+    {
+        $token = $user->currentAccessToken();
+        $session = $token instanceof PersonalAccessToken && $token->getKey() !== null
+            ? 'token:'.$token->getKey()
+            : ($request->hasSession() ? 'session:'.$request->session()->getId() : null);
+
+        return $session === null ? null : "sudo_mode:user_{$user->id}:".hash('sha256', $session);
+    }
+
     public static function hasActiveSudoMode(User $user, Request $request): bool
     {
-        $sudoData = Cache::get("sudo_mode:user_{$user->id}");
-        if (! is_array($sudoData)) {
-            return false;
-        }
-
+        $key = self::sudoCacheKey($user, $request);
+        $sudoData = $key ? Cache::get($key) : null;
         $headerToken = (string) $request->header('X-Sudo-Token', '');
-        if ($headerToken !== '' && isset($sudoData['sudo_token'])) {
-            return hash_equals((string) $sudoData['sudo_token'], $headerToken);
-        }
 
-        return true;
+        return is_array($sudoData) && $headerToken !== ''
+            && isset($sudoData['sudo_token'])
+            && hash_equals((string) $sudoData['sudo_token'], $headerToken);
     }
 
     public function index(Request $request): JsonResponse
@@ -143,7 +148,8 @@ class SessionController extends Controller
         $user = $request->user();
         $current = $user->currentAccessToken();
         $id = $current instanceof PersonalAccessToken ? $current->id : null;
-        $sudoData = Cache::get("sudo_mode:user_{$user->id}");
+        $key = self::sudoCacheKey($user, $request);
+        $sudoData = $key ? Cache::get($key) : null;
 
         return response()->json([
             'data' => $user->tokens()
@@ -161,9 +167,10 @@ class SessionController extends Controller
                 ]),
             'security_history' => Cache::get("user_security_history:{$user->id}", []),
             'known_devices' => array_values(Cache::get("security_known_devices:user_{$user->id}", [])),
+            'passkey_available' => false,
             'passkeys' => array_values(Cache::get("user_passkeys:{$user->id}", [])),
             'sudo_mode' => [
-                'active' => is_array($sudoData),
+                'active' => self::hasActiveSudoMode($user, $request),
                 'expires_at' => $sudoData['expires_at'] ?? null,
             ],
         ]);
@@ -209,6 +216,9 @@ class SessionController extends Controller
             ], 422);
         }
 
+        $key = self::sudoCacheKey($user, $request);
+        abort_unless($key, 403, 'Session non identifiable. Reconnectez-vous.');
+
         $expiresAt = now()->addMinutes(10);
         $sudoToken = 'sudo_'.bin2hex(random_bytes(20));
         $payload = [
@@ -219,7 +229,7 @@ class SessionController extends Controller
             'ip_address' => $request->ip(),
         ];
 
-        Cache::put("sudo_mode:user_{$user->id}", $payload, $expiresAt);
+        Cache::put($key, $payload, $expiresAt);
 
         return response()->json([
             'success' => true,
@@ -235,12 +245,13 @@ class SessionController extends Controller
     public function sudoStatus(Request $request): JsonResponse
     {
         $user = $request->user();
-        $sudoData = Cache::get("sudo_mode:user_{$user->id}");
+        $key = self::sudoCacheKey($user, $request);
+        $sudoData = $key ? Cache::get($key) : null;
 
         return response()->json([
             'success' => true,
             'data' => [
-                'sudo_verified' => is_array($sudoData),
+                'sudo_verified' => self::hasActiveSudoMode($user, $request),
                 'expires_at' => $sudoData['expires_at'] ?? null,
             ],
         ]);
@@ -251,33 +262,12 @@ class SessionController extends Controller
      */
     public function passkeyRegisterOptions(Request $request): JsonResponse
     {
-        $user = $request->user();
-        $challenge = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
-        $rpId = $request->getHost() ?: 'encg-fes.ac.ma';
-
-        Cache::put("passkey_reg_challenge:user_{$user->id}", $challenge, now()->addMinutes(5));
-
+        // Fail closed until standards-compliant WebAuthn assertion and attestation verification is installed.
         return response()->json([
-            'success' => true,
-            'data' => [
-                'challenge' => $challenge,
-                'rp' => [
-                    'name' => 'ENCG Fès — Portail Universitaire',
-                    'id' => $rpId,
-                ],
-                'user' => [
-                    'id' => rtrim(strtr(base64_encode((string) $user->id), '+/', '-_'), '='),
-                    'name' => $user->email,
-                    'displayName' => trim(($user->first_name ?? '').' '.($user->last_name ?? '')) ?: ($user->name ?? $user->email),
-                ],
-                'pubKeyCredParams' => [
-                    ['type' => 'public-key', 'alg' => -7],   // ES256
-                    ['type' => 'public-key', 'alg' => -257], // RS256
-                ],
-                'timeout' => 60000,
-                'attestation' => 'none',
-            ],
-        ]);
+            'success' => false,
+            'code' => 'PASSKEY_UNAVAILABLE',
+            'message' => 'Connexion Passkey temporairement indisponible. Utilisez votre mot de passe ou le code OTP.',
+        ], 503);
     }
 
     /**
@@ -285,57 +275,12 @@ class SessionController extends Controller
      */
     public function registerPasskey(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'credential_id' => ['required', 'string', 'max:512'],
-            'public_key' => ['required', 'string', 'max:4096'],
-            'device_name' => ['nullable', 'string', 'max:120'],
-            'challenge' => ['nullable', 'string'],
-            'transports' => ['nullable', 'array'],
-        ]);
-
-        $user = $request->user();
-        $expectedChallenge = Cache::get("passkey_reg_challenge:user_{$user->id}");
-
-        if (! empty($validated['challenge']) && $expectedChallenge && ! hash_equals((string) $expectedChallenge, (string) $validated['challenge'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Challenge WebAuthn invalide ou expiré.',
-            ], 422);
-        }
-
-        Cache::forget("passkey_reg_challenge:user_{$user->id}");
-
-        $credId = trim($validated['credential_id']);
-        $deviceName = $validated['device_name'] ?: self::parseBrowserAndOs((string) $request->userAgent());
-
-        $passkeyRecord = [
-            'credential_id' => $credId,
-            'user_id' => $user->id,
-            'device_name' => $deviceName,
-            'public_key_Preview' => substr($validated['public_key'], 0, 32).'...',
-            'transports' => $validated['transports'] ?? ['internal', 'hybrid'],
-            'created_at' => now()->toIso8601String(),
-            'last_used_at' => now()->toIso8601String(),
-        ];
-
-        $userPasskeys = Cache::get("user_passkeys:{$user->id}", []);
-        if (! is_array($userPasskeys)) {
-            $userPasskeys = [];
-        }
-        $userPasskeys[$credId] = $passkeyRecord;
-        Cache::put("user_passkeys:{$user->id}", $userPasskeys, now()->addYears(2));
-
-        Cache::put("passkey_lookup:{$credId}", [
-            'user_id' => $user->id,
-            'public_key' => $validated['public_key'],
-            'device_name' => $deviceName,
-        ], now()->addYears(2));
-
+        // Fail closed until standards-compliant WebAuthn assertion and attestation verification is installed.
         return response()->json([
-            'success' => true,
-            'message' => 'Passkey biométrique enregistrée avec succès.',
-            'data' => $passkeyRecord,
-        ], 201);
+            'success' => false,
+            'code' => 'PASSKEY_UNAVAILABLE',
+            'message' => 'Connexion Passkey temporairement indisponible. Utilisez votre mot de passe ou le code OTP.',
+        ], 503);
     }
 
     public function listPasskeys(Request $request): JsonResponse
@@ -350,7 +295,10 @@ class SessionController extends Controller
     {
         $user = $request->user();
         $userPasskeys = Cache::get("user_passkeys:{$user->id}", []);
-        if (is_array($userPasskeys) && isset($userPasskeys[$credentialId])) {
+        $lookup = Cache::get("passkey_lookup:{$credentialId}");
+        abort_unless(is_array($userPasskeys) && isset($userPasskeys[$credentialId])
+            && is_array($lookup) && (int) ($lookup['user_id'] ?? 0) === (int) $user->id, 404);
+        if (isset($userPasskeys[$credentialId])) {
             unset($userPasskeys[$credentialId]);
             Cache::put("user_passkeys:{$user->id}", $userPasskeys, now()->addYears(2));
         }
@@ -367,21 +315,12 @@ class SessionController extends Controller
      */
     public function passkeyLoginOptions(Request $request): JsonResponse
     {
-        $challengeId = 'pkc_'.bin2hex(random_bytes(12));
-        $challenge = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
-
-        Cache::put("passkey_auth_challenge:{$challengeId}", $challenge, now()->addMinutes(5));
-
+        // Fail closed until standards-compliant WebAuthn assertion and attestation verification is installed.
         return response()->json([
-            'success' => true,
-            'data' => [
-                'challenge_id' => $challengeId,
-                'challenge' => $challenge,
-                'rpId' => $request->getHost() ?: 'encg-fes.ac.ma',
-                'timeout' => 60000,
-                'userVerification' => 'preferred',
-            ],
-        ]);
+            'success' => false,
+            'code' => 'PASSKEY_UNAVAILABLE',
+            'message' => 'Connexion Passkey temporairement indisponible. Utilisez votre mot de passe ou le code OTP.',
+        ], 503);
     }
 
     /**
@@ -389,62 +328,12 @@ class SessionController extends Controller
      */
     public function loginWithPasskey(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'credential_id' => ['required', 'string', 'max:512'],
-            'challenge_id' => ['required', 'string'],
-            'signature' => ['required', 'string'],
-            'remember' => ['nullable', 'boolean'],
-        ]);
-
-        $challenge = Cache::pull("passkey_auth_challenge:{$validated['challenge_id']}");
-        if (! $challenge) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Session de vérification Passkey expirée. Veuillez réessayer.',
-            ], 422);
-        }
-
-        $lookup = Cache::get("passkey_lookup:{$validated['credential_id']}");
-        if (! is_array($lookup) || empty($lookup['user_id'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Passkey non reconnue sur ce portail.',
-            ], 401);
-        }
-
-        $user = User::with('roles', 'student.filiere', 'professor.department')->find($lookup['user_id']);
-        if (! $user || ! $user->is_active) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Ce compte est introuvable ou désactivé.',
-            ], 403);
-        }
-
-        $remember = (bool) ($validated['remember'] ?? true);
-        $expiresAt = $remember
-            ? now()->addDays(AuthCookie::REMEMBER_DAYS)
-            : now()->addHours(8);
-        $tokenName = $remember ? 'auth-token-remember' : 'auth-token';
-        $token = $user->createToken($tokenName, ['*'], $expiresAt)->plainTextToken;
-
-        self::recordLoginEvent($user, $request, 'passkey_webauthn', $remember);
-
-        $userPasskeys = Cache::get("user_passkeys:{$user->id}", []);
-        if (is_array($userPasskeys) && isset($userPasskeys[$validated['credential_id']])) {
-            $userPasskeys[$validated['credential_id']]['last_used_at'] = now()->toIso8601String();
-            Cache::put("user_passkeys:{$user->id}", $userPasskeys, now()->addYears(2));
-        }
-
+        // Fail closed until standards-compliant WebAuthn assertion and attestation verification is installed.
         return response()->json([
-            'success' => true,
-            'message' => 'Authentification biométrique Passkey réussie.',
-            'data' => [
-                'user' => new UserResource($user),
-                'token' => $token,
-                'remember' => $remember,
-                'session_expires_at' => $expiresAt->toIso8601String(),
-            ],
-        ])->withCookie(AuthCookie::make($token, $remember));
+            'success' => false,
+            'code' => 'PASSKEY_UNAVAILABLE',
+            'message' => 'Connexion Passkey temporairement indisponible. Utilisez votre mot de passe ou le code OTP.',
+        ], 503);
     }
 
     public function destroy(Request $request, int $id): JsonResponse

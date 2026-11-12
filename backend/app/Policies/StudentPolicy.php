@@ -39,6 +39,20 @@ class StudentPolicy
         ]);
     }
 
+    public function viewSensitive(User $user, Student $student): bool
+    {
+        if ((int) $user->id === (int) $student->user_id) {
+            return true;
+        }
+        if (! $user->institution_id || (int) $user->institution_id !== (int) $student->institution_id) {
+            return false;
+        }
+
+        return $this->hasPermissionOrRole($user, 'students.view-sensitive', [
+            'admin', 'super-admin', 'institution-admin', 'director', 'scolarite',
+        ]);
+    }
+
     /**
      * Determine whether the user can create models.
      */

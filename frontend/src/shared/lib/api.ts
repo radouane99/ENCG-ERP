@@ -20,6 +20,8 @@ api.interceptors.request.use((config) => {
   if (config.data instanceof FormData) config.headers.delete('Content-Type')
   const lang = localStorage.getItem('encg_lang') || 'fr'
   config.headers['Accept-Language'] = lang
+  const sudoToken = sessionStorage.getItem('encg_sudo_token')
+  if (sudoToken) config.headers['X-Sudo-Token'] = sudoToken
   return config
 })
 

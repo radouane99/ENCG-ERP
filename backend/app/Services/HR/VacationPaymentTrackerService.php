@@ -2,14 +2,17 @@
 
 namespace App\Services\HR;
 
-use App\Models\{User, VacationContract, VacationPayment, VacationSession};
+use App\Models\User;
+use App\Models\VacationContract;
+use App\Models\VacationPayment;
+use App\Models\VacationSession;
 use App\Services\Academic\AcademicContext;
 
 class VacationPaymentTrackerService
 {
     public function summary(User $user, ?array $simulation = null): array
     {
-        $prof = $user->professor;
+        $prof = $user->professor()->first();
         abort_unless($prof && ($prof->contract_type === 'vacataire' || $user->hasRole('vacataire')), 403);
         $contracts = VacationContract::where('institution_id', $user->institution_id)->where('professor_id', $prof->id)
             ->when(AcademicContext::yearId(), fn ($q, $year) => $q->where('academic_year_id', $year))->where('status', '!=', 'cancelled')->get();
@@ -29,6 +32,7 @@ class VacationPaymentTrackerService
             $igr = 17;
         }
         $step = fn ($rows, $predicate) => $rows->isEmpty() ? 'pending' : ($rows->every($predicate) ? 'completed' : ($rows->contains($predicate) ? 'in_progress' : 'pending'));
+
         return [
             'mode' => $simulation !== null ? 'simulation' : 'recorded_payments',
             'is_official_document' => false, 'reference_code' => null, 'signature_code' => null,

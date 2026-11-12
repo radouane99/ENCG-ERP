@@ -22,12 +22,13 @@ class StudentDocument extends Model
         'mime_type',
         'file_size',
         'status',
+        'verified_by', 'verified_at', 'rejection_reason',
         'version', 'is_current', 'content_hash', 'storage_disk', 'withdrawn_at', 'uploaded_by',
     ];
 
     protected function casts(): array
     {
-        return ['is_current' => 'boolean', 'version' => 'integer', 'withdrawn_at' => 'datetime'];
+        return ['verified_at' => 'datetime', 'is_current' => 'boolean', 'version' => 'integer', 'withdrawn_at' => 'datetime'];
     }
 
     public function student(): BelongsTo

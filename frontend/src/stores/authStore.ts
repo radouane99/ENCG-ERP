@@ -1,5 +1,13 @@
 import { create } from 'zustand'
 import api from '@shared/lib/api'
+import { resetPrivateQueryClient } from '@shared/lib/queryClient'
+
+let sessionGeneration = 0
+
+function clearPrivateState() {
+  resetPrivateQueryClient()
+  sessionStorage.removeItem('encg_sudo_token')
+}
 
 let sessionInFlight: Promise<void> | null = null
 
@@ -130,27 +138,34 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
   },
 
   clearSession: () => {
+    sessionGeneration++
+    sessionInFlight = null
+    clearPrivateState()
     sessionStorage.removeItem('encg_active_role')
     set({ user: null, activeRole: null, isAuthenticated: false, isLoading: false, requiresTwoFactor: false, twoFactorChallengeToken: null, sessionError: null })
   },
 
   fetchUser: async () => {
     if (sessionInFlight) return sessionInFlight
+    const generation = sessionGeneration
     sessionInFlight = (async () => {
     try {
       const response = await api.get('/v1/auth/me', { suppressToast: true, timeout: 30_000 } as any)
+      if (generation !== sessionGeneration) return
       const user = response.data?.data
       if (!user || !Array.isArray(user.roles) || !Array.isArray(user.permissions)) {
         throw new Error('Invalid authenticated user response')
       }
       set({ user, isAuthenticated: true, isLoading: false, sessionError: null })
     } catch (error) {
+      if (generation !== sessionGeneration) return
       const status = (error as { response?: { status?: number } }).response?.status
       if (status === 401 || status === 403) get().clearSession()
       else set({ isLoading: false, sessionError: 'Connexion au serveur interrompue. Réessayez pour retrouver votre session.' })
     }
     })()
-    try { await sessionInFlight } finally { sessionInFlight = null }
+    const flight = sessionInFlight
+    try { await flight } finally { if (sessionInFlight === flight) sessionInFlight = null }
   },
 
   setUser: (user) => set({ user }),
@@ -187,3 +202,12 @@ export const useAuthStore = create<AuthState>()((set, get) => ({
     return roles.some(r => userRoles.includes(r) || userRoles.includes(r.replace('-', '_')) || userRoles.includes(r.replace('_', '-')))
   },
 }))
+
+// Invalidate private state for every auth entry path, including SSO and OTP.
+useAuthStore.subscribe((state, previous) => {
+  if (state.user?.id !== previous.user?.id || state.user?.institution_id !== previous.user?.institution_id || state.activeRole !== previous.activeRole) {
+    sessionGeneration++
+    sessionInFlight = null
+    clearPrivateState()
+  }
+})

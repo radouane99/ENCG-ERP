@@ -5,9 +5,8 @@ import { useNavigate, useSearchParams, useLocation } from 'react-router-dom'
 import { admissionReturnPath } from '../model/admissionReturnPath'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
-import { Eye, EyeOff, LogIn, Mail, Lock, Sparkles, UserCheck, Shield, CheckCircle2, Trash2, Fingerprint } from 'lucide-react'
+import { Eye, EyeOff, LogIn, Mail, Lock, Sparkles, UserCheck, Shield, CheckCircle2, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import api from '@shared/lib/api'
 import { useAuthStore } from '@stores/authStore'
 import { Button } from '@shared/components/ui/Button'
 import { Input } from '@shared/components/ui/Input'
@@ -45,7 +44,7 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const [searchParams] = useSearchParams()
-  const { login, requestEmailOtp, verifyEmailOtp, setUser } = useAuthStore()
+  const { login, requestEmailOtp, verifyEmailOtp } = useAuthStore()
   const [showPassword, setShowPassword] = useState(false)
   const [showCndpModal, setShowCndpModal] = useState(false)
   const [ssoProviders, setSsoProviders] = useState<SsoProvider[]>(DEFAULT_SSO_PROVIDERS)
@@ -154,61 +153,6 @@ export default function LoginPage() {
     }
   }
 
-  const handlePasskeyLogin = async () => {
-    setOtpLoading(true)
-    try {
-      const optRes = await api.post('/v1/auth/passkeys/login-options')
-      const challengeId = optRes.data?.data?.challenge_id as string
-      const challenge = optRes.data?.data?.challenge as string
-      let credentialId = localStorage.getItem('encg_last_passkey_id') || ''
-
-      if (typeof window !== 'undefined' && window.PublicKeyCredential && navigator.credentials?.get) {
-        try {
-          const challengeBytes = Uint8Array.from(atob(challenge.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0))
-          const cred = (await navigator.credentials.get({
-            publicKey: {
-              challenge: challengeBytes,
-              timeout: 45000,
-              userVerification: 'preferred',
-            },
-          })) as PublicKeyCredential | null
-          if (cred?.id) {
-            credentialId = cred.id
-          }
-        } catch {
-          // Fallback to stored passkey ID on this device if WebAuthn prompt is cancelled in dev
-        }
-      }
-
-      if (!credentialId) {
-        toast.info(
-          isAr
-            ? 'يرجى تسجيل مفتاح بيومتري (Passkey) أولاً من إعدادات الأمان في ملفك الشخصي.'
-            : 'Enregistrez d\'abord une Passkey biométrique depuis Mon Profil → Sécurité & Sessions.'
-        )
-        return
-      }
-
-      const loginRes = await api.post('/v1/auth/passkeys/login', {
-        credential_id: credentialId,
-        challenge_id: challengeId,
-        signature: `sig_${btoa(challengeId)}`,
-        remember: rememberChecked,
-      })
-
-      const user = loginRes.data?.data?.user
-      if (user) {
-        setUser(user)
-        navigate(admissionReturnPath(location.state))
-        toast.success(isAr ? 'تم الدخول بالبصمة بنجاح!' : 'Connexion biométrique Passkey réussie !')
-      }
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Passkey non reconnue ou expirée.')
-    } finally {
-      setOtpLoading(false)
-    }
-  }
-
   const handleVerifyOtp = async () => {
     const identifier = (watch('email') || '').trim()
     const cleanOtp = otpCode.replace(/\D/g, '').slice(0, 6)
@@ -298,20 +242,7 @@ export default function LoginPage() {
           ))}
         </div>
 
-        <button
-          type="button"
-          data-testid="passkey-biometric-login"
-          onClick={handlePasskeyLogin}
-          disabled={otpLoading}
-          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-indigo-500/30 bg-indigo-500/5 hover:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 text-xs font-bold transition-all cursor-pointer"
-        >
-          <Fingerprint className="w-4 h-4 shrink-0" />
-          <span>
-            {isAr
-              ? 'الدخول بالبصمة / Passkey (TouchID · FaceID · Windows Hello)'
-              : 'Passkey Biométrique (TouchID · FaceID · Windows Hello)'}
-          </span>
-        </button>
+
 
         <div className="relative my-2">
           <div className="absolute inset-0 flex items-center">

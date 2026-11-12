@@ -77,7 +77,8 @@ class DeliberationController extends Controller
 
         $semesterId = $request->query('semester', 1);
         $sessionType = $request->query('session', 'normale');
-        $modules = Module::where('semester_id', $semesterId)->with('assessments')->get();
+        $modules = Module::where('semester_id', $semesterId)
+            ->where('institution_id', $request->user()->institution_id)->with('assessments')->get();
 
         $results = ['total_students' => 0, 'admitted' => 0, 'rattrapage' => 0, 'ajourne' => 0];
         $students = Student::with('grades')->has('registrations')->get();
@@ -130,11 +131,14 @@ class DeliberationController extends Controller
      */
     public function simulate(Request $request): JsonResponse
     {
+        $this->authorize('viewAny', Deliberation::class);
+        $request->validate(['student_id' => 'required|integer', 'semester_id' => 'nullable|integer']);
         $studentId = $request->input('student_id');
         $semesterId = $request->input('semester_id', 1);
 
-        $student = Student::with('grades')->findOrFail($studentId);
-        $modules = Module::where('semester_id', $semesterId)->with('assessments')->get();
+        $student = Student::with('grades')->where('institution_id', $request->user()->institution_id)->findOrFail($studentId);
+        $modules = Module::where('semester_id', $semesterId)
+            ->where('institution_id', $request->user()->institution_id)->with('assessments')->get();
         $deliberation = $this->engine->calculateSemesterDeliberation($student, $modules);
 
         $payload = [
@@ -209,9 +213,10 @@ class DeliberationController extends Controller
     public function showJury(int $id): JsonResponse
     {
         $delib = Deliberation::with(['semester', 'filiere', 'academicYear'])->findOrFail($id);
+        $this->authorize('view', $delib);
 
-        $modules = Module::where('semester_id', $delib->semester_id)->with('assessments')->get();
-        $students = Student::with('grades')->whereHas('registrations', function ($q) use ($delib) {
+        $modules = Module::where('institution_id', $delib->institution_id)->where('filiere_id', $delib->filiere_id)->where('semester_id', $delib->semester_id)->with('assessments')->get();
+        $students = Student::with('grades')->where('institution_id', $delib->institution_id)->whereHas('registrations', function ($q) use ($delib) {
             $q->where('filiere_id', $delib->filiere_id)
                 ->where('academic_year_id', $delib->academic_year_id);
         })->get();

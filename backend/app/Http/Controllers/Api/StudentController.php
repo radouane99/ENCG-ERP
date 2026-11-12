@@ -154,6 +154,7 @@ class StudentController extends Controller
      */
     public function getDocuments(Student $student): JsonResponse
     {
+        $this->authorize('viewSensitive', $student);
         $documents = StudentDocument::where('student_id', $student->id)->get();
 
         return response()->json(['data' => $documents]);
@@ -164,8 +165,9 @@ class StudentController extends Controller
      */
     public function uploadDocument(Request $request, Student $student): JsonResponse
     {
+        $this->authorize('update', $student);
         $request->validate([
-            'type' => 'required|string',
+            'type' => 'required|string|max:64',
             'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240',
         ]);
 
@@ -173,23 +175,45 @@ class StudentController extends Controller
         $type = $request->input('type');
 
         $path = $file->store("student_documents/{$student->id}", 'private');
+        abort_unless(is_string($path) && $path !== '', 500, 'Le stockage de la pièce a échoué.');
 
-        StudentDocument::updateOrCreate(
-            ['student_id' => $student->id, 'type' => $type],
-            [
-                'file_path' => $path,
-                'original_filename' => $file->getClientOriginalName(),
-                'mime_type' => $file->getClientMimeType(),
-                'file_size' => $file->getSize(),
-                'status' => 'verified',
-            ]
-        );
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($student, $type, $file, $path, $request) {
+                Student::whereKey($student->id)->lockForUpdate()->firstOrFail();
+                // Admission documents keep their immutable versions and dedicated review workflow.
+                $document = StudentDocument::where('student_id', $student->id)
+                    ->whereNull('application_id')->where('is_current', true)->where('type', $type)->lockForUpdate()->first();
+                $document ??= new StudentDocument(['student_id' => $student->id, 'type' => $type]);
+                $document->fill([
+                    'file_path' => $path, 'storage_disk' => 'private',
+                    'original_filename' => $file->getClientOriginalName(),
+                    'mime_type' => $file->getMimeType(), 'file_size' => $file->getSize(),
+                    'content_hash' => hash_file('sha256', $file->getRealPath()),
+                    'version' => $document->exists ? ((int) $document->version + 1) : 1,
+                    'is_current' => true, 'uploaded_by' => $request->user()->id,
+                    'status' => 'pending', 'verified_by' => null, 'verified_at' => null, 'rejection_reason' => null,
+                ])->save();
+            });
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Storage::disk('private')->delete($path);
+            throw $e;
+        }
 
         return response()->json([
             'message' => 'Document numérisé enregistré avec succès.',
             'file_path' => $path,
             'type' => $type,
         ]);
+    }
+
+    public function verifyStudentDocument(Request $request, Student $student, StudentDocument $document): JsonResponse
+    {
+        $this->authorize('update', $student);
+        $data = $request->validate(['version' => 'required|integer|min:1']);
+        $document = app(\App\Actions\Student\VerifyStudentDocumentAction::class)
+            ->execute($request->user(), $student, $document, (int) $data['version']);
+
+        return response()->json(['data' => $document]);
     }
 
     /**

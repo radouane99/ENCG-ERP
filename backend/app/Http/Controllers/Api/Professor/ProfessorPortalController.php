@@ -12,7 +12,6 @@ use App\Models\AttendanceSession;
 use App\Models\ExamSession;
 use App\Models\ExamSurveillance;
 use App\Models\FinalProject;
-use App\Models\Grade;
 use App\Models\Group;
 use App\Models\Module;
 use App\Models\ModuleProfessor;
@@ -26,9 +25,13 @@ use App\Models\User;
 use App\Models\VacationContract;
 use App\Policies\ProfessorCoursePolicy;
 use App\Services\Academic\AcademicContext;
+use App\Services\Academic\ClassroomRosterService;
 use App\Services\Academic\TimetableCampaignService;
 use App\Services\Documents\OfficialPdfFactory;
+use App\Services\HR\VacationPaymentTrackerService;
+use App\Services\Security\ClassroomAccessService;
 use App\Services\Security\CryptoLedgerService;
+use App\Services\Security\GradeRectificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -586,8 +589,8 @@ class ProfessorPortalController extends Controller
     public function getDoubleGrading(Request $request): JsonResponse
     {
         $moduleId = $request->query('module_id', '64');
-        $moduleName = $moduleId == '64' 
-            ? 'Statistiques et Probabilités (S2)' 
+        $moduleName = $moduleId == '64'
+            ? 'Statistiques et Probabilités (S2)'
             : 'Audit Financier & Contrôle de Gestion (S7)';
         $filiere = $moduleId == '64'
             ? 'Diplôme ENCG - Tronc Commun'
@@ -2229,6 +2232,7 @@ class ProfessorPortalController extends Controller
             $pathway = $s->relationLoaded('pathways')
                 ? ($s->pathways->firstWhere('group_id', $effectiveGroupId) ?? $s->latestPathway)
                 : $s->latestPathway;
+
             return [
                 'id' => $s->id,
                 'student_number' => $s->student_number,
@@ -2401,12 +2405,12 @@ class ProfessorPortalController extends Controller
         $session = $request->filled('attendance_session_id')
             ? AttendanceSession::findOrFail($request->integer('attendance_session_id'))
             : AttendanceSession::firstOrNew([
-            'module_id' => $moduleId,
-            'group_id' => $groupId,
-            'session_date' => $sessionDate,
-            'session_type' => $sessionType,
-            'room' => $seanceCode,
-        ]);
+                'module_id' => $moduleId,
+                'group_id' => $groupId,
+                'session_date' => $sessionDate,
+                'session_type' => $sessionType,
+                'room' => $seanceCode,
+            ]);
 
         if ($session->exists) {
             abort_unless((int) $session->module_id === $moduleId && (int) $session->group_id === $groupId
@@ -2448,7 +2452,7 @@ class ProfessorPortalController extends Controller
             $session->save();
 
             // Récupérer uniquement les étudiants inscrits dans ce groupe / sous-groupe (isolation stricte)
-            $students = app(\App\Services\Academic\ClassroomRosterService::class)->students($group, $user->institution_id)
+            $students = app(ClassroomRosterService::class)->students($group, $user->institution_id)
                 ->when($subGroup !== '', fn ($q) => $q->whereHas('pathways', fn ($p) => $p->where('academic_year_id', $group->academic_year_id)->where('sub_group', $subGroup)))
                 ->pluck('id');
             abort_unless(empty(array_diff($absentIds, $students->all())), 422, 'Étudiant absent hors du groupe.');
@@ -2737,7 +2741,7 @@ class ProfessorPortalController extends Controller
         ]);
         $group = Group::findOrFail($request->integer('group_id'));
         $module = Module::findOrFail($request->integer('module_id'));
-        app(\App\Services\Security\ClassroomAccessService::class)->authorize($request->user(), $module, $group, write: true);
+        app(ClassroomAccessService::class)->authorize($request->user(), $module, $group, write: true);
         $groupId = (int) $request->input('group_id');
         $moduleId = (int) $request->input('module_id');
         $seanceCode = trim((string) $request->input('seance_code', 'S1'));
@@ -2757,7 +2761,7 @@ class ProfessorPortalController extends Controller
         $moduleName = $module?->name ?? 'Module Pédagogique';
         $moduleCode = $module?->code ?? 'MOD';
 
-        $students = app(\App\Services\Academic\ClassroomRosterService::class)->students($group, $module->institution_id)
+        $students = app(ClassroomRosterService::class)->students($group, $module->institution_id)
             ->whereIn('id', $studentIds)->get();
         abort_unless($students->count() === count($studentIds), 422, 'La sélection contient un étudiant hors du groupe.');
         $sentCount = 0;
@@ -2809,13 +2813,13 @@ class ProfessorPortalController extends Controller
         $group = Group::with('filiere')->findOrFail($groupId);
         $module = $request->filled('module_id') ? Module::findOrFail($request->integer('module_id')) : null;
         if ($module) {
-            app(\App\Services\Security\ClassroomAccessService::class)->authorize($request->user(), $module, $group, write: true);
+            app(ClassroomAccessService::class)->authorize($request->user(), $module, $group, write: true);
         } else {
             abort_unless($request->user()->hasAnyRole(['super-admin', 'institution-admin', 'director'])
                 && ($request->user()->hasRole('super-admin') || (int) $group->filiere->institution_id === (int) $request->user()->institution_id), 403);
         }
 
-        $students = app(\App\Services\Academic\ClassroomRosterService::class)->students($group, $group->filiere->institution_id)
+        $students = app(ClassroomRosterService::class)->students($group, $group->filiere->institution_id)
             ->with(['user', 'latestPathway'])
             ->select('students.*')
             ->leftJoin('users', 'students.user_id', '=', 'users.id')
@@ -2871,7 +2875,8 @@ class ProfessorPortalController extends Controller
         ]);
         $simulation = $request->hasAny(['simulated_hours', 'simulated_rate'])
             ? ['hours' => $validated['simulated_hours'] ?? 0, 'rate' => $validated['simulated_rate'] ?? 0] : null;
-        $data = app(\App\Services\HR\VacationPaymentTrackerService::class)->summary($request->user(), $simulation);
+        $data = app(VacationPaymentTrackerService::class)->summary($request->user(), $simulation);
+
         return response()->json(['success' => true, 'data' => $data]);
     }
 
@@ -2886,10 +2891,10 @@ class ProfessorPortalController extends Controller
             'justification' => ['required', 'string', 'min:8', 'max:500'],
         ]);
 
-        $entry = app(\App\Services\Security\GradeRectificationService::class)->request(
+        $entry = app(GradeRectificationService::class)->request(
             $request->user(), (int) $validated['grade_id'], (float) $validated['proposed_value'], $validated['justification']
         );
+
         return response()->json(['success' => true, 'message' => 'Demande enregistrée. Une seconde validation est requise.', 'data' => $entry], 201);
     }
-
 }

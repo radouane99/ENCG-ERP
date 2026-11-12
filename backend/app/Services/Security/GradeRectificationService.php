@@ -2,9 +2,16 @@
 
 namespace App\Services\Security;
 
-use App\Models\{AcademicYear, Grade, GradeRectification, Group, User};
-use App\Services\Academic\{AcademicContext, ClassroomRosterService, GradeService};
-use Illuminate\Support\Facades\{Cache, DB};
+use App\Models\AcademicYear;
+use App\Models\Grade;
+use App\Models\GradeRectification;
+use App\Models\Group;
+use App\Models\User;
+use App\Services\Academic\AcademicContext;
+use App\Services\Academic\ClassroomRosterService;
+use App\Services\Academic\GradeService;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class GradeRectificationService
@@ -19,15 +26,21 @@ class GradeRectificationService
         $access = app(ClassroomAccessService::class);
         $access->authorize($user, $module, write: true);
         foreach (Group::where('filiere_id', $module->filiere_id)->where('academic_year_id', $assessment->academic_year_id)->where('semester_number', $module->semester_number)->get() as $group) {
-            if (! app(ClassroomRosterService::class)->students($group, $user->institution_id)->whereKey($grade->student_id)->exists()) continue;
+            if (! app(ClassroomRosterService::class)->students($group, $user->institution_id)->whereKey($grade->student_id)->exists()) {
+                continue;
+            }
             try {
                 $access->authorize($user, $module, $group, write: true);
+
                 return $group;
             } catch (HttpExceptionInterface $exception) {
-                if ($exception->getStatusCode() !== 403) throw $exception;
+                if ($exception->getStatusCode() !== 403) {
+                    throw $exception;
+                }
             }
         }
         abort_unless($user->hasAnyRole(['super-admin', 'institution-admin', 'admin', 'director', 'scolarite']), 403, 'Étudiant hors des groupes affectés.');
+
         return null;
     }
 
@@ -50,6 +63,7 @@ class GradeRectificationService
                 'grade_id' => $grade->id, 'grade_version' => $grade->version, 'requested_by_user_id' => $user->id,
                 'status' => 'pending_second_approver', 'payload' => $payload]);
             activity()->causedBy($user)->performedOn($grade)->withProperties(['reference' => $reference])->log('grade_rectification_requested');
+
             return $payload;
         });
     }
@@ -57,6 +71,7 @@ class GradeRectificationService
     public function approve(User $user, string $reference): array
     {
         abort_unless($user->hasAnyRole(['super-admin', 'institution-admin', 'director', 'scolarite-admin']), 403);
+
         return DB::transaction(function () use ($user, $reference) {
             $record = GradeRectification::where('reference', $reference)->where('institution_id', $user->institution_id)->lockForUpdate()->firstOrFail();
             abort_unless($record->status === 'pending_second_approver', 409, 'Demande déjà traitée.');
@@ -82,6 +97,7 @@ class GradeRectificationService
             $record->update(['status' => 'approved_and_sealed', 'approved_by_user_id' => $user->id, 'approved_at' => now(), 'payload' => $payload]);
             $seal = app(CryptoLedgerService::class)->sealGradeLedger($user->institution_id, $user->id);
             activity()->causedBy($user)->performedOn($grade)->withProperties(['reference' => $reference])->log('grade_rectification_approved');
+
             return ['rectification' => $payload, 'ledger_seal' => $seal];
         });
     }
@@ -90,16 +106,21 @@ class GradeRectificationService
     {
         $count = 0;
         foreach ((array) Cache::get('encg_four_eyes_grade_rectifications', []) as $entry) {
-            if (! is_array($entry) || empty($entry['id']) || GradeRectification::where('reference', $entry['id'])->exists()) continue;
+            if (! is_array($entry) || empty($entry['id']) || GradeRectification::where('reference', $entry['id'])->exists()) {
+                continue;
+            }
             $grade = Grade::withoutGlobalScopes()->find($entry['grade_id'] ?? null);
             $assessment = $grade?->assessment()->withoutGlobalScopes()->first();
-            if (! $grade || ! $assessment || ! User::find($entry['requested_by_user_id'] ?? null)) continue;
+            if (! $grade || ! $assessment || ! User::find($entry['requested_by_user_id'] ?? null)) {
+                continue;
+            }
             GradeRectification::firstOrCreate(['reference' => $entry['id']], ['institution_id' => $assessment->module->institution_id,
                 'academic_year_id' => $assessment->academic_year_id, 'grade_id' => $grade->id, 'grade_version' => $grade->version,
                 'requested_by_user_id' => $entry['requested_by_user_id'], 'approved_by_user_id' => User::find($entry['approved_by_user_id'] ?? null)?->id,
                 'status' => $entry['status'] ?? 'pending_second_approver', 'approved_at' => $entry['approved_at'] ?? null, 'payload' => $entry]);
             $count++;
         }
+
         return $count;
     }
 }

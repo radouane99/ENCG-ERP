@@ -385,11 +385,29 @@ class ProfessorAiCopilotController extends Controller
         $subGroup = $validated['sub_group'] ?? null;
 
         $group = Group::with(['filiere', 'academicYear'])->findOrFail($groupId);
+        abort_unless((int) $group->filiere?->institution_id === (int) $request->user()->institution_id, 403);
+        $access = app(\App\Services\Security\ClassroomAccessService::class);
+        $modules = Module::where('institution_id', $request->user()->institution_id)
+            ->where('filiere_id', $group->filiere_id)
+            ->where('semester_number', $group->semester_number)
+            ->when($moduleId, fn ($q) => $q->whereKey($moduleId))->get();
+        $allowedModuleIds = [];
+        foreach ($modules as $module) {
+            try {
+                $access->authorize($request->user(), $module, $group, write: true);
+                $allowedModuleIds[] = $module->id;
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+                if (! in_array($e->getStatusCode(), [403, 404], true)) {
+                    throw $e;
+                }
+            }
+        }
+        abort_if($allowedModuleIds === [], 403, 'Groupe ou module non autorisé.');
 
         // Fetch students in this group/subgroup
         $studentsQuery = Student::with('user')
-            ->whereHas('pathways', function ($p) use ($groupId, $subGroup) {
-                $p->where('group_id', $groupId)->where('is_current', true);
+            ->whereHas('pathways', function ($p) use ($groupId, $subGroup, $group) {
+                $p->where('group_id', $groupId)->where('academic_year_id', $group->academic_year_id)->where('is_current', true);
                 if (! empty($subGroup)) {
                     $p->where('sub_group', $subGroup);
                 }
@@ -402,7 +420,8 @@ class ProfessorAiCopilotController extends Controller
         $students = $studentsQuery->get();
 
         // Fetch attendance sessions for this group/module
-        $sessionsQuery = AttendanceSession::where('group_id', $groupId);
+        $sessionsQuery = AttendanceSession::where('group_id', $groupId)
+            ->where('academic_year_id', $group->academic_year_id)->whereIn('module_id', $allowedModuleIds);
         if ($moduleId) {
             $sessionsQuery->where('module_id', $moduleId);
         }
